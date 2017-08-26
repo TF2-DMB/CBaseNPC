@@ -1,0 +1,63 @@
+"Games"
+{
+	"tf"
+	{
+		"Offsets"
+		{
+			"CBaseEntity::MyNextBotPointer"
+			{
+				"windows"	"72"
+				"linux"		"73"
+				"mac"		"73"
+			}
+			"CBaseCombatCharacter::GetLastKnownArea"
+			{
+				"linux"		"315"
+				"windows"	"314"
+			}
+			"NextBotGroundLocomotion::Update"
+			{
+				"linux"		"44"
+				"windows"	"43"
+			}
+		}
+		"Signatures"
+		{
+			"TheNavMesh"
+			{
+				"library"	"server"
+				"linux"		"@TheNavMesh"
+			}
+			"CNavMesh::GetNearestNavArea"
+			{
+				"library"		"server"
+				"linux"			"@_ZNK8CNavMesh17GetNearestNavAreaERK6Vectorbfbbi"
+			}
+			"CNavMesh::GetGroundHeight"
+			{
+				"library"		"server"
+				"linux"			"@_ZNK8CNavMesh15GetGroundHeightERK6VectorPfPS0_"
+			}
+			"CBaseEntity::SetLocalAngles"
+			{
+				"library"		"server"
+				"linux"			"@_ZN11CBaseEntity14SetLocalAnglesERK6QAngle"
+			}
+			"NextBotGroundLocomotion::UpdatePosition"
+			{
+				"library"		"server"
+				"linux"			"@_ZN23NextBotGroundLocomotion14UpdatePositionERK6Vector"
+			}
+			"CTraceFilterSimple::ShouldHitEntity"
+			{
+				"library"		"server"
+				"linux"			"@_ZN18CTraceFilterSimple15ShouldHitEntityEP13IHandleEntityi"
+			}
+			"NavAreaBuildPath"
+			{
+				"library"		"server"
+				"linux"			"@_Z16NavAreaBuildPathIK9IPathCostEbP8CNavAreaS3_PK6VectorRT_PS3_fib"
+			}
+		}
+	}
+}

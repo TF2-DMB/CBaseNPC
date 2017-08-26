@@ -1,0 +1,51 @@
+# vim: set sts=2 ts=8 sw=2 tw=99 et ft=python:
+import os, sys
+
+projectName = 'nextbot_pathing'
+
+# smsdk_ext.cpp will be automatically added later
+sourceFiles = [
+  'extension.cpp',
+  'CDetour/detours.cpp',
+  'asm/asm.c',
+  'helpers.cpp',
+  'NextBot/Path/NextBotPath.cpp',
+  'NextBot/Path/NextBotPathFollow.cpp',
+  'NextBot/Path/NextBotChasePath.cpp',
+  'sourcesdk/nav_area.cpp',
+  'sourcesdk/nav_mesh.cpp',
+  'unsorted_class.cpp',
+]
+
+###############
+# Make sure to edit PackageScript, which copies your files to their appropriate locations
+# Simple extensions do not need to modify past this point.
+
+project = Extension.HL2Project(builder, projectName + '.ext')
+project.compiler.cxxincludes += [os.path.join(builder.currentSourcePath, 'sourcesdk')]
+project.compiler.cxxincludes += [os.path.join(builder.currentSourcePath, 'NextBot')]
+project.compiler.cxxincludes += [os.path.join(builder.currentSourcePath, 'NextBot/Path')]
+project.compiler.cxxincludes += [os.path.join(builder.currentSourcePath, 'natives')]
+project.compiler.cxxincludes += [os.path.join(Extension.sm_root)]
+
+project.compiler.cxxincludes += [os.path.join(Extension.mms_root, 'core', 'sourcehook')]
+
+if os.path.isfile(os.path.join(builder.currentSourcePath, 'sdk', 'smsdk_ext.cpp')):
+  # Use the copy included in the project
+  project.sources += [os.path.join('sdk', 'smsdk_ext.cpp')]
+else:
+  # Use the copy included with SM 1.6 and newer
+  project.sources += [os.path.join(Extension.sm_root, 'public', 'smsdk_ext.cpp')]
+
+project.sources += sourceFiles
+  
+for sdk_name in Extension.sdks:
+  sdk = Extension.sdks[sdk_name]
+  
+  project.compiler.cxxincludes += [os.path.join(sdk.path, 'game/server')]
+  project.compiler.cxxincludes += [os.path.join(sdk.path, 'game/shared')]
+  project.compiler.cxxincludes += [os.path.join(sdk.path, 'game/client')]
+  
+  binary = Extension.HL2Config(project, projectName + '.ext.' + sdk.ext, sdk)
+
+Extension.extensions = builder.Add(project)

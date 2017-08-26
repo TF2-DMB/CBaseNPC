@@ -1,0 +1,17 @@
+# Files to ignore when considering what GIT should commit.
+
+addons/sourcemod/scripting/include/*.inc
+!addons/sourcemod/scripting/include/cbasenpc.inc
+addons/sourcemod/scripting/compile.exe
+addons/sourcemod/scripting/compile.dat
+addons/sourcemod/scripting/spcomp.exe
+addons/sourcemod/scripting/compiled/
+addons/sourcemod/scripting/*.smx
+addons/sourcemod/scripting/*.sp
+!addons/sourcemod/scripting/cbasenpc.sp
+!addons/sourcemod/scripting/cbasenpc_example.sp
+addons/sourcemod/gamedata/*.txt
+!addons/sourcemod/gamedata/cbasenpc.txt
+!addons/sourcemod/gamedata/nextbot_pathing.txt
+extension/build/
+
