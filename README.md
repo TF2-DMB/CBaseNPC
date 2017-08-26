@@ -5,4 +5,4 @@ Remember that this is a private repo, anything found here is confidential and sh
 Required External Dependencies:
 - DHooks
 
-Note: Until I (Benoist) make official support for windows this mod supports windows only.
+Note: Until I (Benoist) make official support for windows this mod supports linux only.
