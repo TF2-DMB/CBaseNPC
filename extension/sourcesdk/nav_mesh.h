@@ -53,6 +53,77 @@ class CNavMesh
 		}
 };
 
+inline void CollectSurroundingAreas( CUtlVector< CNavArea * > *nearbyAreaVector, CNavArea *startArea, float travelDistanceLimit = 1500.0f, float maxStepUpLimit = StepHeight, float maxDropDownLimit = 100.0f )
+{
+	nearbyAreaVector->RemoveAll();
+
+	if ( startArea )
+	{
+		CNavArea::MakeNewMarker();
+		CNavArea::ClearSearchLists();
+
+		startArea->AddToOpenList();
+		startArea->SetTotalCost( 0.0f );
+		startArea->SetCostSoFar( 0.0f );
+		startArea->SetParent( NULL );
+		startArea->Mark();
+
+		CUtlVector< CNavArea * > adjVector;
+
+		while( !CNavArea::IsOpenListEmpty() )
+		{
+			// get next area to check
+			CNavArea *area = CNavArea::PopOpenList();
+
+			if ( travelDistanceLimit > 0.0f && area->GetCostSoFar() > travelDistanceLimit )
+				continue;
+
+			if ( area->GetParent() )
+			{
+				float deltaZ = area->GetParent()->ComputeAdjacentConnectionHeightChange( area );
+
+				if ( deltaZ > maxStepUpLimit )
+					continue;
+
+				if ( deltaZ < -maxDropDownLimit )
+					continue;
+			}
+
+			nearbyAreaVector->AddToTail( area );
+
+			// mark here to ensure all marked areas are also valid areas that are in the collection
+			area->Mark();
+
+			// search adjacent outgoing connections
+			for( int dir=0; dir<NUM_DIRECTIONS; ++dir )
+			{
+				int count = area->GetAdjacentCount( (NavDirType)dir );
+				for( int i=0; i<count; ++i )
+				{
+					CNavArea *adjArea = area->GetAdjacentArea( (NavDirType)dir, i );
+
+					if ( adjArea->IsBlocked( TEAM_ANY ) )
+					{
+						continue;
+					}
+
+					if ( !adjArea->IsMarked() )
+					{
+						adjArea->SetTotalCost( 0.0f );
+						adjArea->SetParent( area );
+
+						// compute approximate travel distance from start area of search
+						float distAlong = area->GetCostSoFar();
+						distAlong += ( adjArea->GetCenter() - area->GetCenter() ).Length();
+						adjArea->SetCostSoFar( distAlong );
+						adjArea->AddToOpenList();
+					}
+				}
+			}
+		}
+	}
+}
+
 #define IGNORE_NAV_BLOCKERS true
 bool NavAreaBuildPath(CNavArea *startArea, CNavArea *goalArea, Vector *goalPos, IPathCost &costFunc, CNavArea **closestArea = NULL, float maxPathLength = 0.0f, int teamID = TEAM_ANY, bool ignoreNavBlockers = false);
 #endif

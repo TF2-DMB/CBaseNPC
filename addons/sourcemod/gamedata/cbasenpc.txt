@@ -53,10 +53,10 @@
 				"linux"		"288"
 				"windows"	"283"
 			}
-			"INextBot::IsRangeLessThan"
+			"ILocomotion::ClimbUpToLedge"
 			{
-				"linux"			"69"
-				"windows"		"69"
+				"linux"		"49"
+				"windows"	"48"
 			}
 			"ILocomotion::GetStepHeight"
 			{
@@ -92,6 +92,16 @@
 			{
 				"linux"		"106"
 				"windows"	"105"
+			}
+			"NextBotGroundLocomotion::GetFrictionForward"
+			{
+				"linux"		"107"
+				"windows"	"106"
+			}
+			"NextBotGroundLocomotion::GetFrictionSideways"
+			{
+				"linux"		"108"
+				"windows"	"107"
 			}
 			"IBody::StartActivity"
 			{

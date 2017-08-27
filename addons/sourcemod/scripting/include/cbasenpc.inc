@@ -46,6 +46,20 @@ enum
 	NAV_MESH_NO_HOSTAGES = 0x0800
 };
 
+methodmap SurroundingAreasCollector
+{
+	public native CNavArea Get(int index);
+	public native int Count();
+};
+
+methodmap CNavMesh
+{
+	public native SurroundingAreasCollector CollectSurroundingAreas(CNavArea startArea, float travelDistanceLimit = 1500.0, float maxStepUpLimit = 18.0, float maxDropDownLimit = 100.0);
+	public native CNavArea GetNearestNavArea(const float pos[3], bool anyZ = false, float maxDist = 10000.0, bool checkLOS = false, bool checkGround = true, int team = -2);
+};
+
+CNavMesh TheNavMesh;
+
 methodmap CNavArea
 {
 	public native float GetCostSoFar();
@@ -59,6 +73,15 @@ methodmap CNavLadder
 	{
 		public native get();
 	}
+};
+
+methodmap CBaseCombatCharacter
+{
+	public CBaseCombatCharacter(int iEntity)
+	{
+		return view_as<CBaseCombatCharacter>(iEntity);
+	}
+	public native CNavArea GetLastKnownArea();
 };
 
 methodmap INextBotEventResponder
@@ -326,6 +349,7 @@ methodmap ChasePath < PathFollower
 methodmap DirectChasePath < ChasePath
 {
 	public native DirectChasePath(SubjectChaseType how = DONT_LEAD_SUBJECT, NavPathCostFunctor costfunction = INVALID_FUNCTION, TraceFilterActors ignoreActorsFilter, TraceFilterActors onlyActorsFilter);
+	public native void Destroy();
 };
 
 enum LookAtPriorityType
@@ -505,6 +529,16 @@ methodmap CBaseNPC __nullable__
 	{
 		public native get();
 		public native set(float RunSpeed);
+	}
+	property float flFrictionForward
+	{
+		public native get();
+		public native set(float Friction);
+	}
+	property float flFrictionSideways
+	{
+		public native get();
+		public native set(float Friction);
 	}
 	property int BloodColor
 	{

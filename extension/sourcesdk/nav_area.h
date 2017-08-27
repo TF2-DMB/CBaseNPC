@@ -215,6 +215,7 @@ class CNavArea : protected CNavAreaCriticalData
 		
 		NavDirType ComputeDirection( Vector *point );
 		
+		int GetAdjacentCount( NavDirType dir ) const	{ return m_connect[ dir ].Count(); }
 		CNavArea *GetAdjacentArea( NavDirType dir, int i ) const;
 		const NavConnectVector *GetAdjacentAreas( NavDirType dir ) const	{ return &m_connect[dir]; }
 		const NavLadderConnectVector *GetLadders( CNavLadder::LadderDirectionType dir ) const	{ return &m_ladder[dir]; }

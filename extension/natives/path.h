@@ -116,8 +116,8 @@ private:
 			return pContext->ThrowNativeError("Invalid DirectChasePath %x", params[1]); \
 		} \
 
-PATHNATIVE(Path)
-
+cell_t Path_Path(IPluginContext *pContext, const cell_t *params)
+{
 	Path *pNewPath = new Path;
 	IPluginFunction *pCostCallback = pContext->GetFunctionById(params[1]);
 	IPluginFunction *pTraceFilter = pContext->GetFunctionById(params[2]);
@@ -345,8 +345,8 @@ PATHNATIVE(Destroy)
 	return 1;
 }
 
-PATHFOLLOWNATIVE(PathFollower)
-
+cell_t PathFollower_PathFollower(IPluginContext *pContext, const cell_t *params)
+{
 	PathFollower *pNewPath = new PathFollower;
 	IPluginFunction *pCostCallback = pContext->GetFunctionById(params[1]);
 	IPluginFunction *pTraceFilter = pContext->GetFunctionById(params[2]);
@@ -408,8 +408,8 @@ PATHFOLLOWNATIVE(Destroy)
 	return 1;
 }
 
-CHASEPATHNATIVE(ChasePath)
-
+cell_t ChasePath_ChasePath(IPluginContext *pContext, const cell_t *params)
+{
 	ChasePath::SubjectChaseType how = (ChasePath::SubjectChaseType)params[2];
 	ChasePath *pNewPath = new ChasePath(how);
 	
@@ -510,8 +510,8 @@ CHASEPATHNATIVE(Destroy)
 	return 1;
 }
 
-DIRECTCHASEPATHNATIVE(DirectChasePath)
-
+cell_t DirectChasePath_DirectChasePath(IPluginContext *pContext, const cell_t *params) \
+{
 	ChasePath::SubjectChaseType how = (ChasePath::SubjectChaseType)params[2];
 	DirectChasePath *pNewPath = new DirectChasePath(how);
 	
@@ -527,6 +527,19 @@ DIRECTCHASEPATHNATIVE(DirectChasePath)
 	
 	g_PathFunctions.AddToTail(hook);
 	return (cell_t)pNewPath;
+}
+
+DIRECTCHASEPATHNATIVE(Destroy)
+	for (int i = 0; i < g_PathFunctions.Count(); i++)
+	{
+		if (g_PathFunctions[i].pPath == (DirectChasePath *)pChasePath)
+		{
+			g_PathFunctions.Remove(i);
+			break;
+		}
+	}
+	delete pChasePath;
+	return 1;
 }
 
 #endif

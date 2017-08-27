@@ -41,11 +41,14 @@ float g_CBaseNPCflAcceleration[MAX_NPCS];
 float g_CBaseNPCflJumpHeight[MAX_NPCS];
 float g_CBaseNPCflWalkSpeed[MAX_NPCS];
 float g_CBaseNPCflRunSpeed[MAX_NPCS];
+float g_CBaseNPCflFrictionForward[MAX_NPCS];
+float g_CBaseNPCflFrictionSideways[MAX_NPCS];
 
 int g_CBaseNPCiHealth[MAX_NPCS];
 int g_CBaseNPCiMaxHealth[MAX_NPCS];
 
 char g_CBaseNPCType[MAX_NPCS][64];
+
 
 /////////////
 // SDKCall //
@@ -75,6 +78,7 @@ Handle g_hSDKAddGestureSequence;
 //INextBot
 
 //Locomotion
+Handle g_hClimbUpToLedge;
 Handle g_hGetAcceleration;
 Handle g_hGetStepHeight;
 Handle g_hGetMaxJumpHeight;
@@ -82,6 +86,8 @@ Handle g_hGetWalkSpeed;
 Handle g_hGetRunSpeed;
 Handle g_hGetGravity;
 Handle g_hShouldCollide;
+Handle g_hGetFrictionForward;
+Handle g_hGetFrictionSideways;
 
 //Body
 Handle g_hStartActivity;
@@ -150,7 +156,10 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 	CreateNative("CBaseNPC.flWalkSpeed.get", Native_CBaseNPCflWalkSpeedGet);
 	CreateNative("CBaseNPC.flRunSpeed.set", Native_CBaseNPCflRunSpeedSet);
 	CreateNative("CBaseNPC.flRunSpeed.get", Native_CBaseNPCflRunSpeedGet);
-	
+	CreateNative("CBaseNPC.flFrictionForward.set", Native_CBaseNPCflFrictionForwardSpeedSet);
+	CreateNative("CBaseNPC.flFrictionForward.get", Native_CBaseNPCflFrictionForwardSpeedGet);
+	CreateNative("CBaseNPC.flFrictionSideways.set", Native_CBaseNPCflFrictionSidewaysSet);
+	CreateNative("CBaseNPC.flFrictionSideways.get", Native_CBaseNPCflFrictionSidewaysGet);
 	
 	CreateNative("CNPCs.FindNPCByEntIndex", Native_CNPCsFindNPCByEntIndex);
 	CreateNative("CNPCs.IsValidNPC", Native_CNPCsIsValidNPC);
@@ -246,6 +255,7 @@ public int Native_CBaseNPCConstructor(Handle plugin, int numParams)
 		g_CBaseNPCiMaxHealth[iIndex] = 200;
 		
 		// Locomotion detours
+		g_CBaseNPCHooks[iIndex].Push(DHookRaw(g_hClimbUpToLedge, false, view_as<Address>(g_CBaseNPCLocomotionInterface[iIndex])));
 		g_CBaseNPCHooks[iIndex].Push(DHookRaw(g_hGetAcceleration, false, view_as<Address>(g_CBaseNPCLocomotionInterface[iIndex])));
 		g_CBaseNPCHooks[iIndex].Push(DHookRaw(g_hGetStepHeight, false, view_as<Address>(g_CBaseNPCLocomotionInterface[iIndex])));
 		g_CBaseNPCHooks[iIndex].Push(DHookRaw(g_hGetMaxJumpHeight, false, view_as<Address>(g_CBaseNPCLocomotionInterface[iIndex])));
@@ -253,6 +263,8 @@ public int Native_CBaseNPCConstructor(Handle plugin, int numParams)
 		g_CBaseNPCHooks[iIndex].Push(DHookRaw(g_hGetRunSpeed, false, view_as<Address>(g_CBaseNPCLocomotionInterface[iIndex])));
 		g_CBaseNPCHooks[iIndex].Push(DHookRaw(g_hGetGravity, false, view_as<Address>(g_CBaseNPCLocomotionInterface[iIndex])));
 		g_CBaseNPCHooks[iIndex].Push(DHookRaw(g_hShouldCollide, false, view_as<Address>(g_CBaseNPCLocomotionInterface[iIndex])));
+		g_CBaseNPCHooks[iIndex].Push(DHookRaw(g_hGetFrictionForward, false, view_as<Address>(g_CBaseNPCLocomotionInterface[iIndex])));
+		g_CBaseNPCHooks[iIndex].Push(DHookRaw(g_hGetFrictionSideways, false, view_as<Address>(g_CBaseNPCLocomotionInterface[iIndex])));
 		// IBody detours
 		g_CBaseNPCHooks[iIndex].Push(DHookRaw(g_hGetHullWidth, false, view_as<Address>(g_CBaseNPCBodyInterface[iIndex])));
 		g_CBaseNPCHooks[iIndex].Push(DHookRaw(g_hGetHullHeight, false, view_as<Address>(g_CBaseNPCBodyInterface[iIndex])));
@@ -590,6 +602,26 @@ public int Native_CBaseNPCflRunSpeedGet(Handle plugin, int numParams)
 	return view_as<int>(g_CBaseNPCflRunSpeed[GetNativeCell(1)]);
 }
 
+public int Native_CBaseNPCflFrictionForwardSpeedSet(Handle plugin, int numParams)
+{
+	g_CBaseNPCflFrictionForward[GetNativeCell(1)] = view_as<float>(GetNativeCell(2));
+}
+
+public int Native_CBaseNPCflFrictionForwardSpeedGet(Handle plugin, int numParams)
+{
+	return view_as<int>(g_CBaseNPCflFrictionForward[GetNativeCell(1)]);
+}
+
+public int Native_CBaseNPCflFrictionSidewaysSet(Handle plugin, int numParams)
+{
+	g_CBaseNPCflFrictionSideways[GetNativeCell(1)] = view_as<float>(GetNativeCell(2));
+}
+
+public int Native_CBaseNPCflFrictionSidewaysGet(Handle plugin, int numParams)
+{
+	return view_as<int>(g_CBaseNPCflFrictionSideways[GetNativeCell(1)]);
+}
+
 public CBaseNPC CBaseNPC_GiveIDToEntity(int iEntity)
 {
 	for (int ID = 0; ID < MAX_NPCS; ID++)
@@ -716,6 +748,13 @@ void SDK_Init()
 	int iOffset = GameConfGetOffset(hGameData, "NextBotGroundLocomotion::GetGravity"); 
 	g_hGetGravity = DHookCreate(iOffset, HookType_Raw, ReturnType_Float, ThisPointer_Address, GetGravity);
 	
+	iOffset = GameConfGetOffset(hGameData, "ILocomotion::ClimbUpToLedge"); 
+	g_hClimbUpToLedge = DHookCreate(iOffset, HookType_Raw, ReturnType_Void, ThisPointer_Address, ClimbUpToLedge);
+	if (g_hClimbUpToLedge == null) SetFailState("Failed to create hook for ILocomotion::ClimbUpToLedge!");
+	DHookAddParam(g_hClimbUpToLedge, HookParamType_VectorPtr);
+	DHookAddParam(g_hClimbUpToLedge, HookParamType_VectorPtr);
+	DHookAddParam(g_hClimbUpToLedge, HookParamType_CBaseEntity);
+	
 	iOffset = GameConfGetOffset(hGameData, "ILocomotion::GetStepHeight"); 
 	g_hGetStepHeight = DHookCreate(iOffset, HookType_Raw, ReturnType_Float, ThisPointer_Address, GetStepHeight);
 	if (g_hGetStepHeight == null) SetFailState("Failed to create hook for ILocomotion::GetStepHeight!");
@@ -772,6 +811,12 @@ void SDK_Init()
 	iOffset = GameConfGetOffset(hGameData, "IBody::GetSolidMask");
 	g_hGetSolidMask = DHookCreate(iOffset, HookType_Raw, ReturnType_Int, ThisPointer_Address, GetSolidMask);
 	if (g_hGetSolidMask == null) SetFailState("Failed to create hook for IBody::GetSolidMask!");
+	
+	iOffset = GameConfGetOffset(hGameData, "NextBotGroundLocomotion::GetFrictionForward"); 
+	g_hGetFrictionForward = DHookCreate(iOffset, HookType_Raw, ReturnType_Float, ThisPointer_Address, GetFrictionForward);
+	
+	iOffset = GameConfGetOffset(hGameData, "NextBotGroundLocomotion::GetFrictionSideways"); 
+	g_hGetFrictionSideways = DHookCreate(iOffset, HookType_Raw, ReturnType_Float, ThisPointer_Address, GetFrictionSideways);
 	
 	StartPrepSDKCall(SDKCall_Entity);
 	PrepSDKCall_SetFromConf(hGameData, SDKConf_Signature, "CBaseAnimating::LookupSequence");
@@ -979,7 +1024,7 @@ public Action NextBotGroundLocomotion_UpdatePosition(NextBotGroundLocomotion mov
 		if (vecEditedPos[0] != vecFromPos[0] || vecEditedPos[1] != vecFromPos[1] || vecEditedPos[2] != vecToPos[2])
 			return Plugin_Changed;
 	}
-	else if (!mover.IsOnGround())//We are in the air perform hull checks and stop our velocity if we collide with a wall
+	else if (!mover.IsOnGround() && !mover.IsClimbingOrJumping())//We are in the air perform hull checks and stop our velocity if we collide with a wall
 	{
 		float flAvoidDist = 2.0;
 		
@@ -1174,19 +1219,64 @@ public void OnEntityDestroyed(int iEntity)
 					DHookRemoveHookID(hookID);
 				}
 			}
+			g_CBaseNPCHooks[Npc.Index].Clear();
 		}
 	}
 }
 
-public MRESReturn IsActivityFinished(int iEnt, Handle hReturn)
+public MRESReturn ClimbUpToLedge(Address pThis, Handle hParams)
 {
-	DHookSetReturn(hReturn, true);
-	return MRES_Supercede;
-}
+	NextBotGroundLocomotion NpcLocomotion = view_as<NextBotGroundLocomotion>(pThis);
+	CBaseNPC Npc = NPCGetFromLocomotion(NpcLocomotion);
+	if (Npc == INVALID_NPC)
+	{
+		return MRES_Ignored;
+	}
+	INextBot bot = NpcLocomotion.GetBot();
+	float vecMyPos[3], vecJumpPos[3];
+	bot.GetPosition(vecMyPos);
+	DHookGetParamVector(hParams, 1, vecJumpPos);
+	
+	float vecJumpVel[3];
+	float flActualHeight = vecJumpPos[2] - vecMyPos[2];
+	float height = flActualHeight;
+	if ( height < 16.0 )
+	{
+		height = 16.0;
+	}
+	
+	float additionalHeight = 20.0;
+	if ( height < 32 )
+	{
+		additionalHeight += 8.0;
+	}
 
-public MRESReturn IsRangeLessThan(Address pThis, Handle hReturn)
-{
-	DHookSetReturn(hReturn, false);
+	height += additionalHeight;
+	
+	float flGravity = NpcLocomotion.GetGravity();
+	float speed = SquareRoot( 2.0 * flGravity * height );
+	float time = speed / flGravity;
+	
+	time += SquareRoot( (2.0 * additionalHeight) / flGravity );
+	
+	SubtractVectors( vecJumpPos, vecMyPos, vecJumpVel );
+	vecJumpVel[0] /= time;
+	vecJumpVel[1] /= time;
+	vecJumpVel[2] /= time;
+	
+	vecJumpVel[2] = speed;
+
+	float flJumpSpeed = GetVectorLength(vecJumpVel);
+	float flMaxSpeed = 650.0;
+	if ( flJumpSpeed > flMaxSpeed )
+	{
+		vecJumpVel[0] *= flMaxSpeed / flJumpSpeed;
+		vecJumpVel[1] *= flMaxSpeed / flJumpSpeed;
+		vecJumpVel[2] *= flMaxSpeed / flJumpSpeed;
+	}
+
+	NpcLocomotion.Jump();
+	NpcLocomotion.SetVelocity(vecJumpVel);
 	return MRES_Supercede;
 }
 
@@ -1276,6 +1366,30 @@ public MRESReturn ShouldCollideWith(Address pThis, Handle hReturn, Handle hParam
 		}
 	}
 	return MRES_Ignored;
+}
+
+public MRESReturn GetFrictionForward(Address pThis, Handle hReturn)
+{
+	NextBotGroundLocomotion NpcLocomotion = view_as<NextBotGroundLocomotion>(pThis);
+	CBaseNPC Npc = NPCGetFromLocomotion(NpcLocomotion);
+	if (Npc == INVALID_NPC)
+	{
+		return MRES_Ignored;
+	}
+	DHookSetReturn(hReturn, g_CBaseNPCflFrictionForward[Npc.Index]);
+	return MRES_Supercede;
+}
+
+public MRESReturn GetFrictionSideways(Address pThis, Handle hReturn)
+{
+	NextBotGroundLocomotion NpcLocomotion = view_as<NextBotGroundLocomotion>(pThis);
+	CBaseNPC Npc = NPCGetFromLocomotion(NpcLocomotion);
+	if (Npc == INVALID_NPC)
+	{
+		return MRES_Ignored;
+	}
+	DHookSetReturn(hReturn, g_CBaseNPCflFrictionSideways[Npc.Index]);
+	return MRES_Supercede;
 }
 
 //IBody

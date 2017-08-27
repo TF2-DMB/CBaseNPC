@@ -7,7 +7,9 @@
 #include "nextbot.h"
 #include "path.h"
 #include "navarea.h"
+#include "navmesh.h"
 #include "component.h"
+#include "cbasecombatcharacter.h"
 
 #pragma once
 	
@@ -262,6 +264,9 @@ const sp_nativeinfo_t g_NativesInfo[] =
 	NATIVENAME(ChasePath, Destroy)
 	
 	NATIVENAME(DirectChasePath, DirectChasePath)
+	NATIVENAME(DirectChasePath, Destroy)
+	
+	NATIVENAME(CBaseCombatCharacter, GetLastKnownArea)
 	
 	{ "CBaseNPC_GetNextBotOfEntity", &CBaseNPC_GetNextBotOfEntity },
 	
@@ -269,6 +274,12 @@ const sp_nativeinfo_t g_NativesInfo[] =
 	NATIVENAME(CNavArea, GetAttributes)
 	NATIVENAME(CNavArea, GetCenter)
 	{ "CNavLadder.length.get", &CNavLadder_length },
+	
+	NATIVENAME(CNavMesh, CollectSurroundingAreas)
+	NATIVENAME(CNavMesh, GetNearestNavArea)
+	
+	NATIVENAME(SurroundingAreasCollector, Get)
+	NATIVENAME(SurroundingAreasCollector, Count)
 	
 	{ nullptr, nullptr },
 };
