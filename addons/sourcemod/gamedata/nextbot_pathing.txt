@@ -12,8 +12,8 @@
 			}
 			"CBaseCombatCharacter::GetLastKnownArea"
 			{
-				"linux"		"315"
-				"windows"	"314"
+				"linux"		"316"
+				"windows"	"315"
 			}
 			"NextBotGroundLocomotion::Update"
 			{
