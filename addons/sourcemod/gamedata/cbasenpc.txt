@@ -40,13 +40,13 @@
 			}
 			"CBaseCombatCharacter::UpdateLastKnownArea"
 			{
-				"linux"		"318"
-				"windows"	"317"
+				"linux"		"319"
+				"windows"	"318"
 			}
 			"CBaseAnimating::StudioFrameAdvance"
 			{
-				"windows""192"
-				"linux""193"
+				"windows""193"
+				"linux""194"
 			}
 			"CBaseAnimating::m_pStudioHdr"
 			{
