@@ -45,8 +45,8 @@
 			}
 			"CBaseAnimating::StudioFrameAdvance"
 			{
-				"windows""193"
-				"linux""194"
+				"windows"	"193"
+				"linux"		"194"
 			}
 			"CBaseAnimating::m_pStudioHdr"
 			{

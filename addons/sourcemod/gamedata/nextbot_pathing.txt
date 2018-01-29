@@ -43,6 +43,11 @@
 				"library"		"server"
 				"linux"			"@_ZN11CBaseEntity14SetLocalAnglesERK6QAngle"
 			}
+			"CBaseEntity::SetAbsVelocity"
+			{
+				"library"		"server"
+				"linux"			"@_ZN11CBaseEntity14SetAbsVelocityERK6Vector"
+			}
 			"NextBotGroundLocomotion::UpdatePosition"
 			{
 				"library"		"server"
