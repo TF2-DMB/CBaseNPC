@@ -284,6 +284,7 @@ enum MoveCursorType
 
 methodmap Segment
 {
+	public native void GetPos(float pos[3]);
 };
 
 methodmap CursorData
@@ -482,13 +483,13 @@ methodmap CBaseNPC __nullable__
 	}
 	property int iMaxHealth
 	{
-		public native get();
-		public native set(int value);
+		public get() { return GetEntProp(this.GetEntity(), Prop_Data, "m_iMaxHealth"); }
+		public set(int value) { SetEntProp(this.GetEntity(), Prop_Data, "m_initialHealth", value); SetEntProp(this.GetEntity(), Prop_Data, "m_iMaxHealth", value); }
 	}
 	property int iHealth
 	{
-		public native get();
-		public native set(int value);
+		public get() { return GetEntProp(this.GetEntity(), Prop_Data, "m_iHealth"); }
+		public set(int value) { SetEntProp(this.GetEntity(), Prop_Data, "m_iHealth", value); }
 	}
 	property int iTeamNum
 	{

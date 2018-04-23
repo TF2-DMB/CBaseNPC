@@ -9,7 +9,7 @@
 #define NPC_TEST_ITEM		"models/player/items/sniper/sniper_zombie.mdl"
 
 CBaseNPC g_ControlledNPC = INVALID_NPC;
-DirectChasePath pPath;
+PathFollower pPath;
 int g_iSummoner;
 float flLastAttackTime;
 
@@ -20,7 +20,7 @@ public void OnPluginStart()
 	RegAdminCmd("set_goal_npc", Command_SetGoalNPC, ADMFLAG_CHEATS);//Change path to pathfollower if you use this command
 	RegAdminCmd("set_goal_npc_me", Command_SetGoalNPCMe, ADMFLAG_CHEATS);//Change path to pathfollower if you use this command
 	
-	pPath = DirectChasePath(_, _, Path_FilterIgnoreActors, Path_FilterOnlyActors);
+	pPath = PathFollower(_, Path_FilterIgnoreActors, Path_FilterOnlyActors);
 }
 
 public void OnMapStart()
@@ -46,7 +46,7 @@ public void Hook_NPCThink(int iEnt)
 		CBaseAnimatingOverlay animationEntity = new CBaseAnimatingOverlay(iEnt);
 		
 		if (GetVectorDistance(vecNPCPos, vecTargetPos) > 100.0)
-			pPath.Update(bot, iClient);
+			pPath.Update(bot);
 		else if (flLastAttackTime <= GetGameTime())
 		{
 			int iSequence;
@@ -120,9 +120,6 @@ public Action Command_SpawnNPC(int iClient, int iArgs)
 		return Plugin_Handled;
 	}
 	
-	if (iArgs != 1)
-		return Plugin_Handled;
-	
 	if (g_ControlledNPC != INVALID_NPC && TheNPCs.IsValidNPC(g_ControlledNPC))
 	{
 		ReplyToCommand(iClient, "You can't spawn more than one test npc.");
@@ -141,7 +138,6 @@ public Action Command_SpawnNPC(int iClient, int iArgs)
 	npc.Teleport(endPos);
 	npc.SetModel(NPC_TEST_MODEL);
 	npc.Spawn();
-	npc.SetModel(NPC_TEST_MODEL);
 	npc.SetThinkFunction(Hook_NPCThink);
 	npc.nSkin = 4;
 	npc.EquipItem("head", NPC_TEST_ITEM);

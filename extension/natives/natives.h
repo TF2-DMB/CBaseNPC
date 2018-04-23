@@ -218,6 +218,8 @@ const sp_nativeinfo_t g_NativesInfo[] =
 	NATIVENAME(INextBot, IsDebugFilterMatch)
 	NATIVENAME(INextBot, DisplayDebugText)
 	
+	NATIVENAME(Segment, GetPos)
+
 	NATIVENAME(Path, Path)
 	NATIVENAME(Path, GetLength)
 	NATIVENAME(Path, GetPosition)

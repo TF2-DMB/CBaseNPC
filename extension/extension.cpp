@@ -39,8 +39,25 @@ CNavArea * (CNavMesh:: *CNavMesh::func_GetNearestNavArea)(const Vector &pos, boo
 bool (CNavMesh:: *CNavMesh::func_GetGroundHeight)(const Vector &pos, float *height, Vector *normal) = nullptr;
 bool (CTraceFilterSimpleHack:: *CTraceFilterSimpleHack::func_ShouldHitEntity)(IHandleEntity *pHandleEntity, int contentsMask) = nullptr;
 
+float k_flMaxEntityEulerAngle = 360.0 * 1000.0f;
+
+inline bool IsEntityQAngleReasonable(const QAngle &q)
+{
+	float r = k_flMaxEntityEulerAngle;
+	return
+		q.x > -r && q.x < r &&
+		q.y > -r && q.y < r &&
+		q.z > -r && q.z < r;
+}
+
 DETOUR_DECL_MEMBER1(CBaseEntity_SetLocalAngles, void, QAngle&, angles)
 {
+	if (!IsEntityQAngleReasonable(angles))
+	{
+		//Instead of leaving the server fucking crash from NaN/Large numbers let's do what they do with vphysics, reset the angles
+		angles = vec3_angle;
+	}
+
 	if (g_pForwardSetLocalAngles != NULL)
 	{
 		cell_t iEntity = gamehelpers->EntityToBCompatRef(reinterpret_cast<CBaseEntity*>(this));

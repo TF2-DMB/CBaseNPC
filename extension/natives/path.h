@@ -122,15 +122,23 @@ cell_t Path_Path(IPluginContext *pContext, const cell_t *params)
 	IPluginFunction *pCostCallback = pContext->GetFunctionById(params[1]);
 	IPluginFunction *pTraceFilter = pContext->GetFunctionById(params[2]);
 	IPluginFunction *pTraceFilter2 = pContext->GetFunctionById(params[3]);
-	
+
 	PathFunctions hook;
 	hook.pCostFunction = pCostCallback;
 	hook.pTraceFilterIgnoreActors = pTraceFilter;
 	hook.pTraceFilterOnlyActors = pTraceFilter2;
 	hook.pPath = pNewPath;
-	
+
 	g_PathFunctions.AddToTail(hook);
 	return (cell_t)pNewPath;
+}
+
+SEGMENTNATIVE(GetPos)
+	cell_t *posAddr;
+	pContext->LocalToPhysAddr(params[2], &posAddr);
+	Vector pos = seg->pos;
+	VectorToPawnVector(posAddr, pos);
+	return 0;
 }
 
 PATHNATIVE(GetLength)

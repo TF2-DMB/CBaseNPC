@@ -58,6 +58,16 @@
 				"linux"		"49"
 				"windows"	"48"
 			}
+			"ILocomotion::IsAbleToJumpAcrossGaps"
+			{
+				"linux"		"77"
+				"windows"	"76"
+			}
+			"ILocomotion::IsAbleToClimb"
+			{
+				"linux"		"78"
+				"windows"	"77"
+			}
 			"ILocomotion::GetStepHeight"
 			{
 				"linux"		"80"
@@ -83,10 +93,25 @@
 				"linux"		"85"
 				"windows"	"84"
 			}
+			"ILocomotion::IsStuck"
+			{
+				"linux"		"96"
+				"windows"	"95"
+			}
+			"ILocomotion::ClearStuckStatus"
+			{
+				"linux"		"98"
+				"windows"	"97"
+			}
 			"ILocomotion::ShouldCollideWith"
 			{
 				"linux"		"100"
 				"windows"	"99"
+			}
+			"ILocomotion::StuckMonitor"
+			{
+				"linux"		"102"
+				"windows"	"101"
 			}
 			"NextBotGroundLocomotion::GetGravity"
 			{
