@@ -474,19 +474,10 @@ methodmap IBody < INextBotComponent
 	public native int GetCollisionGroup();
 };
 
-methodmap CBaseCombatCharacter < int
-{
-	public CBaseCombatCharacter(int entity) 
-	{
-		return view_as<CBaseCombatCharacter>(entity);
-	}
-	public native CNavArea GetLastKnownArea();
-}
-
 methodmap CBaseNPC __nullable__
 {
 	public native CBaseNPC();
-	public native CBaseCombatCharacter GetEntity();
+	public native int GetEntity();
 	public native void Teleport(float origin[3]=NULL_VECTOR, float angles[3]=NULL_VECTOR, float velocity[3]=NULL_VECTOR);
 	public native void Spawn();
 	public native void SetModel(const char[] model);
@@ -676,7 +667,7 @@ methodmap CAnimationLayer __nullable__
 //	public void Dead()       { this.Get(m_fFlags) &= ~ANIM_LAYER_DYING; }
 }
 
-methodmap CBaseAnimating __nullable__
+methodmap CBaseAnimating
 {
 	public CBaseAnimating(int entity) 
 	{
