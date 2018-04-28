@@ -53,8 +53,8 @@ class CBaseCombatCharacter : public IHandleEntity
 			int offset = info.actual_offset;
 			return *(Vector *)((uint8_t *)this + offset);
 		}
-		void SetAbsVelocity(const Vector &vecVelocity);
-		void SetAbsOrigin(const Vector &vecAbsOrigin);
+		//void SetAbsVelocity(const Vector &vecVelocity);
+		//void SetAbsOrigin(const Vector &vecAbsOrigin);
 		int GetTeamNumber()
 		{
 			edict_t *pEdict = gameents->BaseEntityToEdict((CBaseEntity *)this);

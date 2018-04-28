@@ -30,7 +30,7 @@ bool CTraceFilterSimpleHack::ShouldHitEntity( IHandleEntity *pHandleEntity, int 
 	return bResult;
 }
 
-void CBaseCombatCharacter::SetAbsOrigin(const Vector &vecAbsOrigin)
+/*void CBaseCombatCharacter::SetAbsOrigin(const Vector &vecAbsOrigin)
 {
 	sm_datatable_info_t info;
 	gamehelpers->FindDataMapInfo(gamehelpers->GetDataMap((CBaseEntity *)this), "m_vecAbsOrigin", &info);
@@ -68,4 +68,4 @@ void CBaseCombatCharacter::SetAbsVelocity(const Vector &vecAbsVelocity)
 	vec2->x = vecAbsVelocity.x;
 	vec2->y = vecAbsVelocity.y;
 	vec2->z = vecAbsVelocity.z;
-}
+}*/

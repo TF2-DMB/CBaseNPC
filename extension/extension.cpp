@@ -31,9 +31,7 @@ IForward *g_pForwardSetLocalAngles = NULL;
 IForward *g_pForwardUpdateLoco = NULL;
 
 CDetour *g_pSetLocalAngles = NULL;
-CDetour *g_pUpdatePosition = NULL;
-CDetour *g_pSetAbsVelocity = NULL;
-CDetour *g_pUpdateGroundConstraint = NULL;
+//CDetour *g_pUpdatePosition = NULL;
 
 CNavArea * (CNavMesh:: *CNavMesh::func_GetNearestNavArea)(const Vector &pos, bool anyZ, float maxDist, bool checkLOS, bool checkGround, int team) = nullptr;
 bool (CNavMesh:: *CNavMesh::func_GetGroundHeight)(const Vector &pos, float *height, Vector *normal) = nullptr;
@@ -52,12 +50,6 @@ inline bool IsEntityQAngleReasonable(const QAngle &q)
 
 DETOUR_DECL_MEMBER1(CBaseEntity_SetLocalAngles, void, QAngle&, angles)
 {
-	if (!IsEntityQAngleReasonable(angles))
-	{
-		//Instead of leaving the server fucking crash from NaN/Large numbers let's do what they do with vphysics, reset the angles
-		angles = vec3_angle;
-	}
-
 	if (g_pForwardSetLocalAngles != NULL)
 	{
 		cell_t iEntity = gamehelpers->EntityToBCompatRef(reinterpret_cast<CBaseEntity*>(this));
@@ -81,11 +73,7 @@ DETOUR_DECL_MEMBER1(CBaseEntity_SetLocalAngles, void, QAngle&, angles)
 	}
 	DETOUR_MEMBER_CALL(CBaseEntity_SetLocalAngles)(angles);
 }
-
-static bool bHook = false;
-static INextBot *hookedBot;
-static Vector hookedVec;
-
+/*
 DETOUR_DECL_MEMBER1(NextBotGroundLocomotion_UpdatePosition, void, Vector&, newPos)
 {
 	NextBotGroundLocomotion *mover = reinterpret_cast<NextBotGroundLocomotion*>(this);
@@ -130,23 +118,7 @@ DETOUR_DECL_MEMBER1(NextBotGroundLocomotion_UpdatePosition, void, Vector&, newPo
 			DETOUR_MEMBER_CALL(NextBotGroundLocomotion_UpdatePosition)(newPos);
 		}
 	}
-	
-	hookedBot = bot;
-	hookedVec = vecFromPos;
-	bHook = true;
-}
-
-DETOUR_DECL_MEMBER1(CBaseEntity_SetAbsVelocity, void, Vector&, velocity)
-{
-	if (bHook && hookedBot)
-	{
-		hookedBot->SetPosition(hookedVec);
-		bHook = false;
-		hookedBot = NULL;
-	}
-	
-	DETOUR_MEMBER_CALL(CBaseEntity_SetAbsVelocity)(velocity);
-}
+}*/
 
 bool CBaseNPCExt::SDK_OnLoad(char *error, size_t maxlength, bool late)
 {
@@ -191,25 +163,11 @@ bool CBaseNPCExt::SDK_OnLoad(char *error, size_t maxlength, bool late)
 		g_pSM->LogMessage(myself, "CBaseEntity::SetLocalAngles detour enabled.");
 	}
 	
-	g_pUpdatePosition = DETOUR_CREATE_MEMBER(NextBotGroundLocomotion_UpdatePosition, "NextBotGroundLocomotion::UpdatePosition");
+	/*g_pUpdatePosition = DETOUR_CREATE_MEMBER(NextBotGroundLocomotion_UpdatePosition, "NextBotGroundLocomotion::UpdatePosition");
 	if(g_pUpdatePosition != NULL)
 	{
 		g_pUpdatePosition->EnableDetour();
 		g_pSM->LogMessage(myself, "NextBotGroundLocomotion::UpdatePosition detour enabled.");
-	}
-	
-	g_pSetAbsVelocity = DETOUR_CREATE_MEMBER(CBaseEntity_SetAbsVelocity, "CBaseEntity::SetAbsVelocity");
-	if(g_pSetAbsVelocity != NULL)
-	{
-		g_pSetAbsVelocity->EnableDetour();
-		g_pSM->LogMessage(myself, "CBaseEntity::SetAbsVelocity detour enabled.");
-	}
-	
-	/*g_pUpdateGroundConstraint = DETOUR_CREATE_MEMBER(NextBotGroundLocomotion_UpdateGroundConstraint, "NextBotGroundLocomotion::UpdateGroundConstraint");
-	if (g_pUpdateGroundConstraint != NULL)
-	{
-		g_pUpdateGroundConstraint->EnableDetour();
-		g_pSM->LogMessage(myself, "NextBotGroundLocomotion::UpdateGroundConstraint detour enabled.");
 	}*/
 
 	g_pForwardSetLocalAngles = forwards->CreateForward("CBaseEntity_SetLocalAngles", ET_Event, 2, NULL, Param_Cell, Param_Array);
@@ -291,9 +249,7 @@ void CBaseNPCExt::SDK_OnUnload()
 	forwards->ReleaseForward(g_pForwardUpdateLoco);
 
 	if (g_pSetLocalAngles != NULL) g_pSetLocalAngles->Destroy();
-	if (g_pUpdatePosition != NULL) g_pUpdatePosition->Destroy();
-	if (g_pSetAbsVelocity != NULL) g_pSetAbsVelocity->Destroy();
-	//if (g_pUpdateGroundConstraint != NULL) g_pUpdateGroundConstraint->Destroy();
+	//if (g_pUpdatePosition != NULL) g_pUpdatePosition->Destroy();
 	
 	gameconfs->CloseGameConfigFile(g_pGameConf);
 }

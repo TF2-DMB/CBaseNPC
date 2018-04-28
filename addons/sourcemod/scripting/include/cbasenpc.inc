@@ -29,6 +29,8 @@ const CNavArea NULL_AREA = view_as<CNavArea>(0);
 const CNavLadder NULL_LADDER_AREA = view_as<CNavLadder>(0);
 
 native INextBot CBaseNPC_GetNextBotOfEntity(int entity);
+//To-do: Expose getcurrencyvalue vtable offset through a native so that sub plugin can hook the death of their npcs
+//native int CBaseNPC_iOffGetCurrencyValue();
 
 enum
 {
@@ -44,6 +46,43 @@ enum
 	NAV_MESH_DONT_HIDE = 0x0200, 
 	NAV_MESH_STAND = 0x0400, 
 	NAV_MESH_NO_HOSTAGES = 0x0800
+};
+
+//Thanks to Pelipoika & Sigsegv
+enum TFNavAttributeType
+{
+	BLOCKED                     = (1 << 0),
+	RED_SPAWN_ROOM              = (1 << 1),
+	BLUE_SPAWN_ROOM             = (1 << 2),
+	SPAWN_ROOM_EXIT             = (1 << 3),
+	AMMO                        = (1 << 4),
+	HEALTH                      = (1 << 5),
+	CONTROL_POINT               = (1 << 6),
+	BLUE_SENTRY                 = (1 << 7),
+	RED_SENTRY                  = (1 << 8),
+	/* bit  9: unused */
+	/* bit 10: unused */
+	BLUE_SETUP_GATE             = (1 << 11),
+	RED_SETUP_GATE              = (1 << 12),
+	BLOCKED_AFTER_POINT_CAPTURE = (1 << 13),
+	BLOCKED_UNTIL_POINT_CAPTURE = (1 << 14),
+	BLUE_ONE_WAY_DOOR           = (1 << 15),
+	RED_ONE_WAY_DOOR            = (1 << 16),
+	WITH_SECOND_POINT           = (1 << 17),
+	WITH_THIRD_POINT            = (1 << 18),
+	WITH_FOURTH_POINT           = (1 << 19),
+	WITH_FIFTH_POINT            = (1 << 20),
+	SNIPER_SPOT                 = (1 << 21),
+	SENTRY_SPOT                 = (1 << 22),
+	/* bit 23: unused */
+	/* bit 24: unused */
+	NO_SPAWNING                 = (1 << 25),
+	RESCUE_CLOSET               = (1 << 26),
+	BOMB_DROP                   = (1 << 27),
+	DOOR_NEVER_BLOCKS           = (1 << 28),
+	DOOR_ALWAYS_BLOCKS          = (1 << 29),
+	UNBLOCKABLE                 = (1 << 30),
+	/* bit 31: unused */
 };
 
 methodmap SurroundingAreasCollector
@@ -435,15 +474,25 @@ methodmap IBody < INextBotComponent
 	public native int GetCollisionGroup();
 };
 
+methodmap CBaseCombatCharacter < int
+{
+	public CBaseCombatCharacter(int entity) 
+	{
+		return view_as<CBaseCombatCharacter>(entity);
+	}
+	public native CNavArea GetLastKnownArea();
+}
+
 methodmap CBaseNPC __nullable__
 {
 	public native CBaseNPC();
-	public native int GetEntity();
+	public native CBaseCombatCharacter GetEntity();
 	public native void Teleport(float origin[3]=NULL_VECTOR, float angles[3]=NULL_VECTOR, float velocity[3]=NULL_VECTOR);
 	public native void Spawn();
 	public native void SetModel(const char[] model);
 	public native void SetCollisionBounds(float vecMins[3], float vecMaxs[3]);
 	public native void GetVectors(float vecForward[3], float vecRight[3], float vecUp[3]);
+	public native CNavArea GetLastKnownArea();
 	
 	//Interfaces
 	public native INextBot GetBot();

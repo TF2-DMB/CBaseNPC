@@ -15,11 +15,6 @@
 				"linux"		"316"
 				"windows"	"315"
 			}
-			"NextBotGroundLocomotion::Update"
-			{
-				"linux"		"44"
-				"windows"	"43"
-			}
 		}
 		"Signatures"
 		{
@@ -38,20 +33,15 @@
 				"library"		"server"
 				"linux"			"@_ZNK8CNavMesh15GetGroundHeightERK6VectorPfPS0_"
 			}
-			"CBaseEntity::SetLocalAngles"
-			{
-				"library"		"server"
-				"linux"			"@_ZN11CBaseEntity14SetLocalAnglesERK6QAngle"
-			}
-			"NextBotGroundLocomotion::UpdatePosition"
-			{
-				"library"		"server"
-				"linux"			"@_ZN23NextBotGroundLocomotion14UpdatePositionERK6Vector"
-			}
 			"CTraceFilterSimple::ShouldHitEntity"
 			{
 				"library"		"server"
 				"linux"			"@_ZN18CTraceFilterSimple15ShouldHitEntityEP13IHandleEntityi"
+			}
+			"CBaseEntity::SetLocalAngles"
+			{
+				"library"		"server"
+				"linux"			"@_ZN11CBaseEntity14SetLocalAnglesERK6QAngle"
 			}
 			"NavAreaBuildPath"
 			{

@@ -44,9 +44,6 @@ float g_CBaseNPCflRunSpeed[MAX_NPCS];
 float g_CBaseNPCflFrictionForward[MAX_NPCS];
 float g_CBaseNPCflFrictionSideways[MAX_NPCS];
 
-int g_CBaseNPCiHealth[MAX_NPCS];
-int g_CBaseNPCiMaxHealth[MAX_NPCS];
-
 char g_CBaseNPCType[MAX_NPCS][64];
 
 
@@ -59,6 +56,7 @@ Handle g_hSDKGetVectors;
 
 //CBaseCombatCharacter
 Handle g_hSDKUpdateLastKnownArea;
+Handle g_hSDKGetLastKnownArea;
 
 //CBaseAnimating
 Handle g_hSDKLookupSequence;
@@ -66,6 +64,8 @@ Handle g_hSDKResetSequence;
 Handle g_hSDKLookupPoseParameter;
 Handle g_hSDKSetPoseParameter;
 Handle g_hSDKStudioFrameAdvance;
+Handle g_hSDKDispatchAnimEvents;
+Handle g_hSDKGetModelPtr;
 
 //ILocomotion
 Handle g_hSDKStuckMonitor;
@@ -103,8 +103,6 @@ Handle g_hGetHullWidth;
 Handle g_hGetHullHeight;
 Handle g_hGetStandHullHeight;
 Handle g_hGetCrouchHullHeight;
-Handle g_hGetHullMins;
-Handle g_hGetHullMaxs;
 Handle g_hGetSolidMask;
 
 public Plugin myinfo = 
@@ -127,6 +125,7 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 	CreateNative("CBaseNPC.SetModel", Native_CBaseNPCSetModel);
 	CreateNative("CBaseNPC.SetCollisionBounds", Native_CBaseNPCSetCollisionBounds);
 	CreateNative("CBaseNPC.GetVectors", Native_CBaseNPCGetVectors);
+	CreateNative("CBaseNPC.GetLastKnownArea", Native_CBaseNPCGetLastKnownArea);
 	
 	CreateNative("CBaseNPC.GetBot", Native_CBaseNPCGetBot);
 	CreateNative("CBaseNPC.GetLocomotion", Native_CBaseNPCGetLocomotion);
@@ -148,10 +147,6 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 	CreateNative("CBaseNPC.SetVelocity", Native_CBaseNPCSetVelocity);
 	CreateNative("CBaseNPC.GetVelocity", Native_CBaseNPCGetVelocity);
 	
-	CreateNative("CBaseNPC.iMaxHealth.set", Native_CBaseNPCiMaxHealthSet);
-	CreateNative("CBaseNPC.iMaxHealth.get", Native_CBaseNPCiMaxHealthGet);
-	CreateNative("CBaseNPC.iHealth.set", Native_CBaseNPCiHealthSet);
-	CreateNative("CBaseNPC.iHealth.get", Native_CBaseNPCiHealthGet);
 	CreateNative("CBaseNPC.flStepSize.set", Native_CBaseNPCflStepSizeSet);
 	CreateNative("CBaseNPC.flStepSize.get", Native_CBaseNPCflStepSizeGet);
 	CreateNative("CBaseNPC.flGravity.set", Native_CBaseNPCflGravitySet);
@@ -179,6 +174,8 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 	CreateNative("CBaseAnimating.SetPoseParameter", Native_CBaseAnimatingSetPoseParameter);
 	
 	CreateNative("CBaseAnimatingOverlay.AddGestureSequence", Native_CBaseAnimatingOverlayAddGestureSequence);
+	
+	CreateNative("CBaseCombatCharacter.GetLastKnownArea", Native_CBaseCombatCharacterGetLastKnownArea);
 }
 
 public void OnPluginStart()
@@ -187,6 +184,10 @@ public void OnPluginStart()
 	nb_update_frequency.FloatValue = 0.01;
 	HookConVarChange(nb_update_frequency, Hook_BlockCvarValue);
 	SDK_Init();
+	
+	for (int iClient = 1; iClient <= MaxClients; iClient++)
+		if (IsClientInGame(iClient))
+			OnClientPutInServer(iClient);
 }
 
 public void OnPluginEnd()
@@ -216,6 +217,17 @@ public void OnMapStart()
 #endif
 }
 
+public void OnClientPutInServer(int iClient)
+{
+	SDKHook(iClient, SDKHook_PreThink, Client_OnThink);
+}
+
+public void Client_OnThink(int iClient)
+{
+	if (IsPlayerAlive(iClient))
+		SDK_UpdateLastKnownArea(iClient);//Update last known nav area so SDK_GetLastKnownArea returns something
+}
+
 public Action CBaseEntity_SetLocalAngles(int iEntity, float vecNewAngles[3])
 {
 	if (NPCFindByEntityIndex(iEntity) != INVALID_NPC)
@@ -230,7 +242,6 @@ public Action CBaseEntity_SetLocalAngles(int iEntity, float vecNewAngles[3])
 public int Native_CBaseNPCConstructor(Handle plugin, int numParams)
 {
 	int iNpc = CreateEntityByName("base_boss");
-	SetEntProp(iNpc, Prop_Data, "m_nSolidType", 0); 
 	CBaseNPC Npc = CBaseNPC_GiveIDToEntity(iNpc);
 	if (Npc != INVALID_NPC)
 	{
@@ -250,7 +261,10 @@ public int Native_CBaseNPCConstructor(Handle plugin, int numParams)
 				DHookRemoveHookID(hookID);
 			}
 		}
+		
 		g_CBaseNPCHooks[iIndex].Clear();
+		g_CBaseNPCflFrictionSideways[iIndex] = 3.0;
+		g_CBaseNPCflFrictionForward[iIndex] = 0.0;
 		
 		DispatchKeyValue(iNpc,"health","2147483647");
 		Npc.iHealth = 2147483647;
@@ -262,7 +276,7 @@ public int Native_CBaseNPCConstructor(Handle plugin, int numParams)
 		
 		// Locomotion detours
 		g_CBaseNPCHooks[iIndex].Push(DHookRaw(g_hIsAbleToJump, false, view_as<Address>(g_CBaseNPCLocomotionInterface[iIndex])));
-		g_CBaseNPCHooks[iIndex].Push(DHookRaw(g_hIsAbleToJump, false, view_as<Address>(g_CBaseNPCLocomotionInterface[iIndex])));
+		g_CBaseNPCHooks[iIndex].Push(DHookRaw(g_hIsAbleToClimb, false, view_as<Address>(g_CBaseNPCLocomotionInterface[iIndex])));
 		g_CBaseNPCHooks[iIndex].Push(DHookRaw(g_hClimbUpToLedge, false, view_as<Address>(g_CBaseNPCLocomotionInterface[iIndex])));
 		g_CBaseNPCHooks[iIndex].Push(DHookRaw(g_hGetAcceleration, false, view_as<Address>(g_CBaseNPCLocomotionInterface[iIndex])));
 		g_CBaseNPCHooks[iIndex].Push(DHookRaw(g_hGetStepHeight, false, view_as<Address>(g_CBaseNPCLocomotionInterface[iIndex])));
@@ -279,8 +293,6 @@ public int Native_CBaseNPCConstructor(Handle plugin, int numParams)
 		g_CBaseNPCHooks[iIndex].Push(DHookRaw(g_hGetHullHeight, false, view_as<Address>(g_CBaseNPCBodyInterface[iIndex])));
 		g_CBaseNPCHooks[iIndex].Push(DHookRaw(g_hGetStandHullHeight, false, view_as<Address>(g_CBaseNPCBodyInterface[iIndex])));
 		g_CBaseNPCHooks[iIndex].Push(DHookRaw(g_hGetCrouchHullHeight, false, view_as<Address>(g_CBaseNPCBodyInterface[iIndex])));
-		g_CBaseNPCHooks[iIndex].Push(DHookRaw(g_hGetHullMins, false, view_as<Address>(g_CBaseNPCBodyInterface[iIndex])));
-		g_CBaseNPCHooks[iIndex].Push(DHookRaw(g_hGetHullMaxs, false, view_as<Address>(g_CBaseNPCBodyInterface[iIndex])));
 		g_CBaseNPCHooks[iIndex].Push(DHookRaw(g_hGetSolidMask, true, view_as<Address>(g_CBaseNPCBodyInterface[iIndex])));
 	}
 	else
@@ -292,6 +304,7 @@ public Action CBaseNPC_Think(int iEnt)
 {
 	SDK_UpdateLastKnownArea(iEnt);
 	SDK_StudioFrameAdvance(iEnt);
+	SDK_DispatchAnimEvents(iEnt);
 	
 	CBaseNPC npc = NPCFindByEntityIndex(iEnt);
 	if (npc != INVALID_NPC)
@@ -302,13 +315,19 @@ public Action CBaseNPC_Think(int iEnt)
 		if (bStuck)
 		{
 			PathFollower path = g_CBaseNPCNextBotInterface[npc.Index].GetCurrentPath();
-			Segment seg = path.GetCurrentGoal();
-			if (view_as<Address>(seg) != Address_Null)
+			if (view_as<Address>(path) != Address_Null)
 			{
-				float vecPos[3];
-				seg.GetPos(vecPos);
-				g_CBaseNPCNextBotInterface[npc.Index].SetPosition(vecPos);
-				SDKCall(g_hSDKClearStuckStatus, g_CBaseNPCLocomotionInterface[npc.Index], "Un-Stuck");
+				Segment seg = path.GetCurrentGoal();
+				if (view_as<Address>(seg) != Address_Null)
+				{
+					float vecPos[3];
+					seg.GetPos(vecPos);
+					if (!TR_PointOutsideWorld(vecPos) && (vecPos[0] != 0.0 || vecPos[1] != 0.0 || vecPos[2] != 0.0))
+					{
+						g_CBaseNPCNextBotInterface[npc.Index].SetPosition(vecPos);
+						SDKCall(g_hSDKClearStuckStatus, g_CBaseNPCLocomotionInterface[npc.Index], "Un-Stuck moved to goal");
+					}
+				}
 			}
 		}
 	}
@@ -430,6 +449,14 @@ public int Native_CBaseNPCGetVectors(Handle plugin, int numParams)
 	SetNativeArray(4, vecUp, sizeof(vecUp));
 }
 
+public int Native_CBaseNPCGetLastKnownArea(Handle plugin, int numParams)
+{
+	int iEntity = EntRefToEntIndex(g_CBaseNPCEntityRef[GetNativeCell(1)]);
+	if (iEntity < MaxClients) return 0;
+	
+	return view_as<int>(SDK_GetLastKnownArea(iEntity));
+}
+
 public int Native_CBaseNPCGetBot(Handle plugin, int numParams)
 {
 	return view_as<int>(g_CBaseNPCNextBotInterface[GetNativeCell(1)]);
@@ -547,26 +574,6 @@ public int Native_CBaseNPCGetVelocity(Handle plugin, int numParams)
 	float vec[3];
 	g_CBaseNPCLocomotionInterface[GetNativeCell(1)].GetVelocity(vec);
 	SetNativeArray(2, vec, 3);
-}
-
-public int Native_CBaseNPCiMaxHealthSet(Handle plugin, int numParams)
-{
-	g_CBaseNPCiMaxHealth[GetNativeCell(1)] = GetNativeCell(2);
-}
-
-public int Native_CBaseNPCiMaxHealthGet(Handle plugin, int numParams)
-{
-	return g_CBaseNPCiMaxHealth[GetNativeCell(1)];
-}
-
-public int Native_CBaseNPCiHealthSet(Handle plugin, int numParams)
-{
-	g_CBaseNPCiHealth[GetNativeCell(1)] = GetNativeCell(2);
-}
-
-public int Native_CBaseNPCiHealthGet(Handle plugin, int numParams)
-{
-	return g_CBaseNPCiHealth[GetNativeCell(1)];
 }
 
 public int Native_CBaseNPCflStepSizeSet(Handle plugin, int numParams)
@@ -727,7 +734,7 @@ public int Native_CBaseAnimatingResetSequence(Handle plugin, int numParams)
 
 public int Native_CBaseAnimatingGetModelPtr(Handle plugin, int numParams)
 {
-	Address pStudioHdr = view_as<Address>(GetEntData(GetNativeCell(1), g_ipStudioHdrOffset * 4));
+	Address pStudioHdr = SDKCall(g_hSDKGetModelPtr, GetNativeCell(1)); //view_as<Address>(GetEntData(GetNativeCell(1), g_ipStudioHdrOffset * 4));
 	if (!IsValidAddress(pStudioHdr)) return view_as<int>(Address_Null);
 	return view_as<int>(pStudioHdr);
 }
@@ -747,7 +754,7 @@ public int Native_CBaseAnimatingSetPoseParameter(Handle plugin, int numParams)
 {
 	if (g_hSDKSetPoseParameter != INVALID_HANDLE)
 	{
-		SDKCall(g_hSDKSetPoseParameter, GetNativeCell(1), GetNativeCell(2), GetNativeCell(3), GetNativeCell(4));
+		SDKCall(g_hSDKSetPoseParameter, GetNativeCell(1), GetNativeCell(2), GetNativeCell(3), view_as<float>(GetNativeCell(4)));
 	}
 }
 
@@ -759,6 +766,11 @@ public int Native_CBaseAnimatingOverlayAddGestureSequence(Handle plugin, int num
 	}
 }
 
+public int Native_CBaseCombatCharacterGetLastKnownArea(Handle plugin, int numParams)
+{
+	return view_as<int>(SDK_GetLastKnownArea(GetNativeCell(1)));
+}
+
 // SDK Functions
 void SDK_Init()
 {
@@ -767,15 +779,24 @@ void SDK_Init()
 	StartPrepSDKCall(SDKCall_Entity);
 	PrepSDKCall_SetFromConf(hGameData, SDKConf_Virtual, "CBaseCombatCharacter::UpdateLastKnownArea");
 	g_hSDKUpdateLastKnownArea = EndPrepSDKCall();
-	if(g_hSDKUpdateLastKnownArea == INVALID_HANDLE)
+	if (g_hSDKUpdateLastKnownArea == INVALID_HANDLE)
 	{
 		PrintToServer("Failed to retrieve CBaseCombatCharacter::UpdateLastKnownArea offset from BossHunt gamedata!");
+	}
+	
+	StartPrepSDKCall(SDKCall_Entity);
+	PrepSDKCall_SetFromConf(hGameData, SDKConf_Virtual, "CBaseCombatCharacter::GetLastKnownArea");
+	PrepSDKCall_SetReturnInfo(SDKType_PlainOldData, SDKPass_ByValue);
+	g_hSDKGetLastKnownArea = EndPrepSDKCall();
+	if (g_hSDKGetLastKnownArea == INVALID_HANDLE)
+	{
+		PrintToServer("Failed to retrieve CBaseCombatCharacter::GetLastKnownArea offset from BossHunt gamedata!");
 	}
 	
 	StartPrepSDKCall(SDKCall_Raw);
 	PrepSDKCall_SetFromConf(hGameData, SDKConf_Virtual, "ILocomotion::StuckMonitor");
 	g_hSDKStuckMonitor = EndPrepSDKCall();
-	if(g_hSDKStuckMonitor == INVALID_HANDLE)
+	if (g_hSDKStuckMonitor == INVALID_HANDLE)
 	{
 		SetFailState("Failed to create Virtual Call for ILocomotion::StuckMonitor!");
 	}
@@ -861,14 +882,6 @@ void SDK_Init()
 	g_hGetCrouchHullHeight = DHookCreate(iOffset, HookType_Raw, ReturnType_Float, ThisPointer_Address, GetCrouchHullHeight);
 	if (g_hGetCrouchHullHeight == null) SetFailState("Failed to create hook for IBody::GetCrouchHullHeight!");
 	
-	iOffset = GameConfGetOffset(hGameData, "IBody::GetHullMins");
-	g_hGetHullMins = DHookCreate(iOffset, HookType_Raw, ReturnType_VectorPtr, ThisPointer_Address, GetHullMins);
-	if (g_hGetHullMins == null) SetFailState("Failed to create hook for IBody::GetHullMins!");
-	
-	iOffset = GameConfGetOffset(hGameData, "IBody::GetHullMaxs");
-	g_hGetHullMaxs = DHookCreate(iOffset, HookType_Raw, ReturnType_VectorPtr, ThisPointer_Address, GetHullMaxs);
-	if (g_hGetHullMaxs == null) SetFailState("Failed to create hook for IBody::GetHullMaxs!");
-	
 	iOffset = GameConfGetOffset(hGameData, "IBody::GetSolidMask");
 	g_hGetSolidMask = DHookCreate(iOffset, HookType_Raw, ReturnType_Int, ThisPointer_Address, GetSolidMask);
 	if (g_hGetSolidMask == null) SetFailState("Failed to create hook for IBody::GetSolidMask!");
@@ -905,9 +918,10 @@ void SDK_Init()
 	
 	StartPrepSDKCall(SDKCall_Entity);
 	PrepSDKCall_SetFromConf(hGameData, SDKConf_Signature, "CBaseAnimating::SetPoseParameter");
-	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_ByValue);
-	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_ByValue);
+	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);
+	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);
 	PrepSDKCall_AddParameter(SDKType_Float, SDKPass_Plain);
+	PrepSDKCall_SetReturnInfo(SDKType_Float, SDKPass_Plain);
 	g_hSDKSetPoseParameter = EndPrepSDKCall();
 	if (g_hSDKSetPoseParameter == INVALID_HANDLE) PrintToServer("Failed to retrieve CBaseAnimating::SetPoseParameter signature!");
 	
@@ -923,7 +937,12 @@ void SDK_Init()
 	StartPrepSDKCall(SDKCall_Entity);
 	PrepSDKCall_SetFromConf(hGameData, SDKConf_Virtual, "CBaseAnimating::StudioFrameAdvance");
 	g_hSDKStudioFrameAdvance = EndPrepSDKCall();
-	if (g_hSDKStudioFrameAdvance == INVALID_HANDLE) SetFailState("Failed to retrieve CBaseAnimating::StudioFrameAdvance signature!");
+	if (g_hSDKStudioFrameAdvance == INVALID_HANDLE) SetFailState("Failed to retrieve CBaseAnimating::StudioFrameAdvance offset!");
+	
+	StartPrepSDKCall(SDKCall_Entity);
+	PrepSDKCall_SetFromConf(hGameData, SDKConf_Virtual, "CBaseAnimating::DispatchAnimEvents");
+	g_hSDKDispatchAnimEvents = EndPrepSDKCall();
+	if (g_hSDKDispatchAnimEvents == INVALID_HANDLE) SetFailState("Failed to retrieve CBaseAnimating::DispatchAnimEvents offset!");
 	
 	StartPrepSDKCall(SDKCall_Entity);
 	PrepSDKCall_SetFromConf(hGameData, SDKConf_Virtual, "CBaseEntity::GetVectors");
@@ -931,6 +950,11 @@ void SDK_Init()
 	PrepSDKCall_AddParameter(SDKType_Vector, SDKPass_ByRef, _, VENCODE_FLAG_COPYBACK);
 	PrepSDKCall_AddParameter(SDKType_Vector, SDKPass_ByRef, _, VENCODE_FLAG_COPYBACK);
 	if((g_hSDKGetVectors = EndPrepSDKCall()) == INVALID_HANDLE) SetFailState("Failed to create Virtual Call for CBaseEntity::GetVectors!");
+	
+	StartPrepSDKCall(SDKCall_Entity);
+	PrepSDKCall_SetFromConf(hGameData, SDKConf_Signature, "CBaseAnimating::GetModelPtr");
+	PrepSDKCall_SetReturnInfo(SDKType_PlainOldData, SDKPass_ByValue);
+	if((g_hSDKGetModelPtr = EndPrepSDKCall()) == INVALID_HANDLE) SetFailState("Failed to create Virtual Call for CBaseAnimating::GetModelPtr!");
 	
 }
 
@@ -942,11 +966,28 @@ stock void SDK_UpdateLastKnownArea(int iEntity)
 	}
 }
 
+stock Address SDK_GetLastKnownArea(int iEntity)
+{
+	if (g_hSDKGetLastKnownArea != null)
+	{
+		return SDKCall(g_hSDKGetLastKnownArea, iEntity);
+	}
+	return Address_Null;
+}
+
 stock void SDK_StudioFrameAdvance(int iEntity)
 {
 	if (g_hSDKStudioFrameAdvance != INVALID_HANDLE)
 	{
 		SDKCall(g_hSDKStudioFrameAdvance, iEntity);
+	}
+}
+
+stock void SDK_DispatchAnimEvents(int iEntity)
+{
+	if (g_hSDKDispatchAnimEvents != INVALID_HANDLE)
+	{
+		SDKCall(g_hSDKDispatchAnimEvents, iEntity);
 	}
 }
 
@@ -1206,7 +1247,7 @@ public Action NextBotGroundLocomotion_UpdatePosition(NextBotGroundLocomotion mov
 	return Plugin_Continue;*/
 }
 
-public bool TraceRayDontHitEntity(int entity,int mask,any data)
+public bool TraceRayDontHitEntity(int entity, int mask, any data)
 {
 	if (entity == data) return false;
 	if (entity != 0) return false;

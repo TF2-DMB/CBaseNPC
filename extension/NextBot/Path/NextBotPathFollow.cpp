@@ -748,7 +748,7 @@ void PathFollower::Update( INextBot *bot )
 
 	// move bot along path
 	mover->Approach( goalPos );
-
+/*
 	// Currently, Approach determines STAND or CROUCH. 
 	// Override this if we're approaching a climb or a jump
 	if ( m_goal && ( m_goal->type == CLIMB_UP || m_goal->type == JUMP_OVER_GAP ) )
@@ -766,16 +766,16 @@ void PathFollower::Update( INextBot *bot )
 
 		Draw( start );
 
-		/*
-		else
-		{
-		DrawInterpolated( 0.0f, GetLength() );
-		}
-		*/
+		
+		//else
+		//{
+		//DrawInterpolated( 0.0f, GetLength() );
+		//}
+		
 
 		//NDebugOverlay::Cross3D( goalPos, 5.0f, 150, 150, 255, true, 0.1f );
 		//NDebugOverlay::Line( bot->GetEntity()->WorldSpaceCenter(), goalPos, 255, 255, 0, true, 0.1f );
-	}
+	}*/
 }
 
 

@@ -60,6 +60,7 @@ public void Hook_NPCThink(int iEnt)
 			flLastAttackTime = GetGameTime()+1.0;
 			
 			loco.FaceTowards(vecTargetPos);
+			SlapPlayer(iClient, GetRandomFloat(30.0,50.0), false);
 		}
 		loco.Run();
 		
