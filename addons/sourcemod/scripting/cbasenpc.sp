@@ -174,8 +174,7 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 	CreateNative("CBaseAnimating.SetPoseParameter", Native_CBaseAnimatingSetPoseParameter);
 	
 	CreateNative("CBaseAnimatingOverlay.AddGestureSequence", Native_CBaseAnimatingOverlayAddGestureSequence);
-	
-	CreateNative("CBaseCombatCharacter.GetLastKnownArea", Native_CBaseCombatCharacterGetLastKnownArea);
+	return APLRes_Success;
 }
 
 public void OnPluginStart()
@@ -318,7 +317,8 @@ public Action CBaseNPC_Think(int iEnt)
 			if (view_as<Address>(path) != Address_Null)
 			{
 				Segment seg = path.GetCurrentGoal();
-				if (view_as<Address>(seg) != Address_Null)
+				Segment finalGoal = path.LastSegment();
+				if (view_as<Address>(seg) != Address_Null && seg != finalGoal)
 				{
 					float vecPos[3];
 					seg.GetPos(vecPos);
@@ -764,11 +764,6 @@ public int Native_CBaseAnimatingOverlayAddGestureSequence(Handle plugin, int num
 	{
 		SDKCall(g_hSDKAddGestureSequence, GetNativeCell(1), GetNativeCell(2), GetNativeCell(3));
 	}
-}
-
-public int Native_CBaseCombatCharacterGetLastKnownArea(Handle plugin, int numParams)
-{
-	return view_as<int>(SDK_GetLastKnownArea(GetNativeCell(1)));
 }
 
 // SDK Functions
