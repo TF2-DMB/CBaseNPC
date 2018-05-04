@@ -43,6 +43,7 @@ float g_CBaseNPCflWalkSpeed[MAX_NPCS];
 float g_CBaseNPCflRunSpeed[MAX_NPCS];
 float g_CBaseNPCflFrictionForward[MAX_NPCS];
 float g_CBaseNPCflFrictionSideways[MAX_NPCS];
+float g_CBaseNPCflLastStuckTime[MAX_NPCS];
 
 char g_CBaseNPCType[MAX_NPCS][64];
 
@@ -264,6 +265,7 @@ public int Native_CBaseNPCConstructor(Handle plugin, int numParams)
 		g_CBaseNPCHooks[iIndex].Clear();
 		g_CBaseNPCflFrictionSideways[iIndex] = 3.0;
 		g_CBaseNPCflFrictionForward[iIndex] = 0.0;
+		g_CBaseNPCflLastStuckTime[iIndex] = 0.0;
 		
 		DispatchKeyValue(iNpc,"health","2147483647");
 		Npc.iHealth = 2147483647;
@@ -313,22 +315,55 @@ public Action CBaseNPC_Think(int iEnt)
 		bool bStuck = SDKCall(g_hSDKIsStuck, g_CBaseNPCLocomotionInterface[npc.Index]);
 		if (bStuck)
 		{
-			PathFollower path = g_CBaseNPCNextBotInterface[npc.Index].GetCurrentPath();
-			if (view_as<Address>(path) != Address_Null)
+			if (g_CBaseNPCflLastStuckTime[npc.Index] != 0.0 && GetGameTime()-g_CBaseNPCflLastStuckTime[npc.Index] >= 0.5)
 			{
-				Segment seg = path.GetCurrentGoal();
-				Segment finalGoal = path.LastSegment();
-				if (view_as<Address>(seg) != Address_Null && seg != finalGoal)
+				PathFollower path = g_CBaseNPCNextBotInterface[npc.Index].GetCurrentPath();
+				if (view_as<Address>(path) != Address_Null)
 				{
+					Segment seg = path.GetCurrentGoal();
+					Segment finalGoal = path.LastSegment();
+					Segment prior = view_as<Segment>(0);
+					if (view_as<Address>(seg) != Address_Null)
+						prior = path.PriorSegment(seg);
+					
 					float vecPos[3];
-					seg.GetPos(vecPos);
-					if (!TR_PointOutsideWorld(vecPos) && (vecPos[0] != 0.0 || vecPos[1] != 0.0 || vecPos[2] != 0.0))
+					
+					if (view_as<Address>(prior) != Address_Null && prior != finalGoal)
 					{
+						prior.GetPos(vecPos);
 						g_CBaseNPCNextBotInterface[npc.Index].SetPosition(vecPos);
+						PrintToChatAll("unstuck");
+						SDKCall(g_hSDKClearStuckStatus, g_CBaseNPCLocomotionInterface[npc.Index], "Un-Stuck moved to previous segment");
+						g_CBaseNPCflLastStuckTime[npc.Index] = 0.0;
+					}
+					else if (view_as<Address>(seg) != Address_Null && seg != finalGoal)
+					{
+						seg.GetPos(vecPos);
+						g_CBaseNPCNextBotInterface[npc.Index].SetPosition(vecPos);
+						PrintToChatAll("unstuck");
 						SDKCall(g_hSDKClearStuckStatus, g_CBaseNPCLocomotionInterface[npc.Index], "Un-Stuck moved to goal");
+						g_CBaseNPCflLastStuckTime[npc.Index] = 0.0;
+					}
+					else if (view_as<Address>(prior) != Address_Null)
+					{
+						path.GetPosition(40.0, prior, vecPos);
+						g_CBaseNPCNextBotInterface[npc.Index].SetPosition(vecPos);
+						PrintToChatAll("unstuck");
+						SDKCall(g_hSDKClearStuckStatus, g_CBaseNPCLocomotionInterface[npc.Index], "Un-Stuck");
+						g_CBaseNPCflLastStuckTime[npc.Index] = 0.0;
+					}
+					else if (view_as<Address>(seg) != Address_Null)
+					{
+						path.GetPosition(40.0, seg, vecPos);
+						g_CBaseNPCNextBotInterface[npc.Index].SetPosition(vecPos);
+						PrintToChatAll("unstuck");
+						SDKCall(g_hSDKClearStuckStatus, g_CBaseNPCLocomotionInterface[npc.Index], "Un-Stuck");
+						g_CBaseNPCflLastStuckTime[npc.Index] = 0.0;
 					}
 				}
 			}
+			if (g_CBaseNPCflLastStuckTime[npc.Index] == 0.0)
+				g_CBaseNPCflLastStuckTime[npc.Index] = GetGameTime();
 		}
 	}
 }
@@ -936,6 +971,7 @@ void SDK_Init()
 	
 	StartPrepSDKCall(SDKCall_Entity);
 	PrepSDKCall_SetFromConf(hGameData, SDKConf_Virtual, "CBaseAnimating::DispatchAnimEvents");
+	PrepSDKCall_AddParameter(SDKType_CBaseEntity, SDKPass_Pointer);
 	g_hSDKDispatchAnimEvents = EndPrepSDKCall();
 	if (g_hSDKDispatchAnimEvents == INVALID_HANDLE) SetFailState("Failed to retrieve CBaseAnimating::DispatchAnimEvents offset!");
 	
@@ -982,7 +1018,7 @@ stock void SDK_DispatchAnimEvents(int iEntity)
 {
 	if (g_hSDKDispatchAnimEvents != INVALID_HANDLE)
 	{
-		SDKCall(g_hSDKDispatchAnimEvents, iEntity);
+		SDKCall(g_hSDKDispatchAnimEvents, iEntity, iEntity);
 	}
 }
 
