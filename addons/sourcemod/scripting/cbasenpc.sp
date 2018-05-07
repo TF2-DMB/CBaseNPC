@@ -332,7 +332,6 @@ public Action CBaseNPC_Think(int iEnt)
 					{
 						prior.GetPos(vecPos);
 						g_CBaseNPCNextBotInterface[npc.Index].SetPosition(vecPos);
-						PrintToChatAll("unstuck");
 						SDKCall(g_hSDKClearStuckStatus, g_CBaseNPCLocomotionInterface[npc.Index], "Un-Stuck moved to previous segment");
 						g_CBaseNPCflLastStuckTime[npc.Index] = 0.0;
 					}
@@ -340,7 +339,6 @@ public Action CBaseNPC_Think(int iEnt)
 					{
 						seg.GetPos(vecPos);
 						g_CBaseNPCNextBotInterface[npc.Index].SetPosition(vecPos);
-						PrintToChatAll("unstuck");
 						SDKCall(g_hSDKClearStuckStatus, g_CBaseNPCLocomotionInterface[npc.Index], "Un-Stuck moved to goal");
 						g_CBaseNPCflLastStuckTime[npc.Index] = 0.0;
 					}
@@ -348,7 +346,6 @@ public Action CBaseNPC_Think(int iEnt)
 					{
 						path.GetPosition(40.0, prior, vecPos);
 						g_CBaseNPCNextBotInterface[npc.Index].SetPosition(vecPos);
-						PrintToChatAll("unstuck");
 						SDKCall(g_hSDKClearStuckStatus, g_CBaseNPCLocomotionInterface[npc.Index], "Un-Stuck");
 						g_CBaseNPCflLastStuckTime[npc.Index] = 0.0;
 					}
@@ -356,7 +353,6 @@ public Action CBaseNPC_Think(int iEnt)
 					{
 						path.GetPosition(40.0, seg, vecPos);
 						g_CBaseNPCNextBotInterface[npc.Index].SetPosition(vecPos);
-						PrintToChatAll("unstuck");
 						SDKCall(g_hSDKClearStuckStatus, g_CBaseNPCLocomotionInterface[npc.Index], "Un-Stuck");
 						g_CBaseNPCflLastStuckTime[npc.Index] = 0.0;
 					}
