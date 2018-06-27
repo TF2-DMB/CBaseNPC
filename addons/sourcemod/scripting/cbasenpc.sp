@@ -806,7 +806,7 @@ void SDK_Init()
 	g_hSDKUpdateLastKnownArea = EndPrepSDKCall();
 	if (g_hSDKUpdateLastKnownArea == INVALID_HANDLE)
 	{
-		PrintToServer("Failed to retrieve CBaseCombatCharacter::UpdateLastKnownArea offset from BossHunt gamedata!");
+		PrintToServer("Failed to retrieve CBaseCombatCharacter::UpdateLastKnownArea offset!");
 	}
 	
 	StartPrepSDKCall(SDKCall_Entity);
@@ -815,7 +815,7 @@ void SDK_Init()
 	g_hSDKGetLastKnownArea = EndPrepSDKCall();
 	if (g_hSDKGetLastKnownArea == INVALID_HANDLE)
 	{
-		PrintToServer("Failed to retrieve CBaseCombatCharacter::GetLastKnownArea offset from BossHunt gamedata!");
+		PrintToServer("Failed to retrieve CBaseCombatCharacter::GetLastKnownArea offset!");
 	}
 	
 	StartPrepSDKCall(SDKCall_Raw);

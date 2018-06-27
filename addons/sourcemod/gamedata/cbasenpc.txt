@@ -38,6 +38,11 @@
 				"linux"		"137"
 				"windows"	"136"
 			}
+			"CBaseCombatCharacter::GetLastKnownArea"
+			{
+				"linux"		"316"
+				"windows"	"315"
+			}
 			"CBaseCombatCharacter::UpdateLastKnownArea"
 			{
 				"linux"		"319"
