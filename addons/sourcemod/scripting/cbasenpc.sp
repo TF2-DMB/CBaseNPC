@@ -66,7 +66,6 @@ Handle g_hSDKLookupPoseParameter;
 Handle g_hSDKSetPoseParameter;
 Handle g_hSDKStudioFrameAdvance;
 Handle g_hSDKDispatchAnimEvents;
-Handle g_hSDKGetModelPtr;
 
 //ILocomotion
 Handle g_hSDKStuckMonitor;
@@ -765,7 +764,7 @@ public int Native_CBaseAnimatingResetSequence(Handle plugin, int numParams)
 
 public int Native_CBaseAnimatingGetModelPtr(Handle plugin, int numParams)
 {
-	Address pStudioHdr = SDKCall(g_hSDKGetModelPtr, GetNativeCell(1)); //view_as<Address>(GetEntData(GetNativeCell(1), g_ipStudioHdrOffset * 4));
+	Address pStudioHdr = view_as<Address>(GetEntData(GetNativeCell(1), g_ipStudioHdrOffset * 4));
 	if (!IsValidAddress(pStudioHdr)) return view_as<int>(Address_Null);
 	return view_as<int>(pStudioHdr);
 }
@@ -977,12 +976,6 @@ void SDK_Init()
 	PrepSDKCall_AddParameter(SDKType_Vector, SDKPass_ByRef, _, VENCODE_FLAG_COPYBACK);
 	PrepSDKCall_AddParameter(SDKType_Vector, SDKPass_ByRef, _, VENCODE_FLAG_COPYBACK);
 	if((g_hSDKGetVectors = EndPrepSDKCall()) == INVALID_HANDLE) SetFailState("Failed to create Virtual Call for CBaseEntity::GetVectors!");
-	
-	StartPrepSDKCall(SDKCall_Entity);
-	PrepSDKCall_SetFromConf(hGameData, SDKConf_Signature, "CBaseAnimating::GetModelPtr");
-	PrepSDKCall_SetReturnInfo(SDKType_PlainOldData, SDKPass_ByValue);
-	if((g_hSDKGetModelPtr = EndPrepSDKCall()) == INVALID_HANDLE) SetFailState("Failed to create Virtual Call for CBaseAnimating::GetModelPtr!");
-	
 }
 
 stock void SDK_UpdateLastKnownArea(int iEntity)

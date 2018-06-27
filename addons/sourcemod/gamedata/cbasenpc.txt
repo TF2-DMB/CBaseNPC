@@ -25,11 +25,6 @@
 				"linux"			"@_ZN14CBaseAnimating13ResetSequenceEi"
 				"windows"		"\x55\x8B\xEC\xA1\x2A\x2A\x2A\x2A\x53\x56\x57\x83\x78\x30\x00\x8B\xD9\x8B\x7D\x08"
 			}
-			"CBaseAnimating::GetModelPtr"
-			{
-				"library"		"server"
-				"linux"			"@_ZN14CBaseAnimating11GetModelPtrEv"
-			}
 			"CBaseAnimatingOverlay::AddGestureSequence"
 			{
 				"library"		"server"

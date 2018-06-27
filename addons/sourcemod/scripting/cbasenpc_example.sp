@@ -43,7 +43,7 @@ public void Hook_NPCThink(int iEnt)
 		bot.GetPosition(vecNPCPos);
 		GetClientAbsOrigin(iClient, vecTargetPos);
 		
-		CBaseAnimatingOverlay animationEntity = new CBaseAnimatingOverlay(iEnt);
+		CBaseAnimatingOverlay animationEntity = CBaseAnimatingOverlay(iEnt);
 		
 		if (GetVectorDistance(vecNPCPos, vecTargetPos) > 100.0)
 			pPath.Update(bot);
@@ -60,7 +60,7 @@ public void Hook_NPCThink(int iEnt)
 			flLastAttackTime = GetGameTime()+1.0;
 			
 			loco.FaceTowards(vecTargetPos);
-			SlapPlayer(iClient, GetRandomFloat(30.0,50.0), false);
+			SlapPlayer(iClient, GetRandomInt(30,50), false);
 		}
 		loco.Run();
 		
@@ -154,7 +154,7 @@ public Action Command_SpawnNPC(int iClient, int iArgs)
 	npc.iHealth = 99999999;
 		
 	npc.Run();
-	CBaseAnimatingOverlay animationEntity = new CBaseAnimatingOverlay(npc.GetEntity());
+	CBaseAnimatingOverlay animationEntity = CBaseAnimatingOverlay(npc.GetEntity());
 	animationEntity.PlayAnimation("Stand_MELEE");
 	g_iSummoner = GetClientUserId(iClient);
 	
