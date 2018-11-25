@@ -61,6 +61,8 @@ Handle g_hSDKGetLastKnownArea;
 
 //CBaseAnimating
 Handle g_hSDKLookupSequence;
+Handle g_hSDKSelectWeightedSequence;
+Handle g_hSDKSequenceDuration;
 Handle g_hSDKResetSequence;
 Handle g_hSDKLookupPoseParameter;
 Handle g_hSDKSetPoseParameter;
@@ -168,6 +170,8 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 	CreateNative("CNPCs.IsValidNPC", Native_CNPCsIsValidNPC);
 	
 	CreateNative("CBaseAnimating.LookupSequence", Native_CBaseAnimatingLookupSequence);
+	CreateNative("CBaseAnimating.SelectWeightedSequence", Native_CBaseAnimatingSelectWeightedSequence);
+	CreateNative("CBaseAnimating.SequenceDuration", Native_CBaseAnimatingSequenceDuration);
 	CreateNative("CBaseAnimating.ResetSequence", Native_CBaseAnimatingResetSequence);
 	CreateNative("CBaseAnimating.GetModelPtr", Native_CBaseAnimatingGetModelPtr);
 	CreateNative("CBaseAnimating.LookupPoseParameter", Native_CBaseAnimatingLookupPoseParameter);
@@ -754,6 +758,22 @@ public int Native_CBaseAnimatingLookupSequence(Handle plugin, int numParams)
 	return -1;
 }
 
+public int Native_CBaseAnimatingSequenceDuration(Handle plugin, int numParams)
+{
+	if (g_hSDKSequenceDuration != INVALID_HANDLE)
+		return SDKCall(g_hSDKSequenceDuration, GetNativeCell(1), GetNativeCell(2), GetNativeCell(3));
+	return view_as<int>(0.0);
+}
+
+public int Native_CBaseAnimatingSelectWeightedSequence(Handle plugin, int numParams)
+{
+	if (g_hSDKSelectWeightedSequence != INVALID_HANDLE)
+	{
+		return SDKCall(g_hSDKSelectWeightedSequence, GetEntData(GetNativeCell(1), g_ipStudioHdrOffset * 4), GetNativeCell(2), GetEntProp(GetNativeCell(1), Prop_Send, "m_nSequence"));
+	}
+	return -1;
+}
+
 public int Native_CBaseAnimatingResetSequence(Handle plugin, int numParams)
 {
 	if (g_hSDKResetSequence != INVALID_HANDLE)
@@ -923,6 +943,22 @@ void SDK_Init()
 	PrepSDKCall_SetReturnInfo(SDKType_PlainOldData, SDKPass_ByValue);
 	g_hSDKLookupSequence = EndPrepSDKCall();
 	if (g_hSDKLookupSequence == INVALID_HANDLE) PrintToServer("Failed to retrieve CBaseAnimating::LookupSequence signature!");
+	
+	StartPrepSDKCall(SDKCall_Raw);
+	PrepSDKCall_SetFromConf(hGameData, SDKConf_Signature, "CBaseAnimating::SelectWeightedSequence");
+	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_ByValue);
+	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_ByValue);
+	PrepSDKCall_SetReturnInfo(SDKType_PlainOldData, SDKPass_ByValue);
+	g_hSDKSelectWeightedSequence = EndPrepSDKCall();
+	if (g_hSDKSelectWeightedSequence == INVALID_HANDLE) PrintToServer("Failed to retrieve CBaseAnimating::SelectWeightedSequence signature!");
+	
+	StartPrepSDKCall(SDKCall_Entity);
+	PrepSDKCall_SetFromConf(hGameData, SDKConf_Signature, "CBaseAnimating::SequenceDuration");
+	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);
+	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_ByValue);
+	PrepSDKCall_SetReturnInfo(SDKType_Float, SDKPass_ByValue);
+	g_hSDKSequenceDuration = EndPrepSDKCall();
+	if (g_hSDKSequenceDuration == INVALID_HANDLE) PrintToServer("Failed to retrieve CBaseAnimating::SequenceDuration signature!");
 	
 	StartPrepSDKCall(SDKCall_Entity);
 	PrepSDKCall_SetFromConf(hGameData, SDKConf_Signature, "CBaseAnimating::ResetSequence");
