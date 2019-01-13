@@ -753,7 +753,7 @@ public int Native_CBaseAnimatingLookupSequence(Handle plugin, int numParams)
 	{
 		char sAnim[120];
 		GetNativeString(2, sAnim, sizeof(sAnim));
-		return SDKCall(g_hSDKLookupSequence, GetNativeCell(1), sAnim);
+		return SDKCall(g_hSDKLookupSequence, GetEntData(GetNativeCell(1), g_ipStudioHdrOffset * 4), sAnim);
 	}
 	return -1;
 }
@@ -937,7 +937,7 @@ void SDK_Init()
 	iOffset = GameConfGetOffset(hGameData, "NextBotGroundLocomotion::GetFrictionSideways"); 
 	g_hGetFrictionSideways = DHookCreate(iOffset, HookType_Raw, ReturnType_Float, ThisPointer_Address, GetFrictionSideways);
 	
-	StartPrepSDKCall(SDKCall_Entity);
+	StartPrepSDKCall(SDKCall_Raw);
 	PrepSDKCall_SetFromConf(hGameData, SDKConf_Signature, "CBaseAnimating::LookupSequence");
 	PrepSDKCall_AddParameter(SDKType_String, SDKPass_Pointer);
 	PrepSDKCall_SetReturnInfo(SDKType_PlainOldData, SDKPass_ByValue);
@@ -1058,13 +1058,64 @@ stock void SDK_GetVectors(int iEntity, float vecForward[3], float vecRight[3], f
 //Detours
 public Action NextBotGroundLocomotion_UpdatePosition(NextBotGroundLocomotion mover, float vecFromPos[3], float vecToPos[3], float vecAdjustedPos[3], float vecEditedPos[3])
 {
-	/*if (vecFromPos[0] == vecToPos[0] && vecFromPos[1] == vecToPos[1] && vecFromPos[2] == vecToPos[2]) //Nothing happened
+	if (vecFromPos[0] == vecToPos[0] && vecFromPos[1] == vecToPos[1] && vecFromPos[2] == vecToPos[2]) //Nothing happened
 		return Plugin_Continue;
 		
 	CBaseNPC Npc = NPCGetFromLocomotion(mover);
 	if (Npc == INVALID_NPC)
 		return Plugin_Continue;
+		
+	int iEntity = EntRefToEntIndex(g_CBaseNPCEntityRef[Npc.Index]);
+	if (iEntity <= MaxClients)
+		return Plugin_Continue;
+		
+	float vecMins[3], vecMaxs[3];
+	g_CBaseNPCBodyInterface[Npc.Index].GetHullMins(vecMins);
+	g_CBaseNPCBodyInterface[Npc.Index].GetHullMaxs(vecMaxs);
+	if (mover.IsOnGround())
+		vecMins[2] = mover.GetStepHeight();
+		
+	Handle hTrace = TR_TraceHullFilterEx(vecToPos, vecToPos, vecMins, vecMaxs, MASK_NPCSOLID, TraceRayDontHitEntity, iEntity);
+	bool bHit = TR_DidHit(hTrace);
+	delete hTrace;
+	if (bHit)
+	{
+		float vecCorrectedPos[3];
+		vecCorrectedPos = vecToPos;
+		vecCorrectedPos[0] = vecFromPos[0];
+		
+		hTrace = TR_TraceHullFilterEx(vecCorrectedPos, vecCorrectedPos, vecMins, vecMaxs, MASK_NPCSOLID, TraceRayDontHitEntity, iEntity);
+		bHit = TR_DidHit(hTrace);
+		delete hTrace;
+		
+		if (bHit)
+		{
+			vecCorrectedPos = vecToPos;
+			vecCorrectedPos[1] = vecFromPos[1];
+			hTrace = TR_TraceHullFilterEx(vecCorrectedPos, vecCorrectedPos, vecMins, vecMaxs, MASK_NPCSOLID, TraceRayDontHitEntity, iEntity);
+			bHit = TR_DidHit(hTrace);
+			delete hTrace;
+			
+			if (!bHit)
+			{
+				vecEditedPos = vecCorrectedPos;
+				return Plugin_Changed;
+			}
+			else
+			{
+				vecEditedPos = vecFromPos;
+				return Plugin_Changed;
+			}
+		}
+		else
+		{
+			vecEditedPos = vecCorrectedPos;
+			return Plugin_Changed;
+		}
+	}
+	return Plugin_Continue;
 	
+	/*
 	int iEntity = EntRefToEntIndex(g_CBaseNPCEntityRef[Npc.Index]);
 	if (iEntity <= MaxClients)
 		return Plugin_Continue;

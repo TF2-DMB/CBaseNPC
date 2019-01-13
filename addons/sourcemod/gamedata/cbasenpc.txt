@@ -7,17 +7,20 @@
 			"CBaseAnimating::SetPoseParameter"
 			{
 				"library"		"server"
+				"windows"		"\x55\x8B\xEC\x8B\x45\x08\xD9\x45\x10"
 				"linux"			"@_ZN14CBaseAnimating16SetPoseParameterEP10CStudioHdrif"
 			}
 			"CBaseAnimating::LookupPoseParameter"
 			{
 				"library"		"server"
+				"windows"		"\x55\x8B\xEC\x57\x8B\x7D\x08\x85\xFF\x75\x2A\x33\xC0\x5F\x5D\xC2\x08\x00"
 				"linux"			"@_ZN14CBaseAnimating19LookupPoseParameterEP10CStudioHdrPKc"
 			}
 			"CBaseAnimating::LookupSequence"
 			{
 				"library"		"server"
-				"linux"			"@_ZN14CBaseAnimating14LookupSequenceEPKc"
+				"windows"		"\x55\x8B\xEC\x56\x8B\x75\x08\x85\xF6\x75\x2A\x33\xC0\x5E\x5D\xC3\x8B\xCE\xE8\x2A\x2A\x2A\x2A\x84\xC0\x74\x2A\x53"
+				"linux"			"@_Z14LookupSequenceP10CStudioHdrPKc"
 			}
 			"CBaseAnimating::SequenceDuration"
 			{

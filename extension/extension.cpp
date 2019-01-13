@@ -28,10 +28,8 @@ SMEXT_LINK(&g_CBaseNPCExt);
 
 
 IForward *g_pForwardSetLocalAngles = NULL;
-IForward *g_pForwardUpdateLoco = NULL;
 
 CDetour *g_pSetLocalAngles = NULL;
-//CDetour *g_pUpdatePosition = NULL;
 
 CNavArea * (CNavMesh:: *CNavMesh::func_GetNearestNavArea)(const Vector &pos, bool anyZ, float maxDist, bool checkLOS, bool checkGround, int team) = nullptr;
 bool (CNavMesh:: *CNavMesh::func_GetGroundHeight)(const Vector &pos, float *height, Vector *normal) = nullptr;
@@ -73,52 +71,6 @@ DETOUR_DECL_MEMBER1(CBaseEntity_SetLocalAngles, void, QAngle&, angles)
 	}
 	DETOUR_MEMBER_CALL(CBaseEntity_SetLocalAngles)(angles);
 }
-/*
-DETOUR_DECL_MEMBER1(NextBotGroundLocomotion_UpdatePosition, void, Vector&, newPos)
-{
-	NextBotGroundLocomotion *mover = reinterpret_cast<NextBotGroundLocomotion*>(this);
-	INextBot *bot = mover->GetBot();
-
-	Vector vecFromPos = bot->GetPosition();
-	DETOUR_MEMBER_CALL(NextBotGroundLocomotion_UpdatePosition)(newPos);
-	Vector vecAdjustedPos = bot->GetPosition();
-
-	if (g_pForwardUpdateLoco != NULL)
-	{
-		cell_t fromPos[3];
-		fromPos[0] = sp_ftoc(vecFromPos.x);
-		fromPos[1] = sp_ftoc(vecFromPos.y);
-		fromPos[2] = sp_ftoc(vecFromPos.z);
-
-		cell_t toPos[3];
-		toPos[0] = sp_ftoc(newPos.x);
-		toPos[1] = sp_ftoc(newPos.y);
-		toPos[2] = sp_ftoc(newPos.z);
-
-		cell_t adjustedPos[3];
-		adjustedPos[0] = sp_ftoc(vecAdjustedPos.x);
-		adjustedPos[1] = sp_ftoc(vecAdjustedPos.y);
-		adjustedPos[2] = sp_ftoc(vecAdjustedPos.z);
-
-		cell_t editedPos[3];
-
-		cell_t result = Pl_Continue;
-		g_pForwardUpdateLoco->PushCell((cell_t)this);
-		g_pForwardUpdateLoco->PushArray(fromPos, 3);
-		g_pForwardUpdateLoco->PushArray(toPos, 3);
-		g_pForwardUpdateLoco->PushArray(adjustedPos, 3);
-		g_pForwardUpdateLoco->PushArray(editedPos, 3, SM_PARAM_COPYBACK);
-
-		g_pForwardUpdateLoco->Execute(&result);
-		if (result == Pl_Changed)
-		{
-			newPos.x = sp_ctof(editedPos[0]);
-			newPos.y = sp_ctof(editedPos[1]);
-			newPos.z = sp_ctof(editedPos[2]);
-			DETOUR_MEMBER_CALL(NextBotGroundLocomotion_UpdatePosition)(newPos);
-		}
-	}
-}*/
 
 bool CBaseNPCExt::SDK_OnLoad(char *error, size_t maxlength, bool late)
 {
@@ -162,16 +114,8 @@ bool CBaseNPCExt::SDK_OnLoad(char *error, size_t maxlength, bool late)
 		g_pSetLocalAngles->EnableDetour();
 		g_pSM->LogMessage(myself, "CBaseEntity::SetLocalAngles detour enabled.");
 	}
-	
-	/*g_pUpdatePosition = DETOUR_CREATE_MEMBER(NextBotGroundLocomotion_UpdatePosition, "NextBotGroundLocomotion::UpdatePosition");
-	if(g_pUpdatePosition != NULL)
-	{
-		g_pUpdatePosition->EnableDetour();
-		g_pSM->LogMessage(myself, "NextBotGroundLocomotion::UpdatePosition detour enabled.");
-	}*/
 
 	g_pForwardSetLocalAngles = forwards->CreateForward("CBaseEntity_SetLocalAngles", ET_Event, 2, NULL, Param_Cell, Param_Array);
-	g_pForwardUpdateLoco = forwards->CreateForward("NextBotGroundLocomotion_UpdatePosition", ET_Event, 5, NULL, Param_Cell, Param_Array, Param_Array, Param_Array, Param_Array);
 	GETGAMEDATAOFFSET("CBaseCombatCharacter::GetLastKnownArea", g_iLastKnownAreaOffset);
 	GETGAMEDATAOFFSET("CBaseEntity::MyNextBotPointer", g_iMyNextBotPointerOffset);
 
@@ -246,10 +190,8 @@ void CBaseNPCExt::SDK_OnUnload()
 	gameconfs->CloseGameConfigFile(g_pGameConf);
 
 	forwards->ReleaseForward(g_pForwardSetLocalAngles);
-	forwards->ReleaseForward(g_pForwardUpdateLoco);
 
 	if (g_pSetLocalAngles != NULL) g_pSetLocalAngles->Destroy();
-	//if (g_pUpdatePosition != NULL) g_pUpdatePosition->Destroy();
 	
 	gameconfs->CloseGameConfigFile(g_pGameConf);
 }

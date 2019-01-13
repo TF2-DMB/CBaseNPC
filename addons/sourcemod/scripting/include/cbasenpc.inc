@@ -849,7 +849,6 @@ public bool Path_FilterOnlyActors(int entity, int contentsMask, int desiredcolli
 }
 
 forward Action CBaseEntity_SetLocalAngles(int iEntity, float vecNewAngles[3]);
-forward Action NextBotGroundLocomotion_UpdatePosition(NextBotGroundLocomotion mover, float vecFromPos[3], float vecToPos[3], float vecAdjustedPos[3], float vecEditedPos[3]);
 
 enum
 {

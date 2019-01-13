@@ -26,15 +26,22 @@ class CNavMesh
 	public:
 		static void Init()
 		{
-			//To-do add win support
 			CNavMesh **ppTheNavMesh;
 			char *addr;
 			if (g_pGameConf->GetMemSig("TheNavMesh", (void **)&addr) && addr)
 			{
 				ppTheNavMesh = reinterpret_cast<CNavMesh **>(addr);
 			}
-			else
-				g_pSM->LogMessage(myself, "Couldn't locate TheNavMesh pointer!", *TheNavMesh);
+			else if (g_pGameConf->GetMemSig("CNavMesh::SnapToGrid", (void **)&addr) && addr)
+			{
+				int offset;
+				if (!g_pGameConf->GetOffset("TheNavMesh", &offset) || !offset)
+				{
+					g_pSM->LogMessage(myself, "Couldn't find offset for TheNavMesh ptr!");
+				}
+				ppTheNavMesh = *reinterpret_cast<CNavMesh ***>(addr + offset);
+			}
+			
 			TheNavMesh = *ppTheNavMesh;
 		};
 		static CNavArea * (CNavMesh::*func_GetNearestNavArea)(const Vector &pos, bool anyZ, float maxDist, bool checkLOS, bool checkGround, int team);
