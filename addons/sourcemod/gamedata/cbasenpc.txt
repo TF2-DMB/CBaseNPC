@@ -43,6 +43,7 @@
 			"CBaseAnimatingOverlay::AddGestureSequence"
 			{
 				"library"		"server"
+				"windows"		"\x55\x8B\xEC\x56\x6A\x00\xFF\x75\x08\x8B\xF1\xE8\x2A\x2A\x2A\x2A\x85\xC0\x78\x2A"
 				"linux"			"@_ZN21CBaseAnimatingOverlay18AddGestureSequenceEib"
 			}
 		}
