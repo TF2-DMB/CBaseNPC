@@ -48,6 +48,33 @@ enum
 	NAV_MESH_NO_HOSTAGES = 0x0800
 };
 
+enum NavDirType
+{
+	NORTH = 0,
+	EAST = 1,
+	SOUTH = 2,
+	WEST = 3,
+
+	NUM_DIRECTIONS
+};
+
+enum NavTraverseType
+{
+	// NOTE: First 4 directions MUST match NavDirType
+	GO_NORTH = 0,
+	GO_EAST,
+	GO_SOUTH,
+	GO_WEST,
+
+	GO_LADDER_UP,
+	GO_LADDER_DOWN,
+	GO_JUMP,
+	GO_ELEVATOR_UP,
+	GO_ELEVATOR_DOWN,
+
+	NUM_TRAVERSE_TYPES
+};
+
 //Thanks to Pelipoika & Sigsegv
 enum TFNavAttributeType
 {
@@ -102,9 +129,29 @@ CNavMesh TheNavMesh;
 
 methodmap CNavArea
 {
+	public native void UpdateBlocked(bool force = false, int teamID = -2);
+	public native bool IsBlocked(int teamID, bool ignoreNavBlockers = false);
+
+	public native int GetID();
+	
+	public native void SetParent(CNavArea parent, NavTraverseType how = NUM_TRAVERSE_TYPES);
+	public native CNavArea GetParent();
+	public native NavTraverseType GetParentHow();
+	
+	public native void SetCostSoFar(float value);
 	public native float GetCostSoFar();
+	
 	public native int GetAttributes();
+	public bool HasAttributes(int bits) { return ( this.GetAttributes() & bits ) ? true : false; }
 	public native void GetCenter(float vecCenter[3]);
+	
+	public native bool IsConnected(const CNavArea area, NavDirType dir);
+	public native bool IsEdge(NavDirType dir);
+	
+	public native bool Contains(const CNavArea area);
+	public native float GetZ(float x, float y);
+	public native float GetZVector(float vecPos[3]);
+	public native void ComputeNormal(float vecNormal[3], bool alternate = false);
 };
 
 methodmap CNavLadder

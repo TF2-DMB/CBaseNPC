@@ -272,9 +272,23 @@ const sp_nativeinfo_t g_NativesInfo[] =
 	
 	{ "CBaseNPC_GetNextBotOfEntity", &CBaseNPC_GetNextBotOfEntity },
 	
+	NATIVENAME(CNavArea, UpdateBlocked)
+	NATIVENAME(CNavArea, IsBlocked)
+	NATIVENAME(CNavArea, GetID)
+	NATIVENAME(CNavArea, SetParent)
+	NATIVENAME(CNavArea, GetParent)
+	NATIVENAME(CNavArea, GetParentHow)
 	NATIVENAME(CNavArea, GetCostSoFar)
 	NATIVENAME(CNavArea, GetAttributes)
 	NATIVENAME(CNavArea, GetCenter)
+	NATIVENAME(CNavArea, IsConnected)
+	NATIVENAME(CNavArea, IsEdge)
+	NATIVENAME(CNavArea, Contains)
+	NATIVENAME(CNavArea, GetSizeX)
+	NATIVENAME(CNavArea, GetSizeY)
+	NATIVENAME(CNavArea, GetZ)
+	NATIVENAME(CNavArea, GetZVector)
+	NATIVENAME(CNavArea, ComputeNormal)
 	{ "CNavLadder.length.get", &CNavLadder_length },
 	
 	NATIVENAME(CNavMesh, CollectSurroundingAreas)

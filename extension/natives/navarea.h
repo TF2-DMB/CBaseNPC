@@ -27,6 +27,38 @@
 		} \
 	
 	
+
+NAVAREA_NATIVE(UpdateBlocked)
+	pArea->UpdateBlocked(params[2], params[3]);
+	return 1;
+}
+
+NAVAREA_NATIVE(IsBlocked)
+	return pArea->IsBlocked(params[2], params[3]);
+}
+
+NAVAREA_NATIVE(GetID)
+	return pArea->GetID();
+}
+
+NAVAREA_NATIVE(SetParent)
+	pArea->SetParent((CNavArea *)params[2], (NavTraverseType)params[3]);
+return 1;
+}
+
+NAVAREA_NATIVE(GetParent)
+	return (cell_t)pArea->GetParent();
+}
+
+NAVAREA_NATIVE(GetParentHow)
+	return pArea->GetParentHow();
+}
+
+NAVAREA_NATIVE(SetCostSoFar)
+	pArea->SetCostSoFar(sp_ctof(params[2]));
+	return 1;
+}
+
 NAVAREA_NATIVE(GetCostSoFar)
 	return sp_ftoc(pArea->GetCostSoFar());
 }
@@ -40,6 +72,47 @@ NAVAREA_NATIVE(GetCenter)
 	pContext->LocalToPhysAddr(params[2], &posAddr);
 	Vector pos = pArea->GetCenter();
 	VectorToPawnVector(posAddr, pos);
+	return 1;
+}
+
+NAVAREA_NATIVE(IsConnected)
+	return pArea->IsConnected((CNavArea *)params[2], (NavDirType)params[3]);
+}
+
+NAVAREA_NATIVE(IsEdge)
+	return pArea->IsEdge((NavDirType)params[2]);
+}
+
+NAVAREA_NATIVE(Contains)
+	return pArea->Contains((CNavArea *)params[2]);
+}
+
+NAVAREA_NATIVE(GetSizeX)
+	return sp_ftoc(pArea->GetSizeX());
+}
+
+NAVAREA_NATIVE(GetSizeY)
+	return sp_ftoc(pArea->GetSizeY());
+}
+
+NAVAREA_NATIVE(GetZ)
+	return sp_ftoc(pArea->GetZ(sp_ctof(params[2]), sp_ctof(params[3])));
+}
+
+NAVAREA_NATIVE(GetZVector)
+	cell_t *dstAddr;
+	pContext->LocalToPhysAddr(params[2], &dstAddr);
+	Vector dst;
+	PawnVectorToVector(dstAddr, dst);
+	return sp_ftoc(pArea->GetZ(dst));
+}
+
+NAVAREA_NATIVE(ComputeNormal)
+	cell_t *norAddr;
+	pContext->LocalToPhysAddr(params[2], &norAddr);
+	Vector nor;
+	pArea->ComputeNormal(&nor, params[3]);
+	VectorToPawnVector(norAddr, nor);
 	return 1;
 }
 
