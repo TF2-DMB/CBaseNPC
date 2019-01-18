@@ -610,6 +610,11 @@ methodmap CBaseNPC __nullable__
 		public native get();
 		public native set(float JumpHeight);
 	}
+	property float flDeathDropHeight
+	{
+		public native get();
+		public native set(float DeathHeight);
+	}
 	property float flWalkSpeed
 	{
 		public native get();

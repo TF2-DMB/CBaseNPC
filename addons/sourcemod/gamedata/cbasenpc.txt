@@ -104,6 +104,11 @@
 				"linux"		"81"
 				"windows"	"80"
 			}
+			"ILocomotion::GetDeathDropHeight"
+			{
+				"linux"		"82"
+				"windows"	"81"
+			}
 			"ILocomotion::GetRunSpeed"
 			{
 				"linux"		"83"

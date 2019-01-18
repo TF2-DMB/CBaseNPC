@@ -39,6 +39,7 @@ float g_CBaseNPCflStepSize[MAX_NPCS];
 float g_CBaseNPCflGravity[MAX_NPCS];
 float g_CBaseNPCflAcceleration[MAX_NPCS];
 float g_CBaseNPCflJumpHeight[MAX_NPCS];
+float g_CBaseNPCflDeathDropHeight[MAX_NPCS];
 float g_CBaseNPCflWalkSpeed[MAX_NPCS];
 float g_CBaseNPCflRunSpeed[MAX_NPCS];
 float g_CBaseNPCflFrictionForward[MAX_NPCS];
@@ -92,6 +93,7 @@ Handle g_hClimbUpToLedge;
 Handle g_hGetAcceleration;
 Handle g_hGetStepHeight;
 Handle g_hGetMaxJumpHeight;
+Handle g_hGetDeathDropHeight;
 Handle g_hGetWalkSpeed;
 Handle g_hGetRunSpeed;
 Handle g_hGetGravity;
@@ -157,6 +159,8 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 	CreateNative("CBaseNPC.flAcceleration.get", Native_CBaseNPCflAccelerationGet);
 	CreateNative("CBaseNPC.flJumpHeight.set", Native_CBaseNPCflJumpHeightSet);
 	CreateNative("CBaseNPC.flJumpHeight.get", Native_CBaseNPCflJumpHeightGet);
+	CreateNative("CBaseNPC.flDeathDropHeight.set", Native_CBaseNPCflDeathDropHeightSet);
+	CreateNative("CBaseNPC.flDeathDropHeight.get", Native_CBaseNPCflDeathDropHeightGet);
 	CreateNative("CBaseNPC.flWalkSpeed.set", Native_CBaseNPCflWalkSpeedSet);
 	CreateNative("CBaseNPC.flWalkSpeed.get", Native_CBaseNPCflWalkSpeedGet);
 	CreateNative("CBaseNPC.flRunSpeed.set", Native_CBaseNPCflRunSpeedSet);
@@ -285,6 +289,7 @@ public int Native_CBaseNPCConstructor(Handle plugin, int numParams)
 		g_CBaseNPCHooks[iIndex].Push(DHookRaw(g_hGetAcceleration, false, view_as<Address>(g_CBaseNPCLocomotionInterface[iIndex])));
 		g_CBaseNPCHooks[iIndex].Push(DHookRaw(g_hGetStepHeight, false, view_as<Address>(g_CBaseNPCLocomotionInterface[iIndex])));
 		g_CBaseNPCHooks[iIndex].Push(DHookRaw(g_hGetMaxJumpHeight, false, view_as<Address>(g_CBaseNPCLocomotionInterface[iIndex])));
+		g_CBaseNPCHooks[iIndex].Push(DHookRaw(g_hGetDeathDropHeight, false, view_as<Address>(g_CBaseNPCLocomotionInterface[iIndex])));
 		g_CBaseNPCHooks[iIndex].Push(DHookRaw(g_hGetWalkSpeed, false, view_as<Address>(g_CBaseNPCLocomotionInterface[iIndex])));
 		g_CBaseNPCHooks[iIndex].Push(DHookRaw(g_hGetRunSpeed, false, view_as<Address>(g_CBaseNPCLocomotionInterface[iIndex])));
 		g_CBaseNPCHooks[iIndex].Push(DHookRaw(g_hGetGravity, false, view_as<Address>(g_CBaseNPCLocomotionInterface[iIndex])));
@@ -650,6 +655,16 @@ public int Native_CBaseNPCflJumpHeightGet(Handle plugin, int numParams)
 	return view_as<int>(g_CBaseNPCflJumpHeight[GetNativeCell(1)]);
 }
 
+public int Native_CBaseNPCflDeathDropHeightSet(Handle plugin, int numParams)
+{
+	g_CBaseNPCflDeathDropHeight[GetNativeCell(1)] = view_as<float>(GetNativeCell(2));
+}
+
+public int Native_CBaseNPCflDeathDropHeightGet(Handle plugin, int numParams)
+{
+	return view_as<int>(g_CBaseNPCflDeathDropHeight[GetNativeCell(1)]);
+}
+
 public int Native_CBaseNPCflWalkSpeedSet(Handle plugin, int numParams)
 {
 	g_CBaseNPCflWalkSpeed[GetNativeCell(1)] = view_as<float>(GetNativeCell(2));
@@ -889,6 +904,10 @@ void SDK_Init()
 	iOffset = GameConfGetOffset(hGameData, "ILocomotion::GetMaxJumpHeight"); 
 	g_hGetMaxJumpHeight = DHookCreate(iOffset, HookType_Raw, ReturnType_Float, ThisPointer_Address, GetMaxJumpHeight);
 	if (g_hGetMaxJumpHeight == null) SetFailState("Failed to create hook for ILocomotion::GetMaxJumpHeight!");
+	
+	iOffset = GameConfGetOffset(hGameData, "ILocomotion::GetDeathDropHeight"); 
+	g_hGetDeathDropHeight = DHookCreate(iOffset, HookType_Raw, ReturnType_Float, ThisPointer_Address, GetDeathDropHeight);
+	if (g_hGetDeathDropHeight == null) SetFailState("Failed to create hook for ILocomotion::GetDeathDropHeight!");
 	
 	iOffset = GameConfGetOffset(hGameData, "ILocomotion::GetMaxAcceleration"); 
 	g_hGetAcceleration = DHookCreate(iOffset, HookType_Raw, ReturnType_Float, ThisPointer_Address, GetAcceleration);
@@ -1535,6 +1554,18 @@ public MRESReturn GetMaxJumpHeight(Address pThis, Handle hReturn)
 		return MRES_Ignored;
 	}
 	DHookSetReturn(hReturn, g_CBaseNPCflJumpHeight[Npc.Index]);
+	return MRES_Supercede;
+}
+
+public MRESReturn GetDeathDropHeight(Address pThis, Handle hReturn)
+{
+	NextBotGroundLocomotion NpcLocomotion = view_as<NextBotGroundLocomotion>(pThis);
+	CBaseNPC Npc = NPCGetFromLocomotion(NpcLocomotion);
+	if (Npc == INVALID_NPC)
+	{
+		return MRES_Ignored;
+	}
+	DHookSetReturn(hReturn, g_CBaseNPCflDeathDropHeight[Npc.Index]);
 	return MRES_Supercede;
 }
 
