@@ -1506,6 +1506,7 @@ public MRESReturn ClimbUpToLedge(Address pThis, Handle hReturn, Handle hParams)
 
 	NpcLocomotion.Jump();
 	NpcLocomotion.SetVelocity(vecJumpVel);
+	DHookSetReturn(hReturn, true);
 	return MRES_Supercede;
 }
 
