@@ -891,7 +891,7 @@ void SDK_Init()
 	if (g_hIsAbleToJump == null) SetFailState("Failed to create hook for ILocomotion::IsAbleToJumpAcrossGaps!");
 	
 	iOffset = GameConfGetOffset(hGameData, "ILocomotion::ClimbUpToLedge"); 
-	g_hClimbUpToLedge = DHookCreate(iOffset, HookType_Raw, ReturnType_Void, ThisPointer_Address, ClimbUpToLedge);
+	g_hClimbUpToLedge = DHookCreate(iOffset, HookType_Raw, ReturnType_Bool, ThisPointer_Address, ClimbUpToLedge);
 	if (g_hClimbUpToLedge == null) SetFailState("Failed to create hook for ILocomotion::ClimbUpToLedge!");
 	DHookAddParam(g_hClimbUpToLedge, HookParamType_VectorPtr);
 	DHookAddParam(g_hClimbUpToLedge, HookParamType_VectorPtr);
@@ -1453,7 +1453,7 @@ public void OnEntityDestroyed(int iEntity)
 	}
 }
 
-public MRESReturn ClimbUpToLedge(Address pThis, Handle hParams)
+public MRESReturn ClimbUpToLedge(Address pThis, Handle hReturn, Handle hParams)
 {
 	NextBotGroundLocomotion NpcLocomotion = view_as<NextBotGroundLocomotion>(pThis);
 	CBaseNPC Npc = NPCGetFromLocomotion(NpcLocomotion);
