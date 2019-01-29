@@ -3,51 +3,61 @@
 #include <sdkhooks>
 #include <dhooks>
 #include <cbasenpc>
+#include <cbasenpc/util>
 #include <profiler>
 
-#define NPC_TEST_MODEL		"models/player/sniper.mdl"
-#define NPC_TEST_ITEM		"models/player/items/sniper/sniper_zombie.mdl"
+#define NPC_TEST_MODEL		"models/player/medic.mdl"
+#define NPC_TEST_ITEM		"models/player/items/medic/medic_zombie.mdl"
 
-CBaseNPC g_ControlledNPC = INVALID_NPC;
-PathFollower pPath;
-int g_iSummoner;
-float flLastAttackTime;
+CBaseNPC g_ControlledNPC[MAXPLAYERS+1] = {INVALID_NPC, ...};
+PathFollower pPath[MAX_NPCS];
+int g_iSummoner[MAX_NPCS];
+
+float g_flLastAttackTime[MAX_NPCS];
 
 public void OnPluginStart()
 {
 	RegAdminCmd("spawn_test_npc", Command_SpawnNPC, ADMFLAG_CHEATS);
 	RegAdminCmd("teleport_test_npc", Command_TeleportNPC, ADMFLAG_CHEATS);
-	RegAdminCmd("set_goal_npc", Command_SetGoalNPC, ADMFLAG_CHEATS);//Change path to pathfollower if you use this command
-	RegAdminCmd("set_goal_npc_me", Command_SetGoalNPCMe, ADMFLAG_CHEATS);//Change path to pathfollower if you use this command
+	RegAdminCmd("set_goal_npc", Command_SetGoalNPC, ADMFLAG_CHEATS);
+	RegAdminCmd("set_goal_npc_me", Command_SetGoalNPCMe, ADMFLAG_CHEATS);
 	
-	pPath = PathFollower(_, Path_FilterIgnoreActors, Path_FilterOnlyActors);
+	for (int i = 0; i < MAX_NPCS; i++) pPath[i] = PathFollower(_, Path_FilterIgnoreActors, Path_FilterOnlyActors);
 }
 
 public void OnMapStart()
 {
 	PrecacheModel(NPC_TEST_MODEL);
 	PrecacheModel(NPC_TEST_ITEM);
-	flLastAttackTime = 0.0;
+}
+
+public void OnClientPutInServer(int iClient)
+{
+	g_ControlledNPC[iClient] = INVALID_NPC;
 }
 
 public void Hook_NPCThink(int iEnt)
 {
 	CBaseNPC npc = TheNPCs.FindNPCByEntIndex(iEnt);
-	int iClient = GetClientOfUserId(g_iSummoner);
+	int iClient = GetClientOfUserId(g_iSummoner[npc.Index]);
+	
 	if (npc != INVALID_NPC && 0 < iClient <= MaxClients && IsPlayerAlive(iClient))
 	{
-		float vecNPCPos[3], vecTargetPos[3];
+		float vecNPCPos[3], vecNPCAng[3], vecTargetPos[3];
 		INextBot bot = npc.GetBot();
 		NextBotGroundLocomotion loco = npc.GetLocomotion();
 		
 		bot.GetPosition(vecNPCPos);
+		GetEntPropVector(iEnt, Prop_Data, "m_angAbsRotation", vecNPCAng);
 		GetClientAbsOrigin(iClient, vecTargetPos);
 		
 		CBaseAnimatingOverlay animationEntity = CBaseAnimatingOverlay(iEnt);
 		
 		if (GetVectorDistance(vecNPCPos, vecTargetPos) > 100.0)
-			pPath.Update(bot);
-		else if (flLastAttackTime <= GetGameTime())
+		{
+			pPath[npc.Index].Update(bot);
+		}
+		else if (g_flLastAttackTime[npc.Index] <= GetGameTime())
 		{
 			int iSequence;
 			int iRandom = GetRandomInt(0,1);
@@ -57,7 +67,7 @@ public void Hook_NPCThink(int iEnt)
 				iSequence = animationEntity.LookupSequence("Melee_Swing");
 			
 			animationEntity.AddGestureSequence(iSequence);
-			flLastAttackTime = GetGameTime()+1.0;
+			g_flLastAttackTime[npc.Index] = GetGameTime()+1.0;
 			
 			loco.FaceTowards(vecTargetPos);
 			SlapPlayer(iClient, GetRandomInt(30,50), false);
@@ -76,6 +86,24 @@ public void Hook_NPCThink(int iEnt)
 		if (sequence_run == -1) sequence_run = animationEntity.LookupSequence("run_MELEE");
 		
 		Address pModelptr = animationEntity.GetModelPtr();
+		int iPitch = animationEntity.LookupPoseParameter(pModelptr, "body_pitch");
+		int iYaw = animationEntity.LookupPoseParameter(pModelptr, "body_yaw");
+		float vecDir[3], vecAng[3], vecNPCCenter[3], vecPlayerCenter[3];
+		animationEntity.WorldSpaceCenter(vecNPCCenter);
+		CBaseAnimating(iClient).WorldSpaceCenter(vecPlayerCenter);
+		SubtractVectors(vecNPCCenter, vecPlayerCenter, vecDir); 
+		NormalizeVector(vecDir, vecDir);
+		GetVectorAngles(vecDir, vecAng); 
+		
+		
+		float flPitch = animationEntity.GetPoseParameter(iPitch);
+		float flYaw = animationEntity.GetPoseParameter(iYaw);
+		
+		vecAng[0] = UTIL_Clamp(UTIL_AngleNormalize(vecAng[0]), -44.0, 89.0);
+		animationEntity.SetPoseParameter(pModelptr, iPitch, UTIL_ApproachAngle(vecAng[0], flPitch, 1.0));
+		vecAng[1] = UTIL_Clamp(-UTIL_AngleNormalize(UTIL_AngleDiff(UTIL_AngleNormalize(vecAng[1]), UTIL_AngleNormalize(vecNPCAng[1]+180.0))), -44.0,  44.0);
+		animationEntity.SetPoseParameter(pModelptr, iYaw, UTIL_ApproachAngle(vecAng[1], flYaw, 1.0));
+		
 		int iMoveX = animationEntity.LookupPoseParameter(pModelptr, "move_x");
 		int iMoveY = animationEntity.LookupPoseParameter(pModelptr, "move_y");
 		
@@ -121,9 +149,9 @@ public Action Command_SpawnNPC(int iClient, int iArgs)
 		return Plugin_Handled;
 	}
 	
-	if (g_ControlledNPC != INVALID_NPC && TheNPCs.IsValidNPC(g_ControlledNPC))
+	if (TheNPCs.IsValidNPC(g_ControlledNPC[iClient]))
 	{
-		ReplyToCommand(iClient, "You can't spawn more than one test npc.");
+		ReplyToCommand(iClient, "Only one test NPC per player!");
 		return Plugin_Handled;
 	}
 	
@@ -149,16 +177,20 @@ public Action Command_SpawnNPC(int iClient, int iArgs)
 	npc.flJumpHeight = 85.0;
 	npc.flWalkSpeed = 300.0;
 	npc.flRunSpeed = 300.0;
+	npc.flDeathDropHeight = 2000.0;
 
 	npc.iMaxHealth = 9999999;
 	npc.iHealth = 99999999;
-		
+	
 	npc.Run();
+	
 	CBaseAnimatingOverlay animationEntity = CBaseAnimatingOverlay(npc.GetEntity());
 	animationEntity.PlayAnimation("Stand_MELEE");
-	g_iSummoner = GetClientUserId(iClient);
 	
-	g_ControlledNPC = npc;
+	g_iSummoner[npc.Index] = GetClientUserId(iClient);
+	g_flLastAttackTime[npc.Index] = 0.0;
+	
+	g_ControlledNPC[iClient] = npc;
 	return Plugin_Handled;
 }
 
@@ -170,9 +202,9 @@ public Action Command_TeleportNPC(int iClient, int iArgs)
 		return Plugin_Handled;
 	}
 	
-	if (g_ControlledNPC == INVALID_NPC || !TheNPCs.IsValidNPC(g_ControlledNPC))
+	if (!TheNPCs.IsValidNPC(g_ControlledNPC[iClient]))
 	{
-		ReplyToCommand(iClient, "No valid test npc.");
+		ReplyToCommand(iClient, "No test NPC available!");
 		return Plugin_Handled;
 	}
 	
@@ -184,7 +216,7 @@ public Action Command_TeleportNPC(int iClient, int iArgs)
 	TR_GetEndPosition(endPos, hTrace);
 	delete hTrace;
 	
-	g_ControlledNPC.Teleport(endPos);
+	g_ControlledNPC[iClient].Teleport(endPos);
 	return Plugin_Handled;
 }
 
@@ -196,9 +228,9 @@ public Action Command_SetGoalNPC(int iClient, int iArgs)
 		return Plugin_Handled;
 	}
 	
-	if (g_ControlledNPC == INVALID_NPC || !TheNPCs.IsValidNPC(g_ControlledNPC))
+	if (!TheNPCs.IsValidNPC(g_ControlledNPC[iClient]))
 	{
-		ReplyToCommand(iClient, "No valid test npc.");
+		ReplyToCommand(iClient, "No test NPC available!");
 		return Plugin_Handled;
 	}
 	
@@ -212,16 +244,16 @@ public Action Command_SetGoalNPC(int iClient, int iArgs)
 	
 	Handle hProf = CreateProfiler();
 	StartProfiling(hProf);
-	PrintToChatAll("Path %x", view_as<int>(pPath));
+	PrintToChatAll("Path %x", view_as<int>(pPath[g_ControlledNPC[iClient].Index]));
 	endPos[2] += 10.0;
-	if (pPath.ComputeToPos(g_ControlledNPC.GetBot(), endPos, 9999999999.0))
+	if (pPath[g_ControlledNPC[iClient].Index].ComputeToPos(g_ControlledNPC[iClient].GetBot(), endPos, 9999999999.0))
 		PrintToChatAll("Path built!");
 	else
 		PrintToChatAll("Failed to build path!");
 	StopProfiling(hProf);
 	PrintToChatAll("Total build time: %f", GetProfilerTime(hProf));
 	delete hProf;
-	pPath.SetMinLookAheadDistance(300.0);
+	pPath[g_ControlledNPC[iClient].Index].SetMinLookAheadDistance(300.0);
 	return Plugin_Handled;
 }
 
@@ -233,23 +265,23 @@ public Action Command_SetGoalNPCMe(int iClient, int iArgs)
 		return Plugin_Handled;
 	}
 	
-	if (g_ControlledNPC == INVALID_NPC || !TheNPCs.IsValidNPC(g_ControlledNPC))
+	if (!TheNPCs.IsValidNPC(g_ControlledNPC[iClient]))
 	{
-		ReplyToCommand(iClient, "No valid test npc.");
+		ReplyToCommand(iClient, "No test NPC available!");
 		return Plugin_Handled;
 	}
 	
 	Handle hProf = CreateProfiler();
 	StartProfiling(hProf);
-	PrintToChatAll("Path %x", view_as<int>(pPath));
-	if (pPath.ComputeToTarget(g_ControlledNPC.GetBot(), iClient))
+	PrintToChatAll("Path %x", view_as<int>(pPath[g_ControlledNPC[iClient].Index]));
+	if (pPath[g_ControlledNPC[iClient].Index].ComputeToTarget(g_ControlledNPC[iClient].GetBot(), iClient))
 		PrintToChatAll("Path built!");
 	else
 		PrintToChatAll("Failed to build path!");
 	StopProfiling(hProf);
 	PrintToChatAll("Total build timer: %f", GetProfilerTime(hProf));
 	delete hProf;
-	pPath.SetMinLookAheadDistance(300.0);
+	pPath[g_ControlledNPC[iClient].Index].SetMinLookAheadDistance(300.0);
 	
 	return Plugin_Handled;
 }

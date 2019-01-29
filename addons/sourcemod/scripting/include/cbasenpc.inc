@@ -736,6 +736,8 @@ methodmap CBaseAnimating
 		}
 	}
 	
+	public native void WorldSpaceCenter(float vecCenter[3]);
+	
 	public native int LookupSequence(const char[] sName);
 	public native float SequenceDuration(Address pStudioHdr, int iSequence);
 	public native int SelectWeightedSequence(int iActivity);
@@ -751,7 +753,9 @@ methodmap CBaseAnimating
 	}
 	public native Address GetModelPtr();
 	public native int LookupPoseParameter(Address pStudioHdr, const char[] sParamName);
+	
 	public native void SetPoseParameter(Address pStudioHdr, int iPoseParam, float flNewValue);
+	public native float GetPoseParameter(int iPoseParam);
 }
 
 methodmap CBaseAnimatingOverlay < CBaseAnimating

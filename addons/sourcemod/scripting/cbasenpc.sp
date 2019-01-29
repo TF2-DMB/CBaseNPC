@@ -55,6 +55,7 @@ char g_CBaseNPCType[MAX_NPCS][64];
 
 //CBaseEntity
 Handle g_hSDKGetVectors;
+Handle g_hSDKWorldSpaceCenter;
 
 //CBaseCombatCharacter
 Handle g_hSDKUpdateLastKnownArea;
@@ -67,6 +68,7 @@ Handle g_hSDKSequenceDuration;
 Handle g_hSDKResetSequence;
 Handle g_hSDKLookupPoseParameter;
 Handle g_hSDKSetPoseParameter;
+Handle g_hSDKGetPoseParameter;
 Handle g_hSDKStudioFrameAdvance;
 Handle g_hSDKDispatchAnimEvents;
 
@@ -173,6 +175,7 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 	CreateNative("CNPCs.FindNPCByEntIndex", Native_CNPCsFindNPCByEntIndex);
 	CreateNative("CNPCs.IsValidNPC", Native_CNPCsIsValidNPC);
 	
+	CreateNative("CBaseAnimating.WorldSpaceCenter", Native_CBaseAnimatingWorldSpaceCenter);
 	CreateNative("CBaseAnimating.LookupSequence", Native_CBaseAnimatingLookupSequence);
 	CreateNative("CBaseAnimating.SelectWeightedSequence", Native_CBaseAnimatingSelectWeightedSequence);
 	CreateNative("CBaseAnimating.SequenceDuration", Native_CBaseAnimatingSequenceDuration);
@@ -180,6 +183,7 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 	CreateNative("CBaseAnimating.GetModelPtr", Native_CBaseAnimatingGetModelPtr);
 	CreateNative("CBaseAnimating.LookupPoseParameter", Native_CBaseAnimatingLookupPoseParameter);
 	CreateNative("CBaseAnimating.SetPoseParameter", Native_CBaseAnimatingSetPoseParameter);
+	CreateNative("CBaseAnimating.GetPoseParameter", Native_CBaseAnimatingGetPoseParameter);
 	
 	CreateNative("CBaseAnimatingOverlay.AddGestureSequence", Native_CBaseAnimatingOverlayAddGestureSequence);
 	return APLRes_Success;
@@ -760,7 +764,15 @@ public int Native_CNPCsIsValidNPC(Handle plugin, int numParams)
 	return true;
 }
 
-
+public int Native_CBaseAnimatingWorldSpaceCenter(Handle plugin, int numParams)
+{
+	if (g_hSDKWorldSpaceCenter != INVALID_HANDLE)
+	{
+		float vecCenter[3];
+		SDKCall(g_hSDKWorldSpaceCenter, GetNativeCell(1), vecCenter);
+		SetNativeArray(2, vecCenter, sizeof(vecCenter));
+	}
+}
 
 public int Native_CBaseAnimatingLookupSequence(Handle plugin, int numParams)
 {
@@ -813,6 +825,15 @@ public int Native_CBaseAnimatingLookupPoseParameter(Handle plugin, int numParams
 		return SDKCall(g_hSDKLookupPoseParameter, GetNativeCell(1), GetNativeCell(2), sParamName);
 	}
 	return -1;
+}
+
+public int Native_CBaseAnimatingGetPoseParameter(Handle plugin, int numParams)
+{
+	if (g_hSDKGetPoseParameter != INVALID_HANDLE)
+	{
+		return SDKCall(g_hSDKGetPoseParameter, GetNativeCell(1), view_as<float>(GetNativeCell(2)));
+	}
+	return view_as<int>(0.0);
 }
 
 public int Native_CBaseAnimatingSetPoseParameter(Handle plugin, int numParams)
@@ -1006,6 +1027,13 @@ void SDK_Init()
 	g_hSDKSetPoseParameter = EndPrepSDKCall();
 	if (g_hSDKSetPoseParameter == INVALID_HANDLE) PrintToServer("Failed to retrieve CBaseAnimating::SetPoseParameter signature!");
 	
+	StartPrepSDKCall(SDKCall_Entity);
+	PrepSDKCall_SetFromConf(hGameData, SDKConf_Signature, "CBaseAnimating::GetPoseParameter");
+	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);
+	PrepSDKCall_SetReturnInfo(SDKType_Float, SDKPass_Plain);
+	g_hSDKGetPoseParameter = EndPrepSDKCall();
+	if (g_hSDKGetPoseParameter == INVALID_HANDLE) PrintToServer("Failed to retrieve CBaseAnimating::GetPoseParameter signature!");
+	
 	g_ipStudioHdrOffset = GameConfGetOffset(hGameData, "CBaseAnimating::m_pStudioHdr");
 	
 	StartPrepSDKCall(SDKCall_Entity);
@@ -1032,6 +1060,12 @@ void SDK_Init()
 	PrepSDKCall_AddParameter(SDKType_Vector, SDKPass_ByRef, _, VENCODE_FLAG_COPYBACK);
 	PrepSDKCall_AddParameter(SDKType_Vector, SDKPass_ByRef, _, VENCODE_FLAG_COPYBACK);
 	if((g_hSDKGetVectors = EndPrepSDKCall()) == INVALID_HANDLE) SetFailState("Failed to create Virtual Call for CBaseEntity::GetVectors!");
+	
+	StartPrepSDKCall(SDKCall_Entity);
+	PrepSDKCall_SetFromConf(hGameData, SDKConf_Virtual, "CBaseEntity::WorldSpaceCenter");
+	PrepSDKCall_SetReturnInfo(SDKType_Vector, SDKPass_ByRef);
+	g_hSDKWorldSpaceCenter = EndPrepSDKCall();
+	if (g_hSDKWorldSpaceCenter == INVALID_HANDLE) SetFailState("Failed to retrieve CBaseEntity::WorldSpaceCenter signature!");
 }
 
 stock void SDK_UpdateLastKnownArea(int iEntity)
@@ -1078,7 +1112,8 @@ stock void SDK_GetVectors(int iEntity, float vecForward[3], float vecRight[3], f
 //Detours
 public Action NextBotGroundLocomotion_UpdatePosition(NextBotGroundLocomotion mover, float vecFromPos[3], float vecToPos[3], float vecAdjustedPos[3], float vecEditedPos[3])
 {
-	if (vecFromPos[0] == vecToPos[0] && vecFromPos[1] == vecToPos[1] && vecFromPos[2] == vecToPos[2]) //Nothing happened
+	return Plugin_Continue;
+	/*if (vecFromPos[0] == vecToPos[0] && vecFromPos[1] == vecToPos[1] && vecFromPos[2] == vecToPos[2]) //Nothing happened
 		return Plugin_Continue;
 		
 	CBaseNPC Npc = NPCGetFromLocomotion(mover);
@@ -1134,7 +1169,7 @@ public Action NextBotGroundLocomotion_UpdatePosition(NextBotGroundLocomotion mov
 		}
 	}
 	return Plugin_Continue;
-	
+	*/
 	/*
 	int iEntity = EntRefToEntIndex(g_CBaseNPCEntityRef[Npc.Index]);
 	if (iEntity <= MaxClients)
