@@ -28,9 +28,8 @@ const CBaseNPC INVALID_NPC = view_as<CBaseNPC>(-1);
 const CNavArea NULL_AREA = view_as<CNavArea>(0);
 const CNavLadder NULL_LADDER_AREA = view_as<CNavLadder>(0);
 
-native INextBot CBaseNPC_GetNextBotOfEntity(int entity);
-//To-do: Expose getcurrencyvalue vtable offset through a native so that sub plugin can hook the death of their npcs
-//native int CBaseNPC_iOffGetCurrencyValue();
+native INextBot CBaseNPC_GetNextBotOfEntity(int iEntity);
+native void CBaseNPC_HookEventKilled(int iEntity);
 
 enum
 {
@@ -903,6 +902,7 @@ public bool Path_FilterOnlyActors(int entity, int contentsMask, int desiredcolli
 }
 
 forward Action CBaseEntity_SetLocalAngles(int iEntity, float vecNewAngles[3]);
+forward Action CBaseCombatCharacter_EventKilled(int iEntity, int &iAttacker, int &iInflictor, float &flDamage, int &iDamagetype, int &iWeapon, float vecDamageForce[3], float vecDamagePosition[3], int iDamagecustom);
 
 enum
 {

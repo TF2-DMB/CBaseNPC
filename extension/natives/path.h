@@ -329,8 +329,6 @@ cell_t PathFollower_PathFollower(IPluginContext *pContext, const cell_t *params)
 	IPluginFunction *pTraceFilter = pContext->GetFunctionById(params[2]);
 	IPluginFunction *pTraceFilter2 = pContext->GetFunctionById(params[3]);
 	
-	//g_pSM->LogMessage(myself, "Got function: 0x%08x Got function: 0x%08x Got function: 0x%08x", pCostCallback, pTraceFilter, pTraceFilter2);
-	
 	pNewPath->pCostFunction = pCostCallback;
 	pNewPath->pTraceFilterIgnoreActors = pTraceFilter;
 	pNewPath->pTraceFilterOnlyActors = pTraceFilter2;

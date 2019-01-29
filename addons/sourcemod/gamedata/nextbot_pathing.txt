@@ -10,6 +10,11 @@
 				"linux"		"73"
 				"mac"		"73"
 			}
+			"CBaseCombatCharacter::EventKilled"
+			{
+				"windows"	"66"
+				"linux"		"67"
+			}
 			"CBaseCombatCharacter::GetLastKnownArea"
 			{
 				"linux"		"316"

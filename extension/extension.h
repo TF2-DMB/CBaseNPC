@@ -5,7 +5,9 @@
 #include <IBinTools.h>
 #include <IEngineTrace.h>
 #include <convar.h>
+#include <utlmap.h>
 #include "helpers.h"
+#include <ISDKHooks.h>
 
 extern CGlobalVars *gpGlobals;
 extern IBinTools *g_pBinTools;
@@ -32,7 +34,7 @@ extern HandleType_t g_KeyValueType;
 extern ConVar NextBotPathDrawIncrement;
 extern ConVar NextBotPathSegmentInfluenceRadius;
 
-class CBaseNPCExt : public SDKExtension, public IPluginsListener
+class CBaseNPCExt : public SDKExtension, public ISMEntityListener
 {
 	public: // SDKExtension
 		virtual bool SDK_OnLoad(char *error, size_t maxlength, bool late);
@@ -43,6 +45,8 @@ class CBaseNPCExt : public SDKExtension, public IPluginsListener
 		virtual bool QueryInterfaceDrop(SMInterface *pInterface);
 		virtual void NotifyInterfaceDrop(SMInterface *pInterface);
 		virtual void OnCoreMapStart(edict_t *pEdictList, int edictCount, int clientMax);
+	public: // ISMEntityListener
+		virtual void OnEntityDestroyed(CBaseEntity *pEntity);
 	public:
 		#if defined SMEXT_CONF_METAMOD
 			virtual bool SDK_OnMetamodLoad(ISmmAPI *ismm, char *error, size_t maxlength, bool late);

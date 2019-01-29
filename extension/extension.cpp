@@ -27,6 +27,7 @@ SMEXT_LINK(&g_CBaseNPCExt);
 
 
 IForward *g_pForwardSetLocalAngles = NULL;
+IForward *g_pForwardEventKilled = NULL;
 
 CDetour *g_pSetLocalAngles = NULL;
 
@@ -34,16 +35,11 @@ CNavArea * (CNavMesh:: *CNavMesh::func_GetNearestNavArea)(const Vector &pos, boo
 bool (CNavMesh:: *CNavMesh::func_GetGroundHeight)(const Vector &pos, float *height, Vector *normal) = nullptr;
 bool (CTraceFilterSimpleHack:: *CTraceFilterSimpleHack::func_ShouldHitEntity)(IHandleEntity *pHandleEntity, int contentsMask) = nullptr;
 
-float k_flMaxEntityEulerAngle = 360.0 * 1000.0f;
-
-inline bool IsEntityQAngleReasonable(const QAngle &q)
+bool UTILMapLessFunc(const int32_t &in1, const int32_t &in2)
 {
-	float r = k_flMaxEntityEulerAngle;
-	return
-		q.x > -r && q.x < r &&
-		q.y > -r && q.y < r &&
-		q.z > -r && q.z < r;
+	return (in1 < in2);
 }
+CUtlMap<int32_t, int32_t> g_EntitiesHooks(UTILMapLessFunc);
 
 DETOUR_DECL_MEMBER1(CBaseEntity_SetLocalAngles, void, QAngle&, angles)
 {
@@ -115,8 +111,13 @@ bool CBaseNPCExt::SDK_OnLoad(char *error, size_t maxlength, bool late)
 	}
 
 	g_pForwardSetLocalAngles = forwards->CreateForward("CBaseEntity_SetLocalAngles", ET_Event, 2, NULL, Param_Cell, Param_Array);
+	g_pForwardEventKilled = forwards->CreateForward("CBaseCombatCharacter_EventKilled", ET_Event, 9, NULL, Param_Cell, Param_CellByRef, Param_CellByRef, Param_FloatByRef, Param_CellByRef, Param_CellByRef, Param_Array, Param_Array, Param_Cell);
+	
 	GETGAMEDATAOFFSET("CBaseCombatCharacter::GetLastKnownArea", g_iLastKnownAreaOffset);
 	GETGAMEDATAOFFSET("CBaseEntity::MyNextBotPointer", g_iMyNextBotPointerOffset);
+	int iOffset = 0;
+	GETGAMEDATAOFFSET("CBaseCombatCharacter::EventKilled", iOffset);
+	SH_MANUALHOOK_RECONFIGURE(MEvent_Killed, iOffset, 0, 0);
 
 	sharesys->AddDependency(myself, "bintools.ext", true, true);
 	sharesys->AddNatives(myself, g_NativesInfo);
@@ -175,10 +176,26 @@ void CBaseNPCExt::SDK_OnUnload()
 	gameconfs->CloseGameConfigFile(g_pGameConf);
 
 	forwards->ReleaseForward(g_pForwardSetLocalAngles);
+	forwards->ReleaseForward(g_pForwardEventKilled);
 
 	if (g_pSetLocalAngles != NULL) g_pSetLocalAngles->Destroy();
 	
 	gameconfs->CloseGameConfigFile(g_pGameConf);
+	
+	FOR_EACH_MAP_FAST(g_EntitiesHooks, iHookID)
+		SH_REMOVE_HOOK_ID(iHookID);
+}
+
+void CBaseNPCExt::OnEntityDestroyed(CBaseEntity *pEntity)
+{
+	if (!pEntity) return;
+
+	auto iIndex = g_EntitiesHooks.Find(gamehelpers->EntityToReference(pEntity));
+	if (g_EntitiesHooks.IsValidIndex(iIndex))
+	{
+		int iHookID = g_EntitiesHooks.Element(iIndex);
+		SH_REMOVE_HOOK_ID(iHookID);
+	}
 }
 
 //Fix external stuff error
