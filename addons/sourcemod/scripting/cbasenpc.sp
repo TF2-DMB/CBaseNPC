@@ -1499,6 +1499,7 @@ public MRESReturn ClimbUpToLedge(Address pThis, Handle hReturn, Handle hParams)
 	INextBot bot = NpcLocomotion.GetBot();
 	float vecMyPos[3], vecJumpPos[3];
 	bot.GetPosition(vecMyPos);
+	vecMyPos[2] += NpcLocomotion.GetStepHeight();
 	DHookGetParamVector(hParams, 1, vecJumpPos);
 	
 	float vecJumpVel[3];
@@ -1539,8 +1540,9 @@ public MRESReturn ClimbUpToLedge(Address pThis, Handle hReturn, Handle hParams)
 		vecJumpVel[2] *= flMaxSpeed / flJumpSpeed;
 	}
 
-	NpcLocomotion.Jump();
+	bot.SetPosition(vecMyPos);
 	NpcLocomotion.SetVelocity(vecJumpVel);
+	
 	DHookSetReturn(hReturn, true);
 	return MRES_Supercede;
 }
