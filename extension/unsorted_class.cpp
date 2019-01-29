@@ -14,7 +14,7 @@ CTraceFilterSimpleHack::CTraceFilterSimpleHack( const IHandleEntity *passedict, 
 bool CTraceFilterSimpleHack::ShouldHitEntity( IHandleEntity *pHandleEntity, int contentsMask )
 {
 	bool bResult = (this->*func_ShouldHitEntity)(pHandleEntity, contentsMask);
-	if	(bResult)
+	if (bResult)
 	{
 		if (m_pFunc)
 		{
@@ -23,6 +23,7 @@ bool CTraceFilterSimpleHack::ShouldHitEntity( IHandleEntity *pHandleEntity, int 
 			m_pFunc->PushCell(contentsMask);
 			m_pFunc->PushCell(m_collisionGroup);
 			m_pFunc->Execute(&action);
+			
 			return (action) ? true : false;
 		}
 		return bResult;

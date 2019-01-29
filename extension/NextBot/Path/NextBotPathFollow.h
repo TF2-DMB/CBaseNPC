@@ -45,6 +45,11 @@ public:
 		: CTraceFilterSimpleHack( passentity, collisionGroup )
 	{
 	}
+	
+	virtual TraceType_t	GetTraceType() const
+	{
+		return TRACE_ENTITIES_ONLY;
+	}
 };
 //--------------------------------------------------------------------------------------------------------
 /**

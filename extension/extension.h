@@ -15,16 +15,6 @@ extern int g_iLastKnownAreaOffset;
 extern IdentityType_t g_CoreIdent;
 extern IGameConfig *g_pGameConf;
 extern IEngineTrace *enginetrace;
-class Path;
-class PathFunctions
-{
-public:
-	Path*				pPath;
-	IPluginFunction*	pCostFunction;
-	IPluginFunction*	pTraceFilterIgnoreActors;
-	IPluginFunction*	pTraceFilterOnlyActors;
-};
-extern CUtlVector<PathFunctions> g_PathFunctions;
 
 extern IForward *g_pForwardPathCost;
 
@@ -53,8 +43,6 @@ class CBaseNPCExt : public SDKExtension, public IPluginsListener
 		virtual bool QueryInterfaceDrop(SMInterface *pInterface);
 		virtual void NotifyInterfaceDrop(SMInterface *pInterface);
 		virtual void OnCoreMapStart(edict_t *pEdictList, int edictCount, int clientMax);
-	public: // IPluginsListener
-		void OnPluginUnloaded(IPlugin *plugin);
 	public:
 		#if defined SMEXT_CONF_METAMOD
 			virtual bool SDK_OnMetamodLoad(ISmmAPI *ismm, char *error, size_t maxlength, bool late);

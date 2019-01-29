@@ -729,6 +729,10 @@ private:
 	AdjInfo m_adjAreaVector[ MAX_ADJ_AREAS ];
 	int m_adjAreaIndex;
 
+public:
+	IPluginFunction*	pCostFunction;
+	IPluginFunction*	pTraceFilterIgnoreActors;
+	IPluginFunction*	pTraceFilterOnlyActors;
 };
 
 

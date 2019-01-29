@@ -100,6 +100,7 @@ Handle g_hGetWalkSpeed;
 Handle g_hGetRunSpeed;
 Handle g_hGetGravity;
 Handle g_hShouldCollide;
+Handle g_hIsEntityTraversable;
 Handle g_hGetFrictionForward;
 Handle g_hGetFrictionSideways;
 
@@ -298,6 +299,7 @@ public int Native_CBaseNPCConstructor(Handle plugin, int numParams)
 		g_CBaseNPCHooks[iIndex].Push(DHookRaw(g_hGetRunSpeed, false, view_as<Address>(g_CBaseNPCLocomotionInterface[iIndex])));
 		g_CBaseNPCHooks[iIndex].Push(DHookRaw(g_hGetGravity, false, view_as<Address>(g_CBaseNPCLocomotionInterface[iIndex])));
 		g_CBaseNPCHooks[iIndex].Push(DHookRaw(g_hShouldCollide, true, view_as<Address>(g_CBaseNPCLocomotionInterface[iIndex])));
+		g_CBaseNPCHooks[iIndex].Push(DHookRaw(g_hIsEntityTraversable, false, view_as<Address>(g_CBaseNPCLocomotionInterface[iIndex])));
 		g_CBaseNPCHooks[iIndex].Push(DHookRaw(g_hGetFrictionForward, false, view_as<Address>(g_CBaseNPCLocomotionInterface[iIndex])));
 		g_CBaseNPCHooks[iIndex].Push(DHookRaw(g_hGetFrictionSideways, false, view_as<Address>(g_CBaseNPCLocomotionInterface[iIndex])));
 		// IBody detours
@@ -946,7 +948,13 @@ void SDK_Init()
 	g_hShouldCollide = DHookCreate(iOffset, HookType_Raw, ReturnType_Bool, ThisPointer_Address, ShouldCollideWith);
 	if (g_hShouldCollide == null) SetFailState("Failed to create hook for ILocomotion::ShouldCollideWith!");
 	DHookAddParam(g_hShouldCollide, HookParamType_CBaseEntity);
-
+	
+	iOffset = GameConfGetOffset(hGameData, "ILocomotion::IsEntityTraversable");
+	g_hIsEntityTraversable = DHookCreate(iOffset, HookType_Raw, ReturnType_Bool, ThisPointer_Address, IsEntityTraversable);
+	if (g_hIsEntityTraversable == null) SetFailState("Failed to create hook for ILocomotion::IsEntityTraversable!");
+	DHookAddParam(g_hIsEntityTraversable, HookParamType_CBaseEntity);
+	DHookAddParam(g_hIsEntityTraversable, HookParamType_Int);
+	
 	iOffset = GameConfGetOffset(hGameData, "IBody::StartActivity");
 	g_hStartActivity = DHookCreate(iOffset, HookType_Raw, ReturnType_Bool, ThisPointer_Address, StartActivity);
 	if (g_hStartActivity == null) SetFailState("Failed to create hook for IBody::StartActivity!");
@@ -1647,6 +1655,22 @@ public MRESReturn ShouldCollideWith(Address pThis, Handle hReturn, Handle hParam
 	return MRES_Ignored;*/
 	DHookSetReturn(hReturn, false);
 	return MRES_Supercede;
+}
+
+public MRESReturn IsEntityTraversable(Address pThis, Handle hReturn, Handle hParams)
+{
+	int iEntity = DHookGetParam(hParams, 1);
+	if (IsValidEntity(iEntity))
+	{
+		char strClass[32];
+		GetEdictClassname(iEntity, strClass, sizeof(strClass));
+		if (strcmp(strClass, "tf_zombie") == 0 || strcmp(strClass, "base_boss") == 0 || strcmp(strClass, "tf_ammo_pack") == 0 || strcmp(strClass, "tf_dropped_weapon") == 0 )
+		{
+			DHookSetReturn(hReturn, true);
+			return MRES_Supercede;
+		}
+	}
+	return MRES_Ignored;
 }
 
 public MRESReturn GetFrictionForward(Address pThis, Handle hReturn)

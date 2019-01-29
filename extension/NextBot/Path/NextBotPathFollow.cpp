@@ -796,14 +796,8 @@ CBaseEntity *PathFollower::FindBlocker( INextBot *bot )
 
 	trace_t result;
 	NextBotTraceFilterOnlyActors filter( bot->GetEntity(), COLLISION_GROUP_NONE );
-	for (int i = 0; i < g_PathFunctions.Count(); i++)
-	{
-		if (g_PathFunctions[i].pPath == (Path *)this)
-		{
-			filter.SetFunctionPtr(g_PathFunctions[i].pTraceFilterOnlyActors);
-			break;
-		}
-	}
+	filter.SetFunctionPtr(this->pTraceFilterOnlyActors);
+	
 	const float size = body->GetHullWidth()/4.0f;	// keep this small to avoid lockups when groups of bots get close
 	Vector blockerMins( -size, -size, mover->GetStepHeight() );
 	Vector blockerMaxs( size, size, body->GetCrouchHullHeight() );
@@ -922,14 +916,8 @@ Vector PathFollower::Avoid( INextBot *bot, const Vector &goalPos, const Vector &
 	// we want to avoid other players, etc	
 	trace_t result;
 	NextBotTraceFilterOnlyActors filter(bot->GetEntity(), COLLISION_GROUP_NONE );
-	for (int i = 0; i < g_PathFunctions.Count(); i++)
-	{
-		if (g_PathFunctions[i].pPath == (Path *)this)
-		{
-			filter.SetFunctionPtr(g_PathFunctions[i].pTraceFilterOnlyActors);
-			break;
-		}
-	}
+	filter.SetFunctionPtr(this->pTraceFilterOnlyActors);
+
 	IBody *body = bot->GetBodyInterface();
 	unsigned int mask = body->GetSolidMask();
 

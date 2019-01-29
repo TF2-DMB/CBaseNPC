@@ -104,15 +104,9 @@ bool Path::ComputePathDetails( INextBot *bot, const Vector &start )
 					Vector lowerPos = Vector( pos.x, pos.y, toPos.z );
 					
 					NextBotTraceFilterIgnoreActors filter(bot->GetEntity(), COLLISION_GROUP_NONE);
+					filter.SetFunctionPtr(this->pTraceFilterIgnoreActors);
 					Ray_t ray;
-					for (int i = 0; i < g_PathFunctions.Count(); i++)
-					{
-						if (g_PathFunctions[i].pPath == this)
-						{
-							filter.SetFunctionPtr(g_PathFunctions[i].pTraceFilterIgnoreActors);
-							break;
-						}
-					}
+					
 					ray.Init(pos, lowerPos, Vector( -halfWidth, -halfWidth, stepHeight ), Vector( halfWidth, halfWidth, hullHeight ));
 					trace_t *tr = new trace_t;
 					enginetrace->TraceRay(ray, bot->GetBodyInterface()->GetSolidMask(), &filter, tr);

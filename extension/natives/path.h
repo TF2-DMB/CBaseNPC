@@ -7,8 +7,6 @@
 #include "NextBotPathFollow.h"
 #include "NextBotChasePath.h"
 
-extern CUtlVector<PathFunctions> g_PathFunctions;
-
 class SMPathCost : public IPathCost
 {
 public:
@@ -123,13 +121,10 @@ cell_t Path_Path(IPluginContext *pContext, const cell_t *params)
 	IPluginFunction *pTraceFilter = pContext->GetFunctionById(params[2]);
 	IPluginFunction *pTraceFilter2 = pContext->GetFunctionById(params[3]);
 
-	PathFunctions hook;
-	hook.pCostFunction = pCostCallback;
-	hook.pTraceFilterIgnoreActors = pTraceFilter;
-	hook.pTraceFilterOnlyActors = pTraceFilter2;
-	hook.pPath = pNewPath;
-
-	g_PathFunctions.AddToTail(hook);
+	pNewPath->pCostFunction = pCostCallback;
+	pNewPath->pTraceFilterIgnoreActors = pTraceFilter;
+	pNewPath->pTraceFilterOnlyActors = pTraceFilter2;
+	
 	return (cell_t)pNewPath;
 }
 
@@ -307,16 +302,7 @@ PATHNATIVE(ComputeToPos)
 	Vector vecGoal;
 	PawnVectorToVector(vec, vecGoal);
 	
-	IPluginFunction *pFunc;
-	for (int i = 0; i < g_PathFunctions.Count(); i++)
-	{
-		if (g_PathFunctions[i].pPath == (Path *)pPath)
-		{
-			pFunc = g_PathFunctions[i].pCostFunction;
-			break;
-		}
-	}
-	SMPathCost pCostFunc(pBot, pFunc);
+	SMPathCost pCostFunc(pBot, pPath->pCostFunction);
 	
 	return pPath->Compute(pBot, vecGoal, pCostFunc, sp_ctof(params[4]), (params[5]) ? true : false);
 }
@@ -326,29 +312,12 @@ PATHNATIVE(ComputeToTarget)
 	CBaseEntity *pTarget;
 	ENTINDEX_TO_CBASEENTITY(params[3], pTarget);
 
-	IPluginFunction *pFunc;
-	for (int i = 0; i < g_PathFunctions.Count(); i++)
-	{
-		if (g_PathFunctions[i].pPath == (Path *)pPath)
-		{
-			pFunc = g_PathFunctions[i].pCostFunction;
-			break;
-		}
-	}
-	SMPathCost pCostFunc(pBot, pFunc);
+	SMPathCost pCostFunc(pBot, pPath->pCostFunction);
 	
 	return pPath->Compute(pBot, (CBaseCombatCharacter *)pTarget, pCostFunc, sp_ctof(params[4]), (params[5]) ? true : false);
 }
 
 PATHNATIVE(Destroy)
-	for (int i = 0; i < g_PathFunctions.Count(); i++)
-	{
-		if (g_PathFunctions[i].pPath == pPath)
-		{
-			g_PathFunctions.Remove(i);
-			break;
-		}
-	}
 	delete pPath;
 	return 1;
 }
@@ -360,13 +329,12 @@ cell_t PathFollower_PathFollower(IPluginContext *pContext, const cell_t *params)
 	IPluginFunction *pTraceFilter = pContext->GetFunctionById(params[2]);
 	IPluginFunction *pTraceFilter2 = pContext->GetFunctionById(params[3]);
 	
-	PathFunctions hook;
-	hook.pCostFunction = pCostCallback;
-	hook.pTraceFilterIgnoreActors = pTraceFilter;
-	hook.pTraceFilterOnlyActors = pTraceFilter2;
-	hook.pPath = pNewPath;
+	//g_pSM->LogMessage(myself, "Got function: 0x%08x Got function: 0x%08x Got function: 0x%08x", pCostCallback, pTraceFilter, pTraceFilter2);
 	
-	g_PathFunctions.AddToTail(hook);
+	pNewPath->pCostFunction = pCostCallback;
+	pNewPath->pTraceFilterIgnoreActors = pTraceFilter;
+	pNewPath->pTraceFilterOnlyActors = pTraceFilter2;
+	
 	return (cell_t)pNewPath;
 }
 
@@ -404,14 +372,6 @@ PATHFOLLOWNATIVE(SetGoalTolerance)
 }
 
 PATHFOLLOWNATIVE(Destroy)
-	for (int i = 0; i < g_PathFunctions.Count(); i++)
-	{
-		if (g_PathFunctions[i].pPath == (Path *)pPathFollow)
-		{
-			g_PathFunctions.Remove(i);
-			break;
-		}
-	}
 	delete pPathFollow;
 	return 1;
 }
@@ -425,13 +385,10 @@ cell_t ChasePath_ChasePath(IPluginContext *pContext, const cell_t *params)
 	IPluginFunction *pTraceFilter = pContext->GetFunctionById(params[3]);
 	IPluginFunction *pTraceFilter2 = pContext->GetFunctionById(params[4]);
 	
-	PathFunctions hook;
-	hook.pCostFunction = pCostCallback;
-	hook.pTraceFilterIgnoreActors = pTraceFilter;
-	hook.pTraceFilterOnlyActors = pTraceFilter2;
-	hook.pPath = pNewPath;
+	pNewPath->pCostFunction = pCostCallback;
+	pNewPath->pTraceFilterIgnoreActors = pTraceFilter;
+	pNewPath->pTraceFilterOnlyActors = pTraceFilter2;
 	
-	g_PathFunctions.AddToTail(hook);
 	return (cell_t)pNewPath;
 }
 
@@ -441,16 +398,7 @@ CHASEPATHNATIVE(Update)
 	CBaseEntity *pTarget;
 	ENTINDEX_TO_CBASEENTITY(params[3], pTarget);
 
-	IPluginFunction *pFunc;
-	for (int i = 0; i < g_PathFunctions.Count(); i++)
-	{
-		if (g_PathFunctions[i].pPath == (Path *)pChasePath)
-		{
-			pFunc = g_PathFunctions[i].pCostFunction;
-			break;
-		}
-	}
-	SMPathCost pCostFunc(pBot, pFunc);
+	SMPathCost pCostFunc(pBot, pChasePath->pCostFunction);
 	
 	cell_t *predictPos;
 	pContext->LocalToPhysAddr(params[4], &predictPos);
@@ -506,14 +454,6 @@ CHASEPATHNATIVE(GetLifetime)
 }
 
 CHASEPATHNATIVE(Destroy)
-	for (int i = 0; i < g_PathFunctions.Count(); i++)
-	{
-		if (g_PathFunctions[i].pPath == (Path *)pChasePath)
-		{
-			g_PathFunctions.Remove(i);
-			break;
-		}
-	}
 	delete pChasePath;
 	return 1;
 }
@@ -527,25 +467,14 @@ cell_t DirectChasePath_DirectChasePath(IPluginContext *pContext, const cell_t *p
 	IPluginFunction *pTraceFilter = pContext->GetFunctionById(params[3]);
 	IPluginFunction *pTraceFilter2 = pContext->GetFunctionById(params[4]);
 	
-	PathFunctions hook;
-	hook.pCostFunction = pCostCallback;
-	hook.pTraceFilterIgnoreActors = pTraceFilter;
-	hook.pTraceFilterOnlyActors = pTraceFilter2;
-	hook.pPath = pNewPath;
+	pNewPath->pCostFunction = pCostCallback;
+	pNewPath->pTraceFilterIgnoreActors = pTraceFilter;
+	pNewPath->pTraceFilterOnlyActors = pTraceFilter2;
 	
-	g_PathFunctions.AddToTail(hook);
 	return (cell_t)pNewPath;
 }
 
 DIRECTCHASEPATHNATIVE(Destroy)
-	for (int i = 0; i < g_PathFunctions.Count(); i++)
-	{
-		if (g_PathFunctions[i].pPath == (DirectChasePath *)pChasePath)
-		{
-			g_PathFunctions.Remove(i);
-			break;
-		}
-	}
 	delete pChasePath;
 	return 1;
 }

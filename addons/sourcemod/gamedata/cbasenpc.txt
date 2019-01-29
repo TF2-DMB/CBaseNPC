@@ -134,6 +134,11 @@
 				"linux"		"85"
 				"windows"	"84"
 			}
+			"ILocomotion::IsEntityTraversable"
+			{
+				"linux"		"95"
+				"windows"	"94"
+			}
 			"ILocomotion::IsStuck"
 			{
 				"linux"		"96"

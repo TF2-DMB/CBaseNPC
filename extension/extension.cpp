@@ -11,7 +11,6 @@ IBinTools *g_pBinTools = nullptr;
 IServerGameEnts *gameents = nullptr;
 IEngineTrace *enginetrace = nullptr;
 IdentityType_t g_CoreIdent;
-CUtlVector<PathFunctions> g_PathFunctions;
 CBaseEntityList *g_pEntityList = nullptr;
 
 ConVar NextBotPathDrawIncrement("cnb_path_draw_inc", "0", 0, "");                     
@@ -133,20 +132,6 @@ bool CBaseNPCExt::SDK_OnMetamodLoad(ISmmAPI *ismm, char *error, size_t maxlen, b
 	
 	gpGlobals = ismm->GetCGlobals();
 	return true;
-}
-
-void CBaseNPCExt::OnPluginUnloaded(IPlugin *plugin)
-{
-	IPluginContext *pCtx = plugin->GetBaseContext();
-	for (int i = 0; i < g_PathFunctions.Count(); i++)
-	{
-		if (g_PathFunctions[i].pCostFunction->GetParentContext() == pCtx)
-		{
-			delete g_PathFunctions[i].pPath;
-			g_PathFunctions.Remove(i);
-			i--;
-		}
-	}
 }
 
 void CBaseNPCExt::OnCoreMapStart(edict_t *pEdictList, int edictCount, int clientMax)

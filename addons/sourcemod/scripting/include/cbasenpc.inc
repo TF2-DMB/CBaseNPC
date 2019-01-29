@@ -649,9 +649,7 @@ methodmap CNPCs __nullable__
 	//To-Do: add npcs relationships?
 }
 
-#if !defined CBASENPC_CORE
 CNPCs TheNPCs;
-#endif
 
 // Gesture code
 
@@ -901,7 +899,7 @@ public bool Path_FilterIgnoreActors(int entity, int contentsMask, int desiredcol
 
 public bool Path_FilterOnlyActors(int entity, int contentsMask, int desiredcollisiongroup)
 {
-	return ((0 < entity <= MaxClients) || (view_as<Address>(CBaseNPC_GetNextBotOfEntity(entity)) != Address_Null));
+	return ((0 < entity <= MaxClients) || TheNPCs.FindNPCByEntIndex(entity) == INVALID_NPC);
 }
 
 forward Action CBaseEntity_SetLocalAngles(int iEntity, float vecNewAngles[3]);
