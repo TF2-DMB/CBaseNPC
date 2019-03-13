@@ -401,8 +401,8 @@ methodmap Path
 	public native Segment NextSegment(Segment seg);
 	public native Segment PriorSegment(Segment seg);
 	public native Segment LastSegment();
-	public native void ComputeToPos(INextBot bot, float vecPos[3], float maxPathLength = 0.0, bool includeGoalIfPathFails = true);
-	public native void ComputeToTarget(INextBot bot, int entity, float maxPathLength = 0.0, bool includeGoalIfPathFails = true);
+	public native bool ComputeToPos(INextBot bot, float vecPos[3], float maxPathLength = 0.0, bool includeGoalIfPathFails = true);
+	public native bool ComputeToTarget(INextBot bot, int entity, float maxPathLength = 0.0, bool includeGoalIfPathFails = true);
 	public native void Destroy();
 };
 
