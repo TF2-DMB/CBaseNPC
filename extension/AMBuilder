@@ -26,6 +26,8 @@ project.compiler.cxxincludes += [os.path.join(builder.currentSourcePath, 'source
 project.compiler.cxxincludes += [os.path.join(builder.currentSourcePath, 'NextBot')]
 project.compiler.cxxincludes += [os.path.join(builder.currentSourcePath, 'NextBot/Path')]
 project.compiler.cxxincludes += [os.path.join(builder.currentSourcePath, 'natives')]
+project.compiler.cxxincludes += [os.path.join(Extension.sm_root, 'sourcepawn/third_party/amtl/amtl')]
+project.compiler.cxxincludes += [os.path.join(Extension.sm_root, 'sourcepawn/third_party/amtl')]
 project.compiler.cxxincludes += [os.path.join(Extension.sm_root)]
 
 project.compiler.cxxincludes += [os.path.join(Extension.mms_root, 'core', 'sourcehook')]
