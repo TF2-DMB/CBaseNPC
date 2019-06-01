@@ -127,5 +127,4 @@ private:
 	CUtlVector<NextBotDebugLineType *> m_DebugLines; // +0x4c
 };
 
-
 #endif

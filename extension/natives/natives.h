@@ -10,6 +10,7 @@
 #include "navmesh.h"
 #include "component.h"
 #include "cbasecombatcharacter.h"
+#include "vision.h"
 #include <takedamageinfo.h>
 
 #pragma once
@@ -170,6 +171,49 @@ const sp_nativeinfo_t g_NativesInfo[] =
 	NATIVENAME(INextBotComponent, Update)
 	NATIVENAME(INextBotComponent, Upkeep)
 	NATIVENAME(INextBotComponent, GetBot)
+	
+	NATIVENAME(CKnownEntity, Destroy)
+	NATIVENAME(CKnownEntity, UpdatePosition)
+	NATIVENAME(CKnownEntity, GetEntity)
+	NATIVENAME(CKnownEntity, GetLastKnownPosition)
+	NATIVENAME(CKnownEntity, HasLastKnownPositionBeenSeen)
+	NATIVENAME(CKnownEntity, MarkLastKnownPositionAsSeen)
+	NATIVENAME(CKnownEntity, GetLastKnownArea)
+	NATIVENAME(CKnownEntity, GetTimeSinceLastKnown)
+	NATIVENAME(CKnownEntity, GetTimeSinceBecameKnown)
+	NATIVENAME(CKnownEntity, UpdateVisibilityStatus)
+	NATIVENAME(CKnownEntity, IsVisibleInFOVNow)
+	NATIVENAME(CKnownEntity, IsVisibleRecently)
+	NATIVENAME(CKnownEntity, GetTimeSinceBecameVisible)
+	NATIVENAME(CKnownEntity, GetTimeWhenBecameVisible)
+	NATIVENAME(CKnownEntity, GetTimeSinceLastSeen)
+	NATIVENAME(CKnownEntity, WasEverVisible)
+	NATIVENAME(CKnownEntity, IsObsolete)
+	NATIVENAME(CKnownEntity, Is)
+	
+	NATIVENAME(IVision, GetPrimaryKnownThreat)
+	NATIVENAME(IVision, GetTimeSinceVisible)
+	NATIVENAME(IVision, GetClosestKnown)
+	NATIVENAME(IVision, GetKnownCount)
+	NATIVENAME(IVision, GetKnown)
+	NATIVENAME(IVision, AddKnownEntity)
+	NATIVENAME(IVision, ForgetEntity)
+	NATIVENAME(IVision, ForgetAllKnownEntities)
+	NATIVENAME(IVision, GetMaxVisionRange)
+	NATIVENAME(IVision, GetMinRecognizeTime)
+	NATIVENAME(IVision, IsAbleToSee)
+	NATIVENAME(IVision, IsAbleToSeeTarget)
+	NATIVENAME(IVision, IsIgnored)
+	NATIVENAME(IVision, IsVisibleEntityNoticed)
+	NATIVENAME(IVision, IsInFieldOfView)
+	NATIVENAME(IVision, IsInFieldOfViewTarget)
+	NATIVENAME(IVision, GetDefaultFieldOfView)
+	NATIVENAME(IVision, GetFieldOfView)
+	NATIVENAME(IVision, SetFieldOfView)
+	NATIVENAME(IVision, IsLineOfSightClear)
+	NATIVENAME(IVision, IsLineOfSightClearToEntity)
+	NATIVENAME(IVision, IsLookingAt)
+	NATIVENAME(IVision, IsLookingAtTarget)
 	
 	NATIVENAME(IBody, SetPosition)
 	NATIVENAME(IBody, GetEyePosition)

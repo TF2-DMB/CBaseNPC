@@ -4,7 +4,9 @@
 #include <ihandleentity.h>
 
 #define DECLARE_CLASS_NOBASE( className )					typedef className ThisClass;
-
+#ifndef TRACER_DONT_USE_ATTACHMENT
+#define TRACER_DONT_USE_ATTACHMENT -1
+#endif
 class CNavArea;
 class INextBot;
 

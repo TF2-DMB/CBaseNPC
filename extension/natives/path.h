@@ -400,13 +400,17 @@ CHASEPATHNATIVE(Update)
 	
 	cell_t *predictPos;
 	pContext->LocalToPhysAddr(params[4], &predictPos);
+	
 	Vector vpredictPos;
 	PawnVectorToVector(predictPos, vpredictPos);
 	
-	if (vpredictPos.x == 0.0 && vpredictPos.y == 0.0 && vpredictPos.z == 0.0)
+	if (pContext->GetNullRef(SP_NULL_VECTOR) == predictPos)
 		pChasePath->Update(pBot, pTarget, pCostFunc, NULL);
 	else
+	{
 		pChasePath->Update(pBot, pTarget, pCostFunc, &vpredictPos);
+		VectorToPawnVector(predictPos, vpredictPos);
+	}
 	
 	return 1;
 }

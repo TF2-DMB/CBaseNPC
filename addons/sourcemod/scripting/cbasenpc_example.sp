@@ -39,9 +39,9 @@ public void OnClientPutInServer(int iClient)
 public void Hook_NPCThink(int iEnt)
 {
 	CBaseNPC npc = TheNPCs.FindNPCByEntIndex(iEnt);
-	int iClient = GetClientOfUserId(g_iSummoner[npc.Index]);
+	//int iClient = GetClientOfUserId(g_iSummoner[npc.Index]);
 	
-	if (npc != INVALID_NPC && 0 < iClient <= MaxClients && IsPlayerAlive(iClient))
+	if (npc != INVALID_NPC)
 	{
 		float vecNPCPos[3], vecNPCAng[3], vecTargetPos[3];
 		INextBot bot = npc.GetBot();
@@ -49,13 +49,33 @@ public void Hook_NPCThink(int iEnt)
 		
 		bot.GetPosition(vecNPCPos);
 		GetEntPropVector(iEnt, Prop_Data, "m_angAbsRotation", vecNPCAng);
-		GetClientAbsOrigin(iClient, vecTargetPos);
+		
+		float flMaxDistance = 9999999999999999.0;
+		int iBestTarget = -1;
+		for (int i = 1; i <= MaxClients; i++)
+		{
+			if (IsClientInGame(i) && IsPlayerAlive(i))
+			{
+				float vecBuffer[3];
+				GetClientAbsOrigin(i, vecBuffer);
+				float flDistance = GetVectorDistance(vecBuffer, vecNPCPos);
+				if (flDistance < flMaxDistance)
+				{
+					flMaxDistance = flDistance;
+					iBestTarget = i;
+				}
+			}
+		}
+		
+		if (iBestTarget == -1) return;
+		GetClientAbsOrigin(iBestTarget, vecTargetPos);
 		
 		CBaseAnimatingOverlay animationEntity = CBaseAnimatingOverlay(iEnt);
 		
 		if (GetVectorDistance(vecNPCPos, vecTargetPos) > 100.0)
 		{
 			pPath[npc.Index].Update(bot);
+			loco.FaceTowards(vecTargetPos);
 		}
 		else if (g_flLastAttackTime[npc.Index] <= GetGameTime())
 		{
@@ -70,7 +90,7 @@ public void Hook_NPCThink(int iEnt)
 			g_flLastAttackTime[npc.Index] = GetGameTime()+1.0;
 			
 			loco.FaceTowards(vecTargetPos);
-			SlapPlayer(iClient, GetRandomInt(30,50), false);
+			SlapPlayer(iBestTarget, GetRandomInt(30,50), false);
 		}
 		loco.Run();
 		
@@ -90,7 +110,7 @@ public void Hook_NPCThink(int iEnt)
 		int iYaw = animationEntity.LookupPoseParameter(pModelptr, "body_yaw");
 		float vecDir[3], vecAng[3], vecNPCCenter[3], vecPlayerCenter[3];
 		animationEntity.WorldSpaceCenter(vecNPCCenter);
-		CBaseAnimating(iClient).WorldSpaceCenter(vecPlayerCenter);
+		CBaseAnimating(iBestTarget).WorldSpaceCenter(vecPlayerCenter);
 		SubtractVectors(vecNPCCenter, vecPlayerCenter, vecDir); 
 		NormalizeVector(vecDir, vecDir);
 		GetVectorAngles(vecDir, vecAng); 

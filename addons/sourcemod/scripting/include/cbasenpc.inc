@@ -191,7 +191,7 @@ methodmap INextBot < INextBotEventResponder
 	public native ILocomotion GetLocomotionInterface();
 	public native IBody GetBodyInterface();
 	//public native IIntention GetIntentionInterface();
-	//public native IVision GetVisionInterface();
+	public native IVision GetVisionInterface();
 
 	public native bool SetPosition(const float pos[3]);
 	public native void GetPosition(float pos[3]);
@@ -242,6 +242,61 @@ methodmap INextBotComponent < INextBotEventResponder
 	public native void Upkeep();
 
 	public native INextBot GetBot();
+};
+
+enum FieldOfViewCheckType
+{
+	USE_FOV,
+	DISREGARD_FOV
+};
+
+methodmap CKnownEntity
+{
+	public native void Destroy();
+	public native void UpdatePosition();
+	public native int GetEntity();
+	public native void GetLastKnownPosition(float vecPos[3]);
+	public native bool HasLastKnownPositionBeenSeen();
+	public native void MarkLastKnownPositionAsSeen();
+	public native CNavArea GetLastKnownArea();
+	public native float GetTimeSinceLastKnown();
+	public native float GetTimeSinceBecameKnown();
+	public native void UpdateVisibilityStatus(bool visible);
+	public native bool IsVisibleInFOVNow();
+	public native bool IsVisibleRecently();
+	public native float GetTimeSinceBecameVisible();
+	public native float GetTimeWhenBecameVisible();
+	public native float GetTimeSinceLastSeen();
+	public native bool WasEverVisible();
+	public native bool IsObsolete();
+	public native bool Is(int iEntity);
+}
+
+methodmap IVision < INextBotComponent
+{
+	public native CKnownEntity GetPrimaryKnownThreat(bool bVisible);
+	public native float GetTimeSinceVisible(int iTeam);
+	public native CKnownEntity GetClosestKnown(int iTeam);
+	public native int GetKnownCount(int team, bool onlyVisible = false, float rangeLimit = -1.0);
+	public native CKnownEntity GetKnown(int iEntity);
+	public native void AddKnownEntity(int iEntity);
+	public native void ForgetEntity(int iEntity);
+	public native void ForgetAllKnownEntities();
+	public native float GetMaxVisionRange();
+	public native float GetMinRecognizeTime();
+	public native bool IsAbleToSeeTarget(int iEntity, FieldOfViewCheckType checkFOV, float vecPos[3] = NULL_VECTOR);
+	public native bool IsAbleToSee(float vecPos[3], FieldOfViewCheckType checkFOV);
+	public native bool IsIgnored(int iEntity);
+	public native bool IsVisibleEntityNoticed(int iEntity);
+	public native bool IsInFieldOfView(float vecPos[3]);
+	public native bool IsInFieldOfViewTarget(int iEntity);
+	public native float GetDefaultFieldOfView();
+	public native float GetFieldOfView();
+	public native void SetFieldOfView(float horizAngle);
+	public native bool IsLineOfSightClear(float vecPos[3]);
+	public native bool IsLineOfSightClearToEntity(int iActor, float vecPos[3]=NULL_VECTOR);
+	public native bool IsLookingAt(float vecPos[3], float cosTolerance = 0.95);
+	public native bool IsLookingAtTarget(int iActor, float cosTolerance = 0.95);
 };
 
 enum TraverseWhenType 
@@ -733,21 +788,46 @@ methodmap CBaseAnimating
 		}
 	}
 	
-	public native void WorldSpaceCenter(float vecCenter[3]);
+	property int iHandleAnimEvent
+	{
+		public native get();
+	}
 	
+#if defined _dhooks_included
+	public void Hook_HandleAnimEvent(DHookCallback callback)
+	{
+		static Handle hHook = null;
+		if (hHook == null) hHook = DHookCreate(this.iHandleAnimEvent, HookType_Entity, ReturnType_Void, ThisPointer_CBaseEntity, callback);
+		
+		DHookAddParam(hHook, HookParamType_ObjectPtr, -1);
+		DHookEntity(hHook, false, this.iEnt, _, callback);
+	}
+#endif
+	
+	public native void WorldSpaceCenter(float vecCenter[3]);
+	public native void StudioFrameAdvance();
+	public native void DispatchAnimEvents();
 	public native int LookupSequence(const char[] sName);
 	public native float SequenceDuration(Address pStudioHdr, int iSequence);
 	public native int SelectWeightedSequence(int iActivity);
 	public native void ResetSequence(int sequence);
+	public void ResetAnimation(const char[] sName)
+	{
+		int iSequence = this.LookupSequence(sName);
+		if (iSequence != -1)
+			this.ResetSequence(iSequence);
+	}
 	public void PlayAnimation(const char[] sName)
 	{
 		int iSequence = this.LookupSequence(sName);
 		if (iSequence != -1)
 		{
 			this.ResetSequence(iSequence);
-			this.ResetSequence(iSequence);
+			SetEntPropFloat(this.iEnt, Prop_Data, "m_flCycle", 0.0);
 		}
 	}
+	public native int FindAttachment(const char[] sAttachmentName);
+	public native void GetAttachment(int iAttachmentIndex, float vecOrigin[3], float vecAngles[3]);
 	public native Address GetModelPtr();
 	public native int LookupPoseParameter(Address pStudioHdr, const char[] sParamName);
 	

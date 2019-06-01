@@ -252,7 +252,7 @@ public:
 			m_path[ m_segmentCount ].type = ON_GROUND;
 			++m_segmentCount;
 		}
-				
+		
 		// compute path positions
 		if ( ComputePathDetails( bot, start ) == false )
 		{
@@ -374,7 +374,7 @@ public:
 			m_path[ m_segmentCount ].type = ON_GROUND;
 			++m_segmentCount;
 		}
-				
+		
 		// compute path positions
 		if ( ComputePathDetails( bot, start ) == false )
 		{

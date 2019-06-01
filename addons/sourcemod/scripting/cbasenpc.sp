@@ -70,6 +70,8 @@ Handle g_hSDKLookupPoseParameter;
 Handle g_hSDKSetPoseParameter;
 Handle g_hSDKGetPoseParameter;
 Handle g_hSDKStudioFrameAdvance;
+Handle g_hSDKStudioFindAttachment;
+Handle g_hSDKGetAttachment;
 Handle g_hSDKDispatchAnimEvents;
 
 //ILocomotion
@@ -77,7 +79,8 @@ Handle g_hSDKStuckMonitor;
 Handle g_hSDKIsStuck;
 Handle g_hSDKClearStuckStatus;
 
-int g_ipStudioHdrOffset;
+int g_ipStudioHdrOffset = -1;
+int g_iHandleAnimEventOffset = -1;
 
 //CBaseAnimatingOverlay
 Handle g_hSDKAddGestureSequence;
@@ -176,7 +179,12 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 	CreateNative("CNPCs.FindNPCByEntIndex", Native_CNPCsFindNPCByEntIndex);
 	CreateNative("CNPCs.IsValidNPC", Native_CNPCsIsValidNPC);
 	
+	CreateNative("CBaseAnimating.iHandleAnimEvent.get", Native_CBaseAnimatingiHandleAnimEvent);
 	CreateNative("CBaseAnimating.WorldSpaceCenter", Native_CBaseAnimatingWorldSpaceCenter);
+	CreateNative("CBaseAnimating.FindAttachment", Native_CBaseAnimatingFindAttachment);
+	CreateNative("CBaseAnimating.GetAttachment", Native_CBaseAnimatingGetAttachment);
+	CreateNative("CBaseAnimating.StudioFrameAdvance", Native_CBaseAnimatingStudioFrameAdvance);
+	CreateNative("CBaseAnimating.DispatchAnimEvents", Native_CBaseAnimatingDispatchAnimEvents);
 	CreateNative("CBaseAnimating.LookupSequence", Native_CBaseAnimatingLookupSequence);
 	CreateNative("CBaseAnimating.SelectWeightedSequence", Native_CBaseAnimatingSelectWeightedSequence);
 	CreateNative("CBaseAnimating.SequenceDuration", Native_CBaseAnimatingSequenceDuration);
@@ -766,6 +774,11 @@ public int Native_CNPCsIsValidNPC(Handle plugin, int numParams)
 	return true;
 }
 
+public int Native_CBaseAnimatingiHandleAnimEvent(Handle plugin, int numParams)
+{
+	return g_iHandleAnimEventOffset;
+}
+
 public int Native_CBaseAnimatingWorldSpaceCenter(Handle plugin, int numParams)
 {
 	if (g_hSDKWorldSpaceCenter != INVALID_HANDLE)
@@ -774,6 +787,40 @@ public int Native_CBaseAnimatingWorldSpaceCenter(Handle plugin, int numParams)
 		SDKCall(g_hSDKWorldSpaceCenter, GetNativeCell(1), vecCenter);
 		SetNativeArray(2, vecCenter, sizeof(vecCenter));
 	}
+}
+
+public int Native_CBaseAnimatingFindAttachment(Handle plugin, int numParams)
+{
+	if (g_hSDKStudioFindAttachment != INVALID_HANDLE)
+	{
+		char sAttachement[120];
+		GetNativeString(2, sAttachement, sizeof(sAttachement));
+		return SDKCall(g_hSDKStudioFindAttachment, GetEntData(GetNativeCell(1), g_ipStudioHdrOffset * 4), sAttachement);
+	}
+	return -1;
+}
+
+public int Native_CBaseAnimatingGetAttachment(Handle plugin, int numParams)
+{
+	if (g_hSDKGetAttachment != INVALID_HANDLE)
+	{
+		float vecOrigin[3], vecAngles[3];
+		SDKCall(g_hSDKGetAttachment, GetNativeCell(1), GetNativeCell(2), vecOrigin, vecAngles);
+		SetNativeArray(3, vecOrigin, 3);
+		SetNativeArray(4, vecAngles, 3);
+	}
+}
+
+public int Native_CBaseAnimatingStudioFrameAdvance(Handle plugin, int numParams)
+{
+	if (g_hSDKStudioFrameAdvance != INVALID_HANDLE)
+		SDKCall(g_hSDKStudioFrameAdvance, GetNativeCell(1));
+}
+
+public int Native_CBaseAnimatingDispatchAnimEvents(Handle plugin, int numParams)
+{
+	if (g_hSDKDispatchAnimEvents != INVALID_HANDLE)
+		SDKCall(g_hSDKDispatchAnimEvents, GetNativeCell(1), GetNativeCell(1));
 }
 
 public int Native_CBaseAnimatingLookupSequence(Handle plugin, int numParams)
@@ -960,30 +1007,38 @@ void SDK_Init()
 	if (g_hStartActivity == null) SetFailState("Failed to create hook for IBody::StartActivity!");
 
 	iOffset = GameConfGetOffset(hGameData, "IBody::GetHullWidth");
-	if(iOffset == -1) SetFailState("Failed to get offset of IBody::GetHullWidth");
+	if (iOffset == -1) SetFailState("Failed to get offset of IBody::GetHullWidth");
 	g_hGetHullWidth = DHookCreate(iOffset, HookType_Raw, ReturnType_Float, ThisPointer_Address, GetHullWidth);
 	
 	iOffset = GameConfGetOffset(hGameData, "IBody::GetHullHeight");
-	if(iOffset == -1) SetFailState("Failed to get offset of IBody::GetHullHeight");
+	if (iOffset == -1) SetFailState("Failed to get offset of IBody::GetHullHeight");
 	g_hGetHullHeight = DHookCreate(iOffset, HookType_Raw, ReturnType_Float, ThisPointer_Address, GetHullHeight);
 
 	iOffset = GameConfGetOffset(hGameData, "IBody::GetStandHullHeight");
-	if(iOffset == -1) SetFailState("Failed to get offset of IBody::GetStandHullHeight");
+	if (iOffset == -1) SetFailState("Failed to get offset of IBody::GetStandHullHeight");
 	g_hGetStandHullHeight = DHookCreate(iOffset, HookType_Raw, ReturnType_Float, ThisPointer_Address, GetStandHullHeight);
 
 	iOffset = GameConfGetOffset(hGameData, "IBody::GetCrouchHullHeight");
+	if (iOffset == -1) SetFailState("Failed to get offset of IBody::GetCrouchHullHeight");
 	g_hGetCrouchHullHeight = DHookCreate(iOffset, HookType_Raw, ReturnType_Float, ThisPointer_Address, GetCrouchHullHeight);
-	if (g_hGetCrouchHullHeight == null) SetFailState("Failed to create hook for IBody::GetCrouchHullHeight!");
 	
 	iOffset = GameConfGetOffset(hGameData, "IBody::GetSolidMask");
+	if (iOffset == -1) SetFailState("Failed to get offset of IBody::GetSolidMask");
 	g_hGetSolidMask = DHookCreate(iOffset, HookType_Raw, ReturnType_Int, ThisPointer_Address, GetSolidMask);
-	if (g_hGetSolidMask == null) SetFailState("Failed to create hook for IBody::GetSolidMask!");
 	
-	iOffset = GameConfGetOffset(hGameData, "NextBotGroundLocomotion::GetFrictionForward"); 
+	iOffset = GameConfGetOffset(hGameData, "NextBotGroundLocomotion::GetFrictionForward");
+	if (iOffset == -1) SetFailState("Failed to get offset of NextBotGroundLocomotion::GetFrictionForward");
 	g_hGetFrictionForward = DHookCreate(iOffset, HookType_Raw, ReturnType_Float, ThisPointer_Address, GetFrictionForward);
 	
-	iOffset = GameConfGetOffset(hGameData, "NextBotGroundLocomotion::GetFrictionSideways"); 
+	iOffset = GameConfGetOffset(hGameData, "NextBotGroundLocomotion::GetFrictionSideways");
+	if (iOffset == -1) SetFailState("Failed to get offset of NextBotGroundLocomotion::GetFrictionSideways");
 	g_hGetFrictionSideways = DHookCreate(iOffset, HookType_Raw, ReturnType_Float, ThisPointer_Address, GetFrictionSideways);
+	
+	iOffset = GameConfGetOffset(hGameData, "CBaseAnimating::HandleAnimEvent");
+	if (iOffset == -1) SetFailState("Failed to get offset of CBaseAnimating::HandleAnimEvent");
+	g_iHandleAnimEventOffset = iOffset;
+	
+	
 	
 	StartPrepSDKCall(SDKCall_Static);
 	PrepSDKCall_SetFromConf(hGameData, SDKConf_Signature, "CBaseAnimating::LookupSequence");
@@ -991,7 +1046,23 @@ void SDK_Init()
 	PrepSDKCall_AddParameter(SDKType_String, SDKPass_Pointer);
 	PrepSDKCall_SetReturnInfo(SDKType_PlainOldData, SDKPass_Plain);
 	g_hSDKLookupSequence = EndPrepSDKCall();
-	if (g_hSDKLookupSequence == INVALID_HANDLE) PrintToServer("Failed to retrieve CBaseAnimating::LookupSequence signature!");
+	if (g_hSDKLookupSequence == INVALID_HANDLE) SetFailState("Failed to retrieve CBaseAnimating::LookupSequence signature!");
+	
+	StartPrepSDKCall(SDKCall_Static);
+	PrepSDKCall_SetFromConf(hGameData, SDKConf_Signature, "Studio_FindAttachment");
+	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);
+	PrepSDKCall_AddParameter(SDKType_String, SDKPass_Pointer);
+	PrepSDKCall_SetReturnInfo(SDKType_PlainOldData, SDKPass_Plain);
+	g_hSDKStudioFindAttachment = EndPrepSDKCall();
+	if (g_hSDKStudioFindAttachment == INVALID_HANDLE) SetFailState("Failed to create Call for Studio_FindAttachment");
+	
+	StartPrepSDKCall(SDKCall_Entity);
+	PrepSDKCall_SetFromConf(hGameData, SDKConf_Signature, "CBaseAnimating::GetAttachment");
+	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);
+	PrepSDKCall_AddParameter(SDKType_Vector, SDKPass_ByRef, _, VENCODE_FLAG_COPYBACK);
+	PrepSDKCall_AddParameter(SDKType_QAngle, SDKPass_ByRef, _, VENCODE_FLAG_COPYBACK);
+	g_hSDKGetAttachment = EndPrepSDKCall();
+	if (g_hSDKGetAttachment == INVALID_HANDLE) SetFailState("Failed to retrieve CBaseAnimating::GetAttachment signature!");
 	
 	StartPrepSDKCall(SDKCall_Static);
 	PrepSDKCall_SetFromConf(hGameData, SDKConf_Signature, "CBaseAnimating::SelectWeightedSequence");
@@ -999,7 +1070,7 @@ void SDK_Init()
 	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_ByValue);
 	PrepSDKCall_SetReturnInfo(SDKType_PlainOldData, SDKPass_ByValue);
 	g_hSDKSelectWeightedSequence = EndPrepSDKCall();
-	if (g_hSDKSelectWeightedSequence == INVALID_HANDLE) PrintToServer("Failed to retrieve CBaseAnimating::SelectWeightedSequence signature!");
+	if (g_hSDKSelectWeightedSequence == INVALID_HANDLE) SetFailState("Failed to retrieve CBaseAnimating::SelectWeightedSequence signature!");
 	
 	StartPrepSDKCall(SDKCall_Entity);
 	PrepSDKCall_SetFromConf(hGameData, SDKConf_Signature, "CBaseAnimating::SequenceDuration");
@@ -1007,16 +1078,13 @@ void SDK_Init()
 	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_ByValue);
 	PrepSDKCall_SetReturnInfo(SDKType_Float, SDKPass_ByValue);
 	g_hSDKSequenceDuration = EndPrepSDKCall();
-	if (g_hSDKSequenceDuration == INVALID_HANDLE) PrintToServer("Failed to retrieve CBaseAnimating::SequenceDuration signature!");
+	if (g_hSDKSequenceDuration == INVALID_HANDLE) SetFailState("Failed to retrieve CBaseAnimating::SequenceDuration signature!");
 	
 	StartPrepSDKCall(SDKCall_Entity);
 	PrepSDKCall_SetFromConf(hGameData, SDKConf_Signature, "CBaseAnimating::ResetSequence");
 	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_ByValue);
 	g_hSDKResetSequence = EndPrepSDKCall();
-	if(g_hSDKResetSequence == INVALID_HANDLE)
-	{
-		SetFailState("Failed to retrieve CBaseAnimating::ResetSequence signature!");
-	}
+	if(g_hSDKResetSequence == INVALID_HANDLE) SetFailState("Failed to retrieve CBaseAnimating::ResetSequence signature!");
 	
 	StartPrepSDKCall(SDKCall_Entity);
 	PrepSDKCall_SetFromConf(hGameData, SDKConf_Signature, "CBaseAnimating::LookupPoseParameter");
@@ -1074,6 +1142,22 @@ void SDK_Init()
 	PrepSDKCall_SetReturnInfo(SDKType_Vector, SDKPass_ByRef);
 	g_hSDKWorldSpaceCenter = EndPrepSDKCall();
 	if (g_hSDKWorldSpaceCenter == INVALID_HANDLE) SetFailState("Failed to retrieve CBaseEntity::WorldSpaceCenter signature!");
+	
+	int iOS = GameConfGetOffset(hGameData, "OS"); // I wish we could avoid that
+	
+	Address aGetAnimationEvent = GameConfGetAddress(hGameData, "GetAnimationEvent");
+	if (aGetAnimationEvent == Address_Null) SetFailState("Failed to retrieve GetAnimationEvent address.");
+	
+	// Linux has two locations that must be patched
+	if (iOS == -1)
+	{
+		StoreToAddress(aGetAnimationEvent + view_as<Address>(0x17E), 9999, NumberType_Int16);
+		StoreToAddress(aGetAnimationEvent + view_as<Address>(0xB3), 9999, NumberType_Int16);
+	}
+	else
+	{
+		StoreToAddress(aGetAnimationEvent + view_as<Address>(0x83), 9999, NumberType_Int16);
+	}
 }
 
 stock void SDK_UpdateLastKnownArea(int iEntity)

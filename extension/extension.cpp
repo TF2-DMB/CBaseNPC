@@ -143,7 +143,8 @@ void CBaseNPCExt::OnCoreMapStart(edict_t *pEdictList, int edictCount, int client
 void CBaseNPCExt::SDK_OnAllLoaded()
 {
 	SM_GET_LATE_IFACE(BINTOOLS, g_pBinTools);
-
+	g_pSM->LogMessage(myself, "0x%08x bintools.", g_pBinTools);
+	
 	handlesys->FindHandleType("CellArray", &g_CellArrayHandle);
 	handlesys->FindHandleType("KeyValues", &g_KeyValueType);
 	g_CoreIdent = sharesys->FindIdentType("CORE");
@@ -167,8 +168,8 @@ bool CBaseNPCExt::QueryInterfaceDrop(SMInterface *pInterface)
 
 void CBaseNPCExt::NotifyInterfaceDrop(SMInterface *pInterface)
 {
-	if(pInterface == g_pBinTools)
-		g_pBinTools = nullptr;
+	if (strcmp(pInterface->GetInterfaceName(), SMINTERFACE_BINTOOLS_NAME) == 0)
+		g_pBinTools = NULL;
 }
 
 void CBaseNPCExt::SDK_OnUnload()
