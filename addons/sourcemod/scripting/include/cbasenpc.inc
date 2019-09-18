@@ -716,62 +716,92 @@ CNPCs TheNPCs;
 
 #define MAX_OVERLAYS			15
 
-//If we are lucky these will never change
-enum //CAnimationLayer
-{
-	m_fFlags = 0,               //0x0000 
-	m_bSequenceFinished = 4,    //0x0004 
-	m_bLooping = 6,             //0x0006 
-	m_nSequence = 8,            //0x0008 
-	m_flCycle = 12,             //0x000C 
-	m_flPrevCycle = 16,         //0x0010 
-	m_flWeight = 20,            //0x0014 
-	m_flPlaybackRate = 24,      //0x0018 
-	m_flBlendIn = 28,           //0x001C 
-	m_flBlendOut = 32,          //0x0020 
-	m_flKillRate = 36,          //0x0024 
-	m_flKillDelay = 40,         //0x0028 
-	m_flLayerAnimtime = 44,     //0x002C 
-	m_flLayerFadeOuttime = 48,  //0x0030 
-	m_nActivity = 52,           //0x0034 
-	m_nPriority = 56,           //0x0038 
-	m_nOrder = 60,              //0x003C 
-	m_flLastEventCheck = 64,    //0x0040 
-	m_flLastEventAccess = 68,   //0x0044 
-	m_pOwnerEntity = 72,        //0x0048 
-	
-	CAnimationLayer_Size = 76   //0x004C
-}; //Size=0x004C
+#define ANIM_LAYER_ACTIVE        0x0001 
+#define ANIM_LAYER_AUTOKILL      0x0002 
+#define ANIM_LAYER_KILLME        0x0004 
+#define ANIM_LAYER_DONTRESTORE   0x0008 
+#define ANIM_LAYER_CHECKACCESS   0x0010 
+#define ANIM_LAYER_DYING         0x0020
+#define ANIM_LAYER_NOEVENTS         0x0040
 
-methodmap CAnimationLayer __nullable__
-{
-	property Address Address 
-	{
-		public get() 
-		{
-			return view_as<Address>(this);
-		}
-	}
+enum //CAnimationLayer 
+{ 
+    m_fFlags = 0,               //0x0000  
+    m_bSequenceFinished = 4,    //0x0004  
+    m_bLooping = 6,             //0x0006  
+    m_nSequence = 8,            //0x0008  
+    m_flCycle = 12,             //0x000C  
+    m_flPrevCycle = 16,         //0x0010  
+    m_flWeight = 20,            //0x0014  
+    m_flPlaybackRate = 24,      //0x0018  
+    m_flBlendIn = 28,           //0x001C  
+    m_flBlendOut = 32,          //0x0020  
+    m_flKillRate = 36,          //0x0024  
+    m_flKillDelay = 40,         //0x0028  
+    m_flLayerAnimtime = 44,     //0x002C  
+    m_flLayerFadeOuttime = 48,  //0x0030  
+    m_nActivity = 52,           //0x0034  
+    m_nPriority = 56,           //0x0038  
+    m_nOrder = 60,              //0x003C  
+    m_flLastEventCheck = 64,    //0x0040  
+    m_flLastEventAccess = 68,   //0x0044  
+    m_pOwnerEntity = 72,        //0x0048  
+     
+    CAnimationLayer_Size = 76   //0x004C 
+}; //Size=0x004C 
 
-	public any Get(int offset)
-	{
-		return LoadFromAddress(this.Address + view_as<Address>(offset), NumberType_Int32);
-	}
-	
-	public void Set(int offset, any value)
-	{
-		StoreToAddress(this.Address + view_as<Address>(offset), value, NumberType_Int32);
-	}
-	
-	public bool IsActive()   { return ((this.Get(m_fFlags) & ANIM_LAYER_ACTIVE)   != 0); }
-	public bool IsAutokill() { return ((this.Get(m_fFlags) & ANIM_LAYER_AUTOKILL) != 0); }
-	public bool IsKillMe()   { return ((this.Get(m_fFlags) & ANIM_LAYER_KILLME)   != 0); }
-	public bool IsDying()    { return ((this.Get(m_fFlags) & ANIM_LAYER_DYING)    != 0); }
-	public bool IsAutoramp() { return ((this.Get(m_flBlendIn) != 0.0) || (this.Get(m_flBlendOut) != 0.0)); }
-	public void KillMe()     { this.Set(m_fFlags, this.Get(m_fFlags|ANIM_LAYER_KILLME)); }
-//	public void Dying()      { this.Get(m_fFlags) |= ANIM_LAYER_DYING; }
-//	public void Dead()       { this.Get(m_fFlags) &= ~ANIM_LAYER_DYING; }
-}
+methodmap CAnimationOverlay  
+{ 
+    public CAnimationOverlay(int address)
+    {
+        return view_as<CAnimationOverlay>(address);
+    }
+    
+    property Address Address  
+    { 
+        public get()  
+        { 
+            return view_as<Address>(this); 
+        } 
+    } 
+    
+    property bool isNull
+    {
+        public get()  
+        { 
+            return this.Address == Address_Null; 
+        } 
+    }
+
+    public any Get(int iOffset, int iLayer) 
+    { 
+        return LoadFromAddress(this.Address + view_as<Address>(iOffset + CAnimationLayer_Size * iLayer), NumberType_Int32); 
+    } 
+     
+    public void Set(int iOffset, int iLayer, any iValue) 
+    { 
+        StoreToAddress(this.Address + view_as<Address>(iOffset + CAnimationLayer_Size * iLayer), iValue, NumberType_Int32); 
+    } 
+
+    public bool IsActive(int iLayer)    { return ((this.Get(m_fFlags, iLayer) & ANIM_LAYER_ACTIVE)   != 0); } 
+    public bool IsAutokill(int iLayer)  { return ((this.Get(m_fFlags, iLayer) & ANIM_LAYER_AUTOKILL) != 0); } 
+    public bool IsKillMe(int iLayer)    { return ((this.Get(m_fFlags, iLayer) & ANIM_LAYER_KILLME)   != 0); } 
+    public bool IsDying(int iLayer)     { return ((this.Get(m_fFlags, iLayer) & ANIM_LAYER_DYING)    != 0); } 
+    public bool    NoEvents(int iLayer)    { return ((this.Get(m_fFlags, iLayer) & ANIM_LAYER_NOEVENTS) != 0); }
+    public void KillMe(int iLayer)      { int iFlags = this.Get(m_fFlags, iLayer); this.Set(m_fFlags, iLayer, (iFlags |= ANIM_LAYER_KILLME)); } 
+    public void AutoKill(int iLayer)    { int iFlags = this.Get(m_fFlags, iLayer); this.Set(m_fFlags, iLayer, (iFlags |= ANIM_LAYER_AUTOKILL)); }
+    public void Dying(int iLayer)       { int iFlags = this.Get(m_fFlags, iLayer); this.Set(m_fFlags, iLayer, (iFlags |= ANIM_LAYER_DYING));  } 
+    public void Dead(int iLayer)        { int iFlags = this.Get(m_fFlags, iLayer); this.Set(m_fFlags, iLayer, (iFlags &= ~ANIM_LAYER_DYING)); }
+    public void RemoveLayer(int iLayer, float flKillRate, float flKillDelay)
+    {
+        this.Set(m_flKillRate, iLayer, flKillRate > 0.0 ? this.Get(m_flWeight, iLayer) / flKillRate : 100.0);
+        this.Set(m_flKillDelay, iLayer, flKillDelay);
+        this.KillMe(iLayer);
+    }
+    
+    public bool IsAlive(int iLayer)         { int iFlags = this.Get(m_fFlags, iLayer); return (((iFlags & ANIM_LAYER_ACTIVE) != 0) || ((iFlags & ANIM_LAYER_KILLME) == 0)); }
+    public int GetLayerSequence(int iLayer) { return (this.Get(m_nSequence, iLayer)); }
+};
 
 methodmap CBaseAnimating
 {
@@ -811,12 +841,6 @@ methodmap CBaseAnimating
 	public native float SequenceDuration(Address pStudioHdr, int iSequence);
 	public native int SelectWeightedSequence(int iActivity);
 	public native void ResetSequence(int sequence);
-	public void ResetAnimation(const char[] sName)
-	{
-		int iSequence = this.LookupSequence(sName);
-		if (iSequence != -1)
-			this.ResetSequence(iSequence);
-	}
 	public void PlayAnimation(const char[] sName)
 	{
 		int iSequence = this.LookupSequence(sName);
@@ -828,99 +852,74 @@ methodmap CBaseAnimating
 	}
 	public native int FindAttachment(const char[] sAttachmentName);
 	public native void GetAttachment(int iAttachmentIndex, float vecOrigin[3], float vecAngles[3]);
+	
 	public native Address GetModelPtr();
 	public native int LookupPoseParameter(Address pStudioHdr, const char[] sParamName);
-	
 	public native void SetPoseParameter(Address pStudioHdr, int iPoseParam, float flNewValue);
 	public native float GetPoseParameter(int iPoseParam);
-}
-
-methodmap CBaseAnimatingOverlay < CBaseAnimating
-{
-	public CBaseAnimatingOverlay(int entity) 
-	{
-		return view_as<CBaseAnimatingOverlay>(entity);
+	
+	public CAnimationOverlay CAnimatingOverlay() 
+	{ 
+		static int iOffset;
+		if(!iOffset) iOffset = FindDataMapInfo(this.iEnt, "m_AnimOverlay");
+		return CAnimationOverlay(GetEntData(this.iEnt, iOffset));
 	}
 	
-	/*to-do get an access to m_Size member on the CUltVector*/
-	property Address m_AnimOverlay
+	public int AnimOverlayCount()
 	{
-		public get() 
-		{
-			static int m_AnimOverlay = 0;
-			if (m_AnimOverlay == 0) m_AnimOverlay = FindDataMapInfo(this.iEnt, "m_AnimOverlay");
-			
-			int iOffset = (view_as<int>(GetEntityAddress(this.iEnt)) + m_AnimOverlay) + view_as<int>(0x10);
-			Address Overlay = view_as<Address>(LoadFromAddress(view_as<Address>(iOffset), NumberType_Int32));
-		
-			return Overlay;
-		}
-	}
-	
-	public CAnimationLayer GetLayer(int iLayer)
-	{
-		return view_as<CAnimationLayer>(this.m_AnimOverlay + view_as<Address>(iLayer * CAnimationLayer_Size));
+		static int iOffset;
+		if(!iOffset) iOffset = FindDataMapInfo(this.iEnt, "m_AnimOverlay") + 12;
+		return GetEntData(this.iEnt, iOffset);
 	}
 	
 	public bool IsValidLayer( int iLayer )
 	{
-		return (iLayer >= 0 && iLayer < MAX_OVERLAYS && this.GetLayer(iLayer).IsActive());
+		return (iLayer >= 0 && iLayer < this.AnimOverlayCount());
 	}
 	
-	public void RemoveLayer(int iLayer, float flKillRate = 0.2, float flKillDelay = 0.0)
+	public int FindGestureLayerBySequence(int iSequence)
 	{
-		if (!this.IsValidLayer( iLayer ))
-			return;
+		// Validate address
+		CAnimationOverlay pOverlay = this.CAnimatingOverlay(); 
+		// i = layer index
+		int iCount = this.AnimOverlayCount();
+		for(int i = 0; i < iCount; i++) 
+		{
+			// Validate layer
+			if(!pOverlay.IsAlive(i)) 
+			{
+				continue; 
+			}
 
-		CAnimationLayer layer = this.GetLayer(iLayer);
-		
-		if (flKillRate > 0.0)
+			// Validate sequence
+			if(pOverlay.GetLayerSequence(i) == iSequence) 
+			{
+				return i; 
+			}
+		} 
+
+		// Return on the unsuccess
+		return -1; 
+	}
+	
+	public int FindGestureLayer(char[] sAnim) 
+	{
+		// Find the sequence index
+		int iSequence = this.LookupSequence(sAnim); 
+		if(iSequence < 0) 
 		{
-			layer.Set(m_flKillRate, layer.Get(m_flWeight)/flKillRate);
-		}
-		else
-		{
-			layer.Set(m_flKillRate, 100.0);
+			return -1; 
 		}
 
-		layer.Set(m_flKillDelay,flKillDelay);
+		return this.FindGestureLayerBySequence(iSequence);
+	}
+};
 
-		layer.KillMe();
-	}
-	
-	public void RemoveAllGestures()
-	{
-		for (int i = 0; i < MAX_OVERLAYS; i++)
-		{
-			this.RemoveLayer(i);
-		}
-	}
-	
-	public int FindGestureLayer(int activity)
-	{
-		for (int i = 0; i < MAX_OVERLAYS; i++)
-		{
-			CAnimationLayer layer = this.GetLayer(i);
-			
-			if(!(layer.IsActive()))
-				continue;				
-			
-			if(layer.IsKillMe())
-				continue;
-			
-			if(layer.Get(m_nActivity) == activity || layer.Get(m_nSequence) == activity)
-				return i;
-		}
-		return -1;
-	}
-	
-	public bool IsPlayingGesture(int activity)
-	{
-		return this.FindGestureLayer(activity) != -1 ? true : false;
-	}
-	
+methodmap CBaseAnimatingOverlay
+{
 	public native void AddGestureSequence(int sequence, bool bAutokill = true);
-}
+};
+
 #if !defined _navmesh_included
 public float Path_Cost(INextBot bot, CNavArea area, CNavArea fromArea, CNavLadder ladder, int iElevator, float length)
 {
