@@ -90,6 +90,11 @@
 			{
 				"windows"	"1"
 			}
+			"CBaseEntity::UpdateOnRemove"
+			{
+				"windows"	"105"
+				"linux"		"106"
+			}
 			"CBaseEntity::GetVectors"
 			{
 				"linux"		"137"

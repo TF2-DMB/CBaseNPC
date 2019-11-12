@@ -28,6 +28,8 @@ extern HandleType_t HANDLENAME(PluginPathFollower);
 extern HandleType_t HANDLENAME(PluginBotReply);
 extern HandleType_t HANDLENAME(PluginBotEntityFilter);
 
+extern HandleType_t HANDLENAME(SurroundingAreasCollector);
+
 extern HandleType_t g_CellArrayHandle;
 extern HandleType_t g_KeyValueType;
 
@@ -45,6 +47,7 @@ class CBaseNPCExt : public SDKExtension, public ISMEntityListener
 		virtual bool QueryInterfaceDrop(SMInterface *pInterface);
 		virtual void NotifyInterfaceDrop(SMInterface *pInterface);
 		virtual void OnCoreMapStart(edict_t *pEdictList, int edictCount, int clientMax);
+		virtual void OnCoreMapEnd(void);
 	public: // ISMEntityListener
 		virtual void OnEntityDestroyed(CBaseEntity *pEntity);
 	public:

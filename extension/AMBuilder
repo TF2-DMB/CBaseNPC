@@ -14,6 +14,7 @@ sourceFiles = [
   'NextBot/Path/NextBotChasePath.cpp',
   'sourcesdk/nav_area.cpp',
   'sourcesdk/nav_mesh.cpp',
+  'sourcesdk/nav_threaded.cpp',
   'unsorted_class.cpp',
 ]
 

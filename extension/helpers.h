@@ -29,6 +29,19 @@
 	C##name##Handler g_##name##Handler; \
 	HandleType_t g_##name##Handle; \
 
+#define DEFINEHANDLEOBJ(name, obj) \
+	class C##name##Handler: public IHandleTypeDispatch \
+	{ \
+		public: \
+			void OnHandleDestroy(HandleType_t type, void *object) \
+			{ \
+				obj *p##name = (obj *)object; \
+				delete p##name; \
+			} \
+	}; \
+	C##name##Handler g_##name##Handler; \
+	HandleType_t g_##name##Handle; \
+
 #define DEFINEHANDLE2(name, objtype) \
 	class C##name##Handler: public IHandleTypeDispatch \
 	{ \
@@ -46,7 +59,7 @@
 	g_##name##Handle = handlesys->CreateType(#name, &g_##name##Handler, 0, nullptr, nullptr, myself->GetIdentity(), nullptr); \
 
 #define CREATEHANDLE(name, obj) \
-	handlesys->CreateHandle(name, obj, pContext->GetIdentity(), myself->GetIdentity(), nullptr); \
+	handlesys->CreateHandle(g_##name##Handle, obj, pContext->GetIdentity(), myself->GetIdentity(), nullptr) \
 
 #define REMOVEHANDLETYPE(name) \
 	handlesys->RemoveType(g_##name##Handle, myself->GetIdentity()); \
@@ -62,7 +75,7 @@
 	g_##name##Handle \
 
 #define READHANDLE(hnd, name, obj) \
-	HandleError chnderr = handlesys->ReadHandle(hnd, name, &security, (void **)&obj); \
+	HandleError chnderr = handlesys->ReadHandle(hnd, g_##name##Handle, &security, (void **)&obj); \
 	if(chnderr != HandleError_None) \
 	{ \
 		return pContext->ThrowNativeError("Invalid Handle %x (error %i: %s)", hnd, chnderr, HandleErrorToString(chnderr)); \

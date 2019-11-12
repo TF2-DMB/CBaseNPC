@@ -109,10 +109,10 @@ inline void CollectSurroundingAreas( CUtlVector< CNavArea * > *nearbyAreaVector,
 				{
 					CNavArea *adjArea = area->GetAdjacentArea( (NavDirType)dir, i );
 
-					/*if ( adjArea->IsBlocked( TEAM_ANY ) )
+					if ( adjArea->IsBlocked( TEAM_ANY ) )
 					{
 						continue;
-					}*/
+					}
 
 					if ( !adjArea->IsMarked() )
 					{

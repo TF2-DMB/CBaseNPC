@@ -111,16 +111,21 @@ enum TFNavAttributeType
 	/* bit 31: unused */
 };
 
-#if !defined _navmesh_included
-methodmap SurroundingAreasCollector
+methodmap SurroundingAreasCollector < Handle
 {
 	public native CNavArea Get(int index);
 	public native int Count();
 };
 
+typeset CollectSurroundingAreasCallback
+{
+	function void (SurroundingAreasCollector collector, any data);
+};
+
 methodmap CNavMesh
 {
 	public native SurroundingAreasCollector CollectSurroundingAreas(CNavArea startArea, float travelDistanceLimit = 1500.0, float maxStepUpLimit = 18.0, float maxDropDownLimit = 100.0);
+	public native void TCollectSurroundingAreas(CNavArea startArea, float travelDistanceLimit = 1500.0, float maxStepUpLimit = 18.0, float maxDropDownLimit = 100.0, CollectSurroundingAreasCallback callback, any data = 0);
 	public native CNavArea GetNearestNavArea(const float pos[3], bool anyZ = false, float maxDist = 10000.0, bool checkLOS = false, bool checkGround = true, int team = -2);
 };
 
@@ -169,7 +174,6 @@ methodmap CBaseCombatCharacter
 	}
 	public native CNavArea GetLastKnownArea();
 };
-#endif
 
 methodmap INextBotEventResponder
 {
@@ -588,10 +592,11 @@ methodmap CBaseNPC __nullable__
 	public native void GetVectors(float vecForward[3], float vecRight[3], float vecUp[3]);
 	public native CNavArea GetLastKnownArea();
 	
-	//Interfaces
+	// Interfaces
 	public native INextBot GetBot();
 	public native NextBotGroundLocomotion GetLocomotion();
 	public native IBody GetBody();
+	public native IVision GetVision();
 	
 	public native void SetType(char[] sBuffer);
 	public native void GetType(char[] sBuffer, int length);
@@ -607,7 +612,7 @@ methodmap CBaseNPC __nullable__
 	
 	public native int EquipItem(const char[] attachment, const char[] model, const char[] anim = "", int skin = 0);
 	
-	//Locomotion Functions
+	// Locomotion Functions
 	public native void Approach(const float vecPos[3]);
 	public native void FaceTowards(const float vecPos[3]);
 	public native void Walk();
@@ -619,6 +624,12 @@ methodmap CBaseNPC __nullable__
 	public native void SetVelocity(float vec[3]);
 	public native void GetVelocity(float vec[3]);
 	public native void ResetPath();
+	
+	// Body Functions
+	public native void SetBodyMins(float vec[3]);
+	public native void SetBodyMaxs(float vec[3]);
+	public native void GetBodyMins(float vec[3]);
+	public native void GetBodyMaxs(float vec[3]);
 	
 	property int Index
 	{
@@ -803,13 +814,13 @@ methodmap CAnimationOverlay
     public int GetLayerSequence(int iLayer) { return (this.Get(m_nSequence, iLayer)); }
 };
 
-methodmap CBaseAnimating
+methodmap CBaseEntity
 {
-	public CBaseAnimating(int entity) 
+	public CBaseEntity(int iEnt) 
 	{
-		return view_as<CBaseAnimating>(entity);
+		return view_as<CBaseEntity>(iEnt);
 	}
-	
+
 	property int iEnt
 	{
 		public get() 
@@ -817,19 +828,42 @@ methodmap CBaseAnimating
 			return view_as<int>(this);
 		}
 	}
+
+	public static native int iUpdateOnRemove();
 	
-	property int iHandleAnimEvent
+#if defined _dhooks_included
+	public void Hook_UpdateOnRemove(DHookCallback callback)
 	{
-		public native get();
+		static Handle hHook = null;
+		if (hHook == null)
+		{
+			hHook = DHookCreate(CBaseEntity.iUpdateOnRemove(), HookType_Entity, ReturnType_Void, ThisPointer_CBaseEntity);
+			if (hHook == null) return;
+		}
+		DHookEntity(hHook, false, this.iEnt, _, callback);
 	}
+#endif
+}
+
+methodmap CBaseAnimating < CBaseEntity
+{
+	public CBaseAnimating(int entity) 
+	{
+		return view_as<CBaseAnimating>(entity);
+	}
+	
+	public static native int iHandleAnimEvent();
 	
 #if defined _dhooks_included
 	public void Hook_HandleAnimEvent(DHookCallback callback)
 	{
 		static Handle hHook = null;
-		if (hHook == null) hHook = DHookCreate(this.iHandleAnimEvent, HookType_Entity, ReturnType_Void, ThisPointer_CBaseEntity, callback);
-		
-		DHookAddParam(hHook, HookParamType_ObjectPtr, -1);
+		if (hHook == null)
+		{
+			hHook = DHookCreate(CBaseAnimating.iHandleAnimEvent(), HookType_Entity, ReturnType_Void, ThisPointer_CBaseEntity);
+			if (hHook == null) return;
+			DHookAddParam(hHook, HookParamType_ObjectPtr, -1);
+		}
 		DHookEntity(hHook, false, this.iEnt, _, callback);
 	}
 #endif
@@ -915,8 +949,13 @@ methodmap CBaseAnimating
 	}
 };
 
-methodmap CBaseAnimatingOverlay
+methodmap CBaseAnimatingOverlay < CBaseAnimating
 {
+	public CBaseAnimatingOverlay(int entity) 
+	{
+		return view_as<CBaseAnimatingOverlay>(entity);
+	}
+
 	public native void AddGestureSequence(int sequence, bool bAutokill = true);
 };
 

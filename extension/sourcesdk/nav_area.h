@@ -1,19 +1,19 @@
 #ifndef _NAV_AREA_H_
 #define _NAV_AREA_H_
 
-#define MAX_NAV_TEAMS 2
+enum { MAX_NAV_TEAMS = 2 };
 
 #include "tier1/utlvector.h"
 #include "sourcesdk/nav.h"
 #include "sourcesdk/nav_ladder.h"
-
-#define DECLARE_CLASS_NOBASE( className )					typedef className ThisClass;
 
 #if !defined(_X360)
 typedef CUtlVectorUltraConservativeAllocator CNavVectorAllocator;
 #else
 typedef CNavVectorNoEditAllocator CNavVectorAllocator;
 #endif
+
+#define DECLARE_CLASS_NOBASE( className )					typedef className ThisClass;
 
 #ifdef STAGING_ONLY
 inline void DebuggerBreakOnNaN_StagingOnly( float val )
@@ -164,9 +164,9 @@ class CNavArea : protected CNavAreaCriticalData
 		virtual void OnDestroyNotify( CNavArea *dead ) = 0;				// invoked when given area is going away
 		virtual void OnDestroyNotify( CNavLadder *dead ) = 0;			// invoked when given ladder is going away
 
-		virtual void OnEditCreateNotify( CNavArea *newArea ) { };		// invoked when given area has just been added to the mesh in edit mode
-		virtual void OnEditDestroyNotify( CNavArea *deadArea ) { };		// invoked when given area has just been deleted from the mesh in edit mode
-		virtual void OnEditDestroyNotify( CNavLadder *deadLadder ) { };	// invoked when given ladder has just been deleted from the mesh in edit mode
+		virtual void OnEditCreateNotify( CNavArea *newArea ) = 0;		// invoked when given area has just been added to the mesh in edit mode
+		virtual void OnEditDestroyNotify( CNavArea *deadArea ) = 0;		// invoked when given area has just been deleted from the mesh in edit mode
+		virtual void OnEditDestroyNotify( CNavLadder *deadLadder ) = 0;	// invoked when given ladder has just been deleted from the mesh in edit mode
 
 		virtual void Save( CUtlBuffer &fileBuffer, unsigned int version ) const = 0;	// (EXTEND)
 		virtual NavErrorType Load( CUtlBuffer &fileBuffer, unsigned int version, unsigned int subVersion ) = 0;		// (EXTEND)
@@ -175,8 +175,8 @@ class CNavArea : protected CNavAreaCriticalData
 		virtual void SaveToSelectedSet( KeyValues *areaKey ) const = 0;		// (EXTEND) saves attributes for the area to a KeyValues
 		virtual void RestoreFromSelectedSet( KeyValues *areaKey ) = 0;		// (EXTEND) restores attributes from a KeyValues
 		
-		virtual void UpdateBlocked( bool force = false, int teamID = -2 ) = 0;		// Updates the (un)blocked status of the nav area (throttled)
-		virtual bool IsBlocked( int teamID, bool ignoreNavBlockers = false ) const = 0;
+		virtual void UpdateBlocked( bool force = false, int teamID = TEAM_ANY ) = 0;		// Updates the (un)blocked status of the nav area (throttled)
+		//virtual bool IsBlocked( int teamID, bool ignoreNavBlockers = false ) const = 0;
 	public:
 		unsigned int GetID( void ) const	{ return m_id; }
 		
@@ -230,7 +230,7 @@ class CNavArea : protected CNavAreaCriticalData
 		void GetClosestPointOnArea( const Vector &pos, Vector *close ) const { return GetClosestPointOnArea( &pos, close ); }
 		
 		bool IsConnected( const CNavArea *area, NavDirType dir ) const;	// return true if given area is connected in given direction
-		
+		bool IsBlocked(int teamID, bool ignoreNavBlockers = false) const;
 		bool IsEdge( NavDirType dir ) const;						// return true if there are no bi-directional links on the given side
 		
 		CFuncElevator *GetElevator( void ) const												{ return ( m_attributeFlags & NAV_MESH_HAS_ELEVATOR ) ? m_elevator : NULL; }

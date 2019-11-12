@@ -1,4 +1,4 @@
-#include <sourcemod>
+ #include <sourcemod>
 #include <sdktools>
 #include <sdkhooks>
 #include <dhooks>
@@ -34,6 +34,8 @@ ArrayList				g_CBaseNPCHooks[MAX_NPCS];
 INextBot				g_CBaseNPCNextBotInterface[MAX_NPCS];
 NextBotGroundLocomotion g_CBaseNPCLocomotionInterface[MAX_NPCS];
 IBody					g_CBaseNPCBodyInterface[MAX_NPCS];
+IVision					g_CBaseNPCVisionInterface[MAX_NPCS];
+StringMap				g_CBaseNPCInterfacePointer;
 
 float g_CBaseNPCflStepSize[MAX_NPCS];
 float g_CBaseNPCflGravity[MAX_NPCS];
@@ -45,6 +47,9 @@ float g_CBaseNPCflRunSpeed[MAX_NPCS];
 float g_CBaseNPCflFrictionForward[MAX_NPCS];
 float g_CBaseNPCflFrictionSideways[MAX_NPCS];
 float g_CBaseNPCflLastStuckTime[MAX_NPCS];
+
+float g_CBaseNPCvecBodyMins[MAX_NPCS][3];
+float g_CBaseNPCvecBodyMaxs[MAX_NPCS][3];
 
 char g_CBaseNPCType[MAX_NPCS][64];
 
@@ -81,6 +86,7 @@ Handle g_hSDKClearStuckStatus;
 
 int g_ipStudioHdrOffset = -1;
 int g_iHandleAnimEventOffset = -1;
+int g_iUpdateOnRemove = -1;
 
 //CBaseAnimatingOverlay
 Handle g_hSDKAddGestureSequence;
@@ -89,9 +95,12 @@ Handle g_hSDKAddGestureSequence;
 // DETOURS //
 ////////////
 
-//INextBot
+// CBaseEntity
+Handle g_hUpdateOnRemove;
 
-//Locomotion
+// INextBot
+
+// Locomotion
 Handle g_hIsAbleToClimb;
 Handle g_hIsAbleToJump;
 Handle g_hClimbUpToLedge;
@@ -107,7 +116,7 @@ Handle g_hIsEntityTraversable;
 Handle g_hGetFrictionForward;
 Handle g_hGetFrictionSideways;
 
-//Body
+// Body
 Handle g_hStartActivity;
 Handle g_hGetHullWidth;
 Handle g_hGetHullHeight;
@@ -120,7 +129,7 @@ public Plugin myinfo =
 	name = "[TF2] CBaseNPC", 
 	author = "Benoist3012 & Pelipoika(figured most of CBaseAnimating)", 
 	description = "", 
-	version = "0.1", 
+	version = "PRE-0.2", 
 	url = ""
 };
 
@@ -140,6 +149,7 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 	CreateNative("CBaseNPC.GetBot", Native_CBaseNPCGetBot);
 	CreateNative("CBaseNPC.GetLocomotion", Native_CBaseNPCGetLocomotion);
 	CreateNative("CBaseNPC.GetBody", Native_CBaseNPCGetBody);
+	CreateNative("CBaseNPC.GetVision", Native_CBaseNPCGetVision);
 	
 	CreateNative("CBaseNPC.SetType", Native_CBaseNPCSetType);
 	CreateNative("CBaseNPC.GetType", Native_CBaseNPCGetType);
@@ -156,6 +166,11 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 	CreateNative("CBaseNPC.IsClimbingOrJumping", Native_CBaseNPCIsClimbingOrJumping);
 	CreateNative("CBaseNPC.SetVelocity", Native_CBaseNPCSetVelocity);
 	CreateNative("CBaseNPC.GetVelocity", Native_CBaseNPCGetVelocity);
+	
+	CreateNative("CBaseNPC.SetBodyMins", Native_CBaseNPCSetBodyMins);
+	CreateNative("CBaseNPC.SetBodyMaxs", Native_CBaseNPCSetBodyMaxs);
+	CreateNative("CBaseNPC.GetBodyMins", Native_CBaseNPCGetBodyMins);
+	CreateNative("CBaseNPC.GetBodyMaxs", Native_CBaseNPCGetBodyMaxs);
 	
 	CreateNative("CBaseNPC.flStepSize.set", Native_CBaseNPCflStepSizeSet);
 	CreateNative("CBaseNPC.flStepSize.get", Native_CBaseNPCflStepSizeGet);
@@ -179,7 +194,9 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 	CreateNative("CNPCs.FindNPCByEntIndex", Native_CNPCsFindNPCByEntIndex);
 	CreateNative("CNPCs.IsValidNPC", Native_CNPCsIsValidNPC);
 	
-	CreateNative("CBaseAnimating.iHandleAnimEvent.get", Native_CBaseAnimatingiHandleAnimEvent);
+	CreateNative("CBaseEntity.iUpdateOnRemove", Native_CBaseEntityiUpdateOnRemove);
+	
+	CreateNative("CBaseAnimating.iHandleAnimEvent", Native_CBaseAnimatingiHandleAnimEvent);
 	CreateNative("CBaseAnimating.WorldSpaceCenter", Native_CBaseAnimatingWorldSpaceCenter);
 	CreateNative("CBaseAnimating.FindAttachment", Native_CBaseAnimatingFindAttachment);
 	CreateNative("CBaseAnimating.GetAttachment", Native_CBaseAnimatingGetAttachment);
@@ -204,6 +221,8 @@ public void OnPluginStart()
 	nb_update_frequency.FloatValue = 0.01;
 	HookConVarChange(nb_update_frequency, Hook_BlockCvarValue);
 	SDK_Init();
+	
+	g_CBaseNPCInterfacePointer = new StringMap();
 	
 	for (int iClient = 1; iClient <= MaxClients; iClient++)
 		if (IsClientInGame(iClient))
@@ -231,6 +250,7 @@ public void Hook_BlockCvarValue(ConVar convar, const char[] oldValue, const char
 
 public void OnMapStart()
 {
+	g_CBaseNPCInterfacePointer.Clear();
 	PrecacheModel("models/empty.mdl");
 #if defined DEBUG
 	g_iLaserIndex = PrecacheModel("materials/sprites/laser.vmt");
@@ -272,7 +292,7 @@ public int Native_CBaseNPCConstructor(Handle plugin, int numParams)
 		if (g_CBaseNPCHooks[iIndex] == null)
 			g_CBaseNPCHooks[iIndex] = new ArrayList();
 		
-		//Remove old hooks if there's any
+		// Remove old hooks if there's any
 		if (g_CBaseNPCHooks[iIndex].Length > 0)
 		{
 			for (int i = 0; i < g_CBaseNPCHooks[iIndex].Length; i++)
@@ -294,6 +314,21 @@ public int Native_CBaseNPCConstructor(Handle plugin, int numParams)
 		g_CBaseNPCNextBotInterface[iIndex] = CBaseNPC_GetNextBotOfEntity(iNpc);
 		g_CBaseNPCLocomotionInterface[iIndex] = view_as<NextBotGroundLocomotion>(g_CBaseNPCNextBotInterface[iIndex].GetLocomotionInterface());
 		g_CBaseNPCBodyInterface[iIndex] = g_CBaseNPCNextBotInterface[iIndex].GetBodyInterface();
+		g_CBaseNPCVisionInterface[iIndex] = g_CBaseNPCNextBotInterface[iIndex].GetVisionInterface();
+		
+		g_CBaseNPCvecBodyMins[iIndex][0] = -10.0;
+		g_CBaseNPCvecBodyMins[iIndex][1] = -10.0;
+		g_CBaseNPCvecBodyMins[iIndex][2] = 0.0;
+		
+		g_CBaseNPCvecBodyMaxs[iIndex][0] = 10.0;
+		g_CBaseNPCvecBodyMaxs[iIndex][1] = 10.0;
+		g_CBaseNPCvecBodyMaxs[iIndex][2] = 90.0;
+		
+		char sBuffer[20];
+		IntToString(view_as<int>(g_CBaseNPCNextBotInterface[iIndex]), sBuffer, sizeof(sBuffer));
+		g_CBaseNPCInterfacePointer.SetValue(sBuffer, iIndex, true);
+		
+		DHookEntity(g_hUpdateOnRemove, true, iNpc, _, CBaseNPC_UpdateOnRemove);
 		
 		// Locomotion detours
 		g_CBaseNPCHooks[iIndex].Push(DHookRaw(g_hIsAbleToJump, false, view_as<Address>(g_CBaseNPCLocomotionInterface[iIndex])));
@@ -525,6 +560,11 @@ public int Native_CBaseNPCGetBody(Handle plugin, int numParams)
 	return view_as<int>(g_CBaseNPCBodyInterface[GetNativeCell(1)]);
 }
 
+public int Native_CBaseNPCGetVision(Handle plugin, int numParams)
+{
+	return view_as<int>(g_CBaseNPCVisionInterface[GetNativeCell(1)]);
+}
+
 public int Native_CBaseNPCSetType(Handle plugin, int numParams)
 {
 	GetNativeString(2, g_CBaseNPCType[GetNativeCell(1)], sizeof(g_CBaseNPCType[]));
@@ -627,6 +667,26 @@ public int Native_CBaseNPCGetVelocity(Handle plugin, int numParams)
 	float vec[3];
 	g_CBaseNPCLocomotionInterface[GetNativeCell(1)].GetVelocity(vec);
 	SetNativeArray(2, vec, 3);
+}
+
+public int Native_CBaseNPCGetBodyMins(Handle plugin, int numParams)
+{
+	SetNativeArray(2, g_CBaseNPCvecBodyMins[GetNativeCell(1)], 3);
+}
+
+public int Native_CBaseNPCSetBodyMins(Handle plugin, int numParams)
+{
+	GetNativeArray(2, g_CBaseNPCvecBodyMins[GetNativeCell(1)], 3);
+}
+
+public int Native_CBaseNPCGetBodyMaxs(Handle plugin, int numParams)
+{
+	SetNativeArray(2, g_CBaseNPCvecBodyMaxs[GetNativeCell(1)], 3);
+}
+
+public int Native_CBaseNPCSetBodyMaxs(Handle plugin, int numParams)
+{
+	GetNativeArray(2, g_CBaseNPCvecBodyMaxs[GetNativeCell(1)], 3);
 }
 
 public int Native_CBaseNPCflStepSizeSet(Handle plugin, int numParams)
@@ -744,20 +804,16 @@ public CBaseNPC NPCFindByEntityIndex(int iEntity)
 	return INVALID_NPC;
 }
 
-public CBaseNPC NPCGetFromLocomotion(NextBotGroundLocomotion locomotion)
+public CBaseNPC NPCGetFromComponent(INextBotComponent pCompo)
 {
-	for (int ID = 0; ID < MAX_NPCS; ID++)
-	{
-		if (g_CBaseNPCLocomotionInterface[ID] == locomotion)
-		{
-			return view_as<CBaseNPC>(ID);
-		}
-	}
-	return INVALID_NPC;
+	char sBuffer[20];
+	IntToString(view_as<int>(pCompo.GetBot()), sBuffer, sizeof(sBuffer));
+	
+	CBaseNPC npc = INVALID_NPC;
+	g_CBaseNPCInterfacePointer.GetValue(sBuffer, npc);
+	
+	return npc;
 }
-
-
-
 
 
 public int Native_CNPCsFindNPCByEntIndex(Handle plugin, int numParams)
@@ -772,6 +828,11 @@ public int Native_CNPCsIsValidNPC(Handle plugin, int numParams)
 	if (EntRefToEntIndex(g_CBaseNPCEntityRef[iIndex]) <= MaxClients) return false;
 	
 	return true;
+}
+
+public int Native_CBaseEntityiUpdateOnRemove(Handle plugin, int numParams)
+{
+	return g_iUpdateOnRemove;
 }
 
 public int Native_CBaseAnimatingiHandleAnimEvent(Handle plugin, int numParams)
@@ -1038,7 +1099,12 @@ void SDK_Init()
 	if (iOffset == -1) SetFailState("Failed to get offset of CBaseAnimating::HandleAnimEvent");
 	g_iHandleAnimEventOffset = iOffset;
 	
+	iOffset = GameConfGetOffset(hGameData, "CBaseEntity::UpdateOnRemove");
+	if (iOffset == -1) SetFailState("Failed to get offset of CBaseEntity::UpdateOnRemove");
+	g_iUpdateOnRemove = iOffset;
 	
+	g_hUpdateOnRemove = DHookCreate(g_iUpdateOnRemove, HookType_Entity, ReturnType_Void, ThisPointer_CBaseEntity);
+	if (g_hUpdateOnRemove == null) SetFailState("Failed to create hook for CBaseEntity::UpdateOnRemove!");
 	
 	StartPrepSDKCall(SDKCall_Static);
 	PrepSDKCall_SetFromConf(hGameData, SDKConf_Signature, "CBaseAnimating::LookupSequence");
@@ -1208,7 +1274,7 @@ public Action NextBotGroundLocomotion_UpdatePosition(NextBotGroundLocomotion mov
 	/*if (vecFromPos[0] == vecToPos[0] && vecFromPos[1] == vecToPos[1] && vecFromPos[2] == vecToPos[2]) //Nothing happened
 		return Plugin_Continue;
 		
-	CBaseNPC Npc = NPCGetFromLocomotion(mover);
+	CBaseNPC Npc = NPCGetFromComponent(mover);
 	if (Npc == INVALID_NPC)
 		return Plugin_Continue;
 		
@@ -1560,7 +1626,7 @@ public void OnEntityCreated(int iEntity, const char[] sClassname)
 	}
 }
 
-public void OnEntityDestroyed(int iEntity)
+public MRESReturn CBaseNPC_UpdateOnRemove(int iEntity)
 {
 	if (iEntity > MaxClients)
 	{
@@ -1576,6 +1642,10 @@ public void OnEntityDestroyed(int iEntity)
 				}
 			}
 			g_CBaseNPCHooks[Npc.Index].Clear();
+			
+			char sBuffer[20];
+			IntToString(view_as<int>(g_CBaseNPCNextBotInterface[Npc.Index]), sBuffer, sizeof(sBuffer));
+			g_CBaseNPCInterfacePointer.Remove(sBuffer);
 		}
 	}
 }
@@ -1583,7 +1653,7 @@ public void OnEntityDestroyed(int iEntity)
 public MRESReturn ClimbUpToLedge(Address pThis, Handle hReturn, Handle hParams)
 {
 	NextBotGroundLocomotion NpcLocomotion = view_as<NextBotGroundLocomotion>(pThis);
-	CBaseNPC Npc = NPCGetFromLocomotion(NpcLocomotion);
+	CBaseNPC Npc = NPCGetFromComponent(NpcLocomotion);
 	if (Npc == INVALID_NPC)
 	{
 		return MRES_Ignored;
@@ -1642,7 +1712,7 @@ public MRESReturn ClimbUpToLedge(Address pThis, Handle hReturn, Handle hParams)
 public MRESReturn GetGravity(Address pThis, Handle hReturn)
 {
 	NextBotGroundLocomotion NpcLocomotion = view_as<NextBotGroundLocomotion>(pThis);
-	CBaseNPC Npc = NPCGetFromLocomotion(NpcLocomotion);
+	CBaseNPC Npc = NPCGetFromComponent(NpcLocomotion);
 	if (Npc == INVALID_NPC)
 	{
 		return MRES_Ignored;
@@ -1654,7 +1724,7 @@ public MRESReturn GetGravity(Address pThis, Handle hReturn)
 public MRESReturn GetAcceleration(Address pThis, Handle hReturn)
 {
 	NextBotGroundLocomotion NpcLocomotion = view_as<NextBotGroundLocomotion>(pThis);
-	CBaseNPC Npc = NPCGetFromLocomotion(NpcLocomotion);
+	CBaseNPC Npc = NPCGetFromComponent(NpcLocomotion);
 	if (Npc == INVALID_NPC)
 	{
 		return MRES_Ignored;
@@ -1666,7 +1736,7 @@ public MRESReturn GetAcceleration(Address pThis, Handle hReturn)
 public MRESReturn GetStepHeight(Address pThis, Handle hReturn)
 {
 	NextBotGroundLocomotion NpcLocomotion = view_as<NextBotGroundLocomotion>(pThis);
-	CBaseNPC Npc = NPCGetFromLocomotion(NpcLocomotion);
+	CBaseNPC Npc = NPCGetFromComponent(NpcLocomotion);
 	if (Npc == INVALID_NPC)
 	{
 		return MRES_Ignored;
@@ -1678,7 +1748,7 @@ public MRESReturn GetStepHeight(Address pThis, Handle hReturn)
 public MRESReturn GetMaxJumpHeight(Address pThis, Handle hReturn)
 {
 	NextBotGroundLocomotion NpcLocomotion = view_as<NextBotGroundLocomotion>(pThis);
-	CBaseNPC Npc = NPCGetFromLocomotion(NpcLocomotion);
+	CBaseNPC Npc = NPCGetFromComponent(NpcLocomotion);
 	if (Npc == INVALID_NPC)
 	{
 		return MRES_Ignored;
@@ -1690,7 +1760,7 @@ public MRESReturn GetMaxJumpHeight(Address pThis, Handle hReturn)
 public MRESReturn GetDeathDropHeight(Address pThis, Handle hReturn)
 {
 	NextBotGroundLocomotion NpcLocomotion = view_as<NextBotGroundLocomotion>(pThis);
-	CBaseNPC Npc = NPCGetFromLocomotion(NpcLocomotion);
+	CBaseNPC Npc = NPCGetFromComponent(NpcLocomotion);
 	if (Npc == INVALID_NPC)
 	{
 		return MRES_Ignored;
@@ -1702,7 +1772,7 @@ public MRESReturn GetDeathDropHeight(Address pThis, Handle hReturn)
 public MRESReturn GetWalkSpeed(Address pThis, Handle hReturn)
 {
 	NextBotGroundLocomotion NpcLocomotion = view_as<NextBotGroundLocomotion>(pThis);
-	CBaseNPC Npc = NPCGetFromLocomotion(NpcLocomotion);
+	CBaseNPC Npc = NPCGetFromComponent(NpcLocomotion);
 	if (Npc == INVALID_NPC)
 	{
 		return MRES_Ignored;
@@ -1714,7 +1784,7 @@ public MRESReturn GetWalkSpeed(Address pThis, Handle hReturn)
 public MRESReturn GetRunSpeed(Address pThis, Handle hReturn)
 {
 	NextBotGroundLocomotion NpcLocomotion = view_as<NextBotGroundLocomotion>(pThis);
-	CBaseNPC Npc = NPCGetFromLocomotion(NpcLocomotion);
+	CBaseNPC Npc = NPCGetFromComponent(NpcLocomotion);
 	if (Npc == INVALID_NPC)
 	{
 		return MRES_Ignored;
@@ -1760,7 +1830,7 @@ public MRESReturn IsEntityTraversable(Address pThis, Handle hReturn, Handle hPar
 public MRESReturn GetFrictionForward(Address pThis, Handle hReturn)
 {
 	NextBotGroundLocomotion NpcLocomotion = view_as<NextBotGroundLocomotion>(pThis);
-	CBaseNPC Npc = NPCGetFromLocomotion(NpcLocomotion);
+	CBaseNPC Npc = NPCGetFromComponent(NpcLocomotion);
 	if (Npc == INVALID_NPC)
 	{
 		return MRES_Ignored;
@@ -1772,7 +1842,7 @@ public MRESReturn GetFrictionForward(Address pThis, Handle hReturn)
 public MRESReturn GetFrictionSideways(Address pThis, Handle hReturn)
 {
 	NextBotGroundLocomotion NpcLocomotion = view_as<NextBotGroundLocomotion>(pThis);
-	CBaseNPC Npc = NPCGetFromLocomotion(NpcLocomotion);
+	CBaseNPC Npc = NPCGetFromComponent(NpcLocomotion);
 	if (Npc == INVALID_NPC)
 	{
 		return MRES_Ignored;
@@ -1781,7 +1851,7 @@ public MRESReturn GetFrictionSideways(Address pThis, Handle hReturn)
 	return MRES_Supercede;
 }
 
-//IBody
+// IBody
 public MRESReturn StartActivity(Address pThis, Handle hReturn, Handle hParams)
 {
 	DHookSetReturn(hReturn, true);
@@ -1797,29 +1867,28 @@ public MRESReturn GetSolidMask(Address pThis, Handle hReturn)
 public MRESReturn GetHullWidth(Address pThis, Handle hReturn, Handle hParams)
 {
 	IBody pBody = view_as<IBody>(pThis);
-	INextBot pNextBot = pBody.GetBot();
-	int iEntity = pNextBot.GetEntity();
-
-	float vecMaxs[3];
-	GetEntPropVector(iEntity, Prop_Send, "m_vecMaxs", vecMaxs);
+	CBaseNPC Npc = NPCGetFromComponent(pBody);
+	if (Npc == INVALID_NPC)
+	{
+		return MRES_Ignored;
+	}
 	
-	if(vecMaxs[1] > vecMaxs[0])
-		DHookSetReturn(hReturn, vecMaxs[1] * 2);
+	if(g_CBaseNPCvecBodyMaxs[Npc.Index][1] > g_CBaseNPCvecBodyMaxs[Npc.Index][0])
+		DHookSetReturn(hReturn, g_CBaseNPCvecBodyMaxs[Npc.Index][1] * 2);
 	else
-		DHookSetReturn(hReturn, vecMaxs[0] * 2);
+		DHookSetReturn(hReturn, g_CBaseNPCvecBodyMaxs[Npc.Index][0] * 2);
 	return MRES_Supercede;
 }
 
 public MRESReturn GetHullHeight(Address pThis, Handle hReturn, Handle hParams)
 {
 	IBody pBody = view_as<IBody>(pThis);
-	INextBot pNextBot = pBody.GetBot();
-	int iEntity = pNextBot.GetEntity();
-
-	float vecMaxs[3];
-	GetEntPropVector(iEntity, Prop_Send, "m_vecMaxs", vecMaxs);
-	
-	DHookSetReturn(hReturn, vecMaxs[2]);
+	CBaseNPC Npc = NPCGetFromComponent(pBody);
+	if (Npc == INVALID_NPC)
+	{
+		return MRES_Ignored;
+	}
+	DHookSetReturn(hReturn, g_CBaseNPCvecBodyMaxs[Npc.Index][2]);
 
 	return MRES_Supercede;
 }
@@ -1827,13 +1896,12 @@ public MRESReturn GetHullHeight(Address pThis, Handle hReturn, Handle hParams)
 public MRESReturn GetStandHullHeight(Address pThis, Handle hReturn, Handle hParams)
 {
 	IBody pBody = view_as<IBody>(pThis);
-	INextBot pNextBot = pBody.GetBot();
-	int iEntity = pNextBot.GetEntity();
-
-	float vecMaxs[3];
-	GetEntPropVector(iEntity, Prop_Send, "m_vecMaxs", vecMaxs);
-	
-	DHookSetReturn(hReturn, vecMaxs[2]);
+	CBaseNPC Npc = NPCGetFromComponent(pBody);
+	if (Npc == INVALID_NPC)
+	{
+		return MRES_Ignored;
+	}
+	DHookSetReturn(hReturn, g_CBaseNPCvecBodyMaxs[Npc.Index][2]);
 
 	return MRES_Supercede;
 }
@@ -1841,13 +1909,12 @@ public MRESReturn GetStandHullHeight(Address pThis, Handle hReturn, Handle hPara
 public MRESReturn GetCrouchHullHeight(Address pThis, Handle hReturn, Handle hParams)
 {
 	IBody pBody = view_as<IBody>(pThis);
-	INextBot pNextBot = pBody.GetBot();
-	int iEntity = pNextBot.GetEntity();
-
-	float vecMaxs[3];
-	GetEntPropVector(iEntity, Prop_Send, "m_vecMaxs", vecMaxs);
-	
-	DHookSetReturn(hReturn, vecMaxs[2] / 2);
+	CBaseNPC Npc = NPCGetFromComponent(pBody);
+	if (Npc == INVALID_NPC)
+	{
+		return MRES_Ignored;
+	}
+	DHookSetReturn(hReturn, g_CBaseNPCvecBodyMaxs[Npc.Index][2] / 2);
 
 	return MRES_Supercede;
 }
@@ -1855,13 +1922,12 @@ public MRESReturn GetCrouchHullHeight(Address pThis, Handle hReturn, Handle hPar
 public MRESReturn GetHullMins(Address pThis, Handle hReturn, Handle hParams)
 {
 	IBody pBody = view_as<IBody>(pThis);
-	INextBot pNextBot = pBody.GetBot();
-	int iEntity = pNextBot.GetEntity();
-
-	float vecMins[3];
-	GetEntPropVector(iEntity, Prop_Send, "m_vecMins", vecMins);
-	
-	DHookSetReturnVector(hReturn, vecMins);
+	CBaseNPC Npc = NPCGetFromComponent(pBody);
+	if (Npc == INVALID_NPC)
+	{
+		return MRES_Ignored;
+	}
+	DHookSetReturnVector(hReturn, g_CBaseNPCvecBodyMins[Npc.Index]);
 
 	return MRES_Supercede;
 }
@@ -1869,13 +1935,12 @@ public MRESReturn GetHullMins(Address pThis, Handle hReturn, Handle hParams)
 public MRESReturn GetHullMaxs(Address pThis, Handle hReturn, Handle hParams)
 {
 	IBody pBody = view_as<IBody>(pThis);
-	INextBot pNextBot = pBody.GetBot();
-	int iEntity = pNextBot.GetEntity();
-
-	float vecMaxs[3];
-	GetEntPropVector(iEntity, Prop_Send, "m_vecMaxs", vecMaxs);
-	
-	DHookSetReturnVector(hReturn, vecMaxs);
+	CBaseNPC Npc = NPCGetFromComponent(pBody);
+	if (Npc == INVALID_NPC)
+	{
+		return MRES_Ignored;
+	}
+	DHookSetReturnVector(hReturn, g_CBaseNPCvecBodyMaxs[Npc.Index]);
 
 	return MRES_Supercede;
 }

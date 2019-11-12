@@ -2,8 +2,7 @@
 #define NATIVES_NAVMESH_H_INCLUDED_
 
 #include "sourcesdk/nav_mesh.h"
-
-CUtlVector< CNavArea * > areaCollector;
+#include "sourcesdk/nav_threaded.h"
 
 #define NAVMESHNATIVE(name) \
 	cell_t CNavMesh_##name(IPluginContext *pContext, const cell_t *params) \
@@ -16,9 +15,12 @@ CUtlVector< CNavArea * > areaCollector;
 #define COLLECTORNATIVE(name) \
 	cell_t SurroundingAreasCollector_##name(IPluginContext *pContext, const cell_t *params) \
 	{ \
-		if(!TheNavMesh) { \
-			return pContext->ThrowNativeError("TheNavMesh isn't initialized!"); \
-		} \
+		HandleSecurity security; \
+		security.pOwner = NULL; \
+		security.pIdentity = myself->GetIdentity(); \
+		Handle_t hndlObject = static_cast<Handle_t>(params[1]); \
+		CUtlVector< CNavArea * > *pCollector = nullptr; \
+		READHANDLE(hndlObject, SurroundingAreasCollector, pCollector) \
 	
 NAVMESHNATIVE(GetNearestNavArea)
 	cell_t *vecAddr;
@@ -30,19 +32,27 @@ NAVMESHNATIVE(GetNearestNavArea)
 
 NAVMESHNATIVE(CollectSurroundingAreas)
 	
-	CollectSurroundingAreas( &areaCollector, (CNavArea *)params[2], sp_ctof(params[3]), sp_ctof(params[4]), sp_ctof(params[5]));
+	CUtlVector< CNavArea * > *pCollector = new CUtlVector< CNavArea * >;
+	CollectSurroundingAreas( pCollector, (CNavArea *)params[2], sp_ctof(params[3]), sp_ctof(params[4]), sp_ctof(params[5]));
+	return CREATEHANDLE(SurroundingAreasCollector, pCollector);
+}
+
+NAVMESHNATIVE(TCollectSurroundingAreas)
+
+	CTNavMesh::CollectNavThreadedData *pData = new CTNavMesh::CollectNavThreadedData((CNavArea*)params[2], sp_ctof(params[3]), sp_ctof(params[4]), sp_ctof(params[5]), pContext->GetFunctionById(params[6]), params[7]);
+	CTNavMesh::CollectSurroundingAreas(pData);
 	return 1;
 }
 
 COLLECTORNATIVE(Count)
-	return areaCollector.Count();
+	return pCollector->Count();
 }
 
 
 COLLECTORNATIVE(Get)
 	int ID = params[2];
-	if ( ID > areaCollector.Count()) return NULL;
-	return (cell_t)areaCollector[ID];
+	if ( ID > pCollector->Count()) return NULL;
+	return (cell_t) pCollector->Element(ID);
 }
 
 #endif

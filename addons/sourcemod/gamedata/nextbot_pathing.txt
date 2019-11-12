@@ -32,6 +32,11 @@
 				"library"	"server"
 				"linux"		"@TheNavMesh"
 			}
+			"CNavMesh::AddNavArea"
+			{
+				"library"		"server"
+				"linux"			"@_ZN8CNavMesh10AddNavAreaEP8CNavArea"
+			}
 			"CNavMesh::GetNearestNavArea"
 			{
 				"library"		"server"

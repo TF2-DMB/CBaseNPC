@@ -561,3 +561,25 @@ float CNavArea::ComputeAdjacentConnectionHeightChange( const CNavArea *destinati
 
 	return otherEdge.z - myEdge.z;
 }
+
+bool CNavArea::IsBlocked(int teamID, bool ignoreNavBlockers) const
+{
+	if (ignoreNavBlockers && (m_attributeFlags & NAV_MESH_NAV_BLOCKER))
+	{
+		return false;
+	}
+
+	if (teamID == TEAM_ANY)
+	{
+		bool isBlocked = false;
+		for (int i = 0; i < MAX_NAV_TEAMS; ++i)
+		{
+			isBlocked |= m_isBlocked[i];
+		}
+
+		return isBlocked;
+	}
+
+	int teamIdx = teamID % MAX_NAV_TEAMS;
+	return m_isBlocked[teamIdx];
+}
