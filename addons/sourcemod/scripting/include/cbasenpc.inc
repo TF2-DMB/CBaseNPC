@@ -117,9 +117,15 @@ methodmap SurroundingAreasCollector < Handle
 	public native int Count();
 };
 
+methodmap TSurroundingAreasCollector < Handle
+{
+	public native CTNavArea Get(int index);
+	public native int Count();
+};
+
 typeset CollectSurroundingAreasCallback
 {
-	function void (SurroundingAreasCollector collector, any data);
+	function void (TSurroundingAreasCollector collector, any data);
 };
 
 methodmap CNavMesh
@@ -130,6 +136,13 @@ methodmap CNavMesh
 };
 
 CNavMesh TheNavMesh;
+
+methodmap CTNavArea
+{
+	public native NavTraverseType GetParentHow();
+	public native float GetCostSoFar();
+	public native CNavArea GetRealNavArea();
+};
 
 methodmap CNavArea
 {

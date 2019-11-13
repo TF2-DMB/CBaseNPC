@@ -14,6 +14,7 @@ IdentityType_t g_CoreIdent;
 CBaseEntityList *g_pEntityList = nullptr;
 
 DEFINEHANDLEOBJ(SurroundingAreasCollector, CUtlVector< CNavArea* >);
+DEFINEHANDLEOBJ(TSurroundingAreasCollector, CUtlVector< CTNavArea >);
 
 ConVar NextBotPathDrawIncrement("cnb_path_draw_inc", "0", 0, "");                     
 ConVar NextBotPathSegmentInfluenceRadius("cnb_path_segment_influence", "0", 0, "");
@@ -38,11 +39,7 @@ CNavArea * (CNavMesh:: *CNavMesh::func_GetNearestNavArea)(const Vector &pos, boo
 bool (CNavMesh:: *CNavMesh::func_GetGroundHeight)(const Vector &pos, float *height, Vector *normal) = nullptr;
 bool (CTraceFilterSimpleHack:: *CTraceFilterSimpleHack::func_ShouldHitEntity)(IHandleEntity *pHandleEntity, int contentsMask) = nullptr;
 
-bool UTILMapLessFunc(const int32_t &in1, const int32_t &in2)
-{
-	return (in1 < in2);
-}
-CUtlMap<int32_t, int32_t> g_EntitiesHooks(UTILMapLessFunc);
+CUtlMap<int32_t, int32_t> g_EntitiesHooks;
 
 DETOUR_DECL_MEMBER1(CBaseEntity_SetLocalAngles, void, QAngle&, angles)
 {
@@ -136,13 +133,14 @@ bool CBaseNPCExt::SDK_OnLoad(char *error, size_t maxlength, bool late)
 	SH_MANUALHOOK_RECONFIGURE(MEvent_Killed, iOffset, 0, 0);
 	
 	CREATEHANDLETYPE(SurroundingAreasCollector);
+	CREATEHANDLETYPE(TSurroundingAreasCollector);
 
 	sharesys->AddDependency(myself, "bintools.ext", true, true);
 	sharesys->AddNatives(myself, g_NativesInfo);
 	sharesys->RegisterLibrary(myself, "nextbot_pathing");
 
 	CTNavMesh::Init();
-
+	SetDefLessFunc(g_EntitiesHooks);
 	return true;
 }
 

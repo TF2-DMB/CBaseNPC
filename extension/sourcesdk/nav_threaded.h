@@ -41,8 +41,9 @@ public:
 	void SetTotalCost( float value )	{ m_totalCost = value; }
 	float GetTotalCost( void ) const	{ return m_totalCost; }
 	
-	void SetParent( CTNavArea *parent, NavTraverseType how = NUM_TRAVERSE_TYPES )	{ m_parent = parent; m_parentHow = how; }
+	void SetParent(CTNavArea* parent, NavTraverseType how = NUM_TRAVERSE_TYPES) { m_parent = parent; m_parentHow = how; }
 	CTNavArea *GetParent( void ) const	{ return m_parent; }
+	NavTraverseType GetParentHow(void) const { return m_parentHow; }
 	
 	void AddToOpenList( void );
 	void RemoveFromOpenList( void );
@@ -167,10 +168,10 @@ public :
 			m_pFunction(callback),
 			m_data(data)
 		{
-			m_pCollector = new CUtlVector< CNavArea* >;
+			m_pCollector = new CUtlVector< CTNavArea >;
 		}
 
-		CUtlVector< CNavArea* >* m_pCollector;
+		CUtlVector< CTNavArea >* m_pCollector;
 		CNavArea* m_pStartArea;
 		float m_flTravelDistance;
 		float m_flStepUpLimit;
@@ -182,7 +183,7 @@ public :
 	static void Init(void);
 	static void CleanUp(void);
 
-	static void OnFrame(void);
+	static void OnFrame(bool simulating);
 
 	static void Add(CNavArea* area);
 	static void CollectSurroundingAreas(CollectNavThreadedData *pData);

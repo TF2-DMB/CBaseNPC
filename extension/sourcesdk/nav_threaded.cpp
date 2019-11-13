@@ -120,7 +120,7 @@ void CTNavArea::RemoveFromOpenList( void )
 	m_openMarker = 0;
 }
 
-ke::AutoPtr<ke::Thread> CTNavMesh::m_CollectWorker = nullptr;
+ke::AutoPtr<ke::Thread> CTNavMesh::m_CollectWorker;
 ke::ConditionVariable CTNavMesh::m_CollectEvent;
 CUtlQueue<CTNavMesh::CollectNavThreadedData*> CTNavMesh::m_QueueCollect;
 ke::Mutex CTNavMesh::m_CBLock;
@@ -130,6 +130,8 @@ bool CTNavMesh::m_CollectTerminate = false;
 void CTNavMesh::Init(void)
 {
 	CTNavArea::Init();
+	g_pSM->AddGameFrameHook(&CTNavMesh::OnFrame);
+	m_CollectWorker = nullptr;
 }
 
 void CTNavMesh::CleanUp(void)
@@ -244,7 +246,7 @@ void CTNavMesh::CollectSurroundingAreas_Threaded( CollectNavThreadedData* pData 
 					continue;
 			}
 
-			nearbyAreaVector->AddToTail( area->GetRealNavArea() );
+			nearbyAreaVector->AddToTail( *area );
 
 			// mark here to ensure all marked areas are also valid areas that are in the collection
 			area->Mark();
@@ -279,14 +281,14 @@ void CTNavMesh::CollectSurroundingAreas_Threaded( CollectNavThreadedData* pData 
 	}
 }
 
-void CTNavMesh::OnFrame(void)
+void CTNavMesh::OnFrame(bool simulating)
 {
-	for (size_t i = 0; i < 5 && m_QueueCB.IsEmpty(); i++) // TO-DO: Implement a ConVar to control callback fire rate
+	for (size_t i = 0; i < 5 && !m_QueueCB.IsEmpty(); i++) // TO-DO: Implement a ConVar to control callback fire rate
 	{
 		CollectNavThreadedData* pData = nullptr;
 		{
 			ke::AutoLock lock(&m_CBLock);
-			pData = m_QueueCollect.RemoveAtHead();
+			pData = m_QueueCB.RemoveAtHead();
 		}
 
 		// Fire the plugin callback
@@ -294,7 +296,7 @@ void CTNavMesh::OnFrame(void)
 		if (pCallback->IsRunnable())
 		{
 			IPluginContext* pContext = pCallback->GetParentRuntime()->GetDefaultContext();
-			pCallback->PushCell(CREATEHANDLE(SurroundingAreasCollector, pData->m_pCollector));
+			pCallback->PushCell(CREATEHANDLE(TSurroundingAreasCollector, pData->m_pCollector));
 			pCallback->PushCell(pData->m_data);
 			pCallback->Execute(0);
 		}

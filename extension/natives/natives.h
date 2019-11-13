@@ -431,10 +431,17 @@ const sp_nativeinfo_t g_NativesInfo[] =
 	{ "CNavLadder.length.get", &CNavLadder_length },
 	
 	NATIVENAME(CNavMesh, CollectSurroundingAreas)
+	NATIVENAME(CNavMesh, TCollectSurroundingAreas)
 	NATIVENAME(CNavMesh, GetNearestNavArea)
 	
 	NATIVENAME(SurroundingAreasCollector, Get)
 	NATIVENAME(SurroundingAreasCollector, Count)
+	NATIVENAME(TSurroundingAreasCollector, Get)
+	NATIVENAME(TSurroundingAreasCollector, Count)
+
+	NATIVENAME(CTNavArea, GetParentHow)
+	NATIVENAME(CTNavArea, GetCostSoFar)
+	NATIVENAME(CTNavArea, GetRealNavArea)
 	
 	{ nullptr, nullptr },
 };

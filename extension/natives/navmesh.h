@@ -21,6 +21,24 @@
 		Handle_t hndlObject = static_cast<Handle_t>(params[1]); \
 		CUtlVector< CNavArea * > *pCollector = nullptr; \
 		READHANDLE(hndlObject, SurroundingAreasCollector, pCollector) \
+
+#define TCOLLECTORNATIVE(name) \
+	cell_t TSurroundingAreasCollector_##name(IPluginContext *pContext, const cell_t *params) \
+	{ \
+		HandleSecurity security; \
+		security.pOwner = NULL; \
+		security.pIdentity = myself->GetIdentity(); \
+		Handle_t hndlObject = static_cast<Handle_t>(params[1]); \
+		CUtlVector< CTNavArea > *pCollector = nullptr; \
+		READHANDLE(hndlObject, TSurroundingAreasCollector, pCollector) \
+
+#define TNAVAREA_NATIVE(name) \
+	cell_t CTNavArea_##name(IPluginContext *pContext, const cell_t *params) \
+	{ \
+		CTNavArea *pArea = (CTNavArea *)(params[1]); \
+		if(!pArea) { \
+			return pContext->ThrowNativeError("Invalid nav area %x", params[1]); \
+		} \
 	
 NAVMESHNATIVE(GetNearestNavArea)
 	cell_t *vecAddr;
@@ -54,5 +72,29 @@ COLLECTORNATIVE(Get)
 	if ( ID > pCollector->Count()) return NULL;
 	return (cell_t) pCollector->Element(ID);
 }
+
+TCOLLECTORNATIVE(Count)
+	return pCollector->Count();
+}
+
+
+TCOLLECTORNATIVE(Get)
+	int ID = params[2];
+	if (ID > pCollector->Count()) return NULL;
+	return (cell_t)&(pCollector->Element(ID));
+}
+
+TNAVAREA_NATIVE(GetParentHow)
+	return pArea->GetParentHow();
+}
+
+TNAVAREA_NATIVE(GetCostSoFar)
+	return sp_ftoc(pArea->GetCostSoFar());
+}
+
+TNAVAREA_NATIVE(GetRealNavArea)
+	return (cell_t)pArea->GetRealNavArea();
+}
+
 
 #endif
