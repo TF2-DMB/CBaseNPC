@@ -90,6 +90,42 @@ void CTNavArea::AddToOpenList( void )
 	}
 }
 
+void CTNavArea::UpdateOnOpenList(void)
+{
+	// since value can only decrease, bubble this area up from current spot
+	while (m_prevOpen && this->GetTotalCost() < m_prevOpen->GetTotalCost())
+	{
+		// swap position with predecessor
+		CTNavArea* other = m_prevOpen;
+		CTNavArea* before = other->m_prevOpen;
+		CTNavArea* after = this->m_nextOpen;
+
+		this->m_nextOpen = other;
+		this->m_prevOpen = before;
+
+		other->m_prevOpen = this;
+		other->m_nextOpen = after;
+
+		if (before)
+		{
+			before->m_nextOpen = this;
+		}
+		else
+		{
+			m_openList = this;
+		}
+
+		if (after)
+		{
+			after->m_prevOpen = other;
+		}
+		else
+		{
+			m_openListTail = this;
+		}
+	}
+}
+
 void CTNavArea::RemoveFromOpenList( void )
 {
 	if ( m_openMarker == 0 )
@@ -321,4 +357,330 @@ void CTNavMesh::KillCollectThread(void)
 		m_CollectWorker = nullptr;
 		m_CollectTerminate = false;
 	}
+}
+
+bool CTNavMesh::NavAreaBuildPath_Threaded(CTNavArea* startArea, CTNavArea* goalArea, const Vector* goalPos, NavPathThreadedData* costFunc, CTNavArea** closestArea, float maxPathLength, int teamID, bool ignoreNavBlockers)
+{
+	if (closestArea)
+	{
+		*closestArea = startArea;
+	}
+
+#ifdef STAGING_ONLY
+	bool isDebug = (g_DebugPathfindCounter-- > 0);
+#endif
+
+	if (startArea == NULL)
+		return false;
+
+	startArea->SetParent(NULL);
+	CNavArea *realGoalArea = goalArea->GetRealNavArea();
+	CNavArea *realStartArea = startArea->GetRealNavArea();
+
+	if (goalArea != NULL && realGoalArea->IsBlocked(teamID, ignoreNavBlockers))
+		goalArea = NULL;
+
+	if (goalArea == NULL && goalPos == NULL)
+		return false;
+
+	// if we are already in the goal area, build trivial path
+	if (startArea == goalArea)
+	{
+		return true;
+	}
+
+	// determine actual goal position
+	Vector actualGoalPos = (goalPos) ? *goalPos : realGoalArea->GetCenter();
+
+	// start search
+	CTNavArea::ClearSearchLists();
+
+	// compute estimate of path length
+	/// @todo Cost might work as "manhattan distance"
+	startArea->SetTotalCost((realStartArea->GetCenter() - actualGoalPos).Length());
+
+	float initCost = costFunc->operator()(startArea, NULL, NULL, NULL, -1.0f);
+	if (initCost < 0.0f)
+		return false;
+	startArea->SetCostSoFar(initCost);
+	startArea->SetPathLengthSoFar(0.0);
+
+	startArea->AddToOpenList();
+
+	// keep track of the area we visit that is closest to the goal
+	float closestAreaDist = startArea->GetTotalCost();
+
+	// do A* search
+	while (!CTNavArea::IsOpenListEmpty())
+	{
+		// get next area to check
+		CTNavArea *area = CTNavArea::PopOpenList();
+		CNavArea *realArea = area->GetRealNavArea();
+#ifdef STAGING_ONLY
+		if (isDebug)
+		{
+			area->DrawFilled(0, 255, 0, 128, 30.0f);
+		}
+#endif
+
+		// don't consider blocked areas
+		if (realArea->IsBlocked(teamID, ignoreNavBlockers))
+			continue;
+
+		// check if we have found the goal area or position
+		if (area == goalArea || (goalArea == NULL && goalPos && realArea->Contains(*goalPos)))
+		{
+			if (closestArea)
+			{
+				*closestArea = area;
+			}
+
+			return true;
+		}
+
+		// search adjacent areas
+		enum SearchType
+		{
+			SEARCH_FLOOR, SEARCH_LADDERS, SEARCH_ELEVATORS
+		};
+		SearchType searchWhere = SEARCH_FLOOR;
+		int searchIndex = 0;
+
+		int dir = NORTH;
+		const NavConnectVector* floorList = realArea->GetAdjacentAreas(NORTH);
+
+		bool ladderUp = true;
+		const NavLadderConnectVector* ladderList = NULL;
+		enum { AHEAD = 0, LEFT, RIGHT, BEHIND, NUM_TOP_DIRECTIONS };
+		int ladderTopDir = AHEAD;
+		bool bHaveMaxPathLength = (maxPathLength > 0.0f);
+		float length = -1;
+
+		while (true)
+		{
+			CNavArea* realNewArea = NULL;
+
+			NavTraverseType how;
+			const CNavLadder* ladder = NULL;
+			const CFuncElevator* elevator = NULL;
+
+			//
+			// Get next adjacent area - either on floor or via ladder
+			//
+			if (searchWhere == SEARCH_FLOOR)
+			{
+				// if exhausted adjacent connections in current direction, begin checking next direction
+				if (searchIndex >= floorList->Count())
+				{
+					++dir;
+
+					if (dir == NUM_DIRECTIONS)
+					{
+						// checked all directions on floor - check ladders next
+						searchWhere = SEARCH_LADDERS;
+
+						ladderList = realArea->GetLadders(CNavLadder::LADDER_UP);
+						searchIndex = 0;
+						ladderTopDir = AHEAD;
+					}
+					else
+					{
+						// start next direction
+						floorList = realArea->GetAdjacentAreas((NavDirType)dir);
+						searchIndex = 0;
+					}
+
+					continue;
+				}
+
+				const NavConnect& floorConnect = floorList->Element(searchIndex);
+				realNewArea = floorConnect.area;
+				length = floorConnect.length;
+				how = (NavTraverseType)dir;
+				++searchIndex;
+
+				if (IsX360() && searchIndex < floorList->Count())
+				{
+					PREFETCH360(floorList->Element(searchIndex).area, 0);
+				}
+			}
+			else if (searchWhere == SEARCH_LADDERS)
+			{
+				if (searchIndex >= ladderList->Count())
+				{
+					if (!ladderUp)
+					{
+						// checked both ladder directions - check elevators next
+						searchWhere = SEARCH_ELEVATORS;
+						searchIndex = 0;
+						ladder = NULL;
+					}
+					else
+					{
+						// check down ladders
+						ladderUp = false;
+						ladderList = realArea->GetLadders(CNavLadder::LADDER_DOWN);
+						searchIndex = 0;
+					}
+					continue;
+				}
+
+				if (ladderUp)
+				{
+					ladder = ladderList->Element(searchIndex).ladder;
+
+					// do not use BEHIND connection, as its very hard to get to when going up a ladder
+					if (ladderTopDir == AHEAD)
+					{
+						realNewArea = ladder->m_topForwardArea;
+					}
+					else if (ladderTopDir == LEFT)
+					{
+						realNewArea = ladder->m_topLeftArea;
+					}
+					else if (ladderTopDir == RIGHT)
+					{
+						realNewArea = ladder->m_topRightArea;
+					}
+					else
+					{
+						++searchIndex;
+						ladderTopDir = AHEAD;
+						continue;
+					}
+
+					how = GO_LADDER_UP;
+					++ladderTopDir;
+				}
+				else
+				{
+					realNewArea = ladderList->Element(searchIndex).ladder->m_bottomArea;
+					how = GO_LADDER_DOWN;
+					ladder = ladderList->Element(searchIndex).ladder;
+					++searchIndex;
+				}
+
+				if (realNewArea == NULL)
+					continue;
+
+				length = -1.0f;
+			}
+			else // if ( searchWhere == SEARCH_ELEVATORS )
+			{
+				const NavConnectVector& elevatorAreas = realArea->GetElevatorAreas();
+
+				elevator = realArea->GetElevator();
+
+				if (elevator == NULL || searchIndex >= elevatorAreas.Count())
+				{
+					// done searching connected areas
+					elevator = NULL;
+					break;
+				}
+
+				realNewArea = elevatorAreas[searchIndex++].area;
+				if (realNewArea->GetCenter().z > realArea->GetCenter().z)
+				{
+					how = GO_ELEVATOR_UP;
+				}
+				else
+				{
+					how = GO_ELEVATOR_DOWN;
+				}
+
+				length = -1.0f;
+			}
+
+			CTNavArea* newArea = CTNavArea::Find(realNewArea);
+			// don't backtrack
+			Assert(newArea);
+			if (newArea == area->GetParent())
+				continue;
+			if (newArea == area) // self neighbor?
+				continue;
+
+			// don't consider blocked areas
+			if (realNewArea->IsBlocked(teamID, ignoreNavBlockers))
+				continue;
+
+			float newCostSoFar = costFunc->operator()(newArea, area, ladder, elevator, length);
+
+			// NaNs really mess this function up causing tough to track down hangs. If
+			//  we get inf back, clamp it down to a really high number.
+			DebuggerBreakOnNaN_StagingOnly(newCostSoFar);
+			if (IS_NAN(newCostSoFar))
+				newCostSoFar = 1e30f;
+
+			// check if cost functor says this area is a dead-end
+			if (newCostSoFar < 0.0f)
+				continue;
+
+			// Safety check against a bogus functor.  The cost of the path
+			// A...B, C should always be at least as big as the path A...B.
+			Assert(newCostSoFar >= area->GetCostSoFar());
+
+			// And now that we've asserted, let's be a bit more defensive.
+			// Make sure that any jump to a new area incurs some pathfinsing
+			// cost, to avoid us spinning our wheels over insignificant cost
+			// benefit, floating point precision bug, or busted cost functor.
+			float minNewCostSoFar = area->GetCostSoFar() * 1.00001f + 0.00001f;
+			newCostSoFar = Max(newCostSoFar, minNewCostSoFar);
+
+			// stop if path length limit reached
+			if (bHaveMaxPathLength)
+			{
+				// keep track of path length so far
+				float deltaLength = (realNewArea->GetCenter() - realArea->GetCenter()).Length();
+				float newLengthSoFar = area->GetPathLengthSoFar() + deltaLength;
+				if (newLengthSoFar > maxPathLength)
+					continue;
+
+				newArea->SetPathLengthSoFar(newLengthSoFar);
+			}
+
+			if ((newArea->IsOpen() || newArea->IsClosed()) && newArea->GetCostSoFar() <= newCostSoFar)
+			{
+				// this is a worse path - skip it
+				continue;
+			}
+			else
+			{
+				// compute estimate of distance left to go
+				float distSq = (realNewArea->GetCenter() - actualGoalPos).LengthSqr();
+				float newCostRemaining = (distSq > 0.0) ? FastSqrt(distSq) : 0.0;
+
+				// track closest area to goal in case path fails
+				if (closestArea && newCostRemaining < closestAreaDist)
+				{
+					*closestArea = newArea;
+					closestAreaDist = newCostRemaining;
+				}
+
+				newArea->SetCostSoFar(newCostSoFar);
+				newArea->SetTotalCost(newCostSoFar + newCostRemaining);
+
+				if (newArea->IsClosed())
+				{
+					newArea->RemoveFromClosedList();
+				}
+
+				if (newArea->IsOpen())
+				{
+					// area already on open list, update the list order to keep costs sorted
+					newArea->UpdateOnOpenList();
+				}
+				else
+				{
+					newArea->AddToOpenList();
+				}
+
+				newArea->SetParent(area, how);
+			}
+		}
+
+		// we have searched this area
+		area->AddToClosedList();
+	}
+
+	return false;
 }

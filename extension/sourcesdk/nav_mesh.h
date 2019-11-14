@@ -132,5 +132,5 @@ inline void CollectSurroundingAreas( CUtlVector< CNavArea * > *nearbyAreaVector,
 }
 
 #define IGNORE_NAV_BLOCKERS true
-bool NavAreaBuildPath(CNavArea *startArea, CNavArea *goalArea, Vector *goalPos, IPathCost &costFunc, CNavArea **closestArea = NULL, float maxPathLength = 0.0f, int teamID = -2, bool ignoreNavBlockers = false);
+bool NavAreaBuildPath(CNavArea *startArea, CNavArea *goalArea, Vector *goalPos, IPathCost &costFunc, CNavArea **closestArea = NULL, float maxPathLength = 0.0f, int teamID = TEAM_ANY, bool ignoreNavBlockers = false);
 #endif
