@@ -173,9 +173,8 @@ void CTNavMesh::Init(void)
 void CTNavMesh::CleanUp(void)
 {
 	CTNavMesh::KillCollectThread();
-	FOR_EACH_MAP_FAST(CTNavArea::m_copiedNavAreas, areaID)
-		delete CTNavArea::m_copiedNavAreas.Element(areaID);
-
+	CTNavArea::m_copiedNavAreas.PurgeAndDeleteElements();
+	
 	while (!m_QueueCollect.IsEmpty())
 	{
 		CollectNavThreadedData* pData = m_QueueCollect.RemoveAtHead();
