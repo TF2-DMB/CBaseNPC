@@ -385,6 +385,8 @@ const sp_nativeinfo_t g_NativesInfo[] =
 	NATIVENAME(Path, ComputeToPos)
 	NATIVENAME(Path, ComputeToTarget)
 	NATIVENAME(Path, Destroy)
+	NATIVENAME(Path, ComputeToPosT)
+	NATIVENAME(Path, ComputeToTargetT)
 
 	NATIVENAME(PathFollower, PathFollower)
 	NATIVENAME(PathFollower, Update)

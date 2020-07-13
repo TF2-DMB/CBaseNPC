@@ -7,16 +7,21 @@
 #include <convar.h>
 #include <utlmap.h>
 #include "helpers.h"
+#include <itoolentity.h>
 #include <ISDKHooks.h>
+#include <ISDKTools.h>
+#include "shared/npctools.h"
 
 extern CGlobalVars *gpGlobals;
 extern IBinTools *g_pBinTools;
+extern ISDKTools *g_pSDKTools;
 extern IServerGameEnts *gameents;
 extern int g_iMyNextBotPointerOffset;
 extern int g_iLastKnownAreaOffset;
 extern IdentityType_t g_CoreIdent;
 extern IGameConfig *g_pGameConf;
 extern IEngineTrace *enginetrace;
+extern IServerTools *servertools;
 
 extern IForward *g_pForwardPathCost;
 

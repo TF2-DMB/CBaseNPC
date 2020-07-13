@@ -342,7 +342,7 @@ public int Native_CBaseNPCConstructor(Handle plugin, int numParams)
 		g_CBaseNPCHooks[iIndex].Push(DHookRaw(g_hGetRunSpeed, false, view_as<Address>(g_CBaseNPCLocomotionInterface[iIndex])));
 		g_CBaseNPCHooks[iIndex].Push(DHookRaw(g_hGetGravity, false, view_as<Address>(g_CBaseNPCLocomotionInterface[iIndex])));
 		g_CBaseNPCHooks[iIndex].Push(DHookRaw(g_hShouldCollide, true, view_as<Address>(g_CBaseNPCLocomotionInterface[iIndex])));
-		g_CBaseNPCHooks[iIndex].Push(DHookRaw(g_hIsEntityTraversable, false, view_as<Address>(g_CBaseNPCLocomotionInterface[iIndex])));
+		//g_CBaseNPCHooks[iIndex].Push(DHookRaw(g_hIsEntityTraversable, false, view_as<Address>(g_CBaseNPCLocomotionInterface[iIndex])));
 		g_CBaseNPCHooks[iIndex].Push(DHookRaw(g_hGetFrictionForward, false, view_as<Address>(g_CBaseNPCLocomotionInterface[iIndex])));
 		g_CBaseNPCHooks[iIndex].Push(DHookRaw(g_hGetFrictionSideways, false, view_as<Address>(g_CBaseNPCLocomotionInterface[iIndex])));
 		// IBody detours

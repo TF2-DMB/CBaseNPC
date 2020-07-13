@@ -42,40 +42,40 @@ public:
 
 	virtual void ClimbLadder( const CNavLadder *ladder, const CNavArea *dismountGoal ) = 0;
 	virtual void DescendLadder( const CNavLadder *ladder, const CNavArea *dismountGoal ) = 0;
-	virtual bool IsUsingLadder( void ) const = 0;
-	virtual bool IsAscendingOrDescendingLadder( void ) const = 0;
+	virtual bool IsUsingLadder( void ) = 0;
+	virtual bool IsAscendingOrDescendingLadder( void ) = 0;
 
 	virtual void FaceTowards( const Vector &target ) = 0;
 
 	virtual void SetDesiredLean( const QAngle &lean ) = 0;
-	virtual const QAngle &GetDesiredLean( void ) const = 0;
+	virtual const QAngle &GetDesiredLean( void ) = 0;
 
-	virtual const Vector &GetFeet( void ) const = 0;
+	virtual const Vector &GetFeet( void ) = 0;
 
-	virtual float GetStepHeight( void ) const = 0;
-	virtual float GetMaxJumpHeight( void ) const = 0;
-	virtual float GetDeathDropHeight( void ) const = 0;
+	virtual float GetStepHeight( void ) = 0;
+	virtual float GetMaxJumpHeight( void ) = 0;
+	virtual float GetDeathDropHeight( void ) = 0;
 
-	virtual float GetRunSpeed( void ) const = 0;
-	virtual float GetWalkSpeed( void ) const = 0;
+	virtual float GetRunSpeed( void ) = 0;
+	virtual float GetWalkSpeed( void ) = 0;
 
-	virtual float GetMaxAcceleration( void ) const = 0;
-	virtual float GetMaxDeceleration( void ) const = 0;
+	virtual float GetMaxAcceleration( void ) = 0;
+	virtual float GetMaxDeceleration( void ) = 0;
 
-	virtual const Vector &GetAcceleration( void ) const = 0;
+	virtual const Vector &GetAcceleration( void ) = 0;
 	virtual void SetAcceleration( const Vector &accel ) = 0;
 
-	virtual const Vector &GetVelocity( void ) const = 0;
+	virtual const Vector &GetVelocity( void ) = 0;
 	virtual void SetVelocity( const Vector &vel ) = 0;
 
 	virtual void OnMoveToSuccess( const Path *path ) = 0;
 	virtual void OnMoveToFailure( const Path *path, MoveToFailureType reason ) = 0;
 
 //private: expose the functions to our natives
-	virtual float GetGravity( void ) const = 0;
-	virtual float GetFrictionForward( void ) const = 0;
-	virtual float GetFrictionSideways( void ) const = 0;
-	virtual float GetMaxYawRate( void ) const = 0;
+	virtual float GetGravity( void ) = 0;
+	virtual float GetFrictionForward( void ) = 0;
+	virtual float GetFrictionSideways( void ) = 0;
+	virtual float GetMaxYawRate( void ) = 0;
 
 	//This function does no exist it's there to make sure we can update our velocity
 	int TryNextBotMove(Vector *pFirstDest=NULL, trace_t *pFirstTrace=NULL);

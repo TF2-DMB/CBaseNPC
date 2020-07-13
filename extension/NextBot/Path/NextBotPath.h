@@ -10,6 +10,7 @@
 
 #include "unsorted_class.h"
 #include "sourcesdk/nav_mesh.h"
+#include "sourcesdk/nav_threaded.h"
 #include "NextBotInterface.h"
 #include "NextBotIntentionInterface.h"
 #include "NextBotLocomotionInterface.h"
@@ -270,6 +271,7 @@ public:
 
 		return pathResult;
 	}
+	bool ComputeThreaded(INextBot *bot, CBaseCombatCharacter *subject, float maxPathLength = 0.0f, bool includeGoalIfPathFails = true);
 
 
 	//-----------------------------------------------------------------------------------------------------------------
@@ -392,7 +394,8 @@ public:
 
 		return pathResult;
 	}
-
+	bool ComputeT(CTNavMesh::NavPathThreadedData* pData);
+	bool ComputePathDetailsT(CTNavMesh::NavPathThreadedData* pData);
 
 	//-----------------------------------------------------------------------------------------------------------------
 	/**
@@ -583,7 +586,7 @@ public:
 	 * Utility function for when start and goal are in the same area
 	 */
 	bool BuildTrivialPath( INextBot *bot, const Vector &goal );	
-
+	bool BuildTrivialPathT(const Vector& start, const Vector& goal);
 	/**
 	 * Determine exactly where the path goes between the given two areas
 	 * on the path. Return this point in 'crossPos'.

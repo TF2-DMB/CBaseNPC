@@ -317,6 +317,29 @@ PATHNATIVE(ComputeToTarget)
 	return pPath->Compute(pBot, (CBaseCombatCharacter *)pTarget, pCostFunc, sp_ctof(params[4]), (params[5]) ? true : false);
 }
 
+PATHNATIVE(ComputeToPosT)
+	INextBot* pBot = (INextBot*)params[2];
+	cell_t* vec;
+	pContext->LocalToPhysAddr(params[3], &vec);
+	Vector vecGoal;
+	PawnVectorToVector(vec, vecGoal);
+
+	CTNavMesh::NavPathThreadedData* computePath = new CTNavMesh::NavPathThreadedData(pBot, pPath, vecGoal, NULL, sp_ctof(params[4]), (params[5]) ? true : false, pContext->GetFunctionById(params[6]), params[7]);
+	CTNavMesh::Compute(computePath);
+	return 0;
+}
+
+PATHNATIVE(ComputeToTargetT)
+	INextBot* pBot = (INextBot*)params[2];
+	CBaseEntity* pTarget;
+	ENTINDEX_TO_CBASEENTITY(params[3], pTarget);
+
+	Vector vecGoal;
+	CTNavMesh::NavPathThreadedData* computePath = new CTNavMesh::NavPathThreadedData(pBot, pPath, vecGoal, (CBaseCombatCharacter*)pTarget, sp_ctof(params[4]), (params[5]) ? true : false, pContext->GetFunctionById(params[6]), params[7]);
+	CTNavMesh::Compute(computePath);
+	return 0;
+}
+
 PATHNATIVE(Destroy)
 	delete pPath;
 	return 1;

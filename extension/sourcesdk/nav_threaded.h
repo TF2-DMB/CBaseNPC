@@ -4,6 +4,7 @@
 #include "extension.h"
 #include "sourcesdk/nav_mesh.h"
 #include <NextBot/NextBotInterface.h>
+#include <NextBot/NextBotBodyInterface.h>
 #include <NextBot/NextBotGroundLocomotion.h>
 #include <amtl/am-thread-utils.h>
 #include <tier1/utlvector.h>
@@ -133,27 +134,75 @@ inline void CTNavArea::RemoveFromClosedList(void)
 
 class CTNavMesh
 {
-	class NavPathThreadedData
+public:
+	class NavThreadedData
 	{
 	public:
-		NavPathThreadedData(INextBot* pBot)
+		NavThreadedData(IPluginFunction* callback, cell_t data) : m_pFunction(callback), m_data(data)
+		{
+
+		}
+
+
+		enum ThreadedDataType
+		{
+			NAVPATH = 0,
+			COLLECTNAV
+		};
+
+		virtual ThreadedDataType GetDataType() = 0;
+		IPluginFunction* m_pFunction;
+		cell_t m_data;
+	};
+
+	class NavPathThreadedData : public IPathCost, public NavThreadedData
+	{
+	public:
+		virtual ThreadedDataType GetDataType() override { return NAVPATH; };
+
+		NavPathThreadedData(INextBot* pBot, Path *path, Vector end, CBaseCombatCharacter* goal, float maxPathLength, bool includeGoalIfPathFails, IPluginFunction* callback, cell_t data) : NavThreadedData(callback, data)
 		{
 			ILocomotion* mover = pBot->GetLocomotionInterface();
 			m_flDeathDropHeight = mover->GetDeathDropHeight();
 			m_flStepHeight = mover->GetStepHeight();
 			m_flJumpHeight = mover->GetMaxJumpHeight();
+
+			IBody* body = pBot->GetBodyInterface();
+			m_flHullWidth = body->GetHullWidth();
+			m_flCrouchHullHeight = body->GetCrouchHullHeight();
+			m_iSolidMask = body->GetSolidMask();
+
+			m_entity = pBot->GetEntity();
+			m_vecStart = pBot->GetPosition();
+			m_startArea = pBot->GetEntity()->GetLastKnownArea();
+			if (goal)
+			{
+				m_vecEnd = goal->GetAbsOrigin();
+				m_endArea = goal->GetLastKnownArea();
+			}
+			else
+			{
+				m_vecEnd = end;
+				m_endArea = nullptr;
+			}
+			m_bot = pBot;
 			m_iTeam = pBot->GetEntity()->GetTeamNumber();
+			m_flMaxPathLength = maxPathLength;
+			m_bIncludeGoal = includeGoalIfPathFails;
+			m_pFunction = callback;
+			m_data = data;
+			m_path = path;
+			m_bSuccess = false;
 		}
-		virtual float operator()(CTNavArea* area, CTNavArea* fromArea, const CNavLadder* ladder, const CFuncElevator* elevator, float length) const
+
+		virtual float operator()(CNavArea* realArea, CNavArea* realFromArea, const CNavLadder* ladder, const CFuncElevator* elevator, float length) const override
 		{
-			if (fromArea == NULL)
+			if (realFromArea == NULL)
 			{
 				return 0.0f;
 			}
 			else
 			{
-				CNavArea *realArea = area->GetRealNavArea();
-				CNavArea *realFromArea = fromArea->GetRealNavArea();
 				if (realArea->IsBlocked(m_iTeam)) return -1.0f;
 
 				float dist;
@@ -176,27 +225,43 @@ class CTNavMesh
 					if (delta_z < -m_flDeathDropHeight) return -1.0f;
 				}
 
-				return dist + fromArea->GetCostSoFar();
+				return dist + realFromArea->GetCostSoFar();
 			}
 		};
-	private:
+
 		float m_flDeathDropHeight;
 		float m_flStepHeight;
 		float m_flJumpHeight;
+
+		float m_flHullWidth;
+		float m_flCrouchHullHeight;
+		unsigned int m_iSolidMask;
+
+		Vector m_vecStart;
+		Vector m_vecEnd;
+		CNavArea* m_startArea;
+		CNavArea* m_endArea;
+		INextBot* m_bot;
+		IHandleEntity* m_entity;
+		Path* m_path;
 		int m_iTeam;
+		float m_flMaxPathLength;
+		bool m_bIncludeGoal;
+		bool m_bSuccess;
 	};
 
 public :
-	class CollectNavThreadedData
+	class CollectNavThreadedData : public NavThreadedData
 	{
 	public:
+		virtual ThreadedDataType GetDataType() override { return COLLECTNAV; };
+
 		CollectNavThreadedData(CNavArea* startArea, float travelDistanceLimit, float maxStepUpLimit, float maxDropDownLimit, IPluginFunction* callback, cell_t data) :
+			NavThreadedData(callback, data),
 			m_pStartArea(startArea),
 			m_flTravelDistance(travelDistanceLimit),
 			m_flStepUpLimit(maxStepUpLimit),
-			m_flMaxDropDown(maxDropDownLimit),
-			m_pFunction(callback),
-			m_data(data)
+			m_flMaxDropDown(maxDropDownLimit)
 		{
 			m_pCollector = new CUtlVector< CTNavArea >;
 		}
@@ -206,29 +271,30 @@ public :
 		float m_flTravelDistance;
 		float m_flStepUpLimit;
 		float m_flMaxDropDown;
-		IPluginFunction* m_pFunction;
-		cell_t m_data;
 	};
 
 	static void Init(void);
+	static void RefreshHooks(void);
+	static void CleanUpMap(void);
 	static void CleanUp(void);
 
 	static void OnFrame(bool simulating);
 
 	static void Add(CNavArea* area);
-	static void CollectSurroundingAreas(CollectNavThreadedData *pData);
+	static void Compute(NavThreadedData* pData);
 	static void KillCollectThread(void);
 
 private:
 	static ke::AutoPtr<ke::Thread> m_CollectWorker;
 	static ke::ConditionVariable m_CollectEvent;
-	static CUtlQueue<CollectNavThreadedData *> m_QueueCollect;
+	static CUtlQueue<NavThreadedData*> m_QueueCollect;
 	static ke::Mutex m_CBLock;
-	static CUtlQueue<CollectNavThreadedData *> m_QueueCB;
-	static bool m_CollectTerminate;
-	static void RunCollectThread(void);
-	static void CollectSurroundingAreas_Threaded(CollectNavThreadedData* pData);
+	static CUtlQueue<NavThreadedData*> m_QueueCB;
+	static bool m_ThreadTerminate;
+	static int m_hookCleanUpID;
 
+	static void RunThread(void);
+	static void CollectSurroundingAreas_Threaded(CollectNavThreadedData* pData);
 	static bool NavAreaBuildPath_Threaded(CTNavArea* startArea, CTNavArea* goalArea, const Vector* goalPos, NavPathThreadedData *costFunc, CTNavArea** closestArea = NULL, float maxPathLength = 0.0f, int teamID = TEAM_ANY, bool ignoreNavBlockers = false);
 };
 

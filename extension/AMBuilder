@@ -6,6 +6,8 @@ projectName = 'nextbot_pathing'
 # smsdk_ext.cpp will be automatically added later
 sourceFiles = [
   'extension.cpp',
+  'cbasenpc_internal.cpp',
+  'npc_tools_internal.cpp',
   'CDetour/detours.cpp',
   'asm/asm.c',
   'helpers.cpp',
@@ -27,6 +29,7 @@ project.compiler.cxxincludes += [os.path.join(builder.currentSourcePath, 'source
 project.compiler.cxxincludes += [os.path.join(builder.currentSourcePath, 'NextBot')]
 project.compiler.cxxincludes += [os.path.join(builder.currentSourcePath, 'NextBot/Path')]
 project.compiler.cxxincludes += [os.path.join(builder.currentSourcePath, 'natives')]
+project.compiler.cxxincludes += [os.path.join(builder.currentSourcePath, 'shared')]
 project.compiler.cxxincludes += [os.path.join(builder.currentSourcePath, '')]
 project.compiler.cxxincludes += [os.path.join(Extension.sm_root, 'sourcepawn/third_party/amtl/amtl')]
 project.compiler.cxxincludes += [os.path.join(Extension.sm_root, 'sourcepawn/third_party/amtl')]

@@ -1,5 +1,14 @@
 #include "extension.h"
+#include <NextBot/Path/NextBotPath.h>
 #include <sourcesdk/nav_threaded.h>
+
+// Hardcoded the vtable offsets, they're very unlikely to move
+// However if I'm proved wrong, well I guess i'll stop being lazy
+#ifdef _WINDOWS
+SH_DECL_MANUALHOOK0_void(MHook_CleanUpMap, 225, 0, 0);
+#else
+SH_DECL_MANUALHOOK0_void(MHook_CleanUpMap, 227, 0, 0);
+#endif
 
 unsigned int CTNavArea::m_masterMarker = 1;
 CTNavArea* CTNavArea::m_openList = NULL;
@@ -158,16 +167,41 @@ void CTNavArea::RemoveFromOpenList( void )
 
 ke::AutoPtr<ke::Thread> CTNavMesh::m_CollectWorker;
 ke::ConditionVariable CTNavMesh::m_CollectEvent;
-CUtlQueue<CTNavMesh::CollectNavThreadedData*> CTNavMesh::m_QueueCollect;
+CUtlQueue<CTNavMesh::NavThreadedData*> CTNavMesh::m_QueueCollect;
 ke::Mutex CTNavMesh::m_CBLock;
-CUtlQueue<CTNavMesh::CollectNavThreadedData*> CTNavMesh::m_QueueCB;
-bool CTNavMesh::m_CollectTerminate = false;
+CUtlQueue<CTNavMesh::NavThreadedData*> CTNavMesh::m_QueueCB;
+bool CTNavMesh::m_ThreadTerminate = false;
+int CTNavMesh::m_hookCleanUpID = 0;
 
 void CTNavMesh::Init(void)
 {
 	CTNavArea::Init();
+
 	g_pSM->AddGameFrameHook(&CTNavMesh::OnFrame);
 	m_CollectWorker = nullptr;
+}
+
+void CTNavMesh::RefreshHooks(void)
+{
+	if (!g_pSDKTools) return;
+
+	if (m_hookCleanUpID)
+		SH_REMOVE_HOOK_ID(m_hookCleanUpID);
+
+	void* g_pGameRules = g_pSDKTools->GetGameRules();
+	if (!g_pGameRules)
+	{
+		g_pSM->LogMessage(myself, "Failed to hook CTeamplayRoundBasedRules::CleanUpMap");
+		return;
+	}
+	m_hookCleanUpID = SH_ADD_MANUALHOOK(MHook_CleanUpMap, g_pSDKTools->GetGameRules(), &CTNavMesh::CleanUpMap, false);
+	g_pSM->LogMessage(myself, "Hooking CTeamplayRoundBasedRules::CleanUpMap");
+}
+
+void CTNavMesh::CleanUpMap(void)
+{
+	CTNavMesh::CleanUp();
+	RETURN_META(MRES_IGNORED);
 }
 
 void CTNavMesh::CleanUp(void)
@@ -177,15 +211,28 @@ void CTNavMesh::CleanUp(void)
 	
 	while (!m_QueueCollect.IsEmpty())
 	{
-		CollectNavThreadedData* pData = m_QueueCollect.RemoveAtHead();
-		delete pData->m_pCollector;
-		delete pData;
+		NavThreadedData* pData = m_QueueCollect.RemoveAtHead();
+
+		if (pData->GetDataType() == NavThreadedData::COLLECTNAV)
+		{
+			CollectNavThreadedData* pCollect = (CollectNavThreadedData*)pData;
+			delete pCollect->m_pCollector;
+			delete pCollect;
+		}
+		else
+		{
+			NavPathThreadedData* pCompute = (NavPathThreadedData*)pData;
+			delete pCompute;
+		}
 	}
 
 	while (!m_QueueCB.IsEmpty())
 	{
-		CollectNavThreadedData* pData = m_QueueCB.RemoveAtHead();
-		delete pData->m_pCollector;
+		NavThreadedData* pData = m_QueueCB.RemoveAtHead();
+
+		if (pData->GetDataType() == NavThreadedData::COLLECTNAV)
+			delete ((CollectNavThreadedData*)pData)->m_pCollector;
+
 		delete pData;
 	}
 }
@@ -195,15 +242,15 @@ void CTNavMesh::Add(CNavArea* area)
 	new CTNavArea(area);
 }
 
-void CTNavMesh::CollectSurroundingAreas(CollectNavThreadedData* pData)
+void CTNavMesh::Compute(NavThreadedData* pData)
 {
 	if (!m_CollectWorker)
 	{
-		m_CollectWorker = new ke::Thread([]() -> void {CTNavMesh::RunCollectThread();}, "CBaseNPC Nav Thread");
+		m_CollectWorker = new ke::Thread([]() -> void {CTNavMesh::RunThread(); }, "CBaseNPC Nav Thread");
 		if (!m_CollectWorker->Succeeded())
 		{
 			m_CollectWorker = nullptr;
-			m_CollectTerminate = false;
+			m_ThreadTerminate = false;
 			return;
 		}
 	}
@@ -213,21 +260,27 @@ void CTNavMesh::CollectSurroundingAreas(CollectNavThreadedData* pData)
 	m_CollectEvent.Notify();
 }
 
-void CTNavMesh::RunCollectThread(void)
+void CTNavMesh::RunThread(void)
 {
 	ke::AutoLock lock(&m_CollectEvent);
 	while (true)
 	{
-		if (m_CollectTerminate) return;
+		if (m_ThreadTerminate) return;
 
 		while (!m_QueueCollect.IsEmpty()) // Always process the queue as long as we have data waiting
 		{
-			if (m_CollectTerminate) return;
+			if (m_ThreadTerminate) return;
 
-			CollectNavThreadedData* pData = m_QueueCollect.RemoveAtHead();
+			NavThreadedData* pData = m_QueueCollect.RemoveAtHead();
 			ke::AutoUnlock unlock(&m_CollectEvent); // Free queue ownership so plugins can continue to add more collect request
 
-			CTNavMesh::CollectSurroundingAreas_Threaded(pData); // Run the collection
+			if (pData->GetDataType() == NavThreadedData::COLLECTNAV)
+				CTNavMesh::CollectSurroundingAreas_Threaded((CollectNavThreadedData*)pData); // Run the collection
+			else
+			{
+				NavPathThreadedData* compute = (NavPathThreadedData*)pData;
+				compute->m_bSuccess = compute->m_path->ComputeT(compute);
+			}
 
 			ke::AutoLock lock(&m_CBLock);
 			m_QueueCB.Insert(pData);
@@ -237,7 +290,7 @@ void CTNavMesh::RunCollectThread(void)
 		m_CollectEvent.Wait();
 	}
 }
-
+ 
 void CTNavMesh::CollectSurroundingAreas_Threaded( CollectNavThreadedData* pData )
 {
 	auto nearbyAreaVector = pData->m_pCollector;
@@ -320,26 +373,46 @@ void CTNavMesh::OnFrame(bool simulating)
 {
 	for (size_t i = 0; i < 5 && !m_QueueCB.IsEmpty(); i++) // TO-DO: Implement a ConVar to control callback fire rate
 	{
-		CollectNavThreadedData* pData = nullptr;
+		NavThreadedData* pData = nullptr;
 		{
 			ke::AutoLock lock(&m_CBLock);
 			pData = m_QueueCB.RemoveAtHead();
 		}
 
-		// Fire the plugin callback
 		IPluginFunction* pCallback = pData->m_pFunction;
-		if (pCallback->IsRunnable())
+		if (pData->GetDataType() == NavThreadedData::COLLECTNAV)
 		{
-			IPluginContext* pContext = pCallback->GetParentRuntime()->GetDefaultContext();
-			pCallback->PushCell(CREATEHANDLE(TSurroundingAreasCollector, pData->m_pCollector));
-			pCallback->PushCell(pData->m_data);
-			pCallback->Execute(0);
+			CollectNavThreadedData* pCollect = (CollectNavThreadedData *)pData;
+			// Fire the plugin callback
+			if (pCallback->IsRunnable())
+			{
+				IPluginContext* pContext = pCallback->GetParentRuntime()->GetDefaultContext();
+				pCallback->PushCell(CREATEHANDLE(TSurroundingAreasCollector, pCollect->m_pCollector));
+				pCallback->PushCell(pCollect->m_data);
+				pCallback->Execute(0);
+			}
+			else
+			{
+				delete pCollect->m_pCollector;
+			}
+
+			delete pCollect;
 		}
 		else
 		{
-			delete pData->m_pCollector;
+			NavPathThreadedData* pCompute = (NavPathThreadedData*)pData;
+			pCompute->m_path->OnPathChanged(pCompute->m_bot, (pCompute->m_bSuccess) ? Path::COMPLETE_PATH : Path::NO_PATH);
+
+			if (pCallback->IsRunnable())
+			{
+				pCallback->PushCell((cell_t)pCompute->m_path);
+				pCallback->PushCell(pCompute->m_bSuccess);
+				pCallback->PushCell(pCompute->m_data);
+				pCallback->Execute(0);
+			}
+
+			delete pCompute;
 		}
-		delete pData;
 	}
 }
 
@@ -349,16 +422,16 @@ void CTNavMesh::KillCollectThread(void)
 	{
 		{
 			ke::AutoLock lock(&m_CollectEvent);
-			m_CollectTerminate = true;
+			m_ThreadTerminate = true;
 			m_CollectEvent.Notify();
 		}
 		m_CollectWorker->Join();
 		m_CollectWorker = nullptr;
-		m_CollectTerminate = false;
+		m_ThreadTerminate = false;
 	}
 }
 
-bool CTNavMesh::NavAreaBuildPath_Threaded(CTNavArea* startArea, CTNavArea* goalArea, const Vector* goalPos, NavPathThreadedData* costFunc, CTNavArea** closestArea, float maxPathLength, int teamID, bool ignoreNavBlockers)
+/*bool CTNavMesh::NavAreaBuildPath_Threaded(CTNavArea* startArea, CTNavArea* goalArea, const Vector* goalPos, NavPathThreadedData* costFunc, CTNavArea** closestArea, float maxPathLength, int teamID, bool ignoreNavBlockers)
 {
 	if (closestArea)
 	{
@@ -682,4 +755,4 @@ bool CTNavMesh::NavAreaBuildPath_Threaded(CTNavArea* startArea, CTNavArea* goalA
 	}
 
 	return false;
-}
+}*/

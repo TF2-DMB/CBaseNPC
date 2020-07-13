@@ -1,5 +1,10 @@
 #include "NextBotPath.h"
 #include "sourcesdk/nav_mesh.h"
+#include "sourcesdk/nav_threaded.h"
+
+CTNavArea* area;
+CTNavMesh* mesh;
+CTNavMesh::NavPathThreadedData* data;
 
 //--------------------------------------------------------------------------------------------------------------
 Path::Path( void )
@@ -25,8 +30,8 @@ bool Path::ComputePathDetails( INextBot *bot, const Vector &start )
 	if (m_segmentCount == 0)
 		return false;
 		
-	IBody *body = bot->GetBodyInterface();
-	ILocomotion *mover = bot->GetLocomotionInterface();
+	IBody* body = bot->GetBodyInterface();
+	ILocomotion* mover = bot->GetLocomotionInterface();
 	
 	const float stepHeight = ( mover ) ? mover->GetStepHeight() : 18.0f;
 
@@ -109,7 +114,7 @@ bool Path::ComputePathDetails( INextBot *bot, const Vector &start )
 					
 					ray.Init(pos, lowerPos, Vector( -halfWidth, -halfWidth, stepHeight ), Vector( halfWidth, halfWidth, hullHeight ));
 					trace_t *tr = new trace_t;
-					enginetrace->TraceRay(ray, bot->GetBodyInterface()->GetSolidMask(), &filter, tr);
+					enginetrace->TraceRay(ray, body->GetSolidMask(), &filter, tr);
 					if ( tr->fraction >= 1.0f )
 					{
 						// found clearance to drop
@@ -119,13 +124,6 @@ bool Path::ComputePathDetails( INextBot *bot, const Vector &start )
 				
 				Vector startDrop( to->pos.x + pushDist * dir.x, to->pos.y + pushDist * dir.y, to->pos.z );
 				Vector endDrop( startDrop.x, startDrop.y, to->area->GetZ( to->pos ) );
-
-				if ( bot->IsDebugging( NEXTBOT_PATH ) )
-				{
-					//NDebugOverlay::Cross3D( startDrop, 5.0f, 255, 0, 255, true, 5.0f );
-					//NDebugOverlay::Cross3D( endDrop, 5.0f, 255, 255, 0, true, 5.0f );
-					//NDebugOverlay::VertArrow( startDrop, endDrop, 5.0f, 255, 100, 0, 255, true, 5.0f );
-				}
 				
 				// verify that there is actually ground down there in case this is a far jump dropdown
 				float ground;
@@ -249,11 +247,6 @@ bool Path::ComputePathDetails( INextBot *bot, const Vector &start )
 		Vector closeFrom, closeTo;
 		to->area->GetClosestPointOnArea( from->pos, &closeTo );
 		from->area->GetClosestPointOnArea( closeTo, &closeFrom );
-		
-		if ( bot->IsDebugging( NEXTBOT_PATH ) )
-		{
-			//NDebugOverlay::Line( closeFrom, closeTo, 255, 0, 255, true, 5.0f );
-		}
 
 
 		const float separationTolerance = 1.9f * GenerationStepSize;
@@ -306,11 +299,6 @@ bool Path::ComputePathDetails( INextBot *bot, const Vector &start )
 			newSegment.pos = launchPos;
 			newSegment.type = CLIMB_UP;
 
-			if ( bot->IsDebugging( NEXTBOT_PATH ) )
-			{
-				//NDebugOverlay::Cross3D( newSegment.pos, 15.0f, 255, 100, 255, true, 3.0f );
-			}
-
 			InsertSegment( newSegment, i+1 );
 
 			++i;			
@@ -357,6 +345,432 @@ bool Path::ComputePathDetails( INextBot *bot, const Vector &start )
 	return true;
 }
 
+bool Path::ComputeT(CTNavMesh::NavPathThreadedData* pData)
+{
+	Invalidate();
+
+	const Vector& start = pData->m_vecStart;
+	CNavArea* startArea = pData->m_startArea;
+
+	if (!startArea)
+		return false;
+
+	// check line-of-sight to the goal position when finding it's nav area
+	const float maxDistanceToArea = 200.0f;
+	CNavArea* goalArea = pData->m_endArea;
+	if (!goalArea)
+		goalArea = TheNavMesh->GetNearestNavArea(pData->m_vecEnd, true, maxDistanceToArea, true);
+
+	// if we are already in the goal area, build trivial path
+	if (startArea == goalArea)
+	{
+		BuildTrivialPathT(start, pData->m_vecEnd);
+		return true;
+	}
+
+	// make sure path end position is on the ground
+	Vector pathEndPosition = pData->m_vecEnd;
+	if (goalArea)
+	{
+		pathEndPosition.z = goalArea->GetZ(pathEndPosition);
+	}
+	else
+	{
+		TheNavMesh->GetGroundHeight(pathEndPosition, &pathEndPosition.z);
+	}
+
+	//
+	// Compute shortest path to goal
+	//
+	CNavArea* closestArea = NULL;
+	bool pathResult = NavAreaBuildPath(startArea, goalArea, &(pData->m_vecEnd), *pData, &closestArea, pData->m_flMaxPathLength, pData->m_iTeam);
+
+	//
+	// Build actual path by following parent links back from goal area
+	//
+
+	// get count
+	int count = 0;
+	CNavArea* area;
+	for (area = closestArea; area; area = area->GetParent())
+	{
+		++count;
+
+		if (area == startArea)
+		{
+			// startArea can be re-evaluated during the pathfind and given a parent...
+			break;
+		}
+	}
+
+	// save room for endpoint
+	if (count > MAX_PATH_SEGMENTS - 1)
+	{
+		count = MAX_PATH_SEGMENTS - 1;
+	}
+	else if (count == 0)
+	{
+		return false;
+	}
+
+	if (count == 1)
+	{
+		BuildTrivialPathT(start, pData->m_vecEnd);
+		return pathResult;
+	}
+
+	// assemble path
+	m_segmentCount = count;
+	for (area = closestArea; count && area; area = area->GetParent())
+	{
+		--count;
+		m_path[count].area = area;
+		m_path[count].how = area->GetParentHow();
+		m_path[count].type = ON_GROUND;
+	}
+
+	if (pathResult || pData->m_bIncludeGoal)
+	{
+		// append actual goal position
+		m_path[m_segmentCount].area = closestArea;
+		m_path[m_segmentCount].pos = pathEndPosition;
+		m_path[m_segmentCount].ladder = NULL;
+		m_path[m_segmentCount].how = NUM_TRAVERSE_TYPES;
+		m_path[m_segmentCount].type = ON_GROUND;
+		++m_segmentCount;
+	}
+
+	// compute path positions
+	if (ComputePathDetailsT(pData) == false)
+	{
+		Invalidate();
+		return false;
+	}
+
+	// Optimize isn't used in TF2
+	//Optimize(bot);
+
+	PostProcess();
+	return pathResult;
+}
+
+bool Path::ComputePathDetailsT(CTNavMesh::NavPathThreadedData* pData)
+{
+	//VPROF_BUDGET( "Path::ComputePathDetails", "NextBot" );
+
+	if (m_segmentCount == 0)
+		return false;
+
+	const float stepHeight = pData->m_flStepHeight;
+
+	// inflate hull width slightly as a safety margin
+	const float hullWidth = pData->m_flHullWidth + 5.0f;
+
+	// set first path position
+	if (m_path[0].area->Contains(pData->m_vecStart))
+	{
+		m_path[0].pos = pData->m_vecStart;
+	}
+	else
+	{
+		// start in first area's center
+		m_path[0].pos = m_path[0].area->GetCenter();
+	}
+	m_path[0].ladder = NULL;
+	m_path[0].how = NUM_TRAVERSE_TYPES;
+	m_path[0].type = ON_GROUND;
+
+	// set positions along the path
+	for (int i = 1; i < m_segmentCount; ++i)
+	{
+		Segment* from = &m_path[i - 1];
+		Segment* to = &m_path[i];
+
+		if (to->how <= GO_WEST)		// walk along the floor to the next area
+		{
+			to->ladder = NULL;
+
+			from->area->ComputePortal(to->area, (NavDirType)to->how, &to->m_portalCenter, &to->m_portalHalfWidth);
+
+			// compute next point
+			ComputeAreaCrossing(pData->m_bot, from->area, from->pos, to->area, (NavDirType)to->how, &to->pos);
+
+			// we need to walk out of "from" area, so keep Z where we can reach it
+			to->pos.z = from->area->GetZ(to->pos);
+
+			// if this is a "jump down" connection, we must insert an additional point on the path
+			//float expectedHeightDrop = from->area->GetZ( from->pos ) - to->area->GetZ( to->pos );
+
+			// measure the drop distance relative to the actual slope of the ground
+			Vector fromPos = from->pos;
+			fromPos.z = from->area->GetZ(fromPos);
+
+			Vector toPos = to->pos;
+			toPos.z = to->area->GetZ(toPos);
+
+			Vector groundNormal;
+			from->area->ComputeNormal(&groundNormal);
+
+			Vector alongPath = toPos - fromPos;
+
+			float expectedHeightDrop = -DotProduct(alongPath, groundNormal);
+
+			if (expectedHeightDrop > pData->m_flStepHeight)
+			{
+				// NOTE: We can't know this is a drop-down yet, because of subtle interactions
+				// between nav area links and "portals" and "area crossings"
+
+				// compute direction of path just prior to "jump down"
+				Vector2D dir;
+				DirectionToVector2D((NavDirType)to->how, &dir);
+
+				// shift top of "jump down" out a bit to "get over the ledge"
+				const float inc = 10.0f; // 0.25f * hullWidth;
+				const float maxPushDist = 2.0f * hullWidth; // 75.0f;
+				float halfWidth = hullWidth / 2.0f;
+				float hullHeight = pData->m_flCrouchHullHeight;
+
+				float pushDist;
+				for (pushDist = 0.0f; pushDist <= maxPushDist; pushDist += inc)
+				{
+					Vector pos = to->pos + Vector(pushDist * dir.x, pushDist * dir.y, 0.0f);
+					Vector lowerPos = Vector(pos.x, pos.y, toPos.z);
+
+					NextBotTraceFilterIgnoreActors filter(pData->m_entity, COLLISION_GROUP_NONE);
+					Ray_t ray;
+
+					ray.Init(pos, lowerPos, Vector(-halfWidth, -halfWidth, stepHeight), Vector(halfWidth, halfWidth, hullHeight));
+					trace_t* tr = new trace_t;
+					enginetrace->TraceRay(ray, pData->m_iSolidMask, &filter, tr);
+					if (tr->fraction >= 1.0f)
+					{
+						// found clearance to drop
+						break;
+					}
+				}
+
+				Vector startDrop(to->pos.x + pushDist * dir.x, to->pos.y + pushDist * dir.y, to->pos.z);
+				Vector endDrop(startDrop.x, startDrop.y, to->area->GetZ(to->pos));
+
+				// verify that there is actually ground down there in case this is a far jump dropdown
+				float ground;
+				if (TheNavMesh->GetGroundHeight(endDrop, &ground))
+				{
+					if (startDrop.z > ground + stepHeight)
+					{
+						// if "ground" is lower than the next segment along the path
+						// there is a chasm between - this is not a drop down
+						// NOTE next->pos is not yet valid - this loop is computing it!
+						// const Segment *next = NextSegment( to );
+						// if ( !next || next->area->GetCenter().z < ground + stepHeight )
+						{
+							// this is a "jump down" link
+							to->pos = startDrop;
+							to->type = DROP_DOWN;
+
+							// insert a duplicate node to represent the bottom of the fall
+							if (m_segmentCount < MAX_PATH_SEGMENTS - 1)
+							{
+								// copy nodes down
+								for (int j = m_segmentCount; j > i; --j)
+									m_path[j] = m_path[j - 1];
+
+								// path is one node longer
+								++m_segmentCount;
+
+								// move index ahead into the new node we just duplicated
+								++i;
+
+								m_path[i].pos.x = endDrop.x;
+								m_path[i].pos.y = endDrop.y;
+								m_path[i].pos.z = ground;
+
+								m_path[i].type = ON_GROUND;
+							}
+						}
+					}
+				}
+			}
+		}
+		else if (to->how == GO_LADDER_UP)		// to get to next area, must go up a ladder
+		{
+			// find our ladder
+			const NavLadderConnectVector* ladders = from->area->GetLadders(CNavLadder::LADDER_UP);
+			int it;
+			for (it = 0; it < ladders->Count(); ++it)
+			{
+				CNavLadder* ladder = (*ladders)[it].ladder;
+
+				// can't use "behind" area when ascending...
+				if (ladder->m_topForwardArea == to->area ||
+					ladder->m_topLeftArea == to->area ||
+					ladder->m_topRightArea == to->area)
+				{
+					to->ladder = ladder;
+					to->pos = ladder->m_bottom + ladder->GetNormal() * 2.0f * HalfHumanWidth;
+					to->type = LADDER_UP;
+					break;
+				}
+			}
+
+			if (it == ladders->Count())
+			{
+				//PrintIfWatched( "ERROR: Can't find ladder in path\n" );
+				return false;
+			}
+		}
+		else if (to->how == GO_LADDER_DOWN)		// to get to next area, must go down a ladder
+		{
+			// find our ladder
+			const NavLadderConnectVector* ladders = from->area->GetLadders(CNavLadder::LADDER_DOWN);
+			int it;
+			for (it = 0; it < ladders->Count(); ++it)
+			{
+				CNavLadder* ladder = (*ladders)[it].ladder;
+
+				if (ladder->m_bottomArea == to->area)
+				{
+					to->ladder = ladder;
+					to->pos = ladder->m_top;
+					to->pos = ladder->m_top - ladder->GetNormal() * 2.0f * HalfHumanWidth;
+					to->type = LADDER_DOWN;
+					break;
+				}
+			}
+
+			if (it == ladders->Count())
+			{
+				//PrintIfWatched( "ERROR: Can't find ladder in path\n" );
+				return false;
+			}
+		}
+		else if (to->how == GO_ELEVATOR_UP || to->how == GO_ELEVATOR_DOWN)
+		{
+			to->pos = to->area->GetCenter();
+			to->ladder = NULL;
+		}
+	}
+
+
+	//
+	// Scan for non-adjacent nav areas and add gap-jump-target nodes
+	// and jump-up target nodes for adjacent ledge mantling
+	// @todo Adjacency should be baked into the mesh data
+	//
+	for (int i = 0; i < m_segmentCount - 1; ++i)
+	{
+		Segment* from = &m_path[i];
+		Segment* to = &m_path[i + 1];
+
+		// first segment doesnt have a direction
+		if (from->how != NUM_TRAVERSE_TYPES && from->how > GO_WEST)
+			continue;
+
+		if (to->how > GO_WEST || to->type != ON_GROUND)
+			continue;
+
+		// if areas are separated, we may need to 'gap jump' between them
+		// add a node to minimize the jump distance
+		Vector closeFrom, closeTo;
+		to->area->GetClosestPointOnArea(from->pos, &closeTo);
+		from->area->GetClosestPointOnArea(closeTo, &closeFrom);
+
+
+		const float separationTolerance = 1.9f * GenerationStepSize;
+		if ((closeFrom - closeTo).AsVector2D().IsLengthGreaterThan(separationTolerance) && (closeTo - closeFrom).AsVector2D().IsLengthGreaterThan(0.5f * fabs(closeTo.z - closeFrom.z)))
+		{
+			// areas are disjoint and mostly level - add gap jump target
+
+			// compute landing spot in 'to' area			
+			Vector landingPos;
+			to->area->GetClosestPointOnArea(to->pos, &landingPos);
+
+			// compute launch spot in 'from' area			
+			Vector launchPos;
+			from->area->GetClosestPointOnArea(landingPos, &launchPos);
+
+			Vector forward = landingPos - launchPos;
+			forward.NormalizeInPlace();
+
+			const float halfWidth = hullWidth / 2.0f;
+
+			// adjust path position to landing spot
+			to->pos = landingPos + forward * halfWidth;
+
+			// insert launch position just before that segment to ensure bot is 
+			// positioned for minimal jump distance
+			Segment newSegment = *from;
+
+			newSegment.pos = launchPos - forward * halfWidth;
+			newSegment.type = JUMP_OVER_GAP;
+
+			InsertSegment(newSegment, i + 1);
+
+			++i;
+		}
+		else if ((closeTo.z - closeFrom.z) > stepHeight)
+		{
+			// areas are adjacent, but need a jump-up - add a jump-to target
+
+			// adjust goal to be at top of ledge
+			//to->pos.z = to->area->GetZ( to->pos.x, to->pos.y );
+			// use center of climb-up destination area to make sure bot moves onto actual ground once they finish their climb
+			to->pos = to->area->GetCenter();
+
+			// add launch position at base of jump	
+			Segment newSegment = *from;
+
+			Vector launchPos;
+			from->area->GetClosestPointOnArea(to->pos, &launchPos);
+
+			newSegment.pos = launchPos;
+			newSegment.type = CLIMB_UP;
+
+			InsertSegment(newSegment, i + 1);
+
+			++i;
+		}
+
+		/** RETHINK THIS.  It doesn't work in general cases, and messes up on doorways
+		else if ( from->type == ON_GROUND && from->how <= GO_WEST )
+		{
+			// if any segment is not directly walkable, add a segment
+			// fixup corners that are being cut too tightly
+			if ( mover && !mover->IsPotentiallyTraversable( from->pos, to->pos ) )
+			{
+				Segment newSegment = *from;
+
+				if ( bot->IsDebugging( INextBot::PATH ) )
+				{
+					NDebugOverlay::HorzArrow( from->pos, to->pos, 3.0f, 255, 0, 0, 255, true, 3.0f );
+				}
+
+				//newSegment.pos = from->area->GetCenter();
+
+				Vector2D shift;
+				DirectionToVector2D( OppositeDirection( (NavDirType)to->how ), &shift );
+
+				newSegment.pos = to->pos;
+				newSegment.pos.x += hullWidth * shift.x;
+				newSegment.pos.y += hullWidth * shift.y;
+
+				newSegment.type = ON_GROUND;
+
+				if ( bot->IsDebugging( INextBot::PATH ) )
+				{
+					NDebugOverlay::Cross3D( newSegment.pos, 15.0f, 255, 0, 255, true, 3.0f );
+				}
+
+				InsertSegment( newSegment, i+1 );
+
+				i += 2;
+			}
+		}
+		*/
+	}
+
+	return true;
+}
 
 //--------------------------------------------------------------------------------------------------------------
 /**
@@ -426,6 +840,50 @@ bool Path::BuildTrivialPath( INextBot *bot, const Vector &goal )
 	m_path[1].curvature = 0.0f;
 
 	OnPathChanged( bot, COMPLETE_PATH );
+
+	return true;
+}
+
+bool Path::BuildTrivialPathT(const Vector& start, const Vector& goal)
+{
+	m_segmentCount = 0;
+
+	/// @todo Dangerous to use "nearset" nav area - could be far away
+	CNavArea* startArea = TheNavMesh->GetNearestNavArea(start);
+	if (startArea == NULL)
+		return false;
+
+	CNavArea* goalArea = TheNavMesh->GetNearestNavArea(goal);
+	if (goalArea == NULL)
+		return false;
+
+	m_segmentCount = 2;
+
+	m_path[0].area = startArea;
+	m_path[0].pos.x = start.x;
+	m_path[0].pos.y = start.y;
+	m_path[0].pos.z = startArea->GetZ(start);
+	m_path[0].ladder = NULL;
+	m_path[0].how = NUM_TRAVERSE_TYPES;
+	m_path[0].type = ON_GROUND;
+
+	m_path[1].area = goalArea;
+	m_path[1].pos.x = goal.x;
+	m_path[1].pos.y = goal.y;
+	m_path[1].pos.z = goalArea->GetZ(goal);
+	m_path[1].ladder = NULL;
+	m_path[1].how = NUM_TRAVERSE_TYPES;
+	m_path[1].type = ON_GROUND;
+
+	m_path[0].forward = m_path[1].pos - m_path[0].pos;
+	m_path[0].length = m_path[0].forward.NormalizeInPlace();
+	m_path[0].distanceFromStart = 0.0f;
+	m_path[0].curvature = 0.0f;
+
+	m_path[1].forward = m_path[0].forward;
+	m_path[1].length = 0.0f;
+	m_path[1].distanceFromStart = m_path[0].length;
+	m_path[1].curvature = 0.0f;
 
 	return true;
 }

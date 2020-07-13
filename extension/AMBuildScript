@@ -397,6 +397,7 @@ class ExtensionConfig(object):
 
     if compiler.like('msvc'):
       compiler.defines += ['COMPILER_MSVC', 'COMPILER_MSVC32']
+	  compiler.linkflags += ['legacy_stdio_definitions.lib']
     else:
       compiler.defines += ['COMPILER_GCC']
 

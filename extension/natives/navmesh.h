@@ -58,7 +58,7 @@ NAVMESHNATIVE(CollectSurroundingAreas)
 NAVMESHNATIVE(TCollectSurroundingAreas)
 
 	CTNavMesh::CollectNavThreadedData *pData = new CTNavMesh::CollectNavThreadedData((CNavArea*)params[2], sp_ctof(params[3]), sp_ctof(params[4]), sp_ctof(params[5]), pContext->GetFunctionById(params[6]), params[7]);
-	CTNavMesh::CollectSurroundingAreas(pData);
+	CTNavMesh::Compute(pData);
 	return 1;
 }
 

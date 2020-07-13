@@ -4,14 +4,17 @@
 #include "sourcesdk/nav_mesh.h"
 #include "natives.h"
 #include <ihandleentity.h>
+#include "npc_tools_internal.h"
 
-CGlobalVars *gpGlobals = nullptr;
-IGameConfig *g_pGameConf = nullptr;
-IBinTools *g_pBinTools = nullptr;
-IServerGameEnts *gameents = nullptr;
-IEngineTrace *enginetrace = nullptr;
+CGlobalVars* gpGlobals = nullptr;
+IGameConfig* g_pGameConf = nullptr;
+IBinTools* g_pBinTools = nullptr;
+ISDKTools* g_pSDKTools = nullptr;
+IServerGameEnts* gameents = nullptr;
+IEngineTrace* enginetrace = nullptr;
 IdentityType_t g_CoreIdent;
-CBaseEntityList *g_pEntityList = nullptr;
+CBaseEntityList* g_pEntityList = nullptr;
+IServerTools* servertools = nullptr;
 
 DEFINEHANDLEOBJ(SurroundingAreasCollector, CUtlVector< CNavArea* >);
 DEFINEHANDLEOBJ(TSurroundingAreasCollector, CUtlVector< CTNavArea >);
@@ -28,7 +31,6 @@ HandleType_t g_KeyValueType;
 CBaseNPCExt g_CBaseNPCExt;
 SMEXT_LINK(&g_CBaseNPCExt);
 
-
 IForward *g_pForwardSetLocalAngles = nullptr;
 IForward *g_pForwardEventKilled = nullptr;
 
@@ -40,6 +42,8 @@ bool (CNavMesh:: *CNavMesh::func_GetGroundHeight)(const Vector &pos, float *heig
 bool (CTraceFilterSimpleHack:: *CTraceFilterSimpleHack::func_ShouldHitEntity)(IHandleEntity *pHandleEntity, int contentsMask) = nullptr;
 
 CUtlMap<int32_t, int32_t> g_EntitiesHooks;
+
+IBaseNPC_Tools* g_pBaseNPCTools = new BaseNPC_Tools_API;
 
 DETOUR_DECL_MEMBER1(CBaseEntity_SetLocalAngles, void, QAngle&, angles)
 {
@@ -136,8 +140,10 @@ bool CBaseNPCExt::SDK_OnLoad(char *error, size_t maxlength, bool late)
 	CREATEHANDLETYPE(TSurroundingAreasCollector);
 
 	sharesys->AddDependency(myself, "bintools.ext", true, true);
+	sharesys->AddDependency(myself, "sdktools.ext", true, true);
 	sharesys->AddNatives(myself, g_NativesInfo);
 	sharesys->RegisterLibrary(myself, "nextbot_pathing");
+	sharesys->AddInterface(myself, g_pBaseNPCTools);
 
 	CTNavMesh::Init();
 	SetDefLessFunc(g_EntitiesHooks);
@@ -148,7 +154,8 @@ bool CBaseNPCExt::SDK_OnMetamodLoad(ISmmAPI *ismm, char *error, size_t maxlen, b
 {
 	GET_V_IFACE_ANY(GetServerFactory, gameents, IServerGameEnts, INTERFACEVERSION_SERVERGAMEENTS);
 	GET_V_IFACE_ANY(GetEngineFactory, enginetrace, IEngineTrace, INTERFACEVERSION_ENGINETRACE_SERVER);
-	
+	GET_V_IFACE_ANY(GetServerFactory, servertools, IServerTools, VSERVERTOOLS_INTERFACE_VERSION);
+
 	gpGlobals = ismm->GetCGlobals();
 	return true;
 }
@@ -156,6 +163,8 @@ bool CBaseNPCExt::SDK_OnMetamodLoad(ISmmAPI *ismm, char *error, size_t maxlen, b
 void CBaseNPCExt::OnCoreMapStart(edict_t *pEdictList, int edictCount, int clientMax)
 {
 	CNavMesh::Init();
+	CTNavMesh::CleanUp();
+	CTNavMesh::RefreshHooks();
 }
 
 void CBaseNPCExt::OnCoreMapEnd()
@@ -166,13 +175,16 @@ void CBaseNPCExt::OnCoreMapEnd()
 void CBaseNPCExt::SDK_OnAllLoaded()
 {
 	SM_GET_LATE_IFACE(BINTOOLS, g_pBinTools);
-	g_pSM->LogMessage(myself, "0x%08x bintools.", g_pBinTools);
+	SM_GET_LATE_IFACE(SDKTOOLS, g_pSDKTools);
+	g_pSM->LogMessage(myself, "0x%08x IBinTools", g_pBinTools);
+	g_pSM->LogMessage(myself, "0x%08x ISDKTools", g_pSDKTools);
 	
 	handlesys->FindHandleType("CellArray", &g_CellArrayHandle);
 	handlesys->FindHandleType("KeyValues", &g_KeyValueType);
 	g_CoreIdent = sharesys->FindIdentType("CORE");
 	
 	g_pEntityList = (CBaseEntityList *)gamehelpers->GetGlobalEntityList();
+	CTNavMesh::RefreshHooks();
 }
 
 bool CBaseNPCExt::QueryRunning(char *error, size_t maxlength)

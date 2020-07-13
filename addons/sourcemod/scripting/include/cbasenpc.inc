@@ -450,6 +450,11 @@ methodmap CursorData
 {
 };
 
+typeset PathComputeCallback
+{
+	function void (Path path, bool bSuccess, any data);
+};
+
 methodmap Path
 {
 	public native Path(NavPathCostFunctor costfunction = INVALID_FUNCTION, TraceFilterActors ignoreActorsFilter, TraceFilterActors onlyActorsFilter);
@@ -476,6 +481,10 @@ methodmap Path
 	public native bool ComputeToPos(INextBot bot, float vecPos[3], float maxPathLength = 0.0, bool includeGoalIfPathFails = true);
 	public native bool ComputeToTarget(INextBot bot, int entity, float maxPathLength = 0.0, bool includeGoalIfPathFails = true);
 	public native void Destroy();
+	
+	// Threaded
+	public native bool ComputeToPosT(INextBot bot, float vecPos[3], float maxPathLength = 0.0, bool includeGoalIfPathFails = true, PathComputeCallback callback, any data = 0);
+	public native bool ComputeToTargetT(INextBot bot, int entity, float maxPathLength = 0.0, bool includeGoalIfPathFails = true, PathComputeCallback callback, any data = 0);
 };
 
 methodmap PathFollower < Path
