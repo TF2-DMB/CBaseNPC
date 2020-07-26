@@ -2,93 +2,22 @@
 {
 	"tf"
 	{
-		"Addresses"
-		{		
-			"GetAnimationEvent"
-			{
-				"windows"
-				{
-					"signature"	"__GetAnimationEvent__"
-				}
-				"linux"
-				{
-					"signature"	"__GetAnimationEvent__"
-				}
-			}
-		}
-		"Signatures"
-		{
-			"__GetAnimationEvent__"
-			{
-				"library"	"server"
-				"windows"	"\x55\x8B\xEC\x53\x56\x8B\x75\x08\x85\xF6\x0F\x84\x2A\x2A\x2A\x2A"
-				"linux"		"@_Z17GetAnimationEventP10CStudioHdriP11animevent_tffi"
-			}
-			"CBaseAnimating::SetPoseParameter"
-			{
-				"library"		"server"
-				"windows"		"\x55\x8B\xEC\x8B\x45\x08\xD9\x45\x10"
-				"linux"			"@_ZN14CBaseAnimating16SetPoseParameterEP10CStudioHdrif"
-			}
-			"CBaseAnimating::GetPoseParameter"
-			{
-				"windows"		"\x55\x8B\xEC\x56\x8B\xF1\x57\x80\xBE\x41\x03\x00\x00\x00\x75\x2A\x83\xBE\x6C\x04\x00\x00\x00\x75\x2A\xE8\x2A\x2A\x2A\x2A\x85\xC0\x74\x2A\x8B\xCE\xE8\x2A\x2A\x2A\x2A\x8B\xBE\x6C\x04\x00\x00"
-				"linux"			"@_ZN14CBaseAnimating16GetPoseParameterEi"
-			}
-			"CBaseAnimating::LookupPoseParameter"
-			{
-				"library"		"server"
-				"windows"		"\x55\x8B\xEC\x57\x8B\x7D\x08\x85\xFF\x75\x2A\x33\xC0\x5F\x5D\xC2\x08\x00"
-				"linux"			"@_ZN14CBaseAnimating19LookupPoseParameterEP10CStudioHdrPKc"
-			}
-			"CBaseAnimating::LookupSequence"
-			{
-				"library"		"server"
-				"windows"		"\x55\x8B\xEC\x56\x8B\x75\x08\x85\xF6\x75\x2A\x33\xC0\x5E\x5D\xC3\x8B\xCE\xE8\x2A\x2A\x2A\x2A\x84\xC0\x74\x2A\x53"
-				"linux"			"@_Z14LookupSequenceP10CStudioHdrPKc"
-			}
-			"CBaseAnimating::SequenceDuration"
-			{
-				"library"		"server"
-				"windows"		"\x55\x8B\xEC\x56\x8B\x75\x08\x57\x8B\xF9\x85\xF6\x75\x2A\x8B\x47\x5C"
-				"linux"			"@_ZN14CBaseAnimating16SequenceDurationEP10CStudioHdri"
-			}
-			"CBaseAnimating::SelectWeightedSequence"
-			{
-				"library"		"server"
-				"windows"		"\x55\x8B\xEC\x56\x8B\x75\x08\x85\xF6\x75\x2A\x33\xC0\x5E\x5D\xC3\x8B\xCE\xE8\x2A\x2A\x2A\x2A\x84\xC0\x74\x2A\x8B\xCE"
-				"linux"			"@_Z22SelectWeightedSequenceP10CStudioHdrii"
-			}
-			"CBaseAnimating::ResetSequence"
-			{
-				"library"		"server"
-				"linux"			"@_ZN14CBaseAnimating13ResetSequenceEi"
-				"windows"		"\x55\x8B\xEC\xA1\x2A\x2A\x2A\x2A\x53\x56\x57\x83\x78\x30\x00\x8B\xD9\x8B\x7D\x08"
-			}
-			"Studio_FindAttachment"
-			{
-				"library"		"server"
-				"windows"	"\x55\x8B\xEC\x53\x56\x57\x8B\x7D\x08\x85\xFF"
-				"linux"		"@_Z21Studio_FindAttachmentPK10CStudioHdrPKc"
-			}
-			"CBaseAnimating::GetAttachment"
-			{
-				"library"	"server"
-				"windows"	"\x55\x8B\xEC\x8B\x01\x8D\x55\xD0\x83\xEC\x30\x8B\x80\x40\x03\x00\x00\x53\x52\xFF\x75\x08\xFF\xD0\xFF\x75\x10"
-				"linux"		"@_ZN14CBaseAnimating13GetAttachmentEiR6VectorR6QAngle"
-			}
-			"CBaseAnimatingOverlay::AddGestureSequence"
-			{
-				"library"		"server"
-				"windows"		"\x55\x8B\xEC\x56\x6A\x00\xFF\x75\x08\x8B\xF1\xE8\x2A\x2A\x2A\x2A\x85\xC0\x78\x2A"
-				"linux"			"@_ZN21CBaseAnimatingOverlay18AddGestureSequenceEib"
-			}
-		}
 		"Offsets"
 		{
-			"OS"
+			"CBaseCombatCharacter::EventKilled"
 			{
-				"windows"	"1"
+				"windows"	"66"
+				"linux"		"67"
+			}
+			"TheNavMesh"
+			{
+				"windows"	"5"
+			}
+
+			"CBaseEntity::MyNextBotPointer"
+			{
+				"windows"	"72"
+				"linux"		"73"
 			}
 			"CBaseEntity::UpdateOnRemove"
 			{
@@ -105,16 +34,7 @@
 				"windows"	"149"		
 				"linux"		"150"
 			}
-			"CBaseCombatCharacter::GetLastKnownArea"
-			{
-				"linux"		"316"
-				"windows"	"315"
-			}
-			"CBaseCombatCharacter::UpdateLastKnownArea"
-			{
-				"linux"		"319"
-				"windows"	"318"
-			}
+
 			"CBaseAnimating::StudioFrameAdvance"
 			{
 				"linux"		"194"
@@ -135,130 +55,127 @@
 				"linux"		"288"
 				"windows"	"283"
 			}
-			"ILocomotion::ClimbUpToLedge"
+
+			"CBaseCombatCharacter::GetLastKnownArea"
 			{
-				"linux"		"49"
-				"windows"	"48"
+				"linux"		"316"
+				"windows"	"315"
 			}
-			"ILocomotion::IsAbleToJumpAcrossGaps"
+			"CBaseCombatCharacter::UpdateLastKnownArea"
 			{
-				"linux"		"77"
-				"windows"	"76"
+				"linux"		"319"
+				"windows"	"318"
 			}
-			"ILocomotion::IsAbleToClimb"
+		}
+		"Signatures"
+		{
+			"TheNavMesh"
 			{
-				"linux"		"78"
-				"windows"	"77"
+				"library"		"server"
+				"linux"			"@TheNavMesh"
 			}
-			"ILocomotion::GetStepHeight"
+			"CNavMesh::AddNavArea"
 			{
-				"linux"		"80"
-				"windows"	"79"
+				"library"		"server"
+				"linux"			"@_ZN8CNavMesh10AddNavAreaEP8CNavArea"
 			}
-			"ILocomotion::GetMaxJumpHeight"
+			"CNavMesh::GetNearestNavArea"
 			{
-				"linux"		"81"
-				"windows"	"80"
+				"library"		"server"
+				"windows"		"\x55\x8B\xEC\x81\xEC\xF8\x00\x00\x00\x8B\x15"
+				"linux"			"@_ZNK8CNavMesh17GetNearestNavAreaERK6Vectorbfbbi"
 			}
-			"ILocomotion::GetDeathDropHeight"
+			"CNavMesh::GetGroundHeight"
 			{
-				"linux"		"82"
-				"windows"	"81"
+				"library"		"server"
+				"windows"		"\x53\x8B\xDC\x83\xEC\x08\x83\xE4\xF0\x83\xC4\x04\x55\x8B\x6B\x04\x89\x6C\x24\x04\x8B\xEC\x81\xEC\xFC\x00\x00\x00\x56\x6A\x00\x6A\x00\x6A\x00\x8D"
+				"linux"			"@_ZNK8CNavMesh15GetGroundHeightERK6VectorPfPS0_"
 			}
-			"ILocomotion::GetRunSpeed"
+			"CTraceFilterSimple::ShouldHitEntity"
 			{
-				"linux"		"83"
-				"windows"	"82"
+				"library"		"server"
+				"windows"		"\x55\x8B\xEC\x53\x8B\x5D\x0C\x56\x8B\x75\x08\x57\x53\x56"
+				"linux"			"@_ZN18CTraceFilterSimple15ShouldHitEntityEP13IHandleEntityi"
 			}
-			"ILocomotion::GetWalkSpeed"
+			"CNavMesh::SnapToGrid"
 			{
-				"linux"		"84"
-				"windows"	"83"
+				"library"		"server"
+				"windows"		"\x55\x8B\xEC\x51\xA1\x2A\x2A\x2A\x2A\x83\xB8\x10\x05\x00\x00\x00"
 			}
-			"ILocomotion::GetMaxAcceleration"
+
+			"__GetAnimationEvent__"
 			{
-				"linux"		"85"
-				"windows"	"84"
+				"library"		"server"
+				"windows"		"\x55\x8B\xEC\x53\x56\x8B\x75\x08\x85\xF6\x0F\x84\x2A\x2A\x2A\x2A"
+				"linux"			"@_Z17GetAnimationEventP10CStudioHdriP11animevent_tffi"
 			}
-			"ILocomotion::IsEntityTraversable"
+			"Studio_LookupSequence"
 			{
-				"linux"		"95"
-				"windows"	"94"
+				"library"		"server"
+				"windows"		"\x55\x8B\xEC\x56\x8B\x75\x08\x85\xF6\x75\x2A\x33\xC0\x5E\x5D\xC3\x8B\xCE\xE8\x2A\x2A\x2A\x2A\x84\xC0\x74\x2A\x53"
+				"linux"			"@_Z14LookupSequenceP10CStudioHdrPKc"
 			}
-			"ILocomotion::IsStuck"
+			"Studio_SelectWeightedSequence"
 			{
-				"linux"		"96"
-				"windows"	"95"
+				"library"		"server"
+				"windows"		"\x55\x8B\xEC\x56\x8B\x75\x08\x85\xF6\x75\x2A\x33\xC0\x5E\x5D\xC3\x8B\xCE\xE8\x2A\x2A\x2A\x2A\x84\xC0\x74\x2A\x8B\xCE"
+				"linux"			"@_Z22SelectWeightedSequenceP10CStudioHdrii"
 			}
-			"ILocomotion::ClearStuckStatus"
+			"Studio_FindAttachment"
 			{
-				"linux"		"98"
-				"windows"	"97"
+				"library"		"server"
+				"windows"		"\x55\x8B\xEC\x53\x56\x57\x8B\x7D\x08\x85\xFF"
+				"linux"			"@_Z21Studio_FindAttachmentPK10CStudioHdrPKc"
 			}
-			"ILocomotion::ShouldCollideWith"
+
+			"CBaseAnimating::SetPoseParameter"
 			{
-				"linux"		"100"
-				"windows"	"99"
+				"library"		"server"
+				"windows"		"\x55\x8B\xEC\x8B\x45\x08\xD9\x45\x10"
+				"linux"			"@_ZN14CBaseAnimating16SetPoseParameterEP10CStudioHdrif"
 			}
-			"ILocomotion::StuckMonitor"
+			"CBaseAnimating::GetPoseParameter"
 			{
-				"linux"		"102"
-				"windows"	"101"
+				"windows"		"\x55\x8B\xEC\x56\x8B\xF1\x57\x80\xBE\x41\x03\x00\x00\x00\x75\x2A\x83\xBE\x6C\x04\x00\x00\x00\x75\x2A\xE8\x2A\x2A\x2A\x2A\x85\xC0\x74\x2A\x8B\xCE\xE8\x2A\x2A\x2A\x2A\x8B\xBE\x6C\x04\x00\x00"
+				"linux"			"@_ZN14CBaseAnimating16GetPoseParameterEi"
 			}
-			"NextBotGroundLocomotion::GetGravity"
+			"CBaseAnimating::LookupPoseParameter"
 			{
-				"linux"		"106"
-				"windows"	"105"
+				"library"		"server"
+				"windows"		"\x55\x8B\xEC\x57\x8B\x7D\x08\x85\xFF\x75\x2A\x33\xC0\x5F\x5D\xC2\x08\x00"
+				"linux"			"@_ZN14CBaseAnimating19LookupPoseParameterEP10CStudioHdrPKc"
 			}
-			"NextBotGroundLocomotion::GetFrictionForward"
+			"CBaseAnimating::SequenceDuration"
 			{
-				"linux"		"107"
-				"windows"	"106"
+				"library"		"server"
+				"windows"		"\x55\x8B\xEC\x56\x8B\x75\x08\x57\x8B\xF9\x85\xF6\x75\x2A\x8B\x47\x5C"
+				"linux"			"@_ZN14CBaseAnimating16SequenceDurationEP10CStudioHdri"
 			}
-			"NextBotGroundLocomotion::GetFrictionSideways"
+			"CBaseAnimating::ResetSequence"
 			{
-				"linux"		"108"
-				"windows"	"107"
+				"library"		"server"
+				"linux"			"@_ZN14CBaseAnimating13ResetSequenceEi"
+				"windows"		"\x55\x8B\xEC\xA1\x2A\x2A\x2A\x2A\x53\x56\x57\x83\x78\x30\x00\x8B\xD9\x8B\x7D\x08"
 			}
-			"IBody::StartActivity"
+			"CBaseAnimating::GetAttachment"
 			{
-				"linux"		"59"
-				"windows"	"58"
+				"library"		"server"
+				"windows"		"\x55\x8B\xEC\x8B\x01\x8D\x55\xD0\x83\xEC\x30\x8B\x80\x40\x03\x00\x00\x53\x52\xFF\x75\x08\xFF\xD0\xFF\x75\x10"
+				"linux"			"@_ZN14CBaseAnimating13GetAttachmentEiR6VectorR6QAngle"
 			}
-			"IBody::GetHullWidth"
+		}
+		"Addresses"
+		{		
+			"GetAnimationEvent"
 			{
-				"linux"		"75"
-				"windows"	"74"
-			}
-			"IBody::GetHullHeight"
-			{
-				"linux"		"76"
-				"windows"	"75"
-			}
-			"IBody::GetStandHullHeight"
-			{
-				"linux"		"77"
-				"windows"	"76"
-			}
-			"IBody::GetCrouchHullHeight"
-			{
-				"linux"		"78"
-				"windows"	"77"
-			}
-			"IBody::GetHullMins"
-			{
-				"linux"		"79"
-				"windows"	"78"
-			}
-			"IBody::GetHullMaxs"
-			{
-				"linux"		"80"
-				"windows"	"79"
-			}
-			"IBody::GetSolidMask"
-			{
-				"linux"		"81"
-				"windows"	"80"
+				"windows"
+				{
+					"signature"	"__GetAnimationEvent__"
+				}
+				"linux"
+				{
+					"signature"	"__GetAnimationEvent__"
+				}
 			}
 		}
 	}

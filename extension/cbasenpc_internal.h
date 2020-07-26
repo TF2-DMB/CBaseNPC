@@ -99,6 +99,7 @@ void classname##_Internal::##function##_internal params \
 NPC_DECLARE_INTERFACE(ILocomotion)
 {
 	NPC_SETUP_HOOK(ILocomotion);
+	NPC_INTERFACE_HOOK1(FaceTowards, void, Vector const&);
 	NPC_INTERFACE_HOOK0(IsAbleToJumpAcrossGaps, bool);
 	NPC_INTERFACE_HOOK0(IsAbleToClimb, bool);
 	NPC_INTERFACE_HOOK3(ClimbUpToLedge, bool, const Vector&, const Vector&, const CBaseEntity*);
@@ -176,6 +177,7 @@ public:
 	{
 	};
 
+	virtual void FaceTowards(Vector const& vecGoal);
 	virtual bool IsAbleToJumpAcrossGaps();
 	virtual bool IsAbleToClimb();
 	virtual bool ClimbUpToLedge(const Vector& vecGoal, const Vector& vecForward, const CBaseEntity* pEntity);
@@ -207,7 +209,7 @@ class CBaseNPC : public CExtNPC
 public:
 	CBaseNPC();
 
-private:
+public:
 	INextBot* m_pBot;
 	NextBotGroundLocomotion* m_pMover;
 	IVision* m_pVision;
@@ -215,6 +217,7 @@ private:
 
 	CBaseNPC_Locomotion *m_mover;
 	CBaseNPC_Body *m_body;
+	char m_type[64];
 };
 
 

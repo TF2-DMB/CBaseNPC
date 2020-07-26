@@ -106,8 +106,8 @@ public void Hook_NPCThink(int iEnt)
 		if (sequence_run == -1) sequence_run = animationEntity.LookupSequence("run_MELEE");
 		
 		Address pModelptr = animationEntity.GetModelPtr();
-		int iPitch = animationEntity.LookupPoseParameter(pModelptr, "body_pitch");
-		int iYaw = animationEntity.LookupPoseParameter(pModelptr, "body_yaw");
+		int iPitch = animationEntity.LookupPoseParameter("body_pitch");
+		int iYaw = animationEntity.LookupPoseParameter("body_yaw");
 		float vecDir[3], vecAng[3], vecNPCCenter[3], vecPlayerCenter[3];
 		animationEntity.WorldSpaceCenter(vecNPCCenter);
 		CBaseAnimating(iBestTarget).WorldSpaceCenter(vecPlayerCenter);
@@ -120,12 +120,12 @@ public void Hook_NPCThink(int iEnt)
 		float flYaw = animationEntity.GetPoseParameter(iYaw);
 		
 		vecAng[0] = UTIL_Clamp(UTIL_AngleNormalize(vecAng[0]), -44.0, 89.0);
-		animationEntity.SetPoseParameter(pModelptr, iPitch, UTIL_ApproachAngle(vecAng[0], flPitch, 1.0));
+		animationEntity.SetPoseParameter(iPitch, UTIL_ApproachAngle(vecAng[0], flPitch, 1.0));
 		vecAng[1] = UTIL_Clamp(-UTIL_AngleNormalize(UTIL_AngleDiff(UTIL_AngleNormalize(vecAng[1]), UTIL_AngleNormalize(vecNPCAng[1]+180.0))), -44.0,  44.0);
-		animationEntity.SetPoseParameter(pModelptr, iYaw, UTIL_ApproachAngle(vecAng[1], flYaw, 1.0));
+		animationEntity.SetPoseParameter(iYaw, UTIL_ApproachAngle(vecAng[1], flYaw, 1.0));
 		
-		int iMoveX = animationEntity.LookupPoseParameter(pModelptr, "move_x");
-		int iMoveY = animationEntity.LookupPoseParameter(pModelptr, "move_y");
+		int iMoveX = animationEntity.LookupPoseParameter("move_x");
+		int iMoveY = animationEntity.LookupPoseParameter("move_y");
 		
 		if ( iMoveX < 0 || iMoveY < 0 )
 			return;
@@ -150,8 +150,8 @@ public void Hook_NPCThink(int iEnt)
 			float newMoveX = (vecForward[1] * vecMotion[1]) + (vecForward[0] * vecMotion[0]) +  (vecForward[2] * vecMotion[2]);
 			float newMoveY = (vecRight[1] * vecMotion[1]) + (vecRight[0] * vecMotion[0]) + (vecRight[2] * vecMotion[2]);
 			
-			animationEntity.SetPoseParameter(pModelptr, iMoveX, newMoveX);
-			animationEntity.SetPoseParameter(pModelptr, iMoveY, newMoveY);
+			animationEntity.SetPoseParameter(iMoveX, newMoveX);
+			animationEntity.SetPoseParameter(iMoveY, newMoveY);
 		}
 		else
 		{
@@ -189,7 +189,7 @@ public Action Command_SpawnNPC(int iClient, int iArgs)
 	npc.Spawn();
 	npc.SetThinkFunction(Hook_NPCThink);
 	npc.nSkin = 4;
-	npc.EquipItem("head", NPC_TEST_ITEM);
+	//npc.EquipItem("head", NPC_TEST_ITEM);
 	
 	npc.flStepSize = 18.0;
 	npc.flGravity = 800.0;

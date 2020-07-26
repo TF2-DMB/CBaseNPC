@@ -7,6 +7,7 @@
 #define INVALID_NPC_ID					-1
 
 class CExtNPC;
+class INextBot;
 class IBody;
 class ILocomotion;
 class CBaseEntity;
@@ -30,6 +31,13 @@ public:
 	 * @return			NPC index, -1 otherwise
 	 */
 	virtual int GrantID(CBaseEntity* ent, CExtNPC* npc) = 0;
+
+	/**
+	 * @brief Retrieves the nextbot interface from a given entity;
+	 *
+	 * @return			Returns nextbot interface, NULL otherwise
+	 */
+	virtual INextBot* GetNextBotOfEntity(CBaseEntity* pEntity) = 0;
 
 	/**
 	 * @brief Hooks and build a ILocomotion_Hook - You shouldn't have to call this directly

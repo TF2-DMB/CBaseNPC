@@ -21,4 +21,9 @@
 BASECOMBATCHARACTERNATIVE(GetLastKnownArea)
 	return (cell_t)pBCC->GetLastKnownArea();
 }
+
+BASECOMBATCHARACTERNATIVE(UpdateLastKnownArea)
+	pBCC->UpdateLastKnownArea();
+	return 0;
+}
 #endif

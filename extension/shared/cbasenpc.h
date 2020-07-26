@@ -55,6 +55,7 @@ public:
 	ILocomotion_Hook(ILocomotion* mover) : INextBotEventResponder_Hook(g_pBaseNPCTools->Hook_ILocomotion(mover, this)) {};
 	ILocomotion_Hook(INextBotEventResponder_Hook* hook) : INextBotEventResponder_Hook(hook) {}; // For hook classes inheriting us
 
+	LOCOMOTION_INTERFACE_HOOK(FaceTowards, void, (Vector const& vecGoal), (vecGoal));
 	LOCOMOTION_INTERFACE_HOOK(IsAbleToJumpAcrossGaps, bool, (), ());
 	LOCOMOTION_INTERFACE_HOOK(IsAbleToClimb, bool, (), ());
 	LOCOMOTION_INTERFACE_HOOK(ClimbUpToLedge, bool, (const Vector& vecGoal, const Vector& vecForward, const CBaseEntity* pEntity), (vecGoal, vecForward, pEntity));
@@ -102,7 +103,7 @@ class CExtNPC
 public:
 	CExtNPC() : m_iIndex(-1), m_hEntity(NULL) {};
 
-	unsigned long GetID() { return m_iIndex; };
+	int GetID() { return m_iIndex; };
 	CBaseEntity* GetEntity() { return m_hEntity; };
 	void SetEntity(CBaseEntity* ent) { m_hEntity = ent; m_iIndex = g_pBaseNPCTools->GrantID(ent, this); };
 

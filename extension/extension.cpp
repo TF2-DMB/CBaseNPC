@@ -15,6 +15,7 @@ IEngineTrace* enginetrace = nullptr;
 IdentityType_t g_CoreIdent;
 CBaseEntityList* g_pEntityList = nullptr;
 IServerTools* servertools = nullptr;
+CSharedEdictChangeInfo* g_pSharedChangeInfo = nullptr;
 
 DEFINEHANDLEOBJ(SurroundingAreasCollector, CUtlVector< CNavArea* >);
 DEFINEHANDLEOBJ(TSurroundingAreasCollector, CUtlVector< CTNavArea >);
@@ -23,7 +24,7 @@ ConVar NextBotPathDrawIncrement("cnb_path_draw_inc", "0", 0, "");
 ConVar NextBotPathSegmentInfluenceRadius("cnb_path_segment_influence", "0", 0, "");
 
 int g_iLastKnownAreaOffset = -1;
-int g_iMyNextBotPointerOffset = -1;
+int g_iUpdateOnRemove = -1;
 
 HandleType_t g_CellArrayHandle;
 HandleType_t g_KeyValueType;
@@ -31,10 +32,8 @@ HandleType_t g_KeyValueType;
 CBaseNPCExt g_CBaseNPCExt;
 SMEXT_LINK(&g_CBaseNPCExt);
 
-IForward *g_pForwardSetLocalAngles = nullptr;
 IForward *g_pForwardEventKilled = nullptr;
 
-CDetour *g_pSetLocalAngles = nullptr;
 CDetour* g_pNavMeshAddArea = nullptr;
 
 CNavArea * (CNavMesh:: *CNavMesh::func_GetNearestNavArea)(const Vector &pos, bool anyZ, float maxDist, bool checkLOS, bool checkGround, int team) = nullptr;
@@ -45,32 +44,6 @@ CUtlMap<int32_t, int32_t> g_EntitiesHooks;
 
 IBaseNPC_Tools* g_pBaseNPCTools = new BaseNPC_Tools_API;
 
-DETOUR_DECL_MEMBER1(CBaseEntity_SetLocalAngles, void, QAngle&, angles)
-{
-	if (g_pForwardSetLocalAngles != nullptr)
-	{
-		cell_t iEntity = gamehelpers->EntityToBCompatRef(reinterpret_cast<CBaseEntity*>(this));
-		
-		cell_t vector[3];
-		vector[0] = sp_ftoc(angles.x);
-		vector[1] = sp_ftoc(angles.y);
-		vector[2] = sp_ftoc(angles.z);
-
-		cell_t result = Pl_Continue;
-		g_pForwardSetLocalAngles->PushCell(iEntity);
-		g_pForwardSetLocalAngles->PushArray(vector, 3, SM_PARAM_COPYBACK);
-		
-		g_pForwardSetLocalAngles->Execute(&result);
-		if (result == Pl_Changed)
-		{
-			angles.x = sp_ctof(vector[0]);
-			angles.y = sp_ctof(vector[1]);
-			angles.z = sp_ctof(vector[2]);
-		}
-	}
-	DETOUR_MEMBER_CALL(CBaseEntity_SetLocalAngles)(angles);
-}
-
 DETOUR_DECL_MEMBER1(CNavMesh_AddNavArea, void, CNavArea*, area)
 {
 	CTNavMesh::Add(area);
@@ -80,7 +53,7 @@ DETOUR_DECL_MEMBER1(CNavMesh_AddNavArea, void, CNavArea*, area)
 bool CBaseNPCExt::SDK_OnLoad(char *error, size_t maxlength, bool late)
 {
 	char conf_error[255];
-	if(!gameconfs->LoadGameConfigFile("nextbot_pathing", &g_pGameConf, conf_error, sizeof(conf_error)))
+	if (!gameconfs->LoadGameConfigFile("cbasenpc", &g_pGameConf, conf_error, sizeof(conf_error)))
 	{
 		snprintf(error, maxlength, "FAILED TO LOAD GAMEDATA ERROR: %s", conf_error);
 		return false;
@@ -89,6 +62,14 @@ bool CBaseNPCExt::SDK_OnLoad(char *error, size_t maxlength, bool late)
 	CNavMesh::Init();
 	if (TheNavMesh)
 		g_pSM->LogMessage(myself, "Found TheNavMesh pointer: 0x%08x", TheNavMesh);
+
+	if (!CBaseEntityHack::Init(g_pGameConf, error, maxlength)
+		|| !CBaseAnimatingHack::Init(g_pGameConf, error, maxlength)
+		|| !CBaseAnimatingOverlayHack::Init(g_pGameConf, error, maxlength)
+		)
+	{
+		return false;
+	}
 	
 	if (g_pGameConf->GetMemSig("CNavMesh::GetNearestNavArea", reinterpret_cast<void **>(&CNavMesh::func_GetNearestNavArea))) {
 		g_pSM->LogMessage(myself, "Got function: 0x%08x CNavMesh::GetNearestNavArea", *reinterpret_cast<uintptr_t *>(&CNavMesh::func_GetNearestNavArea));
@@ -113,25 +94,16 @@ bool CBaseNPCExt::SDK_OnLoad(char *error, size_t maxlength, bool late)
 	
 	CDetourManager::Init(g_pSM->GetScriptingEngine(), g_pGameConf);
 
-	g_pSetLocalAngles = DETOUR_CREATE_MEMBER(CBaseEntity_SetLocalAngles, "CBaseEntity::SetLocalAngles");
-	if(g_pSetLocalAngles != nullptr)
-	{
-		g_pSetLocalAngles->EnableDetour();
-		g_pSM->LogMessage(myself, "CBaseEntity::SetLocalAngles detour enabled.");
-	}
-
 	g_pNavMeshAddArea = DETOUR_CREATE_MEMBER(CNavMesh_AddNavArea, "CNavMesh::AddNavArea");
 	if (g_pNavMeshAddArea != nullptr)
 	{
 		g_pNavMeshAddArea->EnableDetour();
 		g_pSM->LogMessage(myself, "CNavMesh::AddNavArea detour enabled.");
 	}
-
-	g_pForwardSetLocalAngles = forwards->CreateForward("CBaseEntity_SetLocalAngles", ET_Event, 2, nullptr, Param_Cell, Param_Array);
 	g_pForwardEventKilled = forwards->CreateForward("CBaseCombatCharacter_EventKilled", ET_Event, 9, nullptr, Param_Cell, Param_CellByRef, Param_CellByRef, Param_FloatByRef, Param_CellByRef, Param_CellByRef, Param_Array, Param_Array, Param_Cell);
 	
 	GETGAMEDATAOFFSET("CBaseCombatCharacter::GetLastKnownArea", g_iLastKnownAreaOffset);
-	GETGAMEDATAOFFSET("CBaseEntity::MyNextBotPointer", g_iMyNextBotPointerOffset);
+	GETGAMEDATAOFFSET("CBaseEntity::UpdateOnRemove", g_iUpdateOnRemove);
 	int iOffset = 0;
 	GETGAMEDATAOFFSET("CBaseCombatCharacter::EventKilled", iOffset);
 	SH_MANUALHOOK_RECONFIGURE(MEvent_Killed, iOffset, 0, 0);
@@ -142,7 +114,7 @@ bool CBaseNPCExt::SDK_OnLoad(char *error, size_t maxlength, bool late)
 	sharesys->AddDependency(myself, "bintools.ext", true, true);
 	sharesys->AddDependency(myself, "sdktools.ext", true, true);
 	sharesys->AddNatives(myself, g_NativesInfo);
-	sharesys->RegisterLibrary(myself, "nextbot_pathing");
+	sharesys->RegisterLibrary(myself, "cbasenpc");
 	sharesys->AddInterface(myself, g_pBaseNPCTools);
 
 	CTNavMesh::Init();
@@ -155,7 +127,7 @@ bool CBaseNPCExt::SDK_OnMetamodLoad(ISmmAPI *ismm, char *error, size_t maxlen, b
 	GET_V_IFACE_ANY(GetServerFactory, gameents, IServerGameEnts, INTERFACEVERSION_SERVERGAMEENTS);
 	GET_V_IFACE_ANY(GetEngineFactory, enginetrace, IEngineTrace, INTERFACEVERSION_ENGINETRACE_SERVER);
 	GET_V_IFACE_ANY(GetServerFactory, servertools, IServerTools, VSERVERTOOLS_INTERFACE_VERSION);
-
+	g_pSharedChangeInfo = engine->GetSharedEdictChangeInfo();
 	gpGlobals = ismm->GetCGlobals();
 	return true;
 }
@@ -211,10 +183,8 @@ void CBaseNPCExt::SDK_OnUnload()
 {
 	gameconfs->CloseGameConfigFile(g_pGameConf);
 
-	forwards->ReleaseForward(g_pForwardSetLocalAngles);
 	forwards->ReleaseForward(g_pForwardEventKilled);
 
-	if (g_pSetLocalAngles != nullptr) g_pSetLocalAngles->Destroy();
 	if (g_pNavMeshAddArea != nullptr) g_pNavMeshAddArea->Destroy();
 	
 	gameconfs->CloseGameConfigFile(g_pGameConf);

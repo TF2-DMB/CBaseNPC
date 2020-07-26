@@ -1,1050 +1,7 @@
 #if !defined _CBASENPC_EXTENSION_INC_
 #define _CBASENPC_EXTENSION_INC_
 
-#define MAX_NPCS		200
-
-#define	DAMAGE_NO				0
-#define DAMAGE_EVENTS_ONLY		1
-#define	DAMAGE_YES				2
-#define	DAMAGE_AIM				3
-
-enum NextBotDebugType
-{
-	DEBUG_NONE = 0x0000,
-	DEBUG_ANY  = 0xffff,
-
-	DEBUG_BEHAVIOR   = (1 << 0), // NextBotBehavior
-	DEBUG_LOOK_AT    = (1 << 1), // NextBotBodyInterface
-	DEBUG_PATH       = (1 << 2), // NextBotPath, NextBotPathFollow, NextBotChasePath
-	DEBUG_ANIMATION  = (1 << 3),
-	DEBUG_LOCOMOTION = (1 << 4), // NextBotLocomotionInterface
-	DEBUG_VISION     = (1 << 5), // NextBotVisionInterface
-	DEBUG_HEARING    = (1 << 6),
-	DEBUG_EVENTS     = (1 << 7), // NextBotEventResponderInterface
-	DEBUG_ERRORS     = (1 << 8),
-};
-
-const CBaseNPC INVALID_NPC = view_as<CBaseNPC>(-1);
-const CNavArea NULL_AREA = view_as<CNavArea>(0);
-const CNavLadder NULL_LADDER_AREA = view_as<CNavLadder>(0);
-
-native INextBot CBaseNPC_GetNextBotOfEntity(int iEntity);
-native void CBaseNPC_HookEventKilled(int iEntity);
-
-enum
-{
-	NAV_MESH_CROUCH = 0x0001, 
-	NAV_MESH_JUMP = 0x0002, 
-	NAV_MESH_PRECISE = 0x0004, 
-	NAV_MESH_NO_JUMP = 0x0008, 
-	NAV_MESH_STOP = 0x0010, 
-	NAV_MESH_RUN = 0x0020, 
-	NAV_MESH_WALK = 0x0040, 
-	NAV_MESH_AVOID = 0x0080, 
-	NAV_MESH_TRANSIENT = 0x0100, 
-	NAV_MESH_DONT_HIDE = 0x0200, 
-	NAV_MESH_STAND = 0x0400, 
-	NAV_MESH_NO_HOSTAGES = 0x0800
-};
-
-enum NavDirType
-{
-	NORTH = 0,
-	EAST = 1,
-	SOUTH = 2,
-	WEST = 3,
-
-	NUM_DIRECTIONS
-};
-
-enum NavTraverseType
-{
-	// NOTE: First 4 directions MUST match NavDirType
-	GO_NORTH = 0,
-	GO_EAST,
-	GO_SOUTH,
-	GO_WEST,
-
-	GO_LADDER_UP,
-	GO_LADDER_DOWN,
-	GO_JUMP,
-	GO_ELEVATOR_UP,
-	GO_ELEVATOR_DOWN,
-
-	NUM_TRAVERSE_TYPES
-};
-
-//Thanks to Pelipoika & Sigsegv
-enum TFNavAttributeType
-{
-	BLOCKED                     = (1 << 0),
-	RED_SPAWN_ROOM              = (1 << 1),
-	BLUE_SPAWN_ROOM             = (1 << 2),
-	SPAWN_ROOM_EXIT             = (1 << 3),
-	AMMO                        = (1 << 4),
-	HEALTH                      = (1 << 5),
-	CONTROL_POINT               = (1 << 6),
-	BLUE_SENTRY                 = (1 << 7),
-	RED_SENTRY                  = (1 << 8),
-	/* bit  9: unused */
-	/* bit 10: unused */
-	BLUE_SETUP_GATE             = (1 << 11),
-	RED_SETUP_GATE              = (1 << 12),
-	BLOCKED_AFTER_POINT_CAPTURE = (1 << 13),
-	BLOCKED_UNTIL_POINT_CAPTURE = (1 << 14),
-	BLUE_ONE_WAY_DOOR           = (1 << 15),
-	RED_ONE_WAY_DOOR            = (1 << 16),
-	WITH_SECOND_POINT           = (1 << 17),
-	WITH_THIRD_POINT            = (1 << 18),
-	WITH_FOURTH_POINT           = (1 << 19),
-	WITH_FIFTH_POINT            = (1 << 20),
-	SNIPER_SPOT                 = (1 << 21),
-	SENTRY_SPOT                 = (1 << 22),
-	/* bit 23: unused */
-	/* bit 24: unused */
-	NO_SPAWNING                 = (1 << 25),
-	RESCUE_CLOSET               = (1 << 26),
-	BOMB_DROP                   = (1 << 27),
-	DOOR_NEVER_BLOCKS           = (1 << 28),
-	DOOR_ALWAYS_BLOCKS          = (1 << 29),
-	UNBLOCKABLE                 = (1 << 30),
-	/* bit 31: unused */
-};
-
-methodmap SurroundingAreasCollector < Handle
-{
-	public native CNavArea Get(int index);
-	public native int Count();
-};
-
-methodmap TSurroundingAreasCollector < Handle
-{
-	public native CTNavArea Get(int index);
-	public native int Count();
-};
-
-typeset CollectSurroundingAreasCallback
-{
-	function void (TSurroundingAreasCollector collector, any data);
-};
-
-methodmap CNavMesh
-{
-	public native SurroundingAreasCollector CollectSurroundingAreas(CNavArea startArea, float travelDistanceLimit = 1500.0, float maxStepUpLimit = 18.0, float maxDropDownLimit = 100.0);
-	public native void TCollectSurroundingAreas(CNavArea startArea, float travelDistanceLimit = 1500.0, float maxStepUpLimit = 18.0, float maxDropDownLimit = 100.0, CollectSurroundingAreasCallback callback, any data = 0);
-	public native CNavArea GetNearestNavArea(const float pos[3], bool anyZ = false, float maxDist = 10000.0, bool checkLOS = false, bool checkGround = true, int team = -2);
-};
-
-CNavMesh TheNavMesh;
-
-methodmap CTNavArea
-{
-	public native NavTraverseType GetParentHow();
-	public native float GetCostSoFar();
-	public native CNavArea GetRealNavArea();
-};
-
-methodmap CNavArea
-{
-	public native void UpdateBlocked(bool force = false, int teamID = -2);
-	public native bool IsBlocked(int teamID, bool ignoreNavBlockers = false);
-
-	public native int GetID();
-	
-	public native void SetParent(CNavArea parent, NavTraverseType how = NUM_TRAVERSE_TYPES);
-	public native CNavArea GetParent();
-	public native NavTraverseType GetParentHow();
-	
-	public native void SetCostSoFar(float value);
-	public native float GetCostSoFar();
-	
-	public native int GetAttributes();
-	public bool HasAttributes(int bits) { return ( this.GetAttributes() & bits ) ? true : false; }
-	public native void GetCenter(float vecCenter[3]);
-	
-	public native bool IsConnected(const CNavArea area, NavDirType dir);
-	public native bool IsEdge(NavDirType dir);
-	
-	public native bool Contains(const CNavArea area);
-	public native float GetZ(float x, float y);
-	public native float GetZVector(float vecPos[3]);
-	public native void ComputeNormal(float vecNormal[3], bool alternate = false);
-};
-
-methodmap CNavLadder
-{
-	property float length
-	{
-		public native get();
-	}
-};
-
-methodmap CBaseCombatCharacter
-{
-	public CBaseCombatCharacter(int iEntity)
-	{
-		return view_as<CBaseCombatCharacter>(iEntity);
-	}
-	public native CNavArea GetLastKnownArea();
-};
-
-methodmap INextBotEventResponder
-{
-	public native INextBotEventResponder FirstContainedResponder();
-	public native INextBotEventResponder NextContainedResponder(INextBotEventResponder prev);
-};
-
-methodmap INextBot < INextBotEventResponder
-{
-	public native void Reset();
-	public native void Update();
-	public native void Upkeep();
-
-	public native bool IsRemovedOnReset();
-
-	public native int GetEntity();
-	public native int GetNextBotCombatCharacter();
-
-	public native ILocomotion GetLocomotionInterface();
-	public native IBody GetBodyInterface();
-	//public native IIntention GetIntentionInterface();
-	public native IVision GetVisionInterface();
-
-	public native bool SetPosition(const float pos[3]);
-	public native void GetPosition(float pos[3]);
-
-	public native bool IsEnemy(int entity);
-	public native bool IsFriend(int entity);
-	public native bool IsSelf(int entity);
-
-	public native bool IsAbleToClimbOnto(int entity);
-	public native bool IsAbleToBreak(int entity);
-	public native bool IsAbleToBlockMovementOf(INextBot bot);
-
-	public native bool ShouldTouch(int entity);
-
-	public native void ReactToSurvivorVisibility();
-	public native void ReactToSurvivorNoise();
-	public native void ReactToSurvivorContact();
-
-	public native bool IsImmobile();
-	public native float GetImmobileDuration();
-	public native void ClearImmobileStatus();
-	public native float GetImmobileSpeedThreshold();
-
-	public native PathFollower GetCurrentPath();
-	public native void SetCurrentPath(const PathFollower path);
-	public native void NotifyPathDestruction(const PathFollower path);
-
-	public native bool IsRangeLessThan(int entity, float dist);
-	public native bool IsRangeLessThanEx(const float pos[3], float dist);
-	public native bool IsRangeGreaterThan(int entity, float dist);
-	public native bool IsRangeGreaterThanEx(const float pos[3], float dist);
-
-	public native float GetRangeTo(int entity);
-	public native float GetRangeToEx(const float pos[3]);
-	public native float GetRangeSquaredTo(int entity);
-	public native float GetRangeSquaredToEx(const float pos[3]);
-
-	public native bool IsDebugging(NextBotDebugType type);
-	public native void GetDebugIdentifier(char[] name, int maxsize);
-	public native bool IsDebugFilterMatch(const char[] name);
-	public native void DisplayDebugText(const char[] name);
-};
-
-methodmap INextBotComponent < INextBotEventResponder
-{
-	public native void Reset();
-	public native void Update();
-	public native void Upkeep();
-
-	public native INextBot GetBot();
-};
-
-enum FieldOfViewCheckType
-{
-	USE_FOV,
-	DISREGARD_FOV
-};
-
-methodmap CKnownEntity
-{
-	public native void Destroy();
-	public native void UpdatePosition();
-	public native int GetEntity();
-	public native void GetLastKnownPosition(float vecPos[3]);
-	public native bool HasLastKnownPositionBeenSeen();
-	public native void MarkLastKnownPositionAsSeen();
-	public native CNavArea GetLastKnownArea();
-	public native float GetTimeSinceLastKnown();
-	public native float GetTimeSinceBecameKnown();
-	public native void UpdateVisibilityStatus(bool visible);
-	public native bool IsVisibleInFOVNow();
-	public native bool IsVisibleRecently();
-	public native float GetTimeSinceBecameVisible();
-	public native float GetTimeWhenBecameVisible();
-	public native float GetTimeSinceLastSeen();
-	public native bool WasEverVisible();
-	public native bool IsObsolete();
-	public native bool Is(int iEntity);
-}
-
-methodmap IVision < INextBotComponent
-{
-	public native CKnownEntity GetPrimaryKnownThreat(bool bVisible);
-	public native float GetTimeSinceVisible(int iTeam);
-	public native CKnownEntity GetClosestKnown(int iTeam);
-	public native int GetKnownCount(int team, bool onlyVisible = false, float rangeLimit = -1.0);
-	public native CKnownEntity GetKnown(int iEntity);
-	public native void AddKnownEntity(int iEntity);
-	public native void ForgetEntity(int iEntity);
-	public native void ForgetAllKnownEntities();
-	public native float GetMaxVisionRange();
-	public native float GetMinRecognizeTime();
-	public native bool IsAbleToSeeTarget(int iEntity, FieldOfViewCheckType checkFOV, float vecPos[3] = NULL_VECTOR);
-	public native bool IsAbleToSee(float vecPos[3], FieldOfViewCheckType checkFOV);
-	public native bool IsIgnored(int iEntity);
-	public native bool IsVisibleEntityNoticed(int iEntity);
-	public native bool IsInFieldOfView(float vecPos[3]);
-	public native bool IsInFieldOfViewTarget(int iEntity);
-	public native float GetDefaultFieldOfView();
-	public native float GetFieldOfView();
-	public native void SetFieldOfView(float horizAngle);
-	public native bool IsLineOfSightClear(float vecPos[3]);
-	public native bool IsLineOfSightClearToEntity(int iActor, float vecPos[3]=NULL_VECTOR);
-	public native bool IsLookingAt(float vecPos[3], float cosTolerance = 0.95);
-	public native bool IsLookingAtTarget(int iActor, float cosTolerance = 0.95);
-};
-
-enum TraverseWhenType 
-{ 
-	IMMEDIATELY,
-	EVENTUALLY
-};
-
-methodmap ILocomotion < INextBotComponent
-{
-	public native void Approach(const float dst[3], float unknown);
-	public native void DriveTo(const float dst[3]);
-
-	public native bool ClimbUpToLedge(const float dst[3], const float dir[3], int entity);
-	public native void JumpAcrossGap(const float dst[3], const float dir[3]);
-	public native void Jump();
-	public native bool IsClimbingOrJumping();
-	public native bool IsClimbingUpToLedge();
-	public native bool IsJumpingAcrossGap();
-	public native bool IsScrambling();
-
-	public native void Run();
-	public native void Walk();
-	public native void Stop();
-
-	public native bool IsRunning();
-
-	public native void SetDesiredSpeed(float speed);
-	public native float GetDesiredSpeed();
-
-	public native void SetSpeedLimit(float limit);
-	public native float GetSpeedLimit();
-
-	public native bool IsOnGround();
-	public native int GetGround();
-	public native void GetGroundNormal(float normal[3]);
-	public native float GetGroundSpeed();
-	public native void GetGroundMotionVector(float motion[3]);
-
-	public native void ClimbLadder(CNavLadder ladder, CNavArea area);
-	public native void DescendLadder(CNavLadder ladder, CNavArea area);
-
-	public native bool IsUsingLadder();
-	public native bool IsAscendingOrDescendingLadder();
-	public native bool IsAbleToAutoCenterOnLadder();
-
-	public native void FaceTowards(const float pos[3]);
-
-	public native void SetDesiredLean(const float lean[3]);
-	public native void GetDesiredLean(float lean[3]);
-
-	public native bool IsAbleToJumpAcrossGaps();
-	public native bool IsAbleToClimb();
-
-	public native void GetFeet(float feet[3]);
-
-	public native float GetStepHeight();
-	public native float GetMaxJumpHeight();
-	public native float GetDeathDropHeight();
-	public native float GetRunSpeed();
-	public native float GetWalkSpeed();
-
-	public native float GetMaxAcceleration();
-	public native float GetMaxDeceleration();
-
-	public native void GetVelocity(float vel[3]);
-
-	public native float GetSpeed();
-
-	public native void GetMotionVector(float motion[3]);
-
-	public native bool IsAreaTraversable(CNavArea area);
-	public native float GetTraversableSlopeLimit();
-
-	public native bool IsPotentiallyTraversable(const float from[3], const float to[3], TraverseWhenType when);
-	public native bool HasPotentialGap(const float from[3], const float to[3]);
-	public native bool IsGap(const float from[3], const float to[3]);
-	public native bool IsEntityTraversable(int entity, TraverseWhenType when);
-
-	public native bool IsStuck();
-	public native float GetStuckDuration();
-	public native void ClearStuckStatus(const char[] reason);
-
-	public native bool IsAttemptingToMove();
-
-	public native bool ShouldCollideWith(int entity);
-
-	public native void AdjustPosture(const float lean[3]);
-	public native void StuckMonitor();
-};
-
-methodmap NextBotGroundLocomotion < ILocomotion
-{
-	public native void GetAcceleration(float acel[3]);
-	public native void SetAcceleration(const float acel[3]);
-	public native void SetVelocity(const float vel[3]);
-	public native float GetGravity();
-	public native float GetFrictionForward();
-	public native float GetFrictionSideways();
-	public native float GetMaxYawRate();
-}
-
-typeset NavPathCostFunctor
-{
-	function float(INextBot bot, CNavArea area, CNavArea fromArea, CNavLadder ladder, int iElevator, float length);
-};
-typedef TraceFilterActors = function bool(int iEntityCollide, int contentsMask, int desiredcollisiongroup);
-
-enum SegmentType
-{
-	ON_GROUND,
-	DROP_DOWN,
-	CLIMB_UP,
-	JUMP_OVER_GAP,
-	LADDER_UP,
-	LADDER_DOWN,
-	
-	NUM_SEGMENT_TYPES
-};
-
-enum MoveCursorType
-{
-	MOVECUR_ABS = 0,
-	MOVECUR_REL = 1,
-	MOVECUR_MAX,
-};
-
-methodmap Segment
-{
-	public native void GetPos(float pos[3]);
-};
-
-methodmap CursorData
-{
-};
-
-typeset PathComputeCallback
-{
-	function void (Path path, bool bSuccess, any data);
-};
-
-methodmap Path
-{
-	public native Path(NavPathCostFunctor costfunction = INVALID_FUNCTION, TraceFilterActors ignoreActorsFilter, TraceFilterActors onlyActorsFilter);
-	public native float GetLength();
-	public native void GetPosition(float dist, Segment seg, float pos[3]);
-	public native void GetStartPosition(float pos[3]);
-	public native void GetEndPosition(float pos[3]);
-	public native int GetSubject();
-	public native Segment GetCurrentGoal();
-	public native float GetAge();
-	public native void MoveCursorToStart();
-	public native void MoveCursorToEnd();
-	public native void MoveCursor(float dist, MoveCursorType mctype);
-	public native float GetCursorPosition();
-	public native CursorData GetCursorData();
-	public native bool IsValid();
-	public native void Invalidate();
-	public native void Draw(Segment seg);
-	public native void DrawInterpolated(float from, float to);
-	public native Segment FirstSegment();
-	public native Segment NextSegment(Segment seg);
-	public native Segment PriorSegment(Segment seg);
-	public native Segment LastSegment();
-	public native bool ComputeToPos(INextBot bot, float vecPos[3], float maxPathLength = 0.0, bool includeGoalIfPathFails = true);
-	public native bool ComputeToTarget(INextBot bot, int entity, float maxPathLength = 0.0, bool includeGoalIfPathFails = true);
-	public native void Destroy();
-	
-	// Threaded
-	public native bool ComputeToPosT(INextBot bot, float vecPos[3], float maxPathLength = 0.0, bool includeGoalIfPathFails = true, PathComputeCallback callback, any data = 0);
-	public native bool ComputeToTargetT(INextBot bot, int entity, float maxPathLength = 0.0, bool includeGoalIfPathFails = true, PathComputeCallback callback, any data = 0);
-};
-
-methodmap PathFollower < Path
-{
-	public native PathFollower(NavPathCostFunctor costfunction = INVALID_FUNCTION, TraceFilterActors ignoreActorsFilter, TraceFilterActors onlyActorsFilter);
-	public native void Update(INextBot nextbot);
-	public native void SetMinLookAheadDistance(float dist);
-	public native int GetHindrance();
-	public native bool IsDiscontinuityAhead(INextBot nextbot, SegmentType stype, float max_dist);
-	public native void Destroy();
-};
-
-enum SubjectChaseType
-{
-	LEAD_SUBJECT,
-	DONT_LEAD_SUBJECT
-};
-
-methodmap ChasePath < PathFollower
-{
-	public native ChasePath(SubjectChaseType how = DONT_LEAD_SUBJECT, NavPathCostFunctor costfunction = INVALID_FUNCTION, TraceFilterActors ignoreActorsFilter, TraceFilterActors onlyActorsFilter);
-	public native void Update(INextBot bot, int iTarget, float vecPredictedPos[3]=NULL_VECTOR);
-	public native float GetLeadRadius();
-	public native float GetMaxPathLength();
-	public native void PredictSubjectPosition(INextBot nextbot, int entity, float pos[3]);
-	public native bool IsRepathNeeded(INextBot nextbot, int entity);
-	public native float GetLifetime();
-	public native void Destroy();
-};
-
-methodmap DirectChasePath < ChasePath
-{
-	public native DirectChasePath(SubjectChaseType how = DONT_LEAD_SUBJECT, NavPathCostFunctor costfunction = INVALID_FUNCTION, TraceFilterActors ignoreActorsFilter, TraceFilterActors onlyActorsFilter);
-	public native void Destroy();
-};
-
-enum LookAtPriorityType
-{
-	BORING,
-	INTERESTING,				
-	IMPORTANT,					
-	CRITICAL,			
-	MANDATORY
-};
-
-enum ActivityType 
-{ 
-	MOTION_CONTROLLED_XY	= 0x0001,
-	MOTION_CONTROLLED_Z		= 0x0002,
-	ACTIVITY_UNINTERRUPTIBLE= 0x0004,
-	ACTIVITY_TRANSITORY		= 0x0008,
-	ENTINDEX_PLAYBACK_RATE	= 0x0010,
-};
-	
-enum PostureType
-{
-	STAND,
-	CROUCH,
-	SIT,
-	CRAWL,
-	LIE
-};
-	
-enum ArousalType
-{
-	NEUTRAL,
-	ALERT,
-	INTENSE
-};
-
-methodmap IBody < INextBotComponent
-{
-	public native bool SetPosition(float pos[3]);
-
-	public native void GetEyePosition(float eyepos[3]);
-	public native void GetViewVector(float view[3]);
-
-	//public native void AimHeadTowards(float pos[3], LookAtPriorityType priority, float duration, PluginBotReply reply, const char[] reason);
-	//public native void AimHeadTowardsEx(int entity, LookAtPriorityType priority, float duration, PluginBotReply reply, const char[] reason);
-
-	public native bool IsHeadAimingOnTarget();
-	public native bool IsHeadSteady();
-	public native float GetHeadSteadyDuration();
-	public native float GetHeadAimSubjectLeadTime();
-	public native float GetHeadAimTrackingInterval();
-	public native void ClearPendingAimReply();
-	public native float GetMaxHeadAngularVelocity();
-
-	//public native bool StartActivity(Activity act, int unknown);
-	//public native int SelectAnimationSequence(Activity act);
-	//public native Activity GetActivity();
-	//public native bool IsActivity(Activity act);
-	//public native bool HasActivityType(int unknown);
-
-	public native void SetDesiredPosture(PostureType posture);
-	public native PostureType GetDesiredPosture();
-	public native bool IsDesiredPosture(PostureType posture);
-	public native bool IsInDesiredPosture();
-	public native PostureType GetActualPosture();
-	public native bool IsActualPosture(PostureType posture);
-	public native bool IsPostureMobile();
-	public native bool IsPostureChanging();
-
-	public native void SetArousal(ArousalType arousal);
-	public native ArousalType GetArousal();
-	public native bool IsArousal(ArousalType arousal);
-
-	public native float GetHullWidth();
-	public native float GetHullHeight();
-	public native float GetStandHullHeight();
-	public native float GetCrouchHullHeight();
-	public native void GetHullMins(float mins[3]);
-	public native void GetHullMaxs(float maxs[3]);
-
-	public native int GetSolidMask();
-	public native int GetCollisionGroup();
-};
-
-methodmap CBaseNPC __nullable__
-{
-	public native CBaseNPC();
-	public native int GetEntity();
-	public native void Teleport(float origin[3]=NULL_VECTOR, float angles[3]=NULL_VECTOR, float velocity[3]=NULL_VECTOR);
-	public native void Spawn();
-	public native void SetModel(const char[] model);
-	public native void SetCollisionBounds(float vecMins[3], float vecMaxs[3]);
-	public native void GetVectors(float vecForward[3], float vecRight[3], float vecUp[3]);
-	public native CNavArea GetLastKnownArea();
-	
-	// Interfaces
-	public native INextBot GetBot();
-	public native NextBotGroundLocomotion GetLocomotion();
-	public native IBody GetBody();
-	public native IVision GetVision();
-	
-	public native void SetType(char[] sBuffer);
-	public native void GetType(char[] sBuffer, int length);
-	
-	public void SetThinkFunction(SDKHookCB callback)
-	{
-		SDKHook(this.GetEntity(), SDKHook_Think, callback);
-	}
-	public void SetOnTakeDamageFunction(SDKHookCB callback)
-	{
-		SDKHook(this.GetEntity(), SDKHook_OnTakeDamage, callback);
-	}
-	
-	public native int EquipItem(const char[] attachment, const char[] model, const char[] anim = "", int skin = 0);
-	
-	// Locomotion Functions
-	public native void Approach(const float vecPos[3]);
-	public native void FaceTowards(const float vecPos[3]);
-	public native void Walk();
-	public native void Run();
-	public native void Stop();
-	public native void Jump();
-	public native bool IsOnGround();
-	public native bool IsClimbingOrJumping();
-	public native void SetVelocity(float vec[3]);
-	public native void GetVelocity(float vec[3]);
-	public native void ResetPath();
-	
-	// Body Functions
-	public native void SetBodyMins(float vec[3]);
-	public native void SetBodyMaxs(float vec[3]);
-	public native void GetBodyMins(float vec[3]);
-	public native void GetBodyMaxs(float vec[3]);
-	
-	property int Index
-	{
-		public get() { return view_as<int>(this); }
-	}
-	property int iMaxHealth
-	{
-		public get() { return GetEntProp(this.GetEntity(), Prop_Data, "m_iMaxHealth"); }
-		public set(int value) { SetEntProp(this.GetEntity(), Prop_Data, "m_initialHealth", value); SetEntProp(this.GetEntity(), Prop_Data, "m_iMaxHealth", value); }
-	}
-	property int iHealth
-	{
-		public get() { return GetEntProp(this.GetEntity(), Prop_Data, "m_iHealth"); }
-		public set(int value) { SetEntProp(this.GetEntity(), Prop_Data, "m_iHealth", value); }
-	}
-	property int iTeamNum
-	{
-		public get() { return GetEntProp(this.GetEntity(), Prop_Data, "m_iTeamNum"); }
-		public set(int iTeam) { SetEntProp(this.GetEntity(), Prop_Data, "m_iTeamNum", iTeam); }
-	}
-	property int nSkin
-	{
-		public get() { return GetEntProp(this.GetEntity(), Prop_Data, "m_nSkin"); }
-		public set(int skin) { SetEntProp(this.GetEntity(), Prop_Data, "m_nSkin", skin); }
-	}
-	property float flStepSize
-	{
-		public native get();
-		public native set(float StepSize);
-	}
-	property float flGravity
-	{
-		public native get();
-		public native set(float Gravity);
-	}
-	property float flAcceleration
-	{
-		public native get();
-		public native set(float Acceleration);
-	}
-	property float flJumpHeight
-	{
-		public native get();
-		public native set(float JumpHeight);
-	}
-	property float flDeathDropHeight
-	{
-		public native get();
-		public native set(float DeathHeight);
-	}
-	property float flWalkSpeed
-	{
-		public native get();
-		public native set(float WalkSpeed);
-	}
-	property float flRunSpeed
-	{
-		public native get();
-		public native set(float RunSpeed);
-	}
-	property float flFrictionForward
-	{
-		public native get();
-		public native set(float Friction);
-	}
-	property float flFrictionSideways
-	{
-		public native get();
-		public native set(float Friction);
-	}
-	property int BloodColor
-	{
-		public get() { return GetEntProp(this.GetEntity(), Prop_Data, "m_bloodColor"); }
-		public set(int iBloodColor) { SetEntProp(this.GetEntity(), Prop_Data, "m_bloodColor", iBloodColor); }
-	}
-}
-
-methodmap CNPCs __nullable__
-{
-	public native any FindNPCByEntIndex(int ent);
-	public native bool IsValidNPC(any npc);
-	//To-Do: add npcs relationships?
-}
-
-CNPCs TheNPCs;
-
-// Gesture code
-
-#define ANIM_LAYER_ACTIVE		0x0001
-#define ANIM_LAYER_AUTOKILL		0x0002
-#define ANIM_LAYER_KILLME		0x0004
-#define ANIM_LAYER_DONTRESTORE	0x0008
-#define ANIM_LAYER_CHECKACCESS	0x0010
-#define ANIM_LAYER_DYING		0x0020
-
-#define MAX_OVERLAYS			15
-
-#define ANIM_LAYER_ACTIVE        0x0001 
-#define ANIM_LAYER_AUTOKILL      0x0002 
-#define ANIM_LAYER_KILLME        0x0004 
-#define ANIM_LAYER_DONTRESTORE   0x0008 
-#define ANIM_LAYER_CHECKACCESS   0x0010 
-#define ANIM_LAYER_DYING         0x0020
-#define ANIM_LAYER_NOEVENTS         0x0040
-
-enum //CAnimationLayer 
-{ 
-    m_fFlags = 0,               //0x0000  
-    m_bSequenceFinished = 4,    //0x0004  
-    m_bLooping = 6,             //0x0006  
-    m_nSequence = 8,            //0x0008  
-    m_flCycle = 12,             //0x000C  
-    m_flPrevCycle = 16,         //0x0010  
-    m_flWeight = 20,            //0x0014  
-    m_flPlaybackRate = 24,      //0x0018  
-    m_flBlendIn = 28,           //0x001C  
-    m_flBlendOut = 32,          //0x0020  
-    m_flKillRate = 36,          //0x0024  
-    m_flKillDelay = 40,         //0x0028  
-    m_flLayerAnimtime = 44,     //0x002C  
-    m_flLayerFadeOuttime = 48,  //0x0030  
-    m_nActivity = 52,           //0x0034  
-    m_nPriority = 56,           //0x0038  
-    m_nOrder = 60,              //0x003C  
-    m_flLastEventCheck = 64,    //0x0040  
-    m_flLastEventAccess = 68,   //0x0044  
-    m_pOwnerEntity = 72,        //0x0048  
-     
-    CAnimationLayer_Size = 76   //0x004C 
-}; //Size=0x004C 
-
-methodmap CAnimationOverlay  
-{ 
-    public CAnimationOverlay(int address)
-    {
-        return view_as<CAnimationOverlay>(address);
-    }
-    
-    property Address Address  
-    { 
-        public get()  
-        { 
-            return view_as<Address>(this); 
-        } 
-    } 
-    
-    property bool isNull
-    {
-        public get()  
-        { 
-            return this.Address == Address_Null; 
-        } 
-    }
-
-    public any Get(int iOffset, int iLayer) 
-    { 
-        return LoadFromAddress(this.Address + view_as<Address>(iOffset + CAnimationLayer_Size * iLayer), NumberType_Int32); 
-    } 
-     
-    public void Set(int iOffset, int iLayer, any iValue) 
-    { 
-        StoreToAddress(this.Address + view_as<Address>(iOffset + CAnimationLayer_Size * iLayer), iValue, NumberType_Int32); 
-    } 
-
-    public bool IsActive(int iLayer)    { return ((this.Get(m_fFlags, iLayer) & ANIM_LAYER_ACTIVE)   != 0); } 
-    public bool IsAutokill(int iLayer)  { return ((this.Get(m_fFlags, iLayer) & ANIM_LAYER_AUTOKILL) != 0); } 
-    public bool IsKillMe(int iLayer)    { return ((this.Get(m_fFlags, iLayer) & ANIM_LAYER_KILLME)   != 0); } 
-    public bool IsDying(int iLayer)     { return ((this.Get(m_fFlags, iLayer) & ANIM_LAYER_DYING)    != 0); } 
-    public bool    NoEvents(int iLayer)    { return ((this.Get(m_fFlags, iLayer) & ANIM_LAYER_NOEVENTS) != 0); }
-    public void KillMe(int iLayer)      { int iFlags = this.Get(m_fFlags, iLayer); this.Set(m_fFlags, iLayer, (iFlags |= ANIM_LAYER_KILLME)); } 
-    public void AutoKill(int iLayer)    { int iFlags = this.Get(m_fFlags, iLayer); this.Set(m_fFlags, iLayer, (iFlags |= ANIM_LAYER_AUTOKILL)); }
-    public void Dying(int iLayer)       { int iFlags = this.Get(m_fFlags, iLayer); this.Set(m_fFlags, iLayer, (iFlags |= ANIM_LAYER_DYING));  } 
-    public void Dead(int iLayer)        { int iFlags = this.Get(m_fFlags, iLayer); this.Set(m_fFlags, iLayer, (iFlags &= ~ANIM_LAYER_DYING)); }
-    public void RemoveLayer(int iLayer, float flKillRate, float flKillDelay)
-    {
-        this.Set(m_flKillRate, iLayer, flKillRate > 0.0 ? this.Get(m_flWeight, iLayer) / flKillRate : 100.0);
-        this.Set(m_flKillDelay, iLayer, flKillDelay);
-        this.KillMe(iLayer);
-    }
-    
-    public bool IsAlive(int iLayer)         { int iFlags = this.Get(m_fFlags, iLayer); return (((iFlags & ANIM_LAYER_ACTIVE) != 0) || ((iFlags & ANIM_LAYER_KILLME) == 0)); }
-    public int GetLayerSequence(int iLayer) { return (this.Get(m_nSequence, iLayer)); }
-};
-
-methodmap CBaseEntity
-{
-	public CBaseEntity(int iEnt) 
-	{
-		return view_as<CBaseEntity>(iEnt);
-	}
-
-	property int iEnt
-	{
-		public get() 
-		{
-			return view_as<int>(this);
-		}
-	}
-
-	public static native int iUpdateOnRemove();
-	
-#if defined _dhooks_included
-	public void Hook_UpdateOnRemove(DHookCallback callback)
-	{
-		static Handle hHook = null;
-		if (hHook == null)
-		{
-			hHook = DHookCreate(CBaseEntity.iUpdateOnRemove(), HookType_Entity, ReturnType_Void, ThisPointer_CBaseEntity);
-			if (hHook == null) return;
-		}
-		DHookEntity(hHook, false, this.iEnt, _, callback);
-	}
-#endif
-}
-
-methodmap CBaseAnimating < CBaseEntity
-{
-	public CBaseAnimating(int entity) 
-	{
-		return view_as<CBaseAnimating>(entity);
-	}
-	
-	public static native int iHandleAnimEvent();
-	
-#if defined _dhooks_included
-	public void Hook_HandleAnimEvent(DHookCallback callback)
-	{
-		static Handle hHook = null;
-		if (hHook == null)
-		{
-			hHook = DHookCreate(CBaseAnimating.iHandleAnimEvent(), HookType_Entity, ReturnType_Void, ThisPointer_CBaseEntity);
-			if (hHook == null) return;
-			DHookAddParam(hHook, HookParamType_ObjectPtr, -1);
-		}
-		DHookEntity(hHook, false, this.iEnt, _, callback);
-	}
-#endif
-	
-	public native void WorldSpaceCenter(float vecCenter[3]);
-	public native void StudioFrameAdvance();
-	public native void DispatchAnimEvents();
-	public native int LookupSequence(const char[] sName);
-	public native float SequenceDuration(Address pStudioHdr, int iSequence);
-	public native int SelectWeightedSequence(int iActivity);
-	public native void ResetSequence(int sequence);
-	public void PlayAnimation(const char[] sName)
-	{
-		int iSequence = this.LookupSequence(sName);
-		if (iSequence != -1)
-		{
-			this.ResetSequence(iSequence);
-			SetEntPropFloat(this.iEnt, Prop_Data, "m_flCycle", 0.0);
-		}
-	}
-	public native int FindAttachment(const char[] sAttachmentName);
-	public native void GetAttachment(int iAttachmentIndex, float vecOrigin[3], float vecAngles[3]);
-	
-	public native Address GetModelPtr();
-	public native int LookupPoseParameter(Address pStudioHdr, const char[] sParamName);
-	public native void SetPoseParameter(Address pStudioHdr, int iPoseParam, float flNewValue);
-	public native float GetPoseParameter(int iPoseParam);
-	
-	public CAnimationOverlay CAnimatingOverlay() 
-	{ 
-		static int iOffset;
-		if(!iOffset) iOffset = FindDataMapInfo(this.iEnt, "m_AnimOverlay");
-		return CAnimationOverlay(GetEntData(this.iEnt, iOffset));
-	}
-	
-	public int AnimOverlayCount()
-	{
-		static int iOffset;
-		if(!iOffset) iOffset = FindDataMapInfo(this.iEnt, "m_AnimOverlay") + 12;
-		return GetEntData(this.iEnt, iOffset);
-	}
-	
-	public bool IsValidLayer( int iLayer )
-	{
-		return (iLayer >= 0 && iLayer < this.AnimOverlayCount());
-	}
-	
-	public int FindGestureLayerBySequence(int iSequence)
-	{
-		// Validate address
-		CAnimationOverlay pOverlay = this.CAnimatingOverlay(); 
-		// i = layer index
-		int iCount = this.AnimOverlayCount();
-		for(int i = 0; i < iCount; i++) 
-		{
-			// Validate layer
-			if(!pOverlay.IsAlive(i)) 
-			{
-				continue; 
-			}
-
-			// Validate sequence
-			if(pOverlay.GetLayerSequence(i) == iSequence) 
-			{
-				return i; 
-			}
-		} 
-
-		// Return on the unsuccess
-		return -1; 
-	}
-	
-	public int FindGestureLayer(char[] sAnim) 
-	{
-		// Find the sequence index
-		int iSequence = this.LookupSequence(sAnim); 
-		if(iSequence < 0) 
-		{
-			return -1; 
-		}
-
-		return this.FindGestureLayerBySequence(iSequence);
-	}
-};
-
-methodmap CBaseAnimatingOverlay < CBaseAnimating
-{
-	public CBaseAnimatingOverlay(int entity) 
-	{
-		return view_as<CBaseAnimatingOverlay>(entity);
-	}
-
-	public native void AddGestureSequence(int sequence, bool bAutokill = true);
-};
-
-#if !defined _navmesh_included
-public float Path_Cost(INextBot bot, CNavArea area, CNavArea fromArea, CNavLadder ladder, int iElevator, float length)
-{
-	static int iTime = 0;
-	if (iTime < GetTime())
-	{
-		iTime = GetTime();
-	}
-	
-	float dist;
-	if ( ladder != NULL_LADDER_AREA )
-	{
-		dist = ladder.length;
-	}
-	else if ( length > 0.0 )
-	{
-		dist = length;
-	}
-	else
-	{
-		float vecAreaCenter[3], vecFromAreaCenter[3];
-		area.GetCenter(vecAreaCenter);
-		fromArea.GetCenter(vecFromAreaCenter);
-		dist = GetVectorDistance(vecAreaCenter, vecFromAreaCenter);
-	}
-
-	float cost = dist + fromArea.GetCostSoFar();
-	
-	// if this is a "crouch" area, add penalty
-	int attributes = area.GetAttributes();
-	if ( (attributes & NAV_MESH_CROUCH) )
-	{
-		const float crouchPenalty = 20.0;
-		cost += crouchPenalty * dist;
-	}
-
-	// if this is a "jump" area, add penalty
-	if ( (attributes & NAV_MESH_JUMP) )
-	{
-		const float jumpPenalty = 5.0;
-		cost += jumpPenalty * dist;
-	}
-	return cost;
-}
-#endif
-
-public bool Path_FilterIgnoreActors(int entity, int contentsMask, int desiredcollisiongroup)
-{
-	if ((0 < entity <= MaxClients) || (view_as<Address>(CBaseNPC_GetNextBotOfEntity(entity)) != Address_Null))
-	{
-		return false;
-	}
-	return true;
-}
-
-public bool Path_FilterOnlyActors(int entity, int contentsMask, int desiredcollisiongroup)
-{
-	return ((0 < entity <= MaxClients) || TheNPCs.FindNPCByEntIndex(entity) == INVALID_NPC);
-}
-
-forward Action CBaseEntity_SetLocalAngles(int iEntity, float vecNewAngles[3]);
-forward Action CBaseCombatCharacter_EventKilled(int iEntity, int &iAttacker, int &iInflictor, float &flDamage, int &iDamagetype, int &iWeapon, float vecDamageForce[3], float vecDamagePosition[3], int iDamagecustom);
-
-enum
+enum Activity
 {
 	ACT_INVALID = -1,			// So we have something more succint to check for than '-1'
 	ACT_RESET = 0,				// Set m_Activity to this invalid value to force a reset to m_IdealActivity
@@ -3223,21 +2180,1089 @@ enum
 	LAST_SHARED_ACTIVITY,
 };
 
-public SharedPlugin __pl_cbasenpc = 
+#define MAX_NPCS		200
+
+#define	DAMAGE_NO				0
+#define DAMAGE_EVENTS_ONLY		1
+#define	DAMAGE_YES				2
+#define	DAMAGE_AIM				3
+
+enum NextBotDebugType
 {
-	name = "cbasenpc",
-	file = "cbasenpc.smx",
-#if defined REQUIRE_PLUGIN
-	required = 1,
-#else
-	required = 0,
-#endif
+	DEBUG_NONE = 0x0000,
+	DEBUG_ANY  = 0xffff,
+
+	DEBUG_BEHAVIOR   = (1 << 0), // NextBotBehavior
+	DEBUG_LOOK_AT    = (1 << 1), // NextBotBodyInterface
+	DEBUG_PATH       = (1 << 2), // NextBotPath, NextBotPathFollow, NextBotChasePath
+	DEBUG_ANIMATION  = (1 << 3),
+	DEBUG_LOCOMOTION = (1 << 4), // NextBotLocomotionInterface
+	DEBUG_VISION     = (1 << 5), // NextBotVisionInterface
+	DEBUG_HEARING    = (1 << 6),
+	DEBUG_EVENTS     = (1 << 7), // NextBotEventResponderInterface
+	DEBUG_ERRORS     = (1 << 8),
 };
 
-public Extension __ext_cbasenpcextension = 
+const CBaseNPC INVALID_NPC = view_as<CBaseNPC>(-1);
+const CNavArea NULL_AREA = view_as<CNavArea>(0);
+const CNavLadder NULL_LADDER_AREA = view_as<CNavLadder>(0);
+
+native INextBot CBaseNPC_GetNextBotOfEntity(int iEntity);
+native void CBaseNPC_HookEventKilled(int iEntity);
+
+enum
 {
-	name = "Nextbot Pathing",
-	file = "nextbot_pathing.ext",
+	NAV_MESH_CROUCH = 0x0001, 
+	NAV_MESH_JUMP = 0x0002, 
+	NAV_MESH_PRECISE = 0x0004, 
+	NAV_MESH_NO_JUMP = 0x0008, 
+	NAV_MESH_STOP = 0x0010, 
+	NAV_MESH_RUN = 0x0020, 
+	NAV_MESH_WALK = 0x0040, 
+	NAV_MESH_AVOID = 0x0080, 
+	NAV_MESH_TRANSIENT = 0x0100, 
+	NAV_MESH_DONT_HIDE = 0x0200, 
+	NAV_MESH_STAND = 0x0400, 
+	NAV_MESH_NO_HOSTAGES = 0x0800
+};
+
+enum NavDirType
+{
+	NORTH = 0,
+	EAST = 1,
+	SOUTH = 2,
+	WEST = 3,
+
+	NUM_DIRECTIONS
+};
+
+enum NavTraverseType
+{
+	// NOTE: First 4 directions MUST match NavDirType
+	GO_NORTH = 0,
+	GO_EAST,
+	GO_SOUTH,
+	GO_WEST,
+
+	GO_LADDER_UP,
+	GO_LADDER_DOWN,
+	GO_JUMP,
+	GO_ELEVATOR_UP,
+	GO_ELEVATOR_DOWN,
+
+	NUM_TRAVERSE_TYPES
+};
+
+//Thanks to Pelipoika & Sigsegv
+enum TFNavAttributeType
+{
+	BLOCKED                     = (1 << 0),
+	RED_SPAWN_ROOM              = (1 << 1),
+	BLUE_SPAWN_ROOM             = (1 << 2),
+	SPAWN_ROOM_EXIT             = (1 << 3),
+	AMMO                        = (1 << 4),
+	HEALTH                      = (1 << 5),
+	CONTROL_POINT               = (1 << 6),
+	BLUE_SENTRY                 = (1 << 7),
+	RED_SENTRY                  = (1 << 8),
+	/* bit  9: unused */
+	/* bit 10: unused */
+	BLUE_SETUP_GATE             = (1 << 11),
+	RED_SETUP_GATE              = (1 << 12),
+	BLOCKED_AFTER_POINT_CAPTURE = (1 << 13),
+	BLOCKED_UNTIL_POINT_CAPTURE = (1 << 14),
+	BLUE_ONE_WAY_DOOR           = (1 << 15),
+	RED_ONE_WAY_DOOR            = (1 << 16),
+	WITH_SECOND_POINT           = (1 << 17),
+	WITH_THIRD_POINT            = (1 << 18),
+	WITH_FOURTH_POINT           = (1 << 19),
+	WITH_FIFTH_POINT            = (1 << 20),
+	SNIPER_SPOT                 = (1 << 21),
+	SENTRY_SPOT                 = (1 << 22),
+	/* bit 23: unused */
+	/* bit 24: unused */
+	NO_SPAWNING                 = (1 << 25),
+	RESCUE_CLOSET               = (1 << 26),
+	BOMB_DROP                   = (1 << 27),
+	DOOR_NEVER_BLOCKS           = (1 << 28),
+	DOOR_ALWAYS_BLOCKS          = (1 << 29),
+	UNBLOCKABLE                 = (1 << 30),
+	/* bit 31: unused */
+};
+
+methodmap SurroundingAreasCollector < Handle
+{
+	public native CNavArea Get(int index);
+	public native int Count();
+};
+
+methodmap TSurroundingAreasCollector < Handle
+{
+	public native CTNavArea Get(int index);
+	public native int Count();
+};
+
+typeset CollectSurroundingAreasCallback
+{
+	function void (TSurroundingAreasCollector collector, any data);
+};
+
+methodmap CNavMesh
+{
+	public native SurroundingAreasCollector CollectSurroundingAreas(CNavArea startArea, float travelDistanceLimit = 1500.0, float maxStepUpLimit = 18.0, float maxDropDownLimit = 100.0);
+	public native void TCollectSurroundingAreas(CNavArea startArea, float travelDistanceLimit = 1500.0, float maxStepUpLimit = 18.0, float maxDropDownLimit = 100.0, CollectSurroundingAreasCallback callback, any data = 0);
+	public native CNavArea GetNearestNavArea(const float pos[3], bool anyZ = false, float maxDist = 10000.0, bool checkLOS = false, bool checkGround = true, int team = -2);
+};
+
+CNavMesh TheNavMesh;
+
+methodmap CTNavArea
+{
+	public native NavTraverseType GetParentHow();
+	public native float GetCostSoFar();
+	public native CNavArea GetRealNavArea();
+};
+
+methodmap CNavArea
+{
+	public native void UpdateBlocked(bool force = false, int teamID = -2);
+	public native bool IsBlocked(int teamID, bool ignoreNavBlockers = false);
+
+	public native int GetID();
+	
+	public native void SetParent(CNavArea parent, NavTraverseType how = NUM_TRAVERSE_TYPES);
+	public native CNavArea GetParent();
+	public native NavTraverseType GetParentHow();
+	
+	public native void SetCostSoFar(float value);
+	public native float GetCostSoFar();
+	
+	public native int GetAttributes();
+	public bool HasAttributes(int bits) { return ( this.GetAttributes() & bits ) ? true : false; }
+	public native void GetCenter(float vecCenter[3]);
+	
+	public native bool IsConnected(const CNavArea area, NavDirType dir);
+	public native bool IsEdge(NavDirType dir);
+	
+	public native bool Contains(const CNavArea area);
+	public native float GetZ(float x, float y);
+	public native float GetZVector(float vecPos[3]);
+	public native void ComputeNormal(float vecNormal[3], bool alternate = false);
+};
+
+methodmap CNavLadder
+{
+	property float length
+	{
+		public native get();
+	}
+};
+
+methodmap INextBotEventResponder
+{
+	public native INextBotEventResponder FirstContainedResponder();
+	public native INextBotEventResponder NextContainedResponder(INextBotEventResponder prev);
+};
+
+methodmap INextBot < INextBotEventResponder
+{
+	public native void Reset();
+	public native void Update();
+	public native void Upkeep();
+
+	public native bool IsRemovedOnReset();
+
+	public native int GetEntity();
+	public native int GetNextBotCombatCharacter();
+
+	public native ILocomotion GetLocomotionInterface();
+	public native IBody GetBodyInterface();
+	//public native IIntention GetIntentionInterface();
+	public native IVision GetVisionInterface();
+
+	public native bool SetPosition(const float pos[3]);
+	public native void GetPosition(float pos[3]);
+
+	public native bool IsEnemy(int entity);
+	public native bool IsFriend(int entity);
+	public native bool IsSelf(int entity);
+
+	public native bool IsAbleToClimbOnto(int entity);
+	public native bool IsAbleToBreak(int entity);
+	public native bool IsAbleToBlockMovementOf(INextBot bot);
+
+	public native bool ShouldTouch(int entity);
+
+	public native void ReactToSurvivorVisibility();
+	public native void ReactToSurvivorNoise();
+	public native void ReactToSurvivorContact();
+
+	public native bool IsImmobile();
+	public native float GetImmobileDuration();
+	public native void ClearImmobileStatus();
+	public native float GetImmobileSpeedThreshold();
+
+	public native PathFollower GetCurrentPath();
+	public native void SetCurrentPath(const PathFollower path);
+	public native void NotifyPathDestruction(const PathFollower path);
+
+	public native bool IsRangeLessThan(int entity, float dist);
+	public native bool IsRangeLessThanEx(const float pos[3], float dist);
+	public native bool IsRangeGreaterThan(int entity, float dist);
+	public native bool IsRangeGreaterThanEx(const float pos[3], float dist);
+
+	public native float GetRangeTo(int entity);
+	public native float GetRangeToEx(const float pos[3]);
+	public native float GetRangeSquaredTo(int entity);
+	public native float GetRangeSquaredToEx(const float pos[3]);
+
+	public native bool IsDebugging(NextBotDebugType type);
+	public native void GetDebugIdentifier(char[] name, int maxsize);
+	public native bool IsDebugFilterMatch(const char[] name);
+	public native void DisplayDebugText(const char[] name);
+};
+
+methodmap INextBotComponent < INextBotEventResponder
+{
+	public native void Reset();
+	public native void Update();
+	public native void Upkeep();
+
+	public native INextBot GetBot();
+};
+
+enum FieldOfViewCheckType
+{
+	USE_FOV,
+	DISREGARD_FOV
+};
+
+methodmap CKnownEntity
+{
+	public native void Destroy();
+	public native void UpdatePosition();
+	public native int GetEntity();
+	public native void GetLastKnownPosition(float vecPos[3]);
+	public native bool HasLastKnownPositionBeenSeen();
+	public native void MarkLastKnownPositionAsSeen();
+	public native CNavArea GetLastKnownArea();
+	public native float GetTimeSinceLastKnown();
+	public native float GetTimeSinceBecameKnown();
+	public native void UpdateVisibilityStatus(bool visible);
+	public native bool IsVisibleInFOVNow();
+	public native bool IsVisibleRecently();
+	public native float GetTimeSinceBecameVisible();
+	public native float GetTimeWhenBecameVisible();
+	public native float GetTimeSinceLastSeen();
+	public native bool WasEverVisible();
+	public native bool IsObsolete();
+	public native bool Is(int iEntity);
+}
+
+methodmap IVision < INextBotComponent
+{
+	public native CKnownEntity GetPrimaryKnownThreat(bool bVisible);
+	public native float GetTimeSinceVisible(int iTeam);
+	public native CKnownEntity GetClosestKnown(int iTeam);
+	public native int GetKnownCount(int team, bool onlyVisible = false, float rangeLimit = -1.0);
+	public native CKnownEntity GetKnown(int iEntity);
+	public native void AddKnownEntity(int iEntity);
+	public native void ForgetEntity(int iEntity);
+	public native void ForgetAllKnownEntities();
+	public native float GetMaxVisionRange();
+	public native float GetMinRecognizeTime();
+	public native bool IsAbleToSeeTarget(int iEntity, FieldOfViewCheckType checkFOV, float vecPos[3] = NULL_VECTOR);
+	public native bool IsAbleToSee(float vecPos[3], FieldOfViewCheckType checkFOV);
+	public native bool IsIgnored(int iEntity);
+	public native bool IsVisibleEntityNoticed(int iEntity);
+	public native bool IsInFieldOfView(float vecPos[3]);
+	public native bool IsInFieldOfViewTarget(int iEntity);
+	public native float GetDefaultFieldOfView();
+	public native float GetFieldOfView();
+	public native void SetFieldOfView(float horizAngle);
+	public native bool IsLineOfSightClear(float vecPos[3]);
+	public native bool IsLineOfSightClearToEntity(int iActor, float vecPos[3]=NULL_VECTOR);
+	public native bool IsLookingAt(float vecPos[3], float cosTolerance = 0.95);
+	public native bool IsLookingAtTarget(int iActor, float cosTolerance = 0.95);
+};
+
+enum TraverseWhenType 
+{ 
+	IMMEDIATELY,
+	EVENTUALLY
+};
+
+methodmap ILocomotion < INextBotComponent
+{
+	public native void Approach(const float dst[3], float unknown);
+	public native void DriveTo(const float dst[3]);
+
+	public native bool ClimbUpToLedge(const float dst[3], const float dir[3], int entity);
+	public native void JumpAcrossGap(const float dst[3], const float dir[3]);
+	public native void Jump();
+	public native bool IsClimbingOrJumping();
+	public native bool IsClimbingUpToLedge();
+	public native bool IsJumpingAcrossGap();
+	public native bool IsScrambling();
+
+	public native void Run();
+	public native void Walk();
+	public native void Stop();
+
+	public native bool IsRunning();
+
+	public native void SetDesiredSpeed(float speed);
+	public native float GetDesiredSpeed();
+
+	public native void SetSpeedLimit(float limit);
+	public native float GetSpeedLimit();
+
+	public native bool IsOnGround();
+	public native int GetGround();
+	public native void GetGroundNormal(float normal[3]);
+	public native float GetGroundSpeed();
+	public native void GetGroundMotionVector(float motion[3]);
+
+	public native void ClimbLadder(CNavLadder ladder, CNavArea area);
+	public native void DescendLadder(CNavLadder ladder, CNavArea area);
+
+	public native bool IsUsingLadder();
+	public native bool IsAscendingOrDescendingLadder();
+	public native bool IsAbleToAutoCenterOnLadder();
+
+	public native void FaceTowards(const float pos[3]);
+
+	public native void SetDesiredLean(const float lean[3]);
+	public native void GetDesiredLean(float lean[3]);
+
+	public native bool IsAbleToJumpAcrossGaps();
+	public native bool IsAbleToClimb();
+
+	public native void GetFeet(float feet[3]);
+
+	public native float GetStepHeight();
+	public native float GetMaxJumpHeight();
+	public native float GetDeathDropHeight();
+	public native float GetRunSpeed();
+	public native float GetWalkSpeed();
+
+	public native float GetMaxAcceleration();
+	public native float GetMaxDeceleration();
+
+	public native void GetVelocity(float vel[3]);
+
+	public native float GetSpeed();
+
+	public native void GetMotionVector(float motion[3]);
+
+	public native bool IsAreaTraversable(CNavArea area);
+	public native float GetTraversableSlopeLimit();
+
+	public native bool IsPotentiallyTraversable(const float from[3], const float to[3], TraverseWhenType when);
+	public native bool HasPotentialGap(const float from[3], const float to[3]);
+	public native bool IsGap(const float from[3], const float to[3]);
+	public native bool IsEntityTraversable(int entity, TraverseWhenType when);
+
+	public native bool IsStuck();
+	public native float GetStuckDuration();
+	public native void ClearStuckStatus(const char[] reason);
+
+	public native bool IsAttemptingToMove();
+
+	public native bool ShouldCollideWith(int entity);
+
+	public native void AdjustPosture(const float lean[3]);
+	public native void StuckMonitor();
+};
+
+methodmap NextBotGroundLocomotion < ILocomotion
+{
+	public native void GetAcceleration(float acel[3]);
+	public native void SetAcceleration(const float acel[3]);
+	public native void SetVelocity(const float vel[3]);
+	public native float GetGravity();
+	public native float GetFrictionForward();
+	public native float GetFrictionSideways();
+	public native float GetMaxYawRate();
+}
+
+typeset NavPathCostFunctor
+{
+	function float(INextBot bot, CNavArea area, CNavArea fromArea, CNavLadder ladder, int iElevator, float length);
+};
+typedef TraceFilterActors = function bool(int iEntityCollide, int contentsMask, int desiredcollisiongroup);
+
+enum SegmentType
+{
+	ON_GROUND,
+	DROP_DOWN,
+	CLIMB_UP,
+	JUMP_OVER_GAP,
+	LADDER_UP,
+	LADDER_DOWN,
+	
+	NUM_SEGMENT_TYPES
+};
+
+enum MoveCursorType
+{
+	MOVECUR_ABS = 0,
+	MOVECUR_REL = 1,
+	MOVECUR_MAX,
+};
+
+methodmap Segment
+{
+	public native void GetPos(float pos[3]);
+};
+
+methodmap CursorData
+{
+};
+
+typeset PathComputeCallback
+{
+	function void (Path path, bool bSuccess, any data);
+};
+
+methodmap Path
+{
+	public native Path(NavPathCostFunctor costfunction = INVALID_FUNCTION, TraceFilterActors ignoreActorsFilter, TraceFilterActors onlyActorsFilter);
+	public native float GetLength();
+	public native void GetPosition(float dist, Segment seg, float pos[3]);
+	public native void GetStartPosition(float pos[3]);
+	public native void GetEndPosition(float pos[3]);
+	public native int GetSubject();
+	public native Segment GetCurrentGoal();
+	public native float GetAge();
+	public native void MoveCursorToStart();
+	public native void MoveCursorToEnd();
+	public native void MoveCursor(float dist, MoveCursorType mctype);
+	public native float GetCursorPosition();
+	public native CursorData GetCursorData();
+	public native bool IsValid();
+	public native void Invalidate();
+	public native void Draw(Segment seg);
+	public native void DrawInterpolated(float from, float to);
+	public native Segment FirstSegment();
+	public native Segment NextSegment(Segment seg);
+	public native Segment PriorSegment(Segment seg);
+	public native Segment LastSegment();
+	public native bool ComputeToPos(INextBot bot, float vecPos[3], float maxPathLength = 0.0, bool includeGoalIfPathFails = true);
+	public native bool ComputeToTarget(INextBot bot, int entity, float maxPathLength = 0.0, bool includeGoalIfPathFails = true);
+	public native void Destroy();
+	
+	// Threaded
+	public native bool ComputeToPosT(INextBot bot, float vecPos[3], float maxPathLength = 0.0, bool includeGoalIfPathFails = true, PathComputeCallback callback, any data = 0);
+	public native bool ComputeToTargetT(INextBot bot, int entity, float maxPathLength = 0.0, bool includeGoalIfPathFails = true, PathComputeCallback callback, any data = 0);
+};
+
+methodmap PathFollower < Path
+{
+	public native PathFollower(NavPathCostFunctor costfunction = INVALID_FUNCTION, TraceFilterActors ignoreActorsFilter, TraceFilterActors onlyActorsFilter);
+	public native void Update(INextBot nextbot);
+	public native void SetMinLookAheadDistance(float dist);
+	public native int GetHindrance();
+	public native bool IsDiscontinuityAhead(INextBot nextbot, SegmentType stype, float max_dist);
+	public native void Destroy();
+};
+
+enum SubjectChaseType
+{
+	LEAD_SUBJECT,
+	DONT_LEAD_SUBJECT
+};
+
+methodmap ChasePath < PathFollower
+{
+	public native ChasePath(SubjectChaseType how = DONT_LEAD_SUBJECT, NavPathCostFunctor costfunction = INVALID_FUNCTION, TraceFilterActors ignoreActorsFilter, TraceFilterActors onlyActorsFilter);
+	public native void Update(INextBot bot, int iTarget, float vecPredictedPos[3]=NULL_VECTOR);
+	public native float GetLeadRadius();
+	public native float GetMaxPathLength();
+	public native void PredictSubjectPosition(INextBot nextbot, int entity, float pos[3]);
+	public native bool IsRepathNeeded(INextBot nextbot, int entity);
+	public native float GetLifetime();
+	public native void Destroy();
+};
+
+methodmap DirectChasePath < ChasePath
+{
+	public native DirectChasePath(SubjectChaseType how = DONT_LEAD_SUBJECT, NavPathCostFunctor costfunction = INVALID_FUNCTION, TraceFilterActors ignoreActorsFilter, TraceFilterActors onlyActorsFilter);
+	public native void Destroy();
+};
+
+enum LookAtPriorityType
+{
+	BORING,
+	INTERESTING,				
+	IMPORTANT,					
+	CRITICAL,			
+	MANDATORY
+};
+
+enum ActivityType 
+{ 
+	MOTION_CONTROLLED_XY	= 0x0001,
+	MOTION_CONTROLLED_Z		= 0x0002,
+	ACTIVITY_UNINTERRUPTIBLE= 0x0004,
+	ACTIVITY_TRANSITORY		= 0x0008,
+	ENTINDEX_PLAYBACK_RATE	= 0x0010,
+};
+	
+enum PostureType
+{
+	STAND,
+	CROUCH,
+	SIT,
+	CRAWL,
+	LIE
+};
+	
+enum ArousalType
+{
+	NEUTRAL,
+	ALERT,
+	INTENSE
+};
+
+methodmap IBody < INextBotComponent
+{
+	public native bool SetPosition(float pos[3]);
+
+	public native void GetEyePosition(float eyepos[3]);
+	public native void GetViewVector(float view[3]);
+
+	//public native void AimHeadTowards(float pos[3], LookAtPriorityType priority, float duration, PluginBotReply reply, const char[] reason);
+	//public native void AimHeadTowardsEx(int entity, LookAtPriorityType priority, float duration, PluginBotReply reply, const char[] reason);
+
+	public native bool IsHeadAimingOnTarget();
+	public native bool IsHeadSteady();
+	public native float GetHeadSteadyDuration();
+	public native float GetHeadAimSubjectLeadTime();
+	public native float GetHeadAimTrackingInterval();
+	public native void ClearPendingAimReply();
+	public native float GetMaxHeadAngularVelocity();
+
+	//public native bool StartActivity(Activity act, int unknown);
+	//public native int SelectAnimationSequence(Activity act);
+	//public native Activity GetActivity();
+	//public native bool IsActivity(Activity act);
+	//public native bool HasActivityType(int unknown);
+
+	public native void SetDesiredPosture(PostureType posture);
+	public native PostureType GetDesiredPosture();
+	public native bool IsDesiredPosture(PostureType posture);
+	public native bool IsInDesiredPosture();
+	public native PostureType GetActualPosture();
+	public native bool IsActualPosture(PostureType posture);
+	public native bool IsPostureMobile();
+	public native bool IsPostureChanging();
+
+	public native void SetArousal(ArousalType arousal);
+	public native ArousalType GetArousal();
+	public native bool IsArousal(ArousalType arousal);
+
+	public native float GetHullWidth();
+	public native float GetHullHeight();
+	public native float GetStandHullHeight();
+	public native float GetCrouchHullHeight();
+	public native void GetHullMins(float mins[3]);
+	public native void GetHullMaxs(float maxs[3]);
+
+	public native int GetSolidMask();
+	public native int GetCollisionGroup();
+};
+
+methodmap CExtNPC __nullable__
+{
+	public native int GetEntity();
+	property int Index
+	{
+		public get() { return view_as<int>(this); }
+	}
+};
+
+methodmap CBaseNPC < CExtNPC
+{
+	public native CBaseNPC();
+	
+	// Interfaces
+	public native INextBot GetBot();
+	public native NextBotGroundLocomotion GetLocomotion();
+	public native IBody GetBody();
+	public native IVision GetVision();
+	
+	public native void SetType(char[] sBuffer);
+	public native void GetType(char[] sBuffer, int length);
+	
+	// Body Functions
+	public native void SetBodyMins(float vec[3]);
+	public native void SetBodyMaxs(float vec[3]);
+	public native void GetBodyMins(float vec[3]);
+	public native void GetBodyMaxs(float vec[3]);
+	
+	property float flStepSize
+	{
+		public native get();
+		public native set(float StepSize);
+	}
+	property float flGravity
+	{
+		public native get();
+		public native set(float Gravity);
+	}
+	property float flAcceleration
+	{
+		public native get();
+		public native set(float Acceleration);
+	}
+	property float flJumpHeight
+	{
+		public native get();
+		public native set(float JumpHeight);
+	}
+	property float flDeathDropHeight
+	{
+		public native get();
+		public native set(float DeathHeight);
+	}
+	property float flWalkSpeed
+	{
+		public native get();
+		public native set(float WalkSpeed);
+	}
+	property float flRunSpeed
+	{
+		public native get();
+		public native set(float RunSpeed);
+	}
+	property float flFrictionForward
+	{
+		public native get();
+		public native set(float Friction);
+	}
+	property float flFrictionSideways
+	{
+		public native get();
+		public native set(float Friction);
+	}
+	
+	// =============================
+	// DEPRECATED PLEASE DO NOT USE!
+	// =============================
+	
+	property int iMaxHealth
+	{
+		#pragma deprecated Please use GetEntity() + GetEntProp() functions
+		public get() { return GetEntProp(this.GetEntity(), Prop_Data, "m_iMaxHealth"); }
+		#pragma deprecated Please use GetEntity() + SetEntProp() functions
+		public set(int value) { SetEntProp(this.GetEntity(), Prop_Data, "m_initialHealth", value); SetEntProp(this.GetEntity(), Prop_Data, "m_iMaxHealth", value); }
+	}
+	property int iHealth
+	{
+		#pragma deprecated Please use GetEntity() + GetEntProp() functions
+		public get() { return GetEntProp(this.GetEntity(), Prop_Data, "m_iHealth"); }
+		#pragma deprecated Please use GetEntity() + SetEntProp() functions
+		public set(int value) { SetEntProp(this.GetEntity(), Prop_Data, "m_iHealth", value); }
+	}
+	property int iTeamNum
+	{
+		#pragma deprecated Please use GetEntity() + GetEntProp() functions
+		public get() { return GetEntProp(this.GetEntity(), Prop_Data, "m_iTeamNum"); }
+		#pragma deprecated Please use GetEntity() + SetEntProp() functions
+		public set(int iTeam) { SetEntProp(this.GetEntity(), Prop_Data, "m_iTeamNum", iTeam); }
+	}
+	property int nSkin
+	{
+		#pragma deprecated Please use GetEntity() + GetEntProp() functions
+		public get() { return GetEntProp(this.GetEntity(), Prop_Data, "m_nSkin"); }
+		#pragma deprecated Please use GetEntity() + SetEntProp() functions
+		public set(int skin) { SetEntProp(this.GetEntity(), Prop_Data, "m_nSkin", skin); }
+	}
+	property int BloodColor
+	{
+		#pragma deprecated Please use GetEntity() + GetEntProp() functions
+		public get() { return GetEntProp(this.GetEntity(), Prop_Data, "m_bloodColor"); }
+		#pragma deprecated Please use GetEntity() + SetEntProp() functions
+		public set(int iBloodColor) { SetEntProp(this.GetEntity(), Prop_Data, "m_bloodColor", iBloodColor); }
+	}
+	
+	#pragma deprecated Use GetLocomotion() + Approach() instead
+	public native void Approach(const float vecPos[3]);
+	#pragma deprecated Use GetLocomotion() + FaceTowards() instead
+	public native void FaceTowards(const float vecPos[3]);
+	#pragma deprecated Use GetLocomotion() + Walk() instead
+	public native void Walk();
+	#pragma deprecated Use GetLocomotion() + Run() instead
+	public native void Run();
+	#pragma deprecated Use GetLocomotion() + Stop() instead
+	public native void Stop();
+	#pragma deprecated Use GetLocomotion() + Jump() instead
+	public native void Jump();
+	#pragma deprecated Use GetLocomotion() + IsOnGround() instead
+	public native bool IsOnGround();
+	#pragma deprecated Use GetLocomotion() + IsClimbingOrJumping() instead
+	public native bool IsClimbingOrJumping();
+	#pragma deprecated Use GetLocomotion() + SetVelocity() instead
+	public native void SetVelocity(float vec[3]);
+	#pragma deprecated Use GetLocomotion() + GetVelocity() instead
+	public native void GetVelocity(float vec[3]);
+	#pragma deprecated ResetPath never existed to begin with
+	public native void ResetPath();
+	
+	#pragma deprecated Implement the hook yourself
+	public void SetThinkFunction(SDKHookCB callback)
+	{
+		SDKHook(this.GetEntity(), SDKHook_Think, callback);
+	}
+	#pragma deprecated Implement the hook yourself
+	public void SetOnTakeDamageFunction(SDKHookCB callback)
+	{
+		SDKHook(this.GetEntity(), SDKHook_OnTakeDamage, callback);
+	}
+	
+	#pragma deprecated Pluse use CBaseEntity.GetVectors
+	public native void GetVectors(float vecForward[3], float vecRight[3], float vecUp[3]);
+	#pragma deprecated Please use sdktools functions
+	public native void Teleport(float origin[3]=NULL_VECTOR, float angles[3]=NULL_VECTOR, float velocity[3]=NULL_VECTOR);
+	#pragma deprecated Please use sdktools functions
+	public native void Spawn();
+	#pragma deprecated Please use sdktools functions
+	public native void SetModel(const char[] model);
+	#pragma deprecated Useless function
+	public native void SetCollisionBounds(float vecMins[3], float vecMaxs[3]);
+	#pragma deprecated Use GetEntity() + CBaseCombatCharacter.GetLastKnownArea() functions
+	public native CNavArea GetLastKnownArea();
+	
+	#pragma deprecated Fully deprecated, please don't use this function or else your plugin won't load
+	public native int EquipItem(const char[] attachment, const char[] model, const char[] anim = "", int skin = 0);
+}
+
+methodmap CNPCs __nullable__
+{
+	public native any FindNPCByEntIndex(int ent);
+	public native bool IsValidNPC(any npc);
+	//To-Do: add npcs relationships?
+}
+
+CNPCs TheNPCs;
+
+// Gesture code
+
+#define ANIM_LAYER_ACTIVE		0x0001
+#define ANIM_LAYER_AUTOKILL		0x0002
+#define ANIM_LAYER_KILLME		0x0004
+#define ANIM_LAYER_DONTRESTORE	0x0008
+#define ANIM_LAYER_CHECKACCESS	0x0010
+#define ANIM_LAYER_DYING		0x0020
+
+#define MAX_OVERLAYS			15
+
+#define ANIM_LAYER_ACTIVE        0x0001 
+#define ANIM_LAYER_AUTOKILL      0x0002 
+#define ANIM_LAYER_KILLME        0x0004 
+#define ANIM_LAYER_DONTRESTORE   0x0008 
+#define ANIM_LAYER_CHECKACCESS   0x0010 
+#define ANIM_LAYER_DYING         0x0020
+#define ANIM_LAYER_NOEVENTS         0x0040
+
+enum //CAnimationLayer 
+{ 
+    m_fFlags = 0,               //0x0000  
+    m_bSequenceFinished = 4,    //0x0004  
+    m_bLooping = 6,             //0x0006  
+    m_nSequence = 8,            //0x0008  
+    m_flCycle = 12,             //0x000C  
+    m_flPrevCycle = 16,         //0x0010  
+    m_flWeight = 20,            //0x0014  
+    m_flPlaybackRate = 24,      //0x0018  
+    m_flBlendIn = 28,           //0x001C  
+    m_flBlendOut = 32,          //0x0020  
+    m_flKillRate = 36,          //0x0024  
+    m_flKillDelay = 40,         //0x0028  
+    m_flLayerAnimtime = 44,     //0x002C  
+    m_flLayerFadeOuttime = 48,  //0x0030  
+    m_nActivity = 52,           //0x0034  
+    m_nPriority = 56,           //0x0038  
+    m_nOrder = 60,              //0x003C  
+    m_flLastEventCheck = 64,    //0x0040  
+    m_flLastEventAccess = 68,   //0x0044  
+    m_pOwnerEntity = 72,        //0x0048  
+     
+    CAnimationLayer_Size = 76   //0x004C 
+}; //Size=0x004C 
+
+methodmap CAnimationOverlay  
+{
+	public CAnimationOverlay(Address address)
+	{
+		return view_as<CAnimationOverlay>(address);
+	}
+	
+	property Address Address  
+	{
+		public get()  
+		{
+			return view_as<Address>(this); 
+		}
+	}
+	
+	property bool isNull
+	{
+		public get()  
+		{
+			return this.Address == Address_Null; 
+		}
+	}
+	
+	public any Get(int iOffset) 
+	{ 
+		return LoadFromAddress(this.Address + view_as<Address>(iOffset), NumberType_Int32); 
+	}
+	
+	public void Set(int iOffset, any iValue) 
+	{ 
+		StoreToAddress(this.Address + view_as<Address>(iOffset), iValue, NumberType_Int32); 
+	}
+	
+	public bool IsActive()    { return ((this.Get(m_fFlags) & ANIM_LAYER_ACTIVE)   != 0); } 
+	public bool IsAutokill()  { return ((this.Get(m_fFlags) & ANIM_LAYER_AUTOKILL) != 0); } 
+	public bool IsKillMe()    { return ((this.Get(m_fFlags) & ANIM_LAYER_KILLME)   != 0); } 
+	public bool IsDying()     { return ((this.Get(m_fFlags) & ANIM_LAYER_DYING)    != 0); } 
+	public bool NoEvents()    { return ((this.Get(m_fFlags) & ANIM_LAYER_NOEVENTS) != 0); }
+	public void KillMe()      { int iFlags = this.Get(m_fFlags); this.Set(m_fFlags, (iFlags |= ANIM_LAYER_KILLME)); } 
+	public void AutoKill()    { int iFlags = this.Get(m_fFlags); this.Set(m_fFlags, (iFlags |= ANIM_LAYER_AUTOKILL)); }
+	public void Dying()       { int iFlags = this.Get(m_fFlags); this.Set(m_fFlags, (iFlags |= ANIM_LAYER_DYING));  } 
+	public void Dead()        { int iFlags = this.Get(m_fFlags); this.Set(m_fFlags, (iFlags &= ~ANIM_LAYER_DYING)); }
+	public bool IsAlive()         { int iFlags = this.Get(m_fFlags); return (((iFlags & ANIM_LAYER_ACTIVE) != 0) || ((iFlags & ANIM_LAYER_KILLME) == 0)); }
+	public int GetLayerSequence() { return (this.Get(m_nSequence)); }
+};
+
+methodmap CBaseEntity
+{
+	public CBaseEntity(int iEnt) 
+	{
+		return view_as<CBaseEntity>(iEnt);
+	}
+
+	property int iEnt
+	{
+		public get() 
+		{
+			return view_as<int>(this);
+		}
+	}
+
+	public static native int iUpdateOnRemove();
+	
+#if defined _dhooks_included
+	public void Hook_UpdateOnRemove(DHookCallback callback)
+	{
+		static Handle hHook = null;
+		if (hHook == null)
+		{
+			hHook = DHookCreate(CBaseEntity.iUpdateOnRemove(), HookType_Entity, ReturnType_Void, ThisPointer_CBaseEntity);
+			if (hHook == null) return;
+		}
+		DHookEntity(hHook, false, this.iEnt, _, callback);
+	}
+#endif
+	public native void WorldSpaceCenter(float vecCenter[3]);
+	public native void GetVectors(float vecForward[3], float vecRight[3], float vecUp[3]);
+}
+
+methodmap CBaseAnimating < CBaseEntity
+{
+	public CBaseAnimating(int entity) 
+	{
+		return view_as<CBaseAnimating>(entity);
+	}
+	
+	public static native int iHandleAnimEvent();
+	
+#if defined _dhooks_included
+	public void Hook_HandleAnimEvent(DHookCallback callback)
+	{
+		static Handle hHook = null;
+		if (hHook == null)
+		{
+			hHook = DHookCreate(CBaseAnimating.iHandleAnimEvent(), HookType_Entity, ReturnType_Void, ThisPointer_CBaseEntity);
+			if (hHook == null) return;
+			DHookAddParam(hHook, HookParamType_ObjectPtr, -1);
+		}
+		DHookEntity(hHook, false, this.iEnt, _, callback);
+	}
+#endif
+	
+	public native void StudioFrameAdvance();
+	public native void DispatchAnimEvents(CBaseAnimating anim);
+	public native int LookupSequence(const char[] sName);
+	public native float SequenceDuration(int iSequence);
+	public native int SelectWeightedSequence(Activity activity);
+	public native void ResetSequence(int sequence);
+	public native int LookupAttachment(const char[] sAttachmentName);
+	public native bool GetAttachment(int iAttachmentIndex, float vecOrigin[3], float vecAngles[3]);
+	
+	public native Address GetModelPtr();
+	public native int LookupPoseParameter(const char[] sParamName);
+	public native float SetPoseParameter(int iPoseParam, float flNewValue);
+	public native float GetPoseParameter(int iPoseParam);
+	
+	#pragma deprecated Please implement this function inside your plugin
+	public void PlayAnimation(const char[] sName)
+	{
+		int iSequence = this.LookupSequence(sName);
+		if (iSequence != -1)
+		{
+			this.ResetSequence(iSequence);
+			SetEntPropFloat(this.iEnt, Prop_Data, "m_flCycle", 0.0);
+		}
+	}
+	#pragma deprecated Please use CBaseAnimating.LookupAttachment instead and don't add 1 to return value
+	public native int FindAttachment(const char[] sAttachmentName);
+};
+
+methodmap CBaseAnimatingOverlay < CBaseAnimating
+{
+	public CBaseAnimatingOverlay(int entity) 
+	{
+		return view_as<CBaseAnimatingOverlay>(entity);
+	}
+	
+	public native int AddGestureSequence(int iSequence, float flDuration = 1.0, bool autokill = true);
+	public native int AddGesture(Activity activity, float flDuration = 1.0, bool autokill = true);
+	public native bool IsPlayingGesture(Activity activity);
+	public native void RestartGesture(Activity activity, bool addifmissing = true, bool autokill = true);
+	public native void RemoveAllGestures();
+	public native int AddLayeredSequence(int iSequence, int iPriority);
+	public native void SetLayerPriority(int iLayer, int iPriority);
+	public native bool IsValidLayer(int iLayer);
+	public native void SetLayerDuration(int iLayer, float flDuration);
+	public native float GetLayerDuration(int iLayer);
+	public native void SetLayerCycle(int iLayer, float flCycle);
+	public native float GetLayerCycle(int iLayer);
+	public native void SetLayerPlaybackRate(int iLayer, float flPlaybackRate);
+	public native void SetLayerWeight(int iLayer, float flWeight);
+	public native float GetLayerWeight(int iLayer);
+	public native void SetLayerBlendIn(int iLayer, float flBlendIn);
+	public native void SetLayerBlendOut(int iLayer, float flBlendOut);
+	public native void SetLayerAutokill(int iLayer, bool bAutokill);
+	public native void SetLayerLooping(int iLayer, bool bLooping);
+	public native void SetLayerNoRestore(int iLayer, bool bNoRestore);
+	public native Activity GetLayerActivity(int iLayer);
+	public native int GetLayerSequence(int iLayer);
+	public native int FindGestureLayer(Activity activity);
+	public native void RemoveLayer(int iLayer, float flKillRate = 0.2, float flKillDelay = 0.0);
+	public native void FastRemoveLayer(int iLayer);
+	public native CAnimationOverlay GetAnimOverlay(int iLayer);
+	public native int GetNumAnimOverlays();
+	public native void SetNumAnimOverlays(int iNum);
+	public native bool HasActiveLayer();
+	
+	public int FindGestureLayerBySequence(int iSequence)
+	{
+		// i = layer index
+		int iCount = this.GetNumAnimOverlays();
+		for(int i = 0; i < iCount; i++) 
+		{
+			CAnimationOverlay pOverlay = this.GetAnimOverlay(i); 
+			
+			// Validate layer
+			if (!pOverlay.IsAlive()) 
+			{
+				continue; 
+			}
+
+			// Validate sequence
+			if (pOverlay.GetLayerSequence() == iSequence) 
+			{
+				return i; 
+			}
+		}
+
+		// Return on the unsuccess
+		return -1; 
+	}
+
+};
+
+methodmap CBaseCombatCharacter < CBaseAnimatingOverlay
+{
+	public CBaseCombatCharacter(int iEntity)
+	{
+		return view_as<CBaseCombatCharacter>(iEntity);
+	}
+	public native void UpdateLastKnownArea();
+	public native CNavArea GetLastKnownArea();
+};
+
+#if !defined _navmesh_included
+public float Path_Cost(INextBot bot, CNavArea area, CNavArea fromArea, CNavLadder ladder, int iElevator, float length)
+{
+	static int iTime = 0;
+	if (iTime < GetTime())
+	{
+		iTime = GetTime();
+	}
+	
+	float dist;
+	if ( ladder != NULL_LADDER_AREA )
+	{
+		dist = ladder.length;
+	}
+	else if ( length > 0.0 )
+	{
+		dist = length;
+	}
+	else
+	{
+		float vecAreaCenter[3], vecFromAreaCenter[3];
+		area.GetCenter(vecAreaCenter);
+		fromArea.GetCenter(vecFromAreaCenter);
+		dist = GetVectorDistance(vecAreaCenter, vecFromAreaCenter);
+	}
+
+	float cost = dist + fromArea.GetCostSoFar();
+	
+	// if this is a "crouch" area, add penalty
+	int attributes = area.GetAttributes();
+	if ( (attributes & NAV_MESH_CROUCH) )
+	{
+		const float crouchPenalty = 20.0;
+		cost += crouchPenalty * dist;
+	}
+
+	// if this is a "jump" area, add penalty
+	if ( (attributes & NAV_MESH_JUMP) )
+	{
+		const float jumpPenalty = 5.0;
+		cost += jumpPenalty * dist;
+	}
+	return cost;
+}
+#endif
+
+public bool Path_FilterIgnoreActors(int entity, int contentsMask, int desiredcollisiongroup)
+{
+	if ((0 < entity <= MaxClients) || (view_as<Address>(CBaseNPC_GetNextBotOfEntity(entity)) != Address_Null))
+	{
+		return false;
+	}
+	return true;
+}
+
+public bool Path_FilterOnlyActors(int entity, int contentsMask, int desiredcollisiongroup)
+{
+	return ((0 < entity <= MaxClients) || TheNPCs.FindNPCByEntIndex(entity) == INVALID_NPC);
+}
+
+forward Action CBaseEntity_SetLocalAngles(int iEntity, float vecNewAngles[3]);
+forward Action CBaseCombatCharacter_EventKilled(int iEntity, int &iAttacker, int &iInflictor, float &flDamage, int &iDamagetype, int &iWeapon, float vecDamageForce[3], float vecDamagePosition[3], int iDamagecustom);
+
+public Extension __ext_cbasenpc = 
+{
+	name = "cbasenpc",
+	file = "cbasenpc.ext",
 	autoload = 1,
 #if defined REQUIRE_EXTENSIONS
 	required = 1,

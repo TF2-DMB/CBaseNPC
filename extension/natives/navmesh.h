@@ -7,7 +7,8 @@
 #define NAVMESHNATIVE(name) \
 	cell_t CNavMesh_##name(IPluginContext *pContext, const cell_t *params) \
 	{ \
-		if(!TheNavMesh) { \
+		if(!TheNavMesh) \
+		{ \
 			return pContext->ThrowNativeError("TheNavMesh isn't initialized!"); \
 		} \
 		
@@ -36,7 +37,8 @@
 	cell_t CTNavArea_##name(IPluginContext *pContext, const cell_t *params) \
 	{ \
 		CTNavArea *pArea = (CTNavArea *)(params[1]); \
-		if(!pArea) { \
+		if(!pArea) \
+		{ \
 			return pContext->ThrowNativeError("Invalid nav area %x", params[1]); \
 		} \
 	

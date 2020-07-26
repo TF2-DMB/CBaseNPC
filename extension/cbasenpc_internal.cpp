@@ -2,8 +2,10 @@
 #include "cbasenpc_internal.h"
 #include <bspflags.h>
 #include <ai_activity.h>
+#include <util.h>
 
 // ILocomotion
+SH_DECL_HOOK1_void(ILocomotion, FaceTowards, SH_NOATTRIB, 0, Vector const&);
 SH_DECL_HOOK0(ILocomotion, IsAbleToJumpAcrossGaps, SH_NOATTRIB, 0, bool);
 SH_DECL_HOOK0(ILocomotion, IsAbleToClimb, SH_NOATTRIB, 0, bool);
 SH_DECL_HOOK3(ILocomotion, ClimbUpToLedge, SH_NOATTRIB, 0, bool, const Vector&, const Vector&, const CBaseEntity*);
@@ -44,11 +46,41 @@ CBaseNPC::CBaseNPC()
 
 	m_mover = new CBaseNPC_Locomotion(m_pMover);
 	m_body = new CBaseNPC_Body(m_pBody);
+	m_type[0] = '\0';
 }
 
 // ============================================
 // ILocomotion Hooks
 // ============================================
+
+void CBaseNPC_Locomotion::FaceTowards(Vector const& vecGoal)
+{
+	/*const float deltaT = GetUpdateInterval();
+
+	INextBot* bot = GetBot();
+	QAngle angles = bot->GetLocalAngles();
+
+	float desiredYaw = UTIL_VecToYaw(vecGoal - bot->GetPosition());
+
+	float angleDiff = UTIL_AngleDiff(desiredYaw, angles.y);
+
+	float deltaYaw = GetMaxYawRate() * deltaT;
+
+	if (angleDiff < -deltaYaw)
+	{
+		angles.y -= deltaYaw;
+	}
+	else if (angleDiff > deltaYaw)
+	{
+		angles.y += deltaYaw;
+	}
+	else
+	{
+		angles.y += angleDiff;
+	}
+
+	bot->SetLocalAngles(angles);*/
+}
 
 bool CBaseNPC_Locomotion::IsAbleToJumpAcrossGaps()
 {
@@ -153,18 +185,42 @@ float CBaseNPC_Locomotion::GetFrictionSideways()
 	return m_flFrictionSideways;
 }
 
-/*int CBaseNPC_Internal::GiveIDToEntity(const CBaseEntity* pEntity)
+// ============================================
+// IBody Hooks
+// ============================================
+
+bool CBaseNPC_Body::StartActivity(Activity aAct, unsigned int iFlags)
 {
-	for (int ID = 0; ID < MAX_NPCS; ID++)
-	{
-		if (g_NPCS[ID].GetEntryIndex() < 32)
-		{
-			g_NPCS[ID] = pEntity;
-			return ID;
-		}
-	}
-	return -1;
-}*/
+	return true;
+}
+
+float CBaseNPC_Body::GetHullWidth()
+{
+	float flWidth = m_vecBodyMaxs.x;
+	if (flWidth < m_vecBodyMaxs.y) flWidth = m_vecBodyMaxs.y;
+
+	return flWidth * 2.0;
+}
+
+float CBaseNPC_Body::GetHullHeight()
+{
+	return m_vecBodyMaxs.z;
+}
+
+float CBaseNPC_Body::GetStandHullHeight()
+{
+	return m_vecBodyMaxs.z;
+}
+
+float CBaseNPC_Body::GetCrouchHullHeight()
+{
+	return m_vecBodyMaxs.z / 2;
+}
+
+unsigned int CBaseNPC_Body::GetSolidMask()
+{
+	return (MASK_NPCSOLID | MASK_PLAYERSOLID);
+}
 
 // ============================================
 // ILocomotion Hooks for Extensions
@@ -185,6 +241,7 @@ NPC_BEGIN_HOOK(ILocomotion)
 	NPC_ADD_HOOK(ILocomotion, IsEntityTraversable);
 }
 
+NPC_INTERFACE_DECLARE_HANDLER(ILocomotion_Hook, ILocomotion, FaceTowards, void, (Vector const& vecGoal), (vecGoal));
 NPC_INTERFACE_DECLARE_HANDLER(ILocomotion_Hook, ILocomotion, IsAbleToJumpAcrossGaps, bool, (), ());
 NPC_INTERFACE_DECLARE_HANDLER(ILocomotion_Hook, ILocomotion, IsAbleToClimb, bool, (), ());
 NPC_INTERFACE_DECLARE_HANDLER(ILocomotion_Hook, ILocomotion, ClimbUpToLedge, bool, (const Vector& a, const Vector& b, const CBaseEntity* c), (a,b,c));
@@ -212,43 +269,6 @@ NPC_INTERFACE_DECLARE_HANDLER_void(NextBotGroundLocomotion_Hook, NextBotGroundLo
 NPC_INTERFACE_DECLARE_HANDLER(NextBotGroundLocomotion_Hook, NextBotGroundLocomotion, GetGravity, float, (), ());
 NPC_INTERFACE_DECLARE_HANDLER(NextBotGroundLocomotion_Hook, NextBotGroundLocomotion, GetFrictionForward, float, (), ());
 NPC_INTERFACE_DECLARE_HANDLER(NextBotGroundLocomotion_Hook, NextBotGroundLocomotion, GetFrictionSideways, float, (), ());
-
-// ============================================
-// IBody Hooks
-// ============================================
-
-bool CBaseNPC_Body::StartActivity(Activity aAct, unsigned int iFlags)
-{
-	return true;
-}
-
-float CBaseNPC_Body::GetHullWidth()
-{
-	float flWidth = m_vecBodyMaxs.x;
-	if (flWidth < m_vecBodyMaxs.y) flWidth = m_vecBodyMaxs.y;
-
-	return flWidth*2.0;
-}
-
-float CBaseNPC_Body::GetHullHeight()
-{
-	return m_vecBodyMaxs.z;
-}
-
-float CBaseNPC_Body::GetStandHullHeight()
-{
-	return m_vecBodyMaxs.z;
-}
-
-float CBaseNPC_Body::GetCrouchHullHeight()
-{
-	return m_vecBodyMaxs.z/2;
-}
-
-unsigned int CBaseNPC_Body::GetSolidMask()
-{
-	return (MASK_NPCSOLID | MASK_PLAYERSOLID);
-}
 
 // ============================================
 // IBody Hooks for Extensions

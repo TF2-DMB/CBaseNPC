@@ -1,7 +1,7 @@
 # vim: set sts=2 ts=8 sw=2 tw=99 et ft=python:
 import os, sys
 
-projectName = 'nextbot_pathing'
+projectName = 'cbasenpc'
 
 # smsdk_ext.cpp will be automatically added later
 sourceFiles = [
@@ -17,6 +17,9 @@ sourceFiles = [
   'sourcesdk/nav_area.cpp',
   'sourcesdk/nav_mesh.cpp',
   'sourcesdk/nav_threaded.cpp',
+  'sourcesdk/baseentity.cpp',
+  'sourcesdk/baseanimating.cpp',
+  'sourcesdk/baseanimatingoverlay.cpp',
   'unsorted_class.cpp',
 ]
 

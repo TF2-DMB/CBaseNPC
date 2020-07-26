@@ -91,6 +91,26 @@ class CBaseCombatCharacter : public IHandleEntity
 			float modelscale = *(float *)((unsigned char*)this + offset);
 			return modelscale;
 		}
+		void UpdateLastKnownArea()
+		{
+			static ICallWrapper *pCallUpdateLastKnownArea = nullptr;
+			if (!pCallUpdateLastKnownArea)
+			{
+				PassInfo ret;
+				ret.flags = PASSFLAG_BYVAL;
+				ret.size = sizeof(CNavArea *);
+				ret.type = PassType_Basic;
+				
+				pCallUpdateLastKnownArea = g_pBinTools->CreateVCall(g_iUpdateOnRemove, 0, 0, nullptr, nullptr, 0);
+				if (!pCallUpdateLastKnownArea)
+					return;
+			}
+			unsigned char vstk[sizeof(CBaseCombatCharacter *)];
+			unsigned char *vptr = vstk;
+			
+			*(CBaseCombatCharacter **)vptr = this;
+			pCallUpdateLastKnownArea->Execute(vstk, nullptr);
+		}
 		CNavArea *GetLastKnownArea()
 		{
 			static ICallWrapper *pCallLastKnownArea = nullptr;

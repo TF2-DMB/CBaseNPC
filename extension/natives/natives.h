@@ -1,6 +1,9 @@
 #ifndef NATIVES_H_INCLUDED_
 #define NATIVES_H_INCLUDED_
 
+#include "baseent.h"
+#include "baseanim.h"
+#include "baseanimoverlay.h"
 #include "eventresponder.h"
 #include "body.h"
 #include "locomotion.h"
@@ -11,6 +14,7 @@
 #include "component.h"
 #include "cbasecombatcharacter.h"
 #include "vision.h"
+#include "cbasenpc.h"
 #include <takedamageinfo.h>
 
 #pragma once
@@ -20,6 +24,10 @@ extern CUtlMap<int32_t, int32_t> g_EntitiesHooks;
 	
 #define NATIVENAME(type, name) \
 	{ #type "." #name, type##_##name }, \
+
+#define NATIVENAMEGETSET(type, name) \
+	{ #type "." #name ".get", type##_##name##Get }, \
+	{ #type "." #name ".set", type##_##name##Set }, \
 
 #define ENTINDEX_TO_CBASEENTITY(ref, buffer) \
 	buffer = gamehelpers->ReferenceToEntity(ref); \
@@ -122,30 +130,7 @@ cell_t CBaseNPC_GetNextBotOfEntity(IPluginContext *pContext, const cell_t *param
 	CBaseEntity *pEntity;
 	ENTINDEX_TO_CBASEENTITY(params[1], pEntity);
 	
-	ICallWrapper *pMyNextBotPointerWrapper = nullptr;
-	if (!pMyNextBotPointerWrapper)
-	{
-		SourceMod::PassInfo ret;
-		ret.flags = PASSFLAG_BYVAL;
-		ret.size = sizeof(INextBot *);
-		ret.type = PassType_Basic;
-	
-		pMyNextBotPointerWrapper = g_pBinTools->CreateVCall(g_iMyNextBotPointerOffset, 0, 0, &ret, nullptr, 0);
-		
-		if(!pMyNextBotPointerWrapper) {
-			return pContext->ThrowNativeError("Couldn't initialize CBaseEntity::MyNextBotPointer call!");
-		}
-	}
-	
-	unsigned char vstk[sizeof(CBaseEntity *)];
-	unsigned char *vptr = vstk;
-	
-	*(CBaseEntity **)vptr = pEntity;
-
-	INextBot *bot = nullptr;
-	pMyNextBotPointerWrapper->Execute(vstk, &bot);
-
-	return (cell_t)(bot);
+	return (cell_t)(g_pBaseNPCTools->GetNextBotOfEntity(pEntity));
 }
 
 cell_t CBaseNPC_HookEventKilled(IPluginContext *pContext, const cell_t *params)
@@ -164,6 +149,120 @@ cell_t CBaseNPC_HookEventKilled(IPluginContext *pContext, const cell_t *params)
 
 const sp_nativeinfo_t g_NativesInfo[] =
 {
+	// Base Entity
+	NATIVENAME(CBaseEntity, iUpdateOnRemove)
+	NATIVENAME(CBaseEntity, GetVectors)
+	NATIVENAME(CBaseEntity, WorldSpaceCenter)
+
+	// Base Animating
+	NATIVENAME(CBaseAnimating, iHandleAnimEvent)
+	NATIVENAME(CBaseAnimating, LookupAttachment)
+	NATIVENAME(CBaseAnimating, GetAttachment)
+	NATIVENAME(CBaseAnimating, StudioFrameAdvance)
+	NATIVENAME(CBaseAnimating, DispatchAnimEvents)
+	NATIVENAME(CBaseAnimating, LookupSequence)
+	NATIVENAME(CBaseAnimating, SelectWeightedSequence)
+	NATIVENAME(CBaseAnimating, SequenceDuration)
+	NATIVENAME(CBaseAnimating, ResetSequence)
+	NATIVENAME(CBaseAnimating, GetModelPtr)
+	NATIVENAME(CBaseAnimating, LookupPoseParameter)
+	NATIVENAME(CBaseAnimating, SetPoseParameter)
+	NATIVENAME(CBaseAnimating, GetPoseParameter)
+
+	//Deprecated
+	NATIVENAME(CBaseAnimating, FindAttachment)
+
+	// Base Animating Overlay
+	NATIVENAME(CBaseAnimatingOverlay, AddGestureSequence)
+	NATIVENAME(CBaseAnimatingOverlay, AddGesture)
+	NATIVENAME(CBaseAnimatingOverlay, IsPlayingGesture)
+	NATIVENAME(CBaseAnimatingOverlay, RestartGesture)
+	NATIVENAME(CBaseAnimatingOverlay, RemoveAllGestures)
+	NATIVENAME(CBaseAnimatingOverlay, AddLayeredSequence)
+	NATIVENAME(CBaseAnimatingOverlay, SetLayerPriority)
+	NATIVENAME(CBaseAnimatingOverlay, IsValidLayer)
+	NATIVENAME(CBaseAnimatingOverlay, SetLayerDuration)
+	NATIVENAME(CBaseAnimatingOverlay, GetLayerDuration)
+	NATIVENAME(CBaseAnimatingOverlay, SetLayerCycle)
+	NATIVENAME(CBaseAnimatingOverlay, GetLayerCycle)
+	NATIVENAME(CBaseAnimatingOverlay, SetLayerPlaybackRate)
+	NATIVENAME(CBaseAnimatingOverlay, SetLayerWeight)
+	NATIVENAME(CBaseAnimatingOverlay, GetLayerWeight)
+	NATIVENAME(CBaseAnimatingOverlay, SetLayerBlendIn)
+	NATIVENAME(CBaseAnimatingOverlay, SetLayerBlendOut)
+	NATIVENAME(CBaseAnimatingOverlay, SetLayerAutokill)
+	NATIVENAME(CBaseAnimatingOverlay, SetLayerLooping)
+	NATIVENAME(CBaseAnimatingOverlay, SetLayerNoRestore)
+	NATIVENAME(CBaseAnimatingOverlay, GetLayerActivity)
+	NATIVENAME(CBaseAnimatingOverlay, GetLayerSequence)
+	NATIVENAME(CBaseAnimatingOverlay, FindGestureLayer)
+	NATIVENAME(CBaseAnimatingOverlay, RemoveLayer)
+	NATIVENAME(CBaseAnimatingOverlay, FastRemoveLayer)
+	NATIVENAME(CBaseAnimatingOverlay, GetAnimOverlay)
+	NATIVENAME(CBaseAnimatingOverlay, GetNumAnimOverlays)
+	NATIVENAME(CBaseAnimatingOverlay, SetNumAnimOverlays)
+	NATIVENAME(CBaseAnimatingOverlay, HasActiveLayer)
+
+	// NPC
+	NATIVENAME(CExtNPC, GetEntity)
+
+	NATIVENAME(CBaseNPC, CBaseNPC)
+
+	// INextbot
+	NATIVENAME(CBaseNPC, GetBot)
+	NATIVENAME(CBaseNPC, GetLocomotion)
+	NATIVENAME(CBaseNPC, GetBody)
+	NATIVENAME(CBaseNPC, GetVision)
+
+	NATIVENAME(CBaseNPC, SetType)
+	NATIVENAME(CBaseNPC, GetType)
+	
+	// IBody
+	NATIVENAME(CBaseNPC, SetBodyMins)
+	NATIVENAME(CBaseNPC, SetBodyMaxs)
+	NATIVENAME(CBaseNPC, GetBodyMins)
+	NATIVENAME(CBaseNPC, GetBodyMaxs)
+
+	NATIVENAMEGETSET(CBaseNPC, flStepSize)
+	NATIVENAMEGETSET(CBaseNPC, flGravity)
+	NATIVENAMEGETSET(CBaseNPC, flAcceleration)
+	NATIVENAMEGETSET(CBaseNPC, flJumpHeight)
+	NATIVENAMEGETSET(CBaseNPC, flDeathDropHeight)
+	NATIVENAMEGETSET(CBaseNPC, flWalkSpeed)
+	NATIVENAMEGETSET(CBaseNPC, flRunSpeed)
+	NATIVENAMEGETSET(CBaseNPC, flFrictionForward)
+	NATIVENAMEGETSET(CBaseNPC, flFrictionSideways)
+
+	// Implemented but deprecated so plugins that used this can still continue to work
+	// TO-DO: Remove in the next two updates
+	NATIVENAME(CBaseNPC, Approach)
+	NATIVENAME(CBaseNPC, FaceTowards)
+	NATIVENAME(CBaseNPC, Walk)
+	NATIVENAME(CBaseNPC, Run)
+	NATIVENAME(CBaseNPC, Stop)
+	NATIVENAME(CBaseNPC, Jump)
+	NATIVENAME(CBaseNPC, IsOnGround)
+	NATIVENAME(CBaseNPC, IsClimbingOrJumping)
+	NATIVENAME(CBaseNPC, SetVelocity)
+	NATIVENAME(CBaseNPC, GetVelocity)
+	NATIVENAME(CBaseNPC, GetLastKnownArea)
+	NATIVENAME(CBaseNPC, Spawn)
+	NATIVENAME(CBaseNPC, Teleport)
+	NATIVENAME(CBaseNPC, SetCollisionBounds)
+	NATIVENAME(CBaseNPC, GetLastKnownArea)
+	NATIVENAME(CBaseNPC, GetVectors)
+	NATIVENAME(CBaseNPC, SetModel)
+
+	NATIVENAME(CNPCs, IsValidNPC)
+	NATIVENAME(CNPCs, FindNPCByEntIndex)
+
+	NATIVENAME(INextBotEventResponder, FirstContainedResponder)
+	NATIVENAME(INextBotEventResponder, FirstContainedResponder)
+	NATIVENAME(INextBotEventResponder, FirstContainedResponder)
+	NATIVENAME(INextBotEventResponder, FirstContainedResponder)
+	NATIVENAME(INextBotEventResponder, FirstContainedResponder)
+	NATIVENAME(INextBotEventResponder, FirstContainedResponder)
+
 	NATIVENAME(INextBotEventResponder, FirstContainedResponder)
 	NATIVENAME(INextBotEventResponder, NextContainedResponder)
 	
@@ -409,6 +508,7 @@ const sp_nativeinfo_t g_NativesInfo[] =
 	NATIVENAME(DirectChasePath, Destroy)
 	
 	NATIVENAME(CBaseCombatCharacter, GetLastKnownArea)
+	NATIVENAME(CBaseCombatCharacter, UpdateLastKnownArea)
 	
 	{ "CBaseNPC_GetNextBotOfEntity", &CBaseNPC_GetNextBotOfEntity },
 	{ "CBaseNPC_HookEventKilled", &CBaseNPC_HookEventKilled },
