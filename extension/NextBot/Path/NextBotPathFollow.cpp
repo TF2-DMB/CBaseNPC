@@ -830,7 +830,7 @@ CBaseEntity *PathFollower::FindBlocker( INextBot *bot )
 		if ( result.DidHitNonWorldEntity() )
 		{
 			// if blocker is close, they could be behind us - check
-			Vector toBlocker = ((CBaseEntityEx *)result.m_pEnt)->GetAbsOrigin() - bot->GetLocomotionInterface()->GetFeet();
+			Vector toBlocker = ((CBaseEntityHack *)result.m_pEnt)->GetAbsOrigin() - bot->GetLocomotionInterface()->GetFeet();
 
 			Vector alongPath = s->pos - from;
 			alongPath.z = 0.0f;
@@ -935,7 +935,7 @@ Vector PathFollower::Avoid( INextBot *bot, const Vector &goalPos, const Vector &
 	Vector nextStepHullMin( -size, -size, 2.0f * mover->GetStepHeight() + 0.1f );
 
 	// avoid any open doors in our way
-	CBasePropDoor *door = NULL;
+	CBasePropDoorHack *door = NULL;
 
 	// check left side
 	m_leftFrom = mover->GetFeet() + offset * left;
@@ -961,7 +961,7 @@ Vector PathFollower::Avoid( INextBot *bot, const Vector &goalPos, const Vector &
 		// track any doors we need to avoid
 		if ( result.DidHitNonWorldEntity() )
 		{
-			door = (CBasePropDoor *)result.m_pEnt;
+			door = (CBasePropDoorHack *)result.m_pEnt;
 		}
 
 		// check for steps
@@ -997,7 +997,7 @@ Vector PathFollower::Avoid( INextBot *bot, const Vector &goalPos, const Vector &
 		// track any doors we need to avoid
 		if ( !door && result.DidHitNonWorldEntity() )
 		{
-			door = (CBasePropDoor *)result.m_pEnt;
+			door = (CBasePropDoorHack *)result.m_pEnt;
 		}
 
 		// check for steps
@@ -1389,7 +1389,7 @@ bool PathFollower::Climbing( INextBot *bot, const Path::Segment *goal, const Vec
 		}
 
 		// what are we climbing over?
-		CBaseEntity *obstacle = result.m_pEnt;
+		CBaseEntityHack* obstacle = (CBaseEntityHack *)result.m_pEnt;
 
 		if ( !result.DidHitNonWorldEntity() || bot->IsAbleToClimbOnto( obstacle ) )
 		{			
@@ -1689,7 +1689,7 @@ bool PathFollower::Climbing( INextBot *bot, const Path::Segment *goal, const Vec
 					}
 				}
 
-				if ( !mover->ClimbUpToLedge( ledgePos, climbDirection, obstacle ) )
+				if ( !mover->ClimbUpToLedge( ledgePos, climbDirection, (CBaseEntity *)obstacle ) )
 				{
 					// climb failed - build a new path in case we're now stuck
 					//Invalidate();

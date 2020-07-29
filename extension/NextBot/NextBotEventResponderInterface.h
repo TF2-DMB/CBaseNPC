@@ -15,6 +15,7 @@
 #include "utlvector.h"
 
 class CBaseCombatWeapon;
+class CBaseCombatCharacterHack;
 class Path;
 class CTakeDamageInfo;
 
@@ -52,20 +53,20 @@ public:
 	virtual void OnIgnite() = 0;
 	virtual void OnInjured(const CTakeDamageInfo& info) = 0;
 	virtual void OnKilled(const CTakeDamageInfo& info) = 0;
-	virtual void OnOtherKilled(CBaseCombatCharacter *who, const CTakeDamageInfo& info) = 0;
+	virtual void OnOtherKilled(CBaseCombatCharacterHack* who, const CTakeDamageInfo& info) = 0;
 	
 	virtual void OnSight(CBaseEntity *ent) = 0;
 	virtual void OnLostSight(CBaseEntity *ent) = 0;
 	virtual void OnSound(CBaseEntity *ent, const Vector& v1, KeyValues *kv) = 0;
-	virtual void OnSpokeConcept(CBaseCombatCharacter *who, const char *s1, AI_Response *response) = 0;
-	virtual void OnWeaponFired(CBaseCombatCharacter *who, CBaseCombatWeapon *weapon) = 0;
+	virtual void OnSpokeConcept(CBaseCombatCharacterHack* who, const char *s1, AI_Response *response) = 0;
+	virtual void OnWeaponFired(CBaseCombatCharacterHack* who, CBaseCombatWeapon *weapon) = 0;
 	
 	virtual void OnNavAreaChanged(CNavArea *area1, CNavArea *area2) = 0;
 	virtual void OnModelChanged() = 0;
-	virtual void OnPickUp(CBaseEntity *ent, CBaseCombatCharacter *who) = 0;
+	virtual void OnPickUp(CBaseEntity *ent, CBaseCombatCharacterHack* who) = 0;
 	virtual void OnDrop(CBaseEntity *ent) = 0;
 
-	virtual void OnActorEmoted(CBaseCombatCharacter *who, int concept) = 0;
+	virtual void OnActorEmoted(CBaseCombatCharacterHack* who, int concept) = 0;
 	
 	virtual void OnCommandAttack(CBaseEntity *ent) = 0;
 	virtual void OnCommandApproach(const Vector& v1, float f1) = 0;

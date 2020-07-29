@@ -151,6 +151,9 @@ const sp_nativeinfo_t g_NativesInfo[] =
 {
 	// Base Entity
 	NATIVENAME(CBaseEntity, iUpdateOnRemove)
+	NATIVENAME(CBaseEntity, Spawn)
+	NATIVENAME(CBaseEntity, Teleport)
+	NATIVENAME(CBaseEntity, SetModel)
 	NATIVENAME(CBaseEntity, GetVectors)
 	NATIVENAME(CBaseEntity, WorldSpaceCenter)
 
@@ -169,7 +172,7 @@ const sp_nativeinfo_t g_NativesInfo[] =
 	NATIVENAME(CBaseAnimating, SetPoseParameter)
 	NATIVENAME(CBaseAnimating, GetPoseParameter)
 
-	//Deprecated
+	// Deprecated
 	NATIVENAME(CBaseAnimating, FindAttachment)
 
 	// Base Animating Overlay

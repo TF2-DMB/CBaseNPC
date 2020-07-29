@@ -33,6 +33,20 @@ public:
 	virtual int GrantID(CBaseEntity* ent, CExtNPC* npc) = 0;
 
 	/**
+	 * @brief Deletes an npc object from the array of registered npcs
+	 *
+	 * @return			Deleted npc
+	 */
+	virtual CExtNPC* DeleteNPC(CExtNPC* npc) = 0;
+
+	/**
+	 * @brief Deletes an npc object from the array of registered npcs
+	 *
+	 * @return			Deleted npc
+	 */
+	virtual CExtNPC* DeleteNPCByEntIndex(int index) = 0;
+
+	/**
 	 * @brief Retrieves the nextbot interface from a given entity;
 	 *
 	 * @return			Returns nextbot interface, NULL otherwise

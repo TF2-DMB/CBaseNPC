@@ -9,7 +9,7 @@ bool CBaseAnimatingOverlayHack::Init(SourceMod::IGameConfig* config, char* error
 	// Any entity that inherits CBaseAnimatingOverlay is good
 	// To-do: Should this be moved to gamedata?
 	BEGIN_VAR("cycler_flex");
-	OFFSETVAR_SEND(CBaseAnimatingOverlay, m_AnimOverlay);
+	OFFSETVAR_DATA(CBaseAnimatingOverlay, m_AnimOverlay);
 	END_VAR;
 	return true;
 }
@@ -506,7 +506,7 @@ int CBaseAnimatingOverlayHack::AllocateLayer(int iPriority)
 	auto overlay = m_AnimOverlay();
 	for (i = 0; i < overlay->Count(); i++)
 	{
-		if (overlay->Element(i).IsActive())
+		if ((overlay->Element(i)).IsActive())
 		{
 			if (overlay->Element(i).m_nPriority <= iPriority)
 			{

@@ -3,6 +3,7 @@
 
 #include "extension.h"
 #include "sourcesdk/nav_mesh.h"
+#include "sourcesdk/basecombatcharacter.h"
 #include <NextBot/NextBotInterface.h>
 #include <NextBot/NextBotBodyInterface.h>
 #include <NextBot/NextBotGroundLocomotion.h>
@@ -160,7 +161,7 @@ public:
 	public:
 		virtual ThreadedDataType GetDataType() override { return NAVPATH; };
 
-		NavPathThreadedData(INextBot* pBot, Path *path, Vector end, CBaseCombatCharacter* goal, float maxPathLength, bool includeGoalIfPathFails, IPluginFunction* callback, cell_t data) : NavThreadedData(callback, data)
+		NavPathThreadedData(INextBot* pBot, Path *path, Vector end, CBaseCombatCharacterHack* goal, float maxPathLength, bool includeGoalIfPathFails, IPluginFunction* callback, cell_t data) : NavThreadedData(callback, data)
 		{
 			ILocomotion* mover = pBot->GetLocomotionInterface();
 			m_flDeathDropHeight = mover->GetDeathDropHeight();

@@ -20,10 +20,16 @@ unsigned int BaseNPC_Tools_API::GetInterfaceVersion()
 
 int BaseNPC_Tools_API::GrantID(CBaseEntity* ent, CExtNPC* npc)
 {
-	if (!ent) return INVALID_NPC_ID; // What the hell
+	if (!ent)
+	{
+		return INVALID_NPC_ID;
+	}
 
 	int searchIndex = gamehelpers->EntityToBCompatRef(ent);
-	if (searchIndex <= 0 || searchIndex > 2048) return INVALID_NPC_ID;
+	if (searchIndex <= 0 || searchIndex > 2048)
+	{
+		return INVALID_NPC_ID;
+	}
 
 	int freeID = INVALID_NPC_ID;
 	for (int ID = 0; ID < MAX_NPCS; ID++)
@@ -35,7 +41,7 @@ int BaseNPC_Tools_API::GrantID(CBaseEntity* ent, CExtNPC* npc)
 			g_objNPC2[entIndex] = npc;
 			return ID;
 		}
-		else if (entIndex <= 32)
+		else if (freeID == INVALID_NPC_ID && (entIndex <= 32 || entIndex > 2048))
 		{
 			freeID = ID;
 		}
@@ -51,6 +57,31 @@ int BaseNPC_Tools_API::GrantID(CBaseEntity* ent, CExtNPC* npc)
 	return INVALID_NPC_ID;
 }
 
+CExtNPC* BaseNPC_Tools_API::DeleteNPC(CExtNPC* npc)
+{
+	if (npc->GetID() == INVALID_NPC_ID) return nullptr;
+	if (npc->GetEntity() != g_registeredNPCS[npc->GetID()].Get()) return nullptr;
+
+	g_objNPC[npc->GetID()] = nullptr;
+	g_objNPC2[gamehelpers->EntityToBCompatRef(npc->GetEntity())] = nullptr;
+	g_registeredNPCS[npc->GetID()] = nullptr;
+	return npc;
+}
+
+CExtNPC* BaseNPC_Tools_API::DeleteNPCByEntIndex(int index)
+{
+	if (index <= 0 || index > 2048) return nullptr;
+
+	CExtNPC* npc = g_objNPC2[index];
+	g_objNPC2[index] = nullptr;
+	if (npc && npc->GetID() != INVALID_NPC_ID)
+	{
+		g_objNPC[npc->GetID()] = nullptr;
+		g_registeredNPCS[npc->GetID()] = nullptr;
+	}
+	return npc;
+}
+
 INextBot* BaseNPC_Tools_API::GetNextBotOfEntity(CBaseEntity* pEntity)
 {
 	return ((CBaseEntityHack *)pEntity)->MyNextBotPointer();
@@ -58,15 +89,27 @@ INextBot* BaseNPC_Tools_API::GetNextBotOfEntity(CBaseEntity* pEntity)
 
 ILocomotion_Hook* BaseNPC_Tools_API::Hook_ILocomotion(ILocomotion* mover, ILocomotion_Hook* realHook)
 {
-	return new ILocomotion_Hook_Internal(realHook, mover);
+	auto iface_internal = new ILocomotion_Hook_Internal();
+	realHook->m_pInternalHook = iface_internal;
+	realHook->m_pRealInterface = mover;
+	iface_internal->SetupHook(mover, realHook);
+	return (ILocomotion_Hook*)iface_internal;
 }
 
 NextBotGroundLocomotion_Hook* BaseNPC_Tools_API::Hook_NextBotGroundLocomotion(NextBotGroundLocomotion* mover, NextBotGroundLocomotion_Hook* realHook)
 {
-	return new NextBotGroundLocomotion_Hook_Internal(realHook, mover);
+	auto iface_internal = new NextBotGroundLocomotion_Hook_Internal();
+	realHook->m_pInternalHook = iface_internal;
+	realHook->m_pRealInterface = mover;
+	iface_internal->SetupHook(mover, realHook);
+	return (NextBotGroundLocomotion_Hook*)iface_internal;
 }
 
 IBody_Hook* BaseNPC_Tools_API::Hook_IBody(IBody* body, IBody_Hook* realHook)
 {
-	return new IBody_Hook_Internal(realHook, body);
+	auto iface_internal = new IBody_Hook_Internal();
+	realHook->m_pInternalHook = iface_internal;
+	realHook->m_pRealInterface = body;
+	iface_internal->SetupHook(body, realHook);
+	return (IBody_Hook*)iface_internal;
 }

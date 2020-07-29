@@ -13,7 +13,11 @@
 			{
 				"windows"	"5"
 			}
-
+			"CBaseEntity::MyCombatCharacterPointer"
+			{
+				"windows"	"71"
+				"linux"		"72"
+			}
 			"CBaseEntity::MyNextBotPointer"
 			{
 				"windows"	"72"
@@ -106,7 +110,7 @@
 			"__GetAnimationEvent__"
 			{
 				"library"		"server"
-				"windows"		"\x55\x8B\xEC\x53\x56\x8B\x75\x08\x85\xF6\x0F\x84\x2A\x2A\x2A\x2A"
+				"windows"		"\x55\x8B\xEC\x53\x56\x8B\x75\x08\x85\xF6\x0F\x84\x2A\x2A\x2A\x2A\x8B\xCE\xE8\x2A\x2A\x2A\x2A"
 				"linux"			"@_Z17GetAnimationEventP10CStudioHdriP11animevent_tffi"
 			}
 			"Studio_LookupSequence"
@@ -127,7 +131,12 @@
 				"windows"		"\x55\x8B\xEC\x53\x56\x57\x8B\x7D\x08\x85\xFF"
 				"linux"			"@_Z21Studio_FindAttachmentPK10CStudioHdrPKc"
 			}
-
+			"CBaseEntity::InvalidatePhysicsRecursive"
+			{
+				"library"		"server"
+				"windows"		"\x55\x8B\xEC\x53\x8B\x5D\x08\x56\x8B\xF3\x83\xE6\x04"
+				"linux"			"@"
+			}
 			"CBaseAnimating::SetPoseParameter"
 			{
 				"library"		"server"

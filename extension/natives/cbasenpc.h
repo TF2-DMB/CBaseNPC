@@ -13,7 +13,7 @@
 		CExtNPC *npc = g_objNPC[params[1]]; \
 		if (!npc) \
 		{ \
-			return pContext->ThrowNativeError("Invalid NPC %x", params[1]); \
+			return pContext->ThrowNativeError("Invalid NPC %i", params[1]); \
 		} 
 
 #define CBASENPCNATIVE(name) \
@@ -22,7 +22,7 @@
 		CBaseNPC *npc = (CBaseNPC *)(g_objNPC[params[1]]); \
 		if (!npc) \
 		{ \
-			return pContext->ThrowNativeError("Invalid NPC %x", params[1]); \
+			return pContext->ThrowNativeError("Invalid NPC %i", params[1]); \
 		} 
 
 #define CNPCSNATIVE(name) \
@@ -41,8 +41,10 @@ CEXTNPCNATIVE(GetEntity)
 cell_t CBaseNPC_CBaseNPC(IPluginContext * pContext, const cell_t * params)
 {
 	CBaseNPC *npc = new CBaseNPC;
+	if (!npc) return INVALID_NPC_ID;
+
 	int index = npc->GetID();
-	if (index == -1)
+	if (index == INVALID_NPC_ID)
 	{
 		delete npc;
 	}
@@ -278,7 +280,7 @@ CBASENPCNATIVE(SetVelocity)
 }
 
 CBASENPCNATIVE(GetLastKnownArea)
-	return (cell_t)(((CBaseCombatCharacter *)npc->GetEntity())->GetLastKnownArea());
+	return (cell_t)(((CBaseCombatCharacterHack*)npc->GetEntity())->GetLastKnownArea());
 }
 
 CBASENPCNATIVE(Spawn)
@@ -293,13 +295,19 @@ CBASENPCNATIVE(Teleport)
 	pContext->LocalToPhysAddr(params[3], &angAdd);
 	pContext->LocalToPhysAddr(params[4], &velAdd);
 
-	Vector origin, vel;
-	QAngle ang;
+	Vector origin = vec3_origin;
+	Vector vel = vec3_origin;
+	QAngle ang = QAngle(0, 0, 0);
 	PawnVectorToVector(originAdd, origin);
 	PawnVectorToVector(originAdd, ang);
 	PawnVectorToVector(originAdd, vel);
-
-	((CBaseEntityHack*)npc->GetEntity())->Teleport((originAdd == nullAdd) ? nullptr : &origin, (angAdd == nullAdd) ? nullptr : &ang, (velAdd == nullAdd) ? nullptr : &vel);
+	
+	CBaseEntityHack* entity = (CBaseEntityHack*)npc->GetEntity();
+	if (!entity)
+	{
+		return pContext->ThrowNativeError("Invalid linked entity to NPC");
+	}
+	entity->Teleport((originAdd == nullAdd) ? NULL : &origin, (angAdd == nullAdd) ? NULL : &ang, (velAdd == nullAdd) ? NULL : &vel);
 	
 	return 0;
 }

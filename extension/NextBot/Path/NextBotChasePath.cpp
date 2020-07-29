@@ -5,11 +5,11 @@
 /**
  * Try to cutoff our chase subject
  */
-Vector ChasePath::PredictSubjectPosition( INextBot *bot, CBaseEntity *subject ) const
+Vector ChasePath::PredictSubjectPosition( INextBot *bot, CBaseEntityHack *subject ) const
 {
 	ILocomotion *mover = bot->GetLocomotionInterface();
 
-	const Vector &subjectPos = ((CBaseCombatCharacter*)subject)->GetAbsOrigin();
+	const Vector &subjectPos = subject->GetAbsOrigin();
 
 	Vector to = subjectPos - bot->GetPosition();
 	to.z = 0.0f;
@@ -29,7 +29,7 @@ Vector ChasePath::PredictSubjectPosition( INextBot *bot, CBaseEntity *subject ) 
 	float leadTime = 0.5f + ( range / ( mover->GetRunSpeed() + 0.0001f ) );
 	
 	// estimate amount to lead the subject	
-	Vector lead = leadTime * ((CBaseCombatCharacter*)subject)->GetAbsVelocity();
+	Vector lead = leadTime * subject->GetAbsVelocity();
 	lead.z = 0.0f;
 
 	if ( DotProduct( to, lead ) < 0.0f )
@@ -122,7 +122,7 @@ Vector ChasePath::PredictSubjectPosition( INextBot *bot, CBaseEntity *subject ) 
 		}
 	}
 #else
-	leadArea = TheNavMesh->GetNearestNavArea( pathTarget );
+	leadArea = TheNavMesh->GetNearestNavArea( pathTarget, false, 10000.0f, false, true, TEAM_ANY);
 #endif
 
 
@@ -144,7 +144,7 @@ Vector ChasePath::PredictSubjectPosition( INextBot *bot, CBaseEntity *subject ) 
 }
 
 // if the victim is a player, poke them so they know they're being chased
-void DirectChasePath::NotifyVictim( INextBot *me, CBaseEntity *victim )
+void DirectChasePath::NotifyVictim( INextBot *me, CBaseEntityHack *victim )
 {
 	/*CBaseCombatCharacter *pBCCVictim = ToBaseCombatCharacter( victim );
 	if ( !pBCCVictim )

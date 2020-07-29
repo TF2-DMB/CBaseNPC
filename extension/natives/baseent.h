@@ -47,4 +47,35 @@ CBASEENTNATIVE(WorldSpaceCenter)
 	return 0;
 };
 
+CBASEENTNATIVE(Spawn)
+	servertools->DispatchSpawn((CBaseEntity *)ent);
+	return 0;
+}
+
+CBASEENTNATIVE(Teleport)
+	cell_t* nullAdd = pContext->GetNullRef(SP_NULL_VECTOR);
+	cell_t* originAdd, * angAdd, * velAdd;
+	pContext->LocalToPhysAddr(params[2], &originAdd);
+	pContext->LocalToPhysAddr(params[3], &angAdd);
+	pContext->LocalToPhysAddr(params[4], &velAdd);
+
+	Vector origin = vec3_origin;
+	Vector vel = vec3_origin;
+	QAngle ang = QAngle(0, 0, 0);
+	PawnVectorToVector(originAdd, origin);
+	PawnVectorToVector(originAdd, ang);
+	PawnVectorToVector(originAdd, vel);
+
+	ent->Teleport((originAdd == nullAdd) ? NULL : &origin, (angAdd == nullAdd) ? NULL : &ang, (velAdd == nullAdd) ? NULL : &vel);
+
+	return 0;
+}
+
+CBASEENTNATIVE(SetModel)
+	char* model = nullptr;
+	pContext->LocalToString(params[2], &model);
+	ent->SetModel(model);
+	return 0;
+}
+
 #endif // NATIVE_CBASEENT_H_

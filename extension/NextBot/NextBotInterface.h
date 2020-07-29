@@ -15,7 +15,8 @@ class IVision;
 class PathFollower;
 class Path;
 class NextBotCombatCharacter;
-
+class CBaseEntityHack;
+class CBaseCombatCharacterHack;
 
 class INextBot : public INextBotEventResponder
 {
@@ -51,7 +52,7 @@ public:
 	
 	virtual bool IsRemovedOnReset() const = 0;
 	
-	virtual CBaseCombatCharacter *GetEntity() const = 0;
+	virtual CBaseCombatCharacterHack* GetEntity() const = 0;
 	virtual NextBotCombatCharacter *GetNextBotCombatCharacter() const = 0;
 	
 	virtual ILocomotion *GetLocomotionInterface() const = 0;
@@ -62,15 +63,15 @@ public:
 	virtual bool SetPosition(const Vector& pos) = 0;
 	virtual Vector& GetPosition() const = 0;
 	
-	virtual bool IsEnemy(const CBaseEntity *ent) const = 0;
-	virtual bool IsFriend(const CBaseEntity *ent) const = 0;
-	virtual bool IsSelf(const CBaseEntity *ent) const = 0;
+	virtual bool IsEnemy(const CBaseEntityHack* ent) const = 0;
+	virtual bool IsFriend(const CBaseEntityHack* ent) const = 0;
+	virtual bool IsSelf(const CBaseEntityHack* ent) const = 0;
 	
-	virtual bool IsAbleToClimbOnto(const CBaseEntity *ent) const = 0;
-	virtual bool IsAbleToBreak(const CBaseEntity *ent) const = 0;
+	virtual bool IsAbleToClimbOnto(const CBaseEntityHack* ent) const = 0;
+	virtual bool IsAbleToBreak(const CBaseEntityHack* ent) const = 0;
 	virtual bool IsAbleToBlockMovementOf(const INextBot *nextbot) const = 0;
 	
-	virtual bool ShouldTouch(const CBaseEntity *ent) const = 0;
+	virtual bool ShouldTouch(const CBaseEntityHack* ent) const = 0;
 	
 	virtual bool IsImmobile() const = 0;
 	virtual float GetImmobileDuration() const = 0;
@@ -81,14 +82,14 @@ public:
 	virtual void SetCurrentPath(const PathFollower *follower) = 0;
 	virtual void NotifyPathDestruction(const PathFollower *follower) = 0;
 	
-	virtual bool IsRangeLessThan(CBaseEntity *ent, float dist) const = 0;
+	virtual bool IsRangeLessThan(CBaseEntityHack*ent, float dist) const = 0;
 	virtual bool IsRangeLessThan(const Vector& vec, float dist) const = 0;
-	virtual bool IsRangeGreaterThan(CBaseEntity *ent, float dist) const = 0;
+	virtual bool IsRangeGreaterThan(CBaseEntityHack*ent, float dist) const = 0;
 	virtual bool IsRangeGreaterThan(const Vector& vec, float dist) const = 0;
 	
-	virtual float GetRangeTo(CBaseEntity *ent) const = 0;
+	virtual float GetRangeTo(CBaseEntityHack *ent) const = 0;
 	virtual float GetRangeTo(const Vector& vec) const = 0;
-	virtual float GetRangeSquaredTo(CBaseEntity *ent) const = 0;
+	virtual float GetRangeSquaredTo(CBaseEntityHack*ent) const = 0;
 	virtual float GetRangeSquaredTo(const Vector& vec) const = 0;
 	
 	virtual bool IsDebugging(unsigned int type) const = 0;

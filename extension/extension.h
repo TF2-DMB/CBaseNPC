@@ -16,9 +16,6 @@ extern CGlobalVars *gpGlobals;
 extern IBinTools *g_pBinTools;
 extern ISDKTools *g_pSDKTools;
 extern IServerGameEnts *gameents;
-extern int g_iMyNextBotPointerOffset;
-extern int g_iLastKnownAreaOffset;
-extern int g_iUpdateOnRemove;
 extern IdentityType_t g_CoreIdent;
 extern IGameConfig *g_pGameConf;
 extern IEngineTrace *enginetrace;
@@ -56,7 +53,8 @@ class CBaseNPCExt : public SDKExtension, public ISMEntityListener
 		virtual void OnCoreMapStart(edict_t *pEdictList, int edictCount, int clientMax);
 		virtual void OnCoreMapEnd(void);
 	public: // ISMEntityListener
-		virtual void OnEntityDestroyed(CBaseEntity *pEntity);
+		virtual void OnEntityCreated(CBaseEntity* pEntity, const char* classname);
+		virtual void OnEntityDestroyed(CBaseEntity* pEntity);
 	public:
 		#if defined SMEXT_CONF_METAMOD
 			virtual bool SDK_OnMetamodLoad(ISmmAPI *ismm, char *error, size_t maxlength, bool late);

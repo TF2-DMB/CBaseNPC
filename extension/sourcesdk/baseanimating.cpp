@@ -69,6 +69,7 @@ int (CBaseAnimatingHack::CBaseAnimatingHack::offset_HandleAnimEvent) = 0;
 DEFINEVAR(CBaseAnimatingHack, m_pStudioHdr);
 DEFINEVAR(CBaseAnimatingHack, m_OnIgnite);
 DEFINEVAR(CBaseAnimatingHack, m_nSequence);
+DEFINEVAR(CBaseAnimatingHack, m_flModelScale);
 
 bool CBaseAnimatingHack::Init(SourceMod::IGameConfig* config, char* error, size_t maxlength)
 {
@@ -109,6 +110,7 @@ bool CBaseAnimatingHack::Init(SourceMod::IGameConfig* config, char* error, size_
 	BEGIN_VAR("gib");
 	OFFSETVAR_DATA(CBaseAnimating, m_OnIgnite);
 	OFFSETVAR_SEND(CBaseAnimating, m_nSequence);
+	OFFSETVAR_SEND(CBaseAnimating, m_flModelScale);
 	// m_pStudioHdr is in front of m_OnIgnite
 	VAR_OFFSET_SET(m_pStudioHdr, VAR_OFFSET(m_OnIgnite) + sizeof(COutputEvent));
 	END_VAR;
@@ -120,15 +122,15 @@ bool CBaseAnimatingHack::Init(SourceMod::IGameConfig* config, char* error, size_
 		return false;
 	}
 
-	uint16_t* aGetAnimationEvent = reinterpret_cast<uint16_t*>(aVal);
+	uint8_t* aGetAnimationEvent = reinterpret_cast<uint8_t*>(aVal);
 #ifdef WIN32
-	SourceHook::SetMemAccess(aGetAnimationEvent + 0x83, sizeof(uint16_t), SH_MEM_READ | SH_MEM_WRITE | SH_MEM_EXEC);
-	*(aGetAnimationEvent + 0x83) = 9999;
+	SourceHook::SetMemAccess(aGetAnimationEvent + 0x83, sizeof(uint32_t), SH_MEM_READ | SH_MEM_WRITE | SH_MEM_EXEC);
+	*(uint32_t*)(aGetAnimationEvent + 0x83) = 9999;
 #else
-	SourceHook::SetMemAccess(aGetAnimationEvent + 0x17E, sizeof(uint16_t), SH_MEM_READ | SH_MEM_WRITE | SH_MEM_EXEC);
-	*(aGetAnimationEvent + 0x17E) = 9999;
-	SourceHook::SetMemAccess(aGetAnimationEvent + 0xB3, sizeof(uint16_t), SH_MEM_READ | SH_MEM_WRITE | SH_MEM_EXEC);
-	*(aGetAnimationEvent + 0xB3) = 9999;
+	SourceHook::SetMemAccess(aGetAnimationEvent + 0x17E, sizeof(uint32_t), SH_MEM_READ | SH_MEM_WRITE | SH_MEM_EXEC);
+	*(uint32_t*)(aGetAnimationEvent + 0x17E) = 9999;
+	SourceHook::SetMemAccess(aGetAnimationEvent + 0xB3, sizeof(uint32_t), SH_MEM_READ | SH_MEM_WRITE | SH_MEM_EXEC);
+	*(uint32_t*)(aGetAnimationEvent + 0xB3) = 9999;
 #endif
 	return true;
 }

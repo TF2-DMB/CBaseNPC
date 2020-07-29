@@ -1,6 +1,24 @@
 #if !defined _CBASENPC_EXTENSION_INC_
 #define _CBASENPC_EXTENSION_INC_
 
+#define EFL_DIRTY_SURROUNDING_COLLISION_BOUNDS	(1<<14)
+
+#define EF_BONEMERGE			0x001 	// Performs bone merge on client side
+#define	EF_BRIGHTLIGHT 			0x002	// DLIGHT centered at entity origin
+#define	EF_DIMLIGHT 			0x004	// player flashlight
+#define	EF_NOINTERP				0x008	// don't interpolate the next frame
+#define	EF_NOSHADOW				0x010	// Don't cast no shadow
+#define	EF_NODRAW				0x020	// don't draw entity
+#define	EF_NORECEIVESHADOW		0x040	// Don't receive no shadow
+#define	EF_BONEMERGE_FASTCULL	0x080	// For use with EF_BONEMERGE. If this is set, then it places this ent's origin at its
+										// parent and uses the parent's bbox + the max extents of the aiment.
+										// Otherwise, it sets up the parent's bones every frame to figure out where to place
+										// the aiment, which is inefficient because it'll setup the parent's bones even if
+										// the parent is not in the PVS.
+#define	EF_ITEM_BLINK			0x100	// blink an item so that the user notices it.
+#define	EF_PARENT_ANIMATES		0x200	// always assume that the parent entity is animating
+#define	EF_MAX_BITS = 10
+
 enum Activity
 {
 	ACT_INVALID = -1,			// So we have something more succint to check for than '-1'
@@ -3067,6 +3085,9 @@ methodmap CBaseEntity
 		DHookEntity(hHook, false, this.iEnt, _, callback);
 	}
 #endif
+	public native void Spawn();
+	public native void SetModel(const char[] sModel);
+	public native void Teleport(const float vecOrigin[3]=NULL_VECTOR, const float vecAngles[3]=NULL_VECTOR, const float vecVelocity[3]=NULL_VECTOR);
 	public native void WorldSpaceCenter(float vecCenter[3]);
 	public native void GetVectors(float vecForward[3], float vecRight[3], float vecUp[3]);
 }

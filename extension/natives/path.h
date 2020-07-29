@@ -314,7 +314,7 @@ PATHNATIVE(ComputeToTarget)
 
 	SMPathCost pCostFunc(pBot, pPath->pCostFunction);
 	
-	return pPath->Compute(pBot, (CBaseCombatCharacter *)pTarget, pCostFunc, sp_ctof(params[4]), (params[5]) ? true : false);
+	return pPath->Compute(pBot, (CBaseCombatCharacterHack *)pTarget, pCostFunc, sp_ctof(params[4]), (params[5]) ? true : false);
 }
 
 PATHNATIVE(ComputeToPosT)
@@ -335,7 +335,7 @@ PATHNATIVE(ComputeToTargetT)
 	ENTINDEX_TO_CBASEENTITY(params[3], pTarget);
 
 	Vector vecGoal;
-	CTNavMesh::NavPathThreadedData* computePath = new CTNavMesh::NavPathThreadedData(pBot, pPath, vecGoal, (CBaseCombatCharacter*)pTarget, sp_ctof(params[4]), (params[5]) ? true : false, pContext->GetFunctionById(params[6]), params[7]);
+	CTNavMesh::NavPathThreadedData* computePath = new CTNavMesh::NavPathThreadedData(pBot, pPath, vecGoal, (CBaseCombatCharacterHack*)pTarget, sp_ctof(params[4]), (params[5]) ? true : false, pContext->GetFunctionById(params[6]), params[7]);
 	CTNavMesh::Compute(computePath);
 	return 0;
 }
@@ -428,10 +428,10 @@ CHASEPATHNATIVE(Update)
 	PawnVectorToVector(predictPos, vpredictPos);
 	
 	if (pContext->GetNullRef(SP_NULL_VECTOR) == predictPos)
-		pChasePath->Update(pBot, pTarget, pCostFunc, NULL);
+		pChasePath->Update(pBot, (CBaseEntityHack *)pTarget, pCostFunc, NULL);
 	else
 	{
-		pChasePath->Update(pBot, pTarget, pCostFunc, &vpredictPos);
+		pChasePath->Update(pBot, (CBaseEntityHack*)pTarget, pCostFunc, &vpredictPos);
 		VectorToPawnVector(predictPos, vpredictPos);
 	}
 	
@@ -448,11 +448,13 @@ CHASEPATHNATIVE(GetMaxPathLength)
 
 CHASEPATHNATIVE(PredictSubjectPosition)
 	INextBot *pNextBot = (INextBot *)(params[2]);
-	if(!pNextBot) {
+	if(!pNextBot)
+	{
 		return pContext->ThrowNativeError("Invalid INextBot %x", params[2]);
 	}
-	CBaseEntity *pEntity = gamehelpers->ReferenceToEntity(params[3]);
-	if(!pEntity) {
+	CBaseEntityHack *pEntity = (CBaseEntityHack *)gamehelpers->ReferenceToEntity(params[3]);
+	if(!pEntity)
+	{
 		return pContext->ThrowNativeError("Invalid Entity Reference/Index %i", params[3]);
 	}
 	cell_t *posAddr;
@@ -464,11 +466,13 @@ CHASEPATHNATIVE(PredictSubjectPosition)
 
 CHASEPATHNATIVE(IsRepathNeeded)
 	INextBot *pNextBot = (INextBot *)(params[2]);
-	if(!pNextBot) {
+	if (!pNextBot)
+	{
 		return pContext->ThrowNativeError("Invalid INextBot %x", params[2]);
 	}
-	CBaseEntity *pEntity = gamehelpers->ReferenceToEntity(params[3]);
-	if(!pEntity) {
+	CBaseEntityHack* pEntity = (CBaseEntityHack*)gamehelpers->ReferenceToEntity(params[3]);
+	if (!pEntity)
+	{
 		return pContext->ThrowNativeError("Invalid Entity Reference/Index %i", params[3]);
 	}
 	return (cell_t)(pChasePath->IsRepathNeeded(pNextBot, pEntity));

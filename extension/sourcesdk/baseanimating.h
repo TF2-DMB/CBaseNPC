@@ -14,6 +14,8 @@ public:
 
 	static bool Init(SourceMod::IGameConfig* config, char* error, size_t maxlength);
 
+	float GetModelScale() const;
+
 	inline CStudioHdr* GetModelPtr() { return *m_pStudioHdr(); };
 	inline int GetSequence() { return *m_nSequence(); }
 
@@ -49,6 +51,12 @@ public:
 	DECLAREVAR(COutputEvent, m_OnIgnite);
 	DECLAREVAR(CStudioHdr*, m_pStudioHdr);
 	DECLAREVAR(int, m_nSequence);
+	DECLAREVAR(float, m_flModelScale);
 };
+
+inline float CBaseAnimatingHack::GetModelScale() const
+{
+	return *m_flModelScale();
+}
 
 #endif // H_BASEANIMATING_CBASENPC_

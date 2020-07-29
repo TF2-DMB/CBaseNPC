@@ -127,7 +127,7 @@ bool Path::ComputePathDetails( INextBot *bot, const Vector &start )
 				
 				// verify that there is actually ground down there in case this is a far jump dropdown
 				float ground;
-				if ( TheNavMesh->GetGroundHeight( endDrop, &ground ) )
+				if ( TheNavMesh->GetGroundHeight( endDrop, &ground, nullptr ) )
 				{
 					if ( startDrop.z > ground + stepHeight )
 					{
@@ -359,7 +359,7 @@ bool Path::ComputeT(CTNavMesh::NavPathThreadedData* pData)
 	const float maxDistanceToArea = 200.0f;
 	CNavArea* goalArea = pData->m_endArea;
 	if (!goalArea)
-		goalArea = TheNavMesh->GetNearestNavArea(pData->m_vecEnd, true, maxDistanceToArea, true);
+		goalArea = TheNavMesh->GetNearestNavArea(pData->m_vecEnd, true, maxDistanceToArea, true, true, TEAM_ANY);
 
 	// if we are already in the goal area, build trivial path
 	if (startArea == goalArea)
@@ -376,7 +376,7 @@ bool Path::ComputeT(CTNavMesh::NavPathThreadedData* pData)
 	}
 	else
 	{
-		TheNavMesh->GetGroundHeight(pathEndPosition, &pathEndPosition.z);
+		TheNavMesh->GetGroundHeight(pathEndPosition, &pathEndPosition.z, nullptr);
 	}
 
 	//
@@ -554,7 +554,7 @@ bool Path::ComputePathDetailsT(CTNavMesh::NavPathThreadedData* pData)
 
 				// verify that there is actually ground down there in case this is a far jump dropdown
 				float ground;
-				if (TheNavMesh->GetGroundHeight(endDrop, &ground))
+				if (TheNavMesh->GetGroundHeight(endDrop, &ground, nullptr))
 				{
 					if (startDrop.z > ground + stepHeight)
 					{
@@ -803,11 +803,11 @@ bool Path::BuildTrivialPath( INextBot *bot, const Vector &goal )
 	m_segmentCount = 0;
 
 	/// @todo Dangerous to use "nearset" nav area - could be far away
-	CNavArea *startArea = TheNavMesh->GetNearestNavArea( start );
+	CNavArea* startArea = TheNavMesh->GetNearestNavArea(start, false, 10000.0f, false, true, TEAM_ANY);
 	if (startArea == NULL)
 		return false;
 
-	CNavArea *goalArea = TheNavMesh->GetNearestNavArea( goal );
+	CNavArea *goalArea = TheNavMesh->GetNearestNavArea(goal, false, 10000.0f, false, true, TEAM_ANY);
 	if (goalArea == NULL)
 		return false;
 
@@ -849,11 +849,11 @@ bool Path::BuildTrivialPathT(const Vector& start, const Vector& goal)
 	m_segmentCount = 0;
 
 	/// @todo Dangerous to use "nearset" nav area - could be far away
-	CNavArea* startArea = TheNavMesh->GetNearestNavArea(start);
+	CNavArea* startArea = TheNavMesh->GetNearestNavArea(start, false, 10000.0f, false, true, TEAM_ANY);
 	if (startArea == NULL)
 		return false;
 
-	CNavArea* goalArea = TheNavMesh->GetNearestNavArea(goal);
+	CNavArea* goalArea = TheNavMesh->GetNearestNavArea(goal, false, 10000.0f, false, true, TEAM_ANY);
 	if (goalArea == NULL)
 		return false;
 

@@ -25,14 +25,11 @@ enum InvalidatePhysicsBits_t
 };
 
 #define DECLAREVAR(type, var) \
-private: \
 	static int(offset_##var); \
-public: \
 	inline type* ##var() const \
 	{ \
 		return (type*)((uint8_t*)this + offset_##var); \
-	} \
-private:
+	} 
 
 #define DEFINEVAR(classname, var) \
 int (classname::classname::offset_##var) = 0
@@ -49,7 +46,7 @@ datamap_t* offsetMap = gamehelpers->GetDataMap(offsetEntity)
 #define OFFSETVAR_SEND(classname, var) \
 if (!gamehelpers->FindSendPropInfo(#classname, #var, &offset_send_info)) \
 { \
-	snprintf(error, maxlength, "Failed to retrieve"  #classname "::"  #var  "!"); \
+	snprintf(error, maxlength, "Failed to retrieve "  #classname "::"  #var  "!"); \
 	return false; \
 } \
 offset_##var = offset_send_info.actual_offset
@@ -57,7 +54,7 @@ offset_##var = offset_send_info.actual_offset
 #define OFFSETVAR_DATA(classname, var) \
 if (!gamehelpers->FindDataMapInfo(offsetMap, #var, &offset_data_info)) \
 { \
-	snprintf(error, maxlength, "Failed to retrieve"  #classname "::"  #var  "!"); \
+	snprintf(error, maxlength, "Failed to retrieve "  #classname "::"  #var  "!"); \
 	return false; \
 } \
 offset_##var = offset_data_info.actual_offset
@@ -76,7 +73,6 @@ offset_##var = offset_data_info.actual_offset
 #define DECLAREFUNCTION_virtual(name, returntype, parameters) \
 public: \
 	returntype name parameters; \
-private: \
 	static int(ThisClass::offset_func_##name); \
 	typedef returntype (ThisClass::*func_##name) parameters
 
@@ -122,7 +118,7 @@ if (!config->GetOffset(namestring, &ThisClass::offset_func_##name)) \
 	snprintf(error, maxlength, "Failed to retrieve " namestring " offset!"); \
 	return false; \
 } \
-ThisClass::offset_func_##name *= 4
+//ThisClass::offset_func_##name *= 4
 
 #define FINDSIG(config, name, namestring) \
 if (!config->GetMemSig(namestring, reinterpret_cast<void**>(&ThisClass::func_##name))) \
@@ -131,6 +127,7 @@ if (!config->GetMemSig(namestring, reinterpret_cast<void**>(&ThisClass::func_##n
 	return false; \
 }
 
+class CBaseCombatCharacterHack;
 class CBaseEntityHack : public IServerEntity
 {
 public:
@@ -138,19 +135,27 @@ public:
 
 	static bool Init(SourceMod::IGameConfig* config, char* error, size_t maxlength);
 
-	DECLAREFUNCTION(GetVectors, void, (Vector* forward, Vector* right, Vector* up));
-	DECLAREFUNCTION_virtual(Teleport, void, (Vector* origin, QAngle* ang, Vector* velocity));
+	DECLAREFUNCTION(InvalidatePhysicsRecursive, void, (int nChangeFlags));
+	DECLAREFUNCTION_virtual(GetVectors, void, (Vector* forward, Vector* right, Vector* up));
+	DECLAREFUNCTION_virtual(Teleport, void, (const Vector* origin, const QAngle* ang, const Vector* velocity));
 	DECLAREFUNCTION_virtual(SetModel, void, (char const* model));
-	DECLAREFUNCTION_virtual(MyNextBotPointer, INextBot*, ());
-	DECLAREFUNCTION_virtual(WorldSpaceCenter, const Vector&, ());
+	DECLAREFUNCTION_virtual(MyCombatCharacterPointer, CBaseCombatCharacterHack*, (void));
+	DECLAREFUNCTION_virtual(MyNextBotPointer, INextBot*, (void));
+	DECLAREFUNCTION_virtual(WorldSpaceCenter, const Vector&, (void));
 
 public:
+	friend class CServerNetworkProperty;
 	CServerNetworkProperty* NetworkProp();
 	const CServerNetworkProperty* NetworkProp() const;
-	void	NetworkStateChanged();
+
+	const Vector& GetAbsOrigin(void) const;
+	const QAngle& GetAbsAngles(void) const;
+	const Vector& GetAbsVelocity(void) const;
+
+	void	NetworkStateChanged(void);
 	void	NetworkStateChanged(void* pVar);
 
-	float GetSimulationTime() const;
+	float GetSimulationTime(void) const;
 	void SetSimulationTime(float st);
 
 	void SetLocalAngles(const QAngle& angles);
@@ -159,12 +164,13 @@ public:
 	void SetLocalOrigin(const Vector& origin);
 	const Vector& GetLocalOrigin(void) const;
 
-	void InvalidatePhysicsRecursive(int nChangeFlags);
-
-	int			GetParentAttachment();
+	int			GetParentAttachment(void);
+	MoveType_t GetMoveType(void) const;
 	CBaseEntityHack* GetMoveParent(void);
 	CBaseEntityHack* FirstMoveChild(void);
 	CBaseEntityHack* NextMovePeer(void);
+
+	int GetTeamNumber(void) const;
 
 	static int(CBaseEntityHack::offset_UpdateOnRemove);
 
@@ -172,14 +178,26 @@ private:
 	// Members
 	DECLAREVAR(CServerNetworkProperty, m_Network);
 	DECLAREVAR(string_t, m_iClassname);
-	DECLAREVAR(Vector, m_vecOrigin);
-	DECLAREVAR(QAngle, m_angRotation);
 	DECLAREVAR(float, m_flSimulationTime);
 
 	DECLAREVAR(unsigned char, m_iParentAttachment);
+	DECLAREVAR(unsigned char, m_MoveType);
 	DECLAREVAR(EHANDLE, m_hMoveParent);
 	DECLAREVAR(EHANDLE, m_hMoveChild);
 	DECLAREVAR(EHANDLE, m_hMovePeer);
+
+	DECLAREVAR(Vector, m_vecAbsOrigin);
+	DECLAREVAR(QAngle, m_angAbsRotation);
+	DECLAREVAR(Vector, m_vecAbsVelocity);
+
+	DECLAREVAR(Vector, m_vecOrigin);
+	DECLAREVAR(QAngle, m_angRotation);
+
+	DECLAREVAR(int, m_iTeamNum);
+};
+
+class CBasePropDoorHack : public CBaseEntityHack
+{
 };
 
 inline CServerNetworkProperty* CBaseEntityHack::NetworkProp()
@@ -197,12 +215,38 @@ inline void	CBaseEntityHack::NetworkStateChanged()
 	NetworkProp()->NetworkStateChanged();
 }
 
-
 inline void	CBaseEntityHack::NetworkStateChanged(void* pVar)
 {
 	// Good, they passed an offset so we can track this variable's change
 	// and avoid sending the whole entity.
 	NetworkProp()->NetworkStateChanged((char*)pVar - (char*)this);
+}
+
+inline const Vector& CBaseEntityHack::GetAbsOrigin(void) const
+{
+	/*if (IsEFlagSet(EFL_DIRTY_ABSTRANSFORM))
+	{
+		const_cast<CBaseEntity*>(this)->CalcAbsolutePosition();
+	}*/
+	return *m_vecAbsOrigin();
+}
+
+inline const QAngle& CBaseEntityHack::GetAbsAngles(void) const
+{
+	/*if (IsEFlagSet(EFL_DIRTY_ABSTRANSFORM))
+	{
+		const_cast<CBaseEntity*>(this)->CalcAbsolutePosition();
+	}*/
+	return *m_angAbsRotation();
+}
+
+inline const Vector& CBaseEntityHack::GetAbsVelocity() const
+{
+	/*if (IsEFlagSet(EFL_DIRTY_ABSVELOCITY))
+	{
+		const_cast<CBaseEntity*>(this)->CalcAbsoluteVelocity();
+	}*/
+	return *m_vecAbsVelocity();
 }
 
 inline float CBaseEntityHack::GetSimulationTime() const
@@ -243,6 +287,16 @@ inline CBaseEntityHack* CBaseEntityHack::NextMovePeer(void)
 inline int CBaseEntityHack::GetParentAttachment()
 {
 	return *m_iParentAttachment();
+}
+
+inline MoveType_t CBaseEntityHack::GetMoveType() const
+{
+	return (MoveType_t)(unsigned char)*m_MoveType();
+}
+
+inline int CBaseEntityHack::GetTeamNumber(void) const
+{
+	return *m_iTeamNum();
 }
 
 inline bool IsEntityQAngleReasonable(const QAngle& q)

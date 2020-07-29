@@ -11,6 +11,7 @@
 #include "unsorted_class.h"
 #include "sourcesdk/nav_mesh.h"
 #include "sourcesdk/nav_threaded.h"
+#include "sourcesdk/basecombatcharacter.h"
 #include "NextBotInterface.h"
 #include "NextBotIntentionInterface.h"
 #include "NextBotLocomotionInterface.h"
@@ -99,7 +100,7 @@ public:
 
 	virtual const Vector &GetStartPosition( void ) const;	// return the position where this path starts
 	virtual const Vector &GetEndPosition( void ) const;		// return the position where this path ends
-	virtual CBaseCombatCharacter *GetSubject( void ) const;	// return the actor this path leads to, or NULL if there is no subject
+	virtual CBaseCombatCharacterHack* GetSubject( void ) const;	// return the actor this path leads to, or NULL if there is no subject
 
 	virtual const Path::Segment *GetCurrentGoal( void ) const;	// return current goal along the path we are trying to reach
 
@@ -161,7 +162,7 @@ public:
 	 * If returns false, path may either be invalid (use IsValid() to check), or valid but 
 	 * doesn't reach all the way to the subject.
 	 */
-	bool Compute(INextBot *bot, CBaseCombatCharacter *subject, IPathCost &costFunc, float maxPathLength = 0.0f, bool includeGoalIfPathFails = true)
+	bool Compute(INextBot *bot, CBaseCombatCharacterHack* subject, IPathCost &costFunc, float maxPathLength = 0.0f, bool includeGoalIfPathFails = true)
 	{
 		////VPROF_BUDGET( "Path::Compute(subject)", "NextBot" );
 		Invalidate();
@@ -296,7 +297,7 @@ public:
 
 		// check line-of-sight to the goal position when finding it's nav area
 		const float maxDistanceToArea = 200.0f;
-		CNavArea *goalArea = TheNavMesh->GetNearestNavArea( goal, true, maxDistanceToArea, true );
+		CNavArea *goalArea = TheNavMesh->GetNearestNavArea( goal, true, maxDistanceToArea, true, true, TEAM_ANY);
 
 		// if we are already in the goal area, build trivial path
 		if ( startArea == goalArea )
@@ -313,7 +314,7 @@ public:
 		}
 		else
 		{
-			TheNavMesh->GetGroundHeight( pathEndPosition, &pathEndPosition.z );
+			TheNavMesh->GetGroundHeight(pathEndPosition, &pathEndPosition.z, NULL);
 		}
 
 		//
@@ -615,7 +616,7 @@ private:
 	mutable bool m_isCursorDataDirty;
 
 	IntervalTimer m_ageTimer;					// how old is this path?
-	CHandle< CBaseCombatCharacter > m_subject;	// the subject this path leads to
+	CHandle< CBaseCombatCharacterHack > m_subject;	// the subject this path leads to
 
 	/**
 	 * Build a vector of adjacent areas reachable from the given area
@@ -820,7 +821,7 @@ inline const Vector &Path::GetEndPosition( void ) const
 	return ( IsValid() ) ? m_path[ m_segmentCount-1 ].pos : vec3_origin;
 }
 
-inline CBaseCombatCharacter *Path::GetSubject( void ) const
+inline CBaseCombatCharacterHack *Path::GetSubject( void ) const
 {
 	return m_subject;
 }

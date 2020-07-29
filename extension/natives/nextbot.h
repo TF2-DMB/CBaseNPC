@@ -10,7 +10,8 @@
 	cell_t INextBot_##name(IPluginContext *pContext, const cell_t *params) \
 	{ \
 		INextBot *pNextBot = (INextBot *)(params[1]); \
-		if(!pNextBot) { \
+		if(!pNextBot) \
+		{ \
 			return pContext->ThrowNativeError("Invalid INextBot %x", params[1]); \
 		} \
 
@@ -75,40 +76,45 @@ NEXTBOTNATIVE(GetPosition)
 }
 
 NEXTBOTNATIVE(IsEnemy)
-	CBaseEntity *pEntity = gamehelpers->ReferenceToEntity(params[2]);
-	if(!pEntity) {
+	CBaseEntityHack *pEntity = (CBaseEntityHack*)gamehelpers->ReferenceToEntity(params[2]);
+	if (!pEntity)
+	{
 		return pContext->ThrowNativeError("Invalid Entity Reference/Index %i", params[2]);
 	}
 	return (cell_t)(pNextBot->IsEnemy(pEntity));
 }
 
 NEXTBOTNATIVE(IsFriend)
-	CBaseEntity *pEntity = gamehelpers->ReferenceToEntity(params[2]);
-	if(!pEntity) {
+	CBaseEntityHack* pEntity = (CBaseEntityHack*)gamehelpers->ReferenceToEntity(params[2]);
+	if(!pEntity)
+	{
 		return pContext->ThrowNativeError("Invalid Entity Reference/Index %i", params[2]);
 	}
 	return (cell_t)(pNextBot->IsFriend(pEntity));
 }
 
 NEXTBOTNATIVE(IsSelf)
-	CBaseEntity *pEntity = gamehelpers->ReferenceToEntity(params[2]);
-	if(!pEntity) {
+	CBaseEntityHack* pEntity = (CBaseEntityHack*)gamehelpers->ReferenceToEntity(params[2]);
+	if(!pEntity)
+	{
 		return pContext->ThrowNativeError("Invalid Entity Reference/Index %i", params[2]);
 	}
 	return (cell_t)(pNextBot->IsSelf(pEntity));
 }
 
 NEXTBOTNATIVE(IsAbleToClimbOnto)
-	CBaseEntity *pEntity = gamehelpers->ReferenceToEntity(params[2]);
-	if(!pEntity) {
+	CBaseEntityHack* pEntity = (CBaseEntityHack*)gamehelpers->ReferenceToEntity(params[2]);
+	if(!pEntity)
+	{
 		return pContext->ThrowNativeError("Invalid Entity Reference/Index %i", params[2]);
 	}
 	return (cell_t)(pNextBot->IsAbleToClimbOnto(pEntity));
 }
 
 NEXTBOTNATIVE(IsAbleToBreak)
-	CBaseEntity *pEntity = gamehelpers->ReferenceToEntity(params[2]);
-	if(!pEntity) {
+	CBaseEntityHack* pEntity = (CBaseEntityHack*)gamehelpers->ReferenceToEntity(params[2]);
+	if(!pEntity)
+	{
 		return pContext->ThrowNativeError("Invalid Entity Reference/Index %i", params[2]);
 	}
 	return (cell_t)(pNextBot->IsAbleToBreak(pEntity));
@@ -116,15 +122,17 @@ NEXTBOTNATIVE(IsAbleToBreak)
 
 NEXTBOTNATIVE(IsAbleToBlockMovementOf)
 	INextBot *pOtherNextBot = (INextBot *)(params[2]);
-	if(!pOtherNextBot) {
+	if(!pOtherNextBot)
+	{
 		return pContext->ThrowNativeError("Invalid INextBot %x", params[2]);
 	}
 	return (cell_t)(pNextBot->IsAbleToBlockMovementOf(pOtherNextBot));
 }
 
 NEXTBOTNATIVE(ShouldTouch)
-	CBaseEntity *pEntity = gamehelpers->ReferenceToEntity(params[2]);
-	if(!pEntity) {
+	CBaseEntityHack* pEntity = (CBaseEntityHack*)gamehelpers->ReferenceToEntity(params[2]);
+	if(!pEntity)
+	{
 		return pContext->ThrowNativeError("Invalid Entity Reference/Index %i", params[2]);
 	}
 	return (cell_t)(pNextBot->ShouldTouch(pEntity));
@@ -153,7 +161,8 @@ NEXTBOTNATIVE(GetCurrentPath)
 
 NEXTBOTNATIVE(SetCurrentPath)
 	PathFollower *pPathFollow = (PathFollower *)(params[2]);
-	if(!pPathFollow) {
+	if(!pPathFollow)
+	{
 		return pContext->ThrowNativeError("Invalid PathFollower %x", params[2]);
 	}
 	pNextBot->SetCurrentPath(pPathFollow);
@@ -162,7 +171,8 @@ NEXTBOTNATIVE(SetCurrentPath)
 
 NEXTBOTNATIVE(NotifyPathDestruction)
 	PathFollower *pPathFollow = (PathFollower *)(params[2]);
-	if(!pPathFollow) {
+	if(!pPathFollow)
+	{
 		return pContext->ThrowNativeError("Invalid PathFollower %x", params[2]);
 	}
 	pNextBot->NotifyPathDestruction(pPathFollow);
@@ -170,8 +180,9 @@ NEXTBOTNATIVE(NotifyPathDestruction)
 }
 
 NEXTBOTNATIVE(IsRangeLessThan)
-	CBaseEntity *pEntity = gamehelpers->ReferenceToEntity(params[2]);
-	if(!pEntity) {
+	CBaseEntityHack* pEntity = (CBaseEntityHack*)gamehelpers->ReferenceToEntity(params[2]);
+	if(!pEntity)
+	{
 		return pContext->ThrowNativeError("Invalid Entity Reference/Index %i", params[2]);
 	}
 	return (cell_t)(pNextBot->IsRangeLessThan(pEntity, sp_ctof(params[3])));
@@ -186,8 +197,9 @@ NEXTBOTNATIVE(IsRangeLessThanEx)
 }
 
 NEXTBOTNATIVE(IsRangeGreaterThan)
-	CBaseEntity *pEntity = gamehelpers->ReferenceToEntity(params[2]);
-	if(!pEntity) {
+	CBaseEntityHack* pEntity = (CBaseEntityHack*)gamehelpers->ReferenceToEntity(params[2]);
+	if (!pEntity)
+	{
 		return pContext->ThrowNativeError("Invalid Entity Reference/Index %i", params[2]);
 	}
 	return (cell_t)(pNextBot->IsRangeGreaterThan(pEntity, sp_ctof(params[3])));
@@ -202,8 +214,9 @@ NEXTBOTNATIVE(IsRangeGreaterThanEx)
 }
 
 NEXTBOTNATIVE(GetRangeTo)
-	CBaseEntity *pEntity = gamehelpers->ReferenceToEntity(params[2]);
-	if(!pEntity) {
+	CBaseEntityHack* pEntity = (CBaseEntityHack*)gamehelpers->ReferenceToEntity(params[2]);
+	if(!pEntity)
+	{
 		return pContext->ThrowNativeError("Invalid Entity Reference/Index %i", params[2]);
 	}
 	return sp_ftoc(pNextBot->GetRangeTo(pEntity));
@@ -218,8 +231,9 @@ NEXTBOTNATIVE(GetRangeToEx)
 }
 
 NEXTBOTNATIVE(GetRangeSquaredTo)
-	CBaseEntity *pEntity = gamehelpers->ReferenceToEntity(params[2]);
-	if(!pEntity) {
+	CBaseEntityHack* pEntity = (CBaseEntityHack*)gamehelpers->ReferenceToEntity(params[2]);
+	if(!pEntity)
+	{
 		return pContext->ThrowNativeError("Invalid Entity Reference/Index %i", params[2]);
 	}
 	return sp_ftoc(pNextBot->GetRangeSquaredTo(pEntity));

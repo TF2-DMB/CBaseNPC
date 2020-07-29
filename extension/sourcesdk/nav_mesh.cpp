@@ -7,6 +7,40 @@
 #include "sourcesdk/nav_mesh.h"
 CNavMesh *TheNavMesh = nullptr;
 
+DEFINEFUNCTION(CNavMesh, GetNearestNavArea, CNavArea*, (const Vector& pos, bool anyZ, float maxDist, bool checkLOS, bool checkGround, int team), (pos, anyZ, maxDist, checkLOS, checkGround, team));
+DEFINEFUNCTION(CNavMesh, GetGroundHeight, bool, (const Vector& pos, float* height, Vector* normal), (pos, height, normal));
+
+bool CNavMesh::Init(SourceMod::IGameConfig* config, char* error, size_t maxlength)
+{
+	CNavMesh * *ppTheNavMesh;
+	char* addr;
+	if (g_pGameConf->GetMemSig("TheNavMesh", (void**)&addr) && addr)
+	{
+		ppTheNavMesh = reinterpret_cast<CNavMesh**>(addr);
+	}
+	else if (g_pGameConf->GetMemSig("CNavMesh::SnapToGrid", (void**)&addr) && addr)
+	{
+		int offset;
+		if (!g_pGameConf->GetOffset("TheNavMesh", &offset) || !offset)
+		{
+			snprintf(error, maxlength, "Couldn't find offset for TheNavMesh ptr!");
+			return false;
+		}
+		ppTheNavMesh = *reinterpret_cast<CNavMesh***>(addr + offset);
+	}
+	else
+	{
+		snprintf(error, maxlength, "Failed to retrieve TheNavMesh ptr!");
+		return false;
+	}
+
+	TheNavMesh = *ppTheNavMesh;
+
+	FINDSIG(config, GetNearestNavArea, "CNavMesh::GetNearestNavArea");
+	FINDSIG(config, GetGroundHeight, "CNavMesh::GetGroundHeight");
+	return true;
+}
+
 //bool (*BuildPath)(CNavArea *, CNavArea *, Vector *, IPathCost&, CNavArea **, float, int, bool) = nullptr;
 
 bool NavAreaBuildPath( CNavArea *startArea, CNavArea *goalArea, Vector *goalPos, IPathCost &costFunc, CNavArea **closestArea, float maxPathLength, int teamID, bool ignoreNavBlockers)

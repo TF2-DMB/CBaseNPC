@@ -38,8 +38,8 @@
  
 /* Basic information exposed publicly */
 #define SMEXT_CONF_NAME			"CBaseNPC Ext"
-#define SMEXT_CONF_DESCRIPTION	"Expose NextBot stuff to sourcepawn"
-#define SMEXT_CONF_VERSION		"0.9"
+#define SMEXT_CONF_DESCRIPTION	"Expose NextBot and some SDK functions to plugins"
+#define SMEXT_CONF_VERSION		"1.0"
 #define SMEXT_CONF_AUTHOR		"Kenzzer & Arthurdead & Pelipoika"
 #define SMEXT_CONF_URL			""
 #define SMEXT_CONF_LOGTAG		"CBASENPC"

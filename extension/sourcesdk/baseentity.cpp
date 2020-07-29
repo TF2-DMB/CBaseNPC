@@ -5,17 +5,29 @@
 
 int (CBaseEntityHack::CBaseEntityHack::offset_UpdateOnRemove) = 0;
 
-DEFINEFUNCTION_virtual_void(CBaseEntityHack, Teleport, (Vector* origin, QAngle* ang, Vector* velocity), (origin, ang, velocity));
-DEFINEFUNCTION_void(CBaseEntityHack, GetVectors, (Vector* forward, Vector* right, Vector* up), (forward, right, up));
+DEFINEFUNCTION_virtual_void(CBaseEntityHack, Teleport, (const Vector* origin, const QAngle* ang, const Vector* velocity), (origin, ang, velocity));
+DEFINEFUNCTION_void(CBaseEntityHack, InvalidatePhysicsRecursive, (int nChangeFlags), (nChangeFlags));
+DEFINEFUNCTION_virtual_void(CBaseEntityHack, GetVectors, (Vector* forward, Vector* right, Vector* up), (forward, right, up));
 DEFINEFUNCTION_virtual_void(CBaseEntityHack, SetModel, (const char* name), (name));
+DEFINEFUNCTION_virtual(CBaseEntityHack, MyCombatCharacterPointer, CBaseCombatCharacterHack*, (), ());
 DEFINEFUNCTION_virtual(CBaseEntityHack, MyNextBotPointer, INextBot*, (), ());
 DEFINEFUNCTION_virtual(CBaseEntityHack, WorldSpaceCenter, const Vector&, (), ());
 
 // Members
 DEFINEVAR(CBaseEntityHack, m_Network);
 DEFINEVAR(CBaseEntityHack, m_iClassname);
-DEFINEVAR(CBaseEntityHack, m_angRotation);
 DEFINEVAR(CBaseEntityHack, m_flSimulationTime);
+DEFINEVAR(CBaseEntityHack, m_iParentAttachment);
+DEFINEVAR(CBaseEntityHack, m_MoveType);
+DEFINEVAR(CBaseEntityHack, m_hMoveParent);
+DEFINEVAR(CBaseEntityHack, m_hMoveChild);
+DEFINEVAR(CBaseEntityHack, m_hMovePeer);
+DEFINEVAR(CBaseEntityHack, m_vecAbsOrigin);
+DEFINEVAR(CBaseEntityHack, m_angAbsRotation);
+DEFINEVAR(CBaseEntityHack, m_vecAbsVelocity);
+DEFINEVAR(CBaseEntityHack, m_vecOrigin);
+DEFINEVAR(CBaseEntityHack, m_angRotation);
+DEFINEVAR(CBaseEntityHack, m_iTeamNum);
 
 float k_flMaxEntityEulerAngle = 360.0 * 1000.0f;
 float k_flMaxEntityPosCoord = MAX_COORD_FLOAT;
@@ -28,9 +40,11 @@ bool CBaseEntityHack::Init(SourceMod::IGameConfig* config, char* error, size_t m
 		return false;
 	}
 
-	FINDSIG(config, GetVectors, "CBaseEntity::GetVectors");
+	FINDVTABLE(config, GetVectors, "CBaseEntity::GetVectors");
+	FINDSIG(config, InvalidatePhysicsRecursive, "CBaseEntity::InvalidatePhysicsRecursive");
 	FINDVTABLE(configSDKTools, Teleport, "Teleport");
 	FINDVTABLE(configSDKTools, SetModel, "SetEntityModel");
+	FINDVTABLE(config, MyCombatCharacterPointer, "CBaseEntity::MyCombatCharacterPointer");
 	FINDVTABLE(config, MyNextBotPointer, "CBaseEntity::MyNextBotPointer");
 	FINDVTABLE(config, WorldSpaceCenter, "CBaseEntity::WorldSpaceCenter");
 
@@ -43,15 +57,20 @@ bool CBaseEntityHack::Init(SourceMod::IGameConfig* config, char* error, size_t m
 	// Any entity that inherits CBaseEntity is good
 	BEGIN_VAR("trigger_stun");
 	OFFSETVAR_DATA(CBaseEntity, m_iClassname);
-	OFFSETVAR_SEND(CBaseEntity, m_vecOrigin);
-	OFFSETVAR_SEND(CBaseEntity, m_angRotation);
 	OFFSETVAR_SEND(CBaseEntity, m_flSimulationTime);
 	// m_Network is always located right before m_iClassname
 	VAR_OFFSET_SET(m_Network, VAR_OFFSET(m_iClassname)-sizeof(CServerNetworkProperty));
 	OFFSETVAR_SEND(CBaseEntity, m_iParentAttachment);
-	OFFSETVAR_SEND(CBaseEntity, m_hMoveParent);
-	VAR_OFFSET_SET(m_hMoveChild, VAR_OFFSET(m_hMoveParent) + sizeof(EHANDLE));
-	VAR_OFFSET_SET(m_hMovePeer, VAR_OFFSET(m_hMoveChild) + sizeof(EHANDLE));
+	OFFSETVAR_DATA(CBaseEntity, m_MoveType);
+	OFFSETVAR_DATA(CBaseEntity, m_hMoveParent);
+	OFFSETVAR_DATA(CBaseEntity, m_hMoveChild);
+	OFFSETVAR_DATA(CBaseEntity, m_hMovePeer);
+	OFFSETVAR_DATA(CBaseEntity, m_vecAbsOrigin);
+	OFFSETVAR_DATA(CBaseEntity, m_angAbsRotation);
+	OFFSETVAR_DATA(CBaseEntity, m_vecAbsVelocity);
+	OFFSETVAR_SEND(CBaseEntity, m_vecOrigin);
+	OFFSETVAR_SEND(CBaseEntity, m_angRotation);
+	OFFSETVAR_SEND(CBaseEntity, m_iTeamNum);
 	END_VAR;
 
 	gameconfs->CloseGameConfigFile(configSDKTools);
@@ -88,68 +107,5 @@ void CBaseEntityHack::SetLocalAngles(const QAngle& angles)
 		NETWORKVAR_UPDATE(ang, angles);
 		InvalidatePhysicsRecursive(ANGLES_CHANGED);
 		SetSimulationTime(gpGlobals->curtime);
-	}
-}
-
-void CBaseEntityHack::InvalidatePhysicsRecursive(int nChangeFlags)
-{
-	int nDirtyFlags = 0;
-
-	if (nChangeFlags & VELOCITY_CHANGED)
-	{
-		nDirtyFlags |= EFL_DIRTY_ABSVELOCITY;
-	}
-
-	if (nChangeFlags & POSITION_CHANGED)
-	{
-		nDirtyFlags |= EFL_DIRTY_ABSTRANSFORM;
-		NetworkProp()->MarkPVSInformationDirty();
-		// NOTE: This will also mark shadow projection + client leaf dirty
-		CollisionProp()->MarkPartitionHandleDirty();
-	}
-
-	// NOTE: This has to be done after velocity + position are changed
-	// because we change the nChangeFlags for the child entities
-	if (nChangeFlags & ANGLES_CHANGED)
-	{
-		nDirtyFlags |= EFL_DIRTY_ABSTRANSFORM;
-		if (CollisionProp()->DoesRotationInvalidateSurroundingBox())
-		{
-			// NOTE: This will handle the KD-tree, surrounding bounds, PVS
-			// render-to-texture shadow, shadow projection, and client leaf dirty
-			CollisionProp()->MarkSurroundingBoundsDirty();
-		}
-
-		// This is going to be used for all children: children
-		// have position + velocity changed
-		nChangeFlags |= POSITION_CHANGED | VELOCITY_CHANGED;
-	}
-
-	AddEFlags(nDirtyFlags);
-
-	// Set flags for children
-	bool bOnlyDueToAttachment = false;
-	if (nChangeFlags & ANIMATION_CHANGED)
-	{
-		// Only set this flag if the only thing that changed us was the animation.
-		// If position or something else changed us, then we must tell all children.
-		if (!(nChangeFlags & (POSITION_CHANGED | VELOCITY_CHANGED | ANGLES_CHANGED)))
-		{
-			bOnlyDueToAttachment = true;
-		}
-
-		nChangeFlags = POSITION_CHANGED | ANGLES_CHANGED | VELOCITY_CHANGED;
-	}
-
-	for (CBaseEntityHack* pChild = FirstMoveChild(); pChild; pChild = pChild->NextMovePeer())
-	{
-		// If this is due to the parent animating, only invalidate children that are parented to an attachment
-		// Entities that are following also access attachments points on parents and must be invalidated.
-		if (bOnlyDueToAttachment)
-		{
-			if (pChild->GetParentAttachment() == 0)
-				continue;
-		}
-		pChild->InvalidatePhysicsRecursive(nChangeFlags);
 	}
 }

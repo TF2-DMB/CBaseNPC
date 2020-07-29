@@ -1,6 +1,8 @@
 #ifndef NATIVES_BCC_H_INCLUDED_
 #define NATIVES_BCC_H_INCLUDED_
 
+#include "sourcesdk/basecombatcharacter.h"
+
 #define ENTINDEX_TO_CBASEENTITY(ref, buffer) \
 	buffer = gamehelpers->ReferenceToEntity(ref); \
 	if (!buffer) \
@@ -13,8 +15,9 @@
 	{ \
 		CBaseEntity *pEnt; \
 		ENTINDEX_TO_CBASEENTITY(params[1], pEnt) \
-		CBaseCombatCharacter *pBCC = (CBaseCombatCharacter *)(pEnt); \
-		if(!pBCC) { \
+		CBaseCombatCharacterHack *pBCC = (CBaseCombatCharacterHack *)(pEnt); \
+		if(!pBCC) \
+		{ \
 			return pContext->ThrowNativeError("Invalid entity %i", params[1]); \
 		} \
 		

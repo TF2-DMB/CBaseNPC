@@ -17,7 +17,8 @@ public:
 	virtual void Update( void ) = 0;
 	virtual void Upkeep( void ) { };
 	virtual INextBot *GetBot( void ) const  { return m_bot; }
-	
+	inline float GetUpdateInterval();
+
 private:
 	float m_lastUpdateTime;
 	float m_curInterval;
@@ -28,4 +29,9 @@ private:
 	INextBotComponent *m_nextComponent;
 };
 
+
+inline float INextBotComponent::GetUpdateInterval()
+{
+	return m_curInterval;
+}
 #endif // _NEXT_BOT_COMPONENT_INTERFACE_H_

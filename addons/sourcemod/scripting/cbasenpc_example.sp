@@ -70,7 +70,7 @@ public void Hook_NPCThink(int iEnt)
 		if (iBestTarget == -1) return;
 		GetClientAbsOrigin(iBestTarget, vecTargetPos);
 		
-		CBaseAnimatingOverlay animationEntity = CBaseAnimatingOverlay(iEnt);
+		CBaseCombatCharacter animationEntity = CBaseCombatCharacter(iEnt);
 		
 		if (GetVectorDistance(vecNPCPos, vecTargetPos) > 100.0)
 		{
@@ -79,14 +79,7 @@ public void Hook_NPCThink(int iEnt)
 		}
 		else if (g_flLastAttackTime[npc.Index] <= GetGameTime())
 		{
-			int iSequence;
-			int iRandom = GetRandomInt(0,1);
-			if (iRandom == 0)
-				iSequence = animationEntity.LookupSequence("ITEM1_fire");
-			else
-				iSequence = animationEntity.LookupSequence("Melee_Swing");
-			
-			animationEntity.AddGestureSequence(iSequence);
+			animationEntity.RestartGesture(ACT_MP_ATTACK_STAND_MELEE);
 			g_flLastAttackTime[npc.Index] = GetGameTime()+1.0;
 			
 			loco.FaceTowards(vecTargetPos);
@@ -97,15 +90,15 @@ public void Hook_NPCThink(int iEnt)
 		int iSequence = GetEntProp(iEnt, Prop_Send, "m_nSequence");
 		
 		static int sequence_ilde = -1;
-		if (sequence_ilde == -1) sequence_ilde = animationEntity.LookupSequence("Stand_MELEE");
+		if (sequence_ilde == -1) sequence_ilde = animationEntity.SelectWeightedSequence(ACT_MP_STAND_MELEE);
 		
 		static int sequence_air_walk = -1;
-		if (sequence_air_walk == -1) sequence_air_walk = animationEntity.LookupSequence("Airwalk_MELEE");
+		if (sequence_air_walk == -1) sequence_air_walk = animationEntity.SelectWeightedSequence(ACT_MP_JUMP_FLOAT_MELEE);
 		
 		static int sequence_run = -1;
-		if (sequence_run == -1) sequence_run = animationEntity.LookupSequence("run_MELEE");
+		if (sequence_run == -1) sequence_run = animationEntity.SelectWeightedSequence(ACT_MP_RUN_MELEE);
 		
-		Address pModelptr = animationEntity.GetModelPtr();
+		
 		int iPitch = animationEntity.LookupPoseParameter("body_pitch");
 		int iYaw = animationEntity.LookupPoseParameter("body_yaw");
 		float vecDir[3], vecAng[3], vecNPCCenter[3], vecPlayerCenter[3];
@@ -145,7 +138,7 @@ public void Hook_NPCThink(int iEnt)
 			}
 			
 			float vecForward[3], vecRight[3], vecUp[3], vecMotion[3];
-			npc.GetVectors(vecForward, vecRight, vecUp);
+			animationEntity.GetVectors(vecForward, vecRight, vecUp);
 			loco.GetGroundMotionVector(vecMotion);
 			float newMoveX = (vecForward[1] * vecMotion[1]) + (vecForward[0] * vecMotion[0]) +  (vecForward[2] * vecMotion[2]);
 			float newMoveY = (vecRight[1] * vecMotion[1]) + (vecRight[0] * vecMotion[0]) + (vecRight[2] * vecMotion[2]);
@@ -184,12 +177,20 @@ public Action Command_SpawnNPC(int iClient, int iArgs)
 	delete hTrace;
 	
 	CBaseNPC npc = new CBaseNPC();
-	npc.Teleport(endPos);
-	npc.SetModel(NPC_TEST_MODEL);
-	npc.Spawn();
-	npc.SetThinkFunction(Hook_NPCThink);
-	npc.nSkin = 4;
-	//npc.EquipItem("head", NPC_TEST_ITEM);
+	if (npc == INVALID_NPC)
+	{
+		ReplyToCommand(iClient, "Failed to create npc!");
+		return Plugin_Handled;
+	}
+	
+	CBaseCombatCharacter npcEntity = CBaseCombatCharacter(npc.GetEntity());
+	npcEntity.Spawn();
+	npcEntity.Teleport(endPos);
+	npcEntity.SetModel(NPC_TEST_MODEL);
+	
+	SetEntProp(npcEntity.iEnt, Prop_Send, "m_nSkin",  4);
+	EquipItem(npcEntity.iEnt, 0, "head", NPC_TEST_ITEM);
+	SDKHook(npcEntity.iEnt, SDKHook_Think, Hook_NPCThink);
 	
 	npc.flStepSize = 18.0;
 	npc.flGravity = 800.0;
@@ -198,19 +199,23 @@ public Action Command_SpawnNPC(int iClient, int iArgs)
 	npc.flWalkSpeed = 300.0;
 	npc.flRunSpeed = 300.0;
 	npc.flDeathDropHeight = 2000.0;
-
-	npc.iMaxHealth = 9999999;
-	npc.iHealth = 99999999;
 	
-	npc.Run();
+	float vecMins[3] = {-1.0, -1.0, 0.0};
+	float vecMaxs[3] = {1.0, 1.0, 90.0};
+	npc.SetBodyMins(vecMins);
+	npc.SetBodyMaxs(vecMaxs);
 	
-	CBaseAnimatingOverlay animationEntity = CBaseAnimatingOverlay(npc.GetEntity());
-	animationEntity.PlayAnimation("Stand_MELEE");
+	int iSequence = npcEntity.SelectWeightedSequence(ACT_MP_STAND_MELEE);
+	if (iSequence != -1)
+	{
+		npcEntity.ResetSequence(iSequence);
+		SetEntPropFloat(npcEntity.iEnt, Prop_Data, "m_flCycle", 0.0);
+	}
 	
 	g_iSummoner[npc.Index] = GetClientUserId(iClient);
 	g_flLastAttackTime[npc.Index] = 0.0;
-	
 	g_ControlledNPC[iClient] = npc;
+	
 	return Plugin_Handled;
 }
 
@@ -236,7 +241,7 @@ public Action Command_TeleportNPC(int iClient, int iArgs)
 	TR_GetEndPosition(endPos, hTrace);
 	delete hTrace;
 	
-	g_ControlledNPC[iClient].Teleport(endPos);
+	CBaseCombatCharacter(g_ControlledNPC[iClient].GetEntity()).Teleport(endPos);
 	return Plugin_Handled;
 }
 
@@ -311,4 +316,22 @@ public bool TraceRayDontHitEntity(int entity,int mask,any data)
 	if (entity == data) return false;
 	if (entity != 0) return false;
 	return true;
+}
+
+int EquipItem(const int iEntity, const int nSkin, const char[] sAttachement, const char[] sModel)
+{
+	int iItem = CreateEntityByName("prop_dynamic");
+	DispatchKeyValue(iItem, "model", sModel);
+	DispatchKeyValueFloat(iItem, "modelscale", GetEntPropFloat(iEntity, Prop_Send, "m_flModelScale"));
+	DispatchSpawn(iItem);
+	
+	SetEntProp(iItem, Prop_Send, "m_nSkin", nSkin);
+	SetEntProp(iItem, Prop_Send, "m_fEffects", EF_BONEMERGE|EF_PARENT_ANIMATES);
+	SetVariantString("!activator");
+	AcceptEntityInput(iItem, "SetParent", iEntity);
+	
+	SetVariantString(sAttachement);
+	AcceptEntityInput(iItem, "SetParentAttachmentMaintainOffset"); 
+
+	return iItem;
 }

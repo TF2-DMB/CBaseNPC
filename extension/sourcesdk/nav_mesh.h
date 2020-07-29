@@ -2,6 +2,8 @@
 #define NAV_MESH_H
 
 #include "sourcesdk/nav_area.h"
+#include "sourcesdk/baseentity.h"
+#include "sourcesdk/basecombatcharacter.h"
 
 #pragma once
 
@@ -24,36 +26,11 @@ extern CNavMesh *TheNavMesh;
 class CNavMesh
 {
 	public:
-		static void Init()
-		{
-			CNavMesh **ppTheNavMesh;
-			char *addr;
-			if (g_pGameConf->GetMemSig("TheNavMesh", (void **)&addr) && addr)
-			{
-				ppTheNavMesh = reinterpret_cast<CNavMesh **>(addr);
-			}
-			else if (g_pGameConf->GetMemSig("CNavMesh::SnapToGrid", (void **)&addr) && addr)
-			{
-				int offset;
-				if (!g_pGameConf->GetOffset("TheNavMesh", &offset) || !offset)
-				{
-					g_pSM->LogMessage(myself, "Couldn't find offset for TheNavMesh ptr!");
-				}
-				ppTheNavMesh = *reinterpret_cast<CNavMesh ***>(addr + offset);
-			}
-			
-			TheNavMesh = *ppTheNavMesh;
-		};
-		static CNavArea * (CNavMesh::*func_GetNearestNavArea)(const Vector &pos, bool anyZ, float maxDist, bool checkLOS, bool checkGround, int team);
-		CNavArea *GetNearestNavArea(const Vector &pos, bool anyZ = false, float maxDist = 10000.0f, bool checkLOS = false, bool checkGround = true, int team = -2)//-2 stands for TEAM_ANY
-		{
-			return (this->*func_GetNearestNavArea)(pos, anyZ, maxDist, checkLOS, checkGround, team);
-		};
-		static bool (CNavMesh::*func_GetGroundHeight)(const Vector &pos, float *height, Vector *normal);
-		bool GetGroundHeight(const Vector &pos, float *height, Vector *normal = NULL)
-		{
-			return (this->*func_GetGroundHeight)(pos,height,normal);
-		};
+		DECLARE_CLASS_NOBASE(CNavMesh);
+		static bool Init(SourceMod::IGameConfig* config, char* error, size_t maxlength);
+		DECLAREFUNCTION(GetNearestNavArea, CNavArea*, (const Vector& pos, bool anyZ, float maxDist, bool checkLOS, bool checkGround, int team));
+		DECLAREFUNCTION(GetGroundHeight, bool, (const Vector& pos, float* height, Vector* normal));
+	public:
 		bool IsAuthoritative()
 		{
 			return true; //TF2 has simple geometry
