@@ -165,10 +165,11 @@ void CTNavArea::RemoveFromOpenList( void )
 	m_openMarker = 0;
 }
 
-ke::AutoPtr<ke::Thread> CTNavMesh::m_CollectWorker;
-ke::ConditionVariable CTNavMesh::m_CollectEvent;
+std::unique_ptr<std::thread> CTNavMesh::m_CollectWorker;
+std::condition_variable CTNavMesh::m_CollectEvent;
+std::mutex CTNavMesh::m_CollectLock;
 CUtlQueue<CTNavMesh::NavThreadedData*> CTNavMesh::m_QueueCollect;
-ke::Mutex CTNavMesh::m_CBLock;
+std::mutex CTNavMesh::m_CBLock;
 CUtlQueue<CTNavMesh::NavThreadedData*> CTNavMesh::m_QueueCB;
 bool CTNavMesh::m_ThreadTerminate = false;
 int CTNavMesh::m_hookCleanUpID = 0;
@@ -246,23 +247,22 @@ void CTNavMesh::Compute(NavThreadedData* pData)
 {
 	if (!m_CollectWorker)
 	{
-		m_CollectWorker = new ke::Thread([]() -> void {CTNavMesh::RunThread(); }, "CBaseNPC Nav Thread");
-		if (!m_CollectWorker->Succeeded())
+		m_CollectWorker = ke::NewThread("CBaseNPC Nav Thread", []() -> void {CTNavMesh::RunThread();});
+		if (!m_CollectWorker)
 		{
-			m_CollectWorker = nullptr;
 			m_ThreadTerminate = false;
 			return;
 		}
 	}
 
-	ke::AutoLock lock(&m_CollectEvent);
+	std::lock_guard<std::mutex> lock(m_CollectLock);
 	m_QueueCollect.Insert(pData);
-	m_CollectEvent.Notify();
+	m_CollectEvent.notify_one();
 }
 
 void CTNavMesh::RunThread(void)
 {
-	ke::AutoLock lock(&m_CollectEvent);
+	std::unique_lock<std::mutex> lock(m_CollectLock);
 	while (true)
 	{
 		if (m_ThreadTerminate) return;
@@ -272,7 +272,7 @@ void CTNavMesh::RunThread(void)
 			if (m_ThreadTerminate) return;
 
 			NavThreadedData* pData = m_QueueCollect.RemoveAtHead();
-			ke::AutoUnlock unlock(&m_CollectEvent); // Free queue ownership so plugins can continue to add more collect request
+			lock.unlock(); // Free queue ownership so plugins can continue to add more collect request
 
 			if (pData->GetDataType() == NavThreadedData::COLLECTNAV)
 				CTNavMesh::CollectSurroundingAreas_Threaded((CollectNavThreadedData*)pData); // Run the collection
@@ -282,12 +282,12 @@ void CTNavMesh::RunThread(void)
 				compute->m_bSuccess = compute->m_path->ComputeT(compute);
 			}
 
-			ke::AutoLock lock(&m_CBLock);
+			std::lock_guard<std::mutex> lock(m_CBLock);
 			m_QueueCB.Insert(pData);
 		}
 
 		// Unlock and wait for a notification
-		m_CollectEvent.Wait();
+		m_CollectEvent.wait(lock);
 	}
 }
  
@@ -375,7 +375,7 @@ void CTNavMesh::OnFrame(bool simulating)
 	{
 		NavThreadedData* pData = nullptr;
 		{
-			ke::AutoLock lock(&m_CBLock);
+			std::lock_guard<std::mutex> lock(m_CBLock);
 			pData = m_QueueCB.RemoveAtHead();
 		}
 
@@ -421,11 +421,11 @@ void CTNavMesh::KillCollectThread(void)
 	if (m_CollectWorker)
 	{
 		{
-			ke::AutoLock lock(&m_CollectEvent);
+			std::lock_guard<std::mutex> lock(m_CollectLock);
 			m_ThreadTerminate = true;
-			m_CollectEvent.Notify();
+			m_CollectEvent.notify_all();
 		}
-		m_CollectWorker->Join();
+		m_CollectWorker->join();
 		m_CollectWorker = nullptr;
 		m_ThreadTerminate = false;
 	}

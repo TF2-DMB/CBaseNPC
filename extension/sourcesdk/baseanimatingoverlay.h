@@ -204,4 +204,4 @@ inline float CAnimationLayer::GetFadeout(float flCurTime)
 	}
 	return s;
 }
-#endif H_BASEANIMATING_CBASENPC_
+#endif // H_BASEANIMATING_CBASENPC_

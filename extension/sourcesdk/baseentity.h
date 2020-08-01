@@ -26,7 +26,7 @@ enum InvalidatePhysicsBits_t
 
 #define DECLAREVAR(type, var) \
 	static int(offset_##var); \
-	inline type* ##var() const \
+	inline type* var() const \
 	{ \
 		return (type*)((uint8_t*)this + offset_##var); \
 	} 
@@ -73,7 +73,7 @@ offset_##var = offset_data_info.actual_offset
 #define DECLAREFUNCTION_virtual(name, returntype, parameters) \
 public: \
 	returntype name parameters; \
-	static int(ThisClass::offset_func_##name); \
+	static int(offset_func_##name); \
 	typedef returntype (ThisClass::*func_##name) parameters
 
 #define DECLAREFUNCTION(name, returntype, parameters) \
@@ -83,7 +83,7 @@ private: \
 	static returntype (ThisClass::*func_##name) parameters
 
 #define DEFINEFUNCTION_virtual_void(classname, name, parameters, paramscall) \
-int (classname::classname::offset_func_##name) = 0; \
+int (classname::offset_func_##name) = 0; \
 void classname::name parameters \
 { \
 	classname::func_##name func = (*reinterpret_cast<classname::func_##name **>(this))[this->offset_func_##name]; \
@@ -91,7 +91,7 @@ void classname::name parameters \
 }
 
 #define DEFINEFUNCTION_virtual(classname, name, returntype, parameters, paramscall) \
-int (classname::classname::offset_func_##name) = 0; \
+int (classname::offset_func_##name) = 0; \
 returntype classname::name parameters \
 { \
 	classname::func_##name func = (*reinterpret_cast<classname::func_##name **>(this))[this->offset_func_##name]; \
@@ -172,7 +172,7 @@ public:
 
 	int GetTeamNumber(void) const;
 
-	static int(CBaseEntityHack::offset_UpdateOnRemove);
+	static int(offset_UpdateOnRemove);
 
 private:
 	// Members

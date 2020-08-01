@@ -36,7 +36,7 @@ public:
 
 	float	GetPoseParameter(const char* name);
 
-	static int (CBaseAnimatingHack::offset_HandleAnimEvent);
+	static int (offset_HandleAnimEvent);
 
 	DECLAREFUNCTION(SequenceDuration, float, (CStudioHdr* studio, int sequence));
 	DECLAREFUNCTION(ResetSequence, void, (int sequence));

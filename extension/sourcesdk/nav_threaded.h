@@ -7,9 +7,14 @@
 #include <NextBot/NextBotInterface.h>
 #include <NextBot/NextBotBodyInterface.h>
 #include <NextBot/NextBotGroundLocomotion.h>
-#include <amtl/am-thread-utils.h>
+#include <condition_variable>
+#include <memory>
+#include <mutex>
+#include <thread>
+#include <amtl/am-thread.h>
 #include <tier1/utlvector.h>
 #include <tier1/utlqueue.h>
+
 
 #pragma once
 
@@ -286,10 +291,11 @@ public :
 	static void KillCollectThread(void);
 
 private:
-	static ke::AutoPtr<ke::Thread> m_CollectWorker;
-	static ke::ConditionVariable m_CollectEvent;
+	static std::unique_ptr<std::thread> m_CollectWorker;
+	static std::condition_variable m_CollectEvent;
+	static std::mutex m_CollectLock;
 	static CUtlQueue<NavThreadedData*> m_QueueCollect;
-	static ke::Mutex m_CBLock;
+	static std::mutex m_CBLock;
 	static CUtlQueue<NavThreadedData*> m_QueueCB;
 	static bool m_ThreadTerminate;
 	static int m_hookCleanUpID;

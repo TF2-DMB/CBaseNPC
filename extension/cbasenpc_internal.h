@@ -80,25 +80,25 @@ public: \
 	virtual rettype function(pa1 p1, pa2 p2, pa3 p3, pa4 p4, pa5 p5) attrib
 
 #define NPC_INTERFACE_DECLARE_HANDLER(classname, iface, function, attrib, rettype, params, paramscall) \
-rettype classname##_Internal::##function##_internal params attrib \
+rettype classname##_Internal:: function##_internal params attrib \
 { \
 	RETURN_META_VALUE(MRES_SUPERCEDE, m_pExternal##iface##Hook->function paramscall); \
 } \
-rettype classname##_Internal::##function params attrib \
+rettype classname##_Internal:: function params attrib \
 { \
-	return SH_CALL(m_pReal##iface##Interface, &##iface::##function) paramscall; \
+	return SH_CALL(m_pReal##iface##Interface, & iface::function) paramscall; \
 }
 
 
 #define NPC_INTERFACE_DECLARE_HANDLER_void(classname, iface, function, attrib, params, paramscall) \
-void classname##_Internal::##function##_internal params attrib \
+void classname##_Internal:: function##_internal params attrib \
 { \
 	m_pExternal##iface##Hook->function paramscall; \
 	RETURN_META(MRES_SUPERCEDE); \
 } \
-void classname##_Internal::##function params attrib \
+void classname##_Internal:: function params attrib \
 { \
-	SH_CALL(m_pReal##iface##Interface, &##iface::##function) paramscall; \
+	SH_CALL(m_pReal##iface##Interface, & iface::function) paramscall; \
 	return; \
 } \
 
@@ -190,8 +190,7 @@ class CBaseNPC_Locomotion : public NextBotGroundLocomotion_Hook
 {
 public:
 	CBaseNPC_Locomotion(NextBotGroundLocomotion* mover) : 
-		m_flFrictionSideways(3.0),
-		m_flFrictionForward(0.0),
+		NextBotGroundLocomotion_Hook(mover),
 		m_flJumpHeight(0.0),
 		m_flStepSize(18.0),
 		m_flGravity(800.0),
@@ -199,7 +198,8 @@ public:
 		m_flDeathDropHeight(1000.0),
 		m_flWalkSpeed(400.0),
 		m_flRunSpeed(400.0),
-		NextBotGroundLocomotion_Hook(mover)
+		m_flFrictionForward(0.0),
+		m_flFrictionSideways(3.0)
 	{
 	};
 
