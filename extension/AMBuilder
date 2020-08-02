@@ -20,6 +20,8 @@ sourceFiles = [
   'sourcesdk/baseentity.cpp',
   'sourcesdk/baseanimating.cpp',
   'sourcesdk/baseanimatingoverlay.cpp',
+  'sourcesdk/basecombatcharacter.cpp',
+  'sourcesdk/servernetworkproperty.cpp',
   'unsorted_class.cpp',
 ]
 
