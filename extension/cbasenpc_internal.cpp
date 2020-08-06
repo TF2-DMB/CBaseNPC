@@ -50,6 +50,7 @@ CBaseNPC::CBaseNPC()
 	CBaseEntityHack* pBoss = (CBaseEntityHack*)servertools->CreateEntityByName("base_boss");
 	if (pBoss)
 	{
+		m_pBot = pBoss->MyNextBotPointer();
 		SetEntity((CBaseEntity *)pBoss);
 		servertools->SetKeyValue((CBaseEntity*)pBoss, "health", "2147483647");
 
@@ -65,7 +66,6 @@ CBaseNPC::CBaseNPC()
 
 CBaseNPC::~CBaseNPC()
 {
-	g_pSM->LogMessage(myself, "CBaseNPC dtor called!");
 	if (m_mover)
 	{
 		delete m_mover;
@@ -74,7 +74,6 @@ CBaseNPC::~CBaseNPC()
 	{
 		delete m_body;
 	}
-	g_pSM->LogMessage(myself, "CBaseNPC dtor ended!");
 }
 
 // ============================================

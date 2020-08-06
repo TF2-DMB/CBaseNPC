@@ -97,6 +97,7 @@ bool CBaseNPCExt::SDK_OnLoad(char *error, size_t maxlength, bool late)
 
 	CTNavMesh::Init();
 	SetDefLessFunc(g_EntitiesHooks);
+
 	return true;
 }
 
@@ -159,6 +160,7 @@ void CBaseNPCExt::SDK_OnAllLoaded()
 	
 	g_pEntityList = (CBaseEntityList *)gamehelpers->GetGlobalEntityList();
 	CTNavMesh::RefreshHooks();
+	CBaseNPC npc;
 }
 
 bool CBaseNPCExt::QueryRunning(char *error, size_t maxlength)

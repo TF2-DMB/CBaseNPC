@@ -24,15 +24,48 @@ enum InvalidatePhysicsBits_t
 	ANIMATION_CHANGED = 0x8,
 };
 
+#define VCALLPREPARE(offset) \
+ThisClass* theThis = this; \
+void** this_ptr = *(void***)&theThis; \
+void** vtable = *(void***)this; \
+void* func = vtable[offset]
+
+#ifdef WIN32
+#define VCALLSETUP(returntype, params) \
+union \
+{ \
+	returntype(ThisClass::*mfpnew) params; \
+	void* addr; \
+} u; \
+u.addr = func;
+
+#else
+#define VCALLSETUP(returntype, paramscall) \
+union \
+{ \
+	returntype(ThisClass::*mfpnew) paramscall; \
+	struct { \
+		void* addr; \
+		intptr_t adjustor; \
+	} s; \
+} u; \
+u.s.addr = func; \
+u.s.adjustor = 0; \
+
+#endif
+
+#define VCALLEND(returntype, paramscall) \
+(returntype)(reinterpret_cast<ThisClass*>(this_ptr)->*u.mfpnew)paramscall;
+
 #define DECLAREVAR(type, var) \
-	static int(offset_##var); \
+	static int32_t(offset_##var); \
 	inline type* var() const \
 	{ \
 		return (type*)((uint8_t*)this + offset_##var); \
 	} 
 
 #define DEFINEVAR(classname, var) \
-int (classname::classname::offset_##var) = 0
+int32_t (classname::classname::offset_##var) = 0
 
 #define BEGIN_VAR(classentity) \
 SourceMod::sm_sendprop_info_t offset_send_info; \
@@ -73,8 +106,7 @@ offset_##var = offset_data_info.actual_offset
 #define DECLAREFUNCTION_virtual(name, returntype, parameters) \
 public: \
 	returntype name parameters; \
-	static int(offset_func_##name); \
-	typedef returntype (ThisClass::*func_##name) parameters
+	static int(offset_func_##name)
 
 #define DECLAREFUNCTION(name, returntype, parameters) \
 public: \
@@ -86,16 +118,18 @@ private: \
 int (classname::offset_func_##name) = 0; \
 void classname::name parameters \
 { \
-	classname::func_##name func = (*reinterpret_cast<classname::func_##name **>(this))[this->offset_func_##name]; \
-	(this->*func) paramscall; \
+	VCALLPREPARE(this->offset_func_##name); \
+	VCALLSETUP(void, parameters); \
+	VCALLEND(void, paramscall); \
 }
 
 #define DEFINEFUNCTION_virtual(classname, name, returntype, parameters, paramscall) \
 int (classname::offset_func_##name) = 0; \
 returntype classname::name parameters \
 { \
-	classname::func_##name func = (*reinterpret_cast<classname::func_##name **>(this))[this->offset_func_##name]; \
-	return (this->*func) paramscall; \
+	VCALLPREPARE(this->offset_func_##name); \
+	VCALLSETUP(returntype, parameters); \
+	return VCALLEND(returntype, paramscall); \
 }
 
 #define DEFINEFUNCTION_void(classname, name, parameters, paramscall) \
