@@ -82,10 +82,12 @@ public: \
 #define NPC_INTERFACE_DECLARE_HANDLER(classname, iface, function, attrib, rettype, params, paramscall) \
 rettype classname##_Internal:: function##_internal params attrib \
 { \
+	VPROF_BUDGET( #iface "::" #function "[detour]", "CBaseNPC-Detour" ); \
 	RETURN_META_VALUE(MRES_SUPERCEDE, m_pExternal##iface##Hook->function paramscall); \
 } \
 rettype classname##_Internal:: function params attrib \
 { \
+	VPROF_BUDGET( #iface "::" #function "[gamecall]", "CBaseNPC-Detour" ); \
 	return SH_CALL(m_pReal##iface##Interface, & iface::function) paramscall; \
 }
 
@@ -93,11 +95,13 @@ rettype classname##_Internal:: function params attrib \
 #define NPC_INTERFACE_DECLARE_HANDLER_void(classname, iface, function, attrib, params, paramscall) \
 void classname##_Internal:: function##_internal params attrib \
 { \
+	VPROF_BUDGET( #iface "::" #function "[detour]", "CBaseNPC-Detour" ); \
 	m_pExternal##iface##Hook->function paramscall; \
 	RETURN_META(MRES_SUPERCEDE); \
 } \
 void classname##_Internal:: function params attrib \
 { \
+	VPROF_BUDGET( #iface "::" #function "[gamecall]", "CBaseNPC-Detour" ); \
 	SH_CALL(m_pReal##iface##Interface, & iface::function) paramscall; \
 	return; \
 } \
@@ -110,7 +114,6 @@ NPC_DECLARE_INTERFACE(INextBotComponent)
 {
 	NPC_SETUP_HOOK(INextBotComponent);
 	NPC_INTERFACE_HOOK0(Update, void, SH_NOATTRIB);
-	NPC_INTERFACE_HOOK0(GetBot, INextBot*, const);
 };
 
 NPC_DECLARE_INTERFACE_INHERIT(ILocomotion, INextBotComponent)

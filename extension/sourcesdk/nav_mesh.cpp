@@ -1,7 +1,7 @@
 #include "extension.h"
-#include "shareddefs.h"
-#include "enginecallback.h"
-#include "util_shared.h"
+#include <shareddefs.h>
+#include <enginecallback.h>
+#include <util_shared.h>
 #include "sourcesdk/nav.h"
 #include "sourcesdk/nav_area.h"
 #include "sourcesdk/nav_mesh.h"

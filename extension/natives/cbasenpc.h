@@ -35,7 +35,7 @@ CEXTNPCNATIVE(GetEntity)
 	{
 		return -1;
 	}
-	return gamehelpers->EntityToReference(ent);
+	return gamehelpers->EntityToBCompatRef(ent);
 }
 
 cell_t CBaseNPC_CBaseNPC(IPluginContext * pContext, const cell_t * params)

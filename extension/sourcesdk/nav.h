@@ -13,7 +13,6 @@
 #define _NAV_H_
 
 #include "extension.h"
-#include "unsorted_class.h"
 
 class CFuncElevator;
 class CNavArea;

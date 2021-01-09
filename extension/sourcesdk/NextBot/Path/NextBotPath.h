@@ -8,7 +8,7 @@
 
 #include <extension.h>
 
-#include "unsorted_class.h"
+#include "sourcesdk/tracefilter_simple.h"
 #include "sourcesdk/nav_mesh.h"
 #include "sourcesdk/nav_threaded.h"
 #include "sourcesdk/basecombatcharacter.h"
@@ -17,6 +17,8 @@
 #include "NextBotLocomotionInterface.h"
 #include "NextBotDebug.h"
 #include "NextBotBodyInterface.h"
+
+#include <tier0/vprof.h>
 
 #define PATH_NO_LENGTH_LIMIT 0.0f				// non-default argument value for Path::Compute()
 #define PATH_TRUNCATE_INCOMPLETE_PATH false		// non-default argument value for Path::Compute()
@@ -164,7 +166,7 @@ public:
 	 */
 	bool Compute(INextBot *bot, CBaseCombatCharacterHack* subject, IPathCost &costFunc, float maxPathLength = 0.0f, bool includeGoalIfPathFails = true)
 	{
-		////VPROF_BUDGET( "Path::Compute(subject)", "NextBot" );
+		VPROF_BUDGET( "Path::Compute(subject)", "NextBot" );
 		Invalidate();
 
 		m_subject = subject;
@@ -284,6 +286,7 @@ public:
 	 */
 	bool Compute( INextBot *bot, Vector &goal, IPathCost &costFunc, float maxPathLength = 0.0f, bool includeGoalIfPathFails = true )
 	{
+		VPROF_BUDGET( "Path::Compute(pos)", "NextBot" );
 		Invalidate();
 		
 		const Vector &start = bot->GetPosition();
@@ -406,7 +409,7 @@ public:
 	 */
 	virtual bool ComputeWithOpenGoal( INextBot *bot, const IPathCost &costFunc, const IPathOpenGoalSelector &goalSelector, float maxSearchRadius = 0.0f )
 	{
-		//VPROF_BUDGET( "ComputeWithOpenGoal", "NextBot" );
+		VPROF_BUDGET( "ComputeWithOpenGoal", "NextBot" );
 
 		int teamID = bot->GetEntity()->GetTeamNumber();
 
@@ -521,7 +524,7 @@ public:
 	 */
 	void AssemblePrecomputedPath( INextBot *bot, const Vector &goal, CNavArea *endArea )
 	{
-		//VPROF_BUDGET( "AssemblePrecomputedPath", "NextBot" );
+		VPROF_BUDGET( "AssemblePrecomputedPath", "NextBot" );
 
 		const Vector &start = bot->GetPosition();
 

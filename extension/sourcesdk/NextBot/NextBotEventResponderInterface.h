@@ -11,7 +11,6 @@
 #include "util_shared.h"
 #include "isaverestore.h"
 #include "AI_Criteria.h"
-#include "extension.h"
 #include "utlvector.h"
 
 class CBaseCombatWeapon;

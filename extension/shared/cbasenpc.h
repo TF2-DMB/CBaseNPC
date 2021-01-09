@@ -45,7 +45,7 @@ public:
 	};
 
 	INTERFACE_HOOK_void(Update, (), (), SH_NOATTRIB);
-	INTERFACE_HOOK(GetBot, INextBot*, (), (), const);
+	inline INextBot* GetBot() { return m_pRealInterface->GetBot(); };
 	inline float GetUpdateInterval() { return m_pRealInterface->GetUpdateInterval(); };
 
 	void* m_pInternalHook;

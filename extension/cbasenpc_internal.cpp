@@ -8,7 +8,6 @@
 
 // INextBotEventResponder
 SH_DECL_HOOK0_void(INextBotComponent, Update, SH_NOATTRIB, 0);
-SH_DECL_HOOK0(INextBotComponent, GetBot, const, 0, INextBot*);
 
 // ILocomotion
 SH_DECL_HOOK1_void(ILocomotion, FaceTowards, SH_NOATTRIB, 0, Vector const&);
@@ -82,6 +81,8 @@ CBaseNPC::~CBaseNPC()
 
 void CBaseNPC_Locomotion::Update()
 {
+	VPROF_ENTER_SCOPE("CBaseNPC_Locomotion::Update");
+
 	CBaseCombatCharacterHack* entity = GetBot()->GetEntity();
 	entity->UpdateLastKnownArea();
 
@@ -119,12 +120,13 @@ void CBaseNPC_Locomotion::Update()
 			}
 		}
 	}
-
+	VPROF_EXIT_SCOPE();
 	INextBotComponent_Hook::Update();
 }
 
 void CBaseNPC_Locomotion::FaceTowards(Vector const& vecGoal)
 {
+	VPROF_BUDGET("CBaseNPC_Locomotion::FaceTowards", "CBaseNPC" );
 	const float deltaT = GetUpdateInterval();
 
 	INextBot* bot = GetBot();
@@ -165,6 +167,7 @@ bool CBaseNPC_Locomotion::IsAbleToClimb() const
 
 bool CBaseNPC_Locomotion::ClimbUpToLedge(const Vector& vecGoal, const Vector& vecForward, const CBaseEntity* pEntity)
 {
+	VPROF_BUDGET("CBaseNPC_Locomotion::ClimbUpToLedge", "CBaseNPC" );
 	Vector vecMyPos = GetBot()->GetPosition();
 	vecMyPos.z += m_flStepSize;
 
@@ -248,6 +251,7 @@ bool CBaseNPC_Locomotion::ShouldCollideWith(const CBaseEntity* pEntity) const
 
 bool CBaseNPC_Locomotion::IsEntityTraversable(CBaseEntity* pEntity, ILocomotion::TraverseWhenType when) const
 {
+	VPROF_BUDGET("CBaseNPC_Locomotion::IsEntityTraversable", "CBaseNPC" );
 	CBaseEntityHack* ent = (CBaseEntityHack*)pEntity;
 	if (ent->MyCombatCharacterPointer()) return true;
 	return false;
@@ -274,10 +278,11 @@ float CBaseNPC_Locomotion::GetMaxYawRate() const
 
 void CBaseNPC_Body::Update()
 {
+	VPROF_ENTER_SCOPE("CBaseNPC_Body::Update");
 	CBaseCombatCharacterHack* entity = GetBot()->GetEntity();
 	entity->DispatchAnimEvents(entity);
 	entity->StudioFrameAdvance();
-
+	VPROF_EXIT_SCOPE();
 	INextBotComponent_Hook::Update();
 }
 
@@ -332,11 +337,9 @@ NPC_BEGIN_HOOK(INextBotComponent)
 {
 	NPC_COPY_FACE(INextBotComponent);
 	NPC_ADD_HOOK(INextBotComponent, Update);
-	NPC_ADD_HOOK(INextBotComponent, GetBot);
 }
 
 NPC_INTERFACE_DECLARE_HANDLER_void(INextBotComponent_Hook, INextBotComponent, Update, SH_NOATTRIB, (), ());
-NPC_INTERFACE_DECLARE_HANDLER(INextBotComponent_Hook, INextBotComponent, GetBot, const, INextBot*, (), ());
 
 NPC_BEGIN_HOOK(ILocomotion)
 {

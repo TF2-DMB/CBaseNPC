@@ -61,15 +61,9 @@ bool CBaseNPCExt::SDK_OnLoad(char *error, size_t maxlength, bool late)
 		|| !CBaseAnimatingOverlayHack::Init(g_pGameConf, error, maxlength)
 		|| !CNavMesh::Init(g_pGameConf, error, maxlength)
 		|| !CBaseCombatCharacterHack::Init(g_pGameConf, error, maxlength)
+		|| !CTraceFilterSimpleHack::Init(g_pGameConf, error, maxlength)
 		)
 	{
-		return false;
-	}
-	
-	if (g_pGameConf->GetMemSig("CTraceFilterSimple::ShouldHitEntity", reinterpret_cast<void **>(&CTraceFilterSimpleHack::func_ShouldHitEntity))) {
-		g_pSM->LogMessage(myself, "Got function: 0x%08x CTraceFilterSimple::ShouldHitEntity", *reinterpret_cast<uintptr_t *>(&CTraceFilterSimpleHack::func_ShouldHitEntity));
-	} else {
-		g_pSM->LogMessage(myself, "Couldn't locate function CTraceFilterSimple::ShouldHitEntity!");
 		return false;
 	}
 

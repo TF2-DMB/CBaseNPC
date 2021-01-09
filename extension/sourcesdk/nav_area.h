@@ -4,8 +4,8 @@
 enum { MAX_NAV_TEAMS = 2 };
 
 #include "tier1/utlvector.h"
-#include "sourcesdk/nav.h"
-#include "sourcesdk/nav_ladder.h"
+#include "nav.h"
+#include "nav_ladder.h"
 
 #if !defined(_X360)
 typedef CUtlVectorUltraConservativeAllocator CNavVectorAllocator;

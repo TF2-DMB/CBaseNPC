@@ -135,7 +135,7 @@
 			{
 				"library"		"server"
 				"windows"		"\x55\x8B\xEC\x53\x8B\x5D\x08\x56\x8B\xF3\x83\xE6\x04"
-				"linux"			"@"
+				"linux"			"@_ZN11CBaseEntity26InvalidatePhysicsRecursiveEi"
 			}
 			"CBaseAnimating::SetPoseParameter"
 			{

@@ -11,9 +11,9 @@ sourceFiles = [
   'CDetour/detours.cpp',
   'asm/asm.c',
   'helpers.cpp',
-  'NextBot/Path/NextBotPath.cpp',
-  'NextBot/Path/NextBotPathFollow.cpp',
-  'NextBot/Path/NextBotChasePath.cpp',
+  'sourcesdk/NextBot/Path/NextBotPath.cpp',
+  'sourcesdk/NextBot/Path/NextBotPathFollow.cpp',
+  'sourcesdk/NextBot/Path/NextBotChasePath.cpp',
   'sourcesdk/nav_area.cpp',
   'sourcesdk/nav_mesh.cpp',
   'sourcesdk/nav_threaded.cpp',
@@ -22,7 +22,7 @@ sourceFiles = [
   'sourcesdk/baseanimatingoverlay.cpp',
   'sourcesdk/basecombatcharacter.cpp',
   'sourcesdk/servernetworkproperty.cpp',
-  'unsorted_class.cpp',
+  'sourcesdk/tracefilter_simple.cpp',
 ]
 
 ###############
@@ -31,8 +31,8 @@ sourceFiles = [
 
 project = Extension.HL2Project(builder, projectName + '.ext')
 project.compiler.cxxincludes += [os.path.join(builder.currentSourcePath, 'sourcesdk')]
-project.compiler.cxxincludes += [os.path.join(builder.currentSourcePath, 'NextBot')]
-project.compiler.cxxincludes += [os.path.join(builder.currentSourcePath, 'NextBot/Path')]
+project.compiler.cxxincludes += [os.path.join(builder.currentSourcePath, 'sourcesdk/NextBot')]
+project.compiler.cxxincludes += [os.path.join(builder.currentSourcePath, 'sourcesdk/NextBot/Path')]
 project.compiler.cxxincludes += [os.path.join(builder.currentSourcePath, 'natives')]
 project.compiler.cxxincludes += [os.path.join(builder.currentSourcePath, 'shared')]
 project.compiler.cxxincludes += [os.path.join(builder.currentSourcePath, '')]

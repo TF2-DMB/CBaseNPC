@@ -282,8 +282,10 @@ void CTNavMesh::RunThread(void)
 				compute->m_bSuccess = compute->m_path->ComputeT(compute);
 			}
 
-			std::lock_guard<std::mutex> lock(m_CBLock);
+			std::lock_guard<std::mutex> lock2(m_CBLock);
 			m_QueueCB.Insert(pData);
+			
+			lock.lock();
 		}
 
 		// Unlock and wait for a notification
