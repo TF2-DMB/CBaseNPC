@@ -46,14 +46,6 @@ public:
 	virtual CNavArea *operator() ( CNavArea *currentGoal, CNavArea *newArea ) const = 0;
 };
 
-class NextBotTraceFilterIgnoreActors : public CTraceFilterSimpleHack
-{
-public:
-	NextBotTraceFilterIgnoreActors( const IHandleEntity *passentity, int collisionGroup ) : CTraceFilterSimpleHack( passentity, collisionGroup )
-	{
-	}
-};
-
 //---------------------------------------------------------------------------------------------------------------
 /**
  * A Path through the world.

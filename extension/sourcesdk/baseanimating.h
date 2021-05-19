@@ -10,8 +10,6 @@ class COutputEvent;
 class CBaseAnimatingHack : public CBaseEntityHack
 {
 public:
-	DECLARE_CLASS_NOBASE(CBaseAnimatingHack);
-
 	static bool Init(SourceMod::IGameConfig* config, char* error, size_t maxlength);
 
 	float GetModelScale() const;
@@ -38,14 +36,31 @@ public:
 
 	static int (offset_HandleAnimEvent);
 
-	DECLAREFUNCTION(SequenceDuration, float, (CStudioHdr* studio, int sequence));
-	DECLAREFUNCTION(ResetSequence, void, (int sequence));
-	DECLAREFUNCTION_virtual(StudioFrameAdvance, void, ());
-	DECLAREFUNCTION_virtual(DispatchAnimEvents, void, (CBaseAnimatingHack* animating));
-	DECLAREFUNCTION(GetAttachment, bool, (int attachment, Vector& absOrigin, QAngle& absAngles));
-	DECLAREFUNCTION(LookupPoseParameter, int, (CStudioHdr* studio, const char* name));
-	DECLAREFUNCTION(GetPoseParameter, float, (int parameter));
-	DECLAREFUNCTION(SetPoseParameter, float, (CStudioHdr* studio, int parameter, float value));
+	static VCall<void> vStudioFrameAdvance;
+	void StudioFrameAdvance(void);
+
+	static VCall<void, CBaseAnimatingHack*> vDispatchAnimEvents;
+	void DispatchAnimEvents(CBaseAnimatingHack*);
+
+	static MCall<float, CStudioHdr*, int> mSequenceDuration;
+	float SequenceDuration(CStudioHdr*, int);
+
+	static MCall<void, int> mResetSequence;
+	void ResetSequence(int);
+
+	static VCall<bool, int, matrix3x4_t> vGetAttachment;
+	bool GetAttachment(int, matrix3x4_t&);
+	bool GetAttachment(const char*, Vector &, QAngle &);
+	bool GetAttachment(int, Vector&, QAngle&);
+
+	static MCall<int, CStudioHdr*, const char*> mLookupPoseParameter;
+	int LookupPoseParameter(CStudioHdr*, const char*);
+
+	static MCall<float, int> mGetPoseParameter;
+	float GetPoseParameter(int);
+
+	static MCall<float, CStudioHdr*, int, float> mSetPoseParameter;
+	float SetPoseParameter(CStudioHdr*, int, float);
 
 	// Members
 	DECLAREVAR(COutputEvent, m_OnIgnite);

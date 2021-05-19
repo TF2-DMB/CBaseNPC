@@ -8,6 +8,16 @@
 
 #include "NextBotPath.h"
 
+extern ConVar* NextBotSpeedLookAheadRange;
+extern ConVar* NextBotGoalLookAheadRange;
+extern ConVar* NextBotLadderAlignRange;
+
+extern ConVar* NextBotAllowAvoiding;
+extern ConVar* NextBotAllowClimbing;
+extern ConVar* NextBotAllowGapJumping;
+
+extern ConVar* NextBotDebugClimbing;
+
 class INextBot;
 class ILocomotion;
 

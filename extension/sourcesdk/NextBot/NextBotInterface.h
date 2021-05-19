@@ -4,8 +4,9 @@
 #pragma once
 
 #include "NextBotEventResponderInterface.h"
-#include "enginecallback.h"
-#include "util_shared.h"
+#include "sourcesdk/tracefilter_simple.h"
+#include <enginecallback.h>
+#include <util_shared.h>
 
 class INextBotComponent;
 class IIntention;
@@ -17,6 +18,16 @@ class Path;
 class NextBotCombatCharacter;
 class CBaseEntityHack;
 class CBaseCombatCharacterHack;
+
+bool IgnoreActorsTraceFilterFunction( IHandleEntity *pServerEntity, int contentsMask );
+
+class NextBotTraceFilterIgnoreActors : public CTraceFilterSimpleHack
+{
+public:
+	NextBotTraceFilterIgnoreActors(const IHandleEntity *passentity, int collisionGroup) : CTraceFilterSimpleHack(passentity, collisionGroup, IgnoreActorsTraceFilterFunction)
+	{
+	}
+};
 
 class INextBot : public INextBotEventResponder
 {
@@ -75,7 +86,7 @@ public:
 	
 	virtual bool IsImmobile() const = 0;
 	virtual float GetImmobileDuration() const = 0;
-	virtual void ClearImmobileStatus();
+	virtual void ClearImmobileStatus() = 0;
 	virtual float GetImmobileSpeedThreshold() const = 0;
 	
 	virtual PathFollower *GetCurrentPath() const = 0;
@@ -97,21 +108,13 @@ public:
 	virtual bool IsDebugFilterMatch(const char *filter) const = 0;
 	virtual void DisplayDebugText(const char *text) const = 0;
 	
-	bool BeginUpdate() { return false; }
-	void EndUpdate() {}
-	
-	void DebugConColorMessage(NextBotDebugType type, const Color& color, const char *fmt, ...) {}
-	
-	void GetDebugHistory(unsigned int mask, CUtlVector<const NextBotDebugLineType *> *dst) const {}
-	void ResetDebugHistory() {}
-	
+	friend class INextBotComponent;
 	void RegisterComponent(INextBotComponent *component);
-	void UnRegisterComponent(INextBotComponent *component);
 	
-private:
+public:
 	void UpdateImmobileStatus() {}
 	
-	INextBotComponent *m_ComponentList;              // +0x04
+	INextBotComponent *m_componentList;              // +0x04
 	PathFollower *m_CurrentPath;                     // +0x08
 	int m_iManagerIndex;                             // +0x0c
 	bool m_bScheduledForNextTick;                    // +0x10

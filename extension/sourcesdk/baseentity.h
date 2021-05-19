@@ -7,55 +7,24 @@
 #include <IGameConfigs.h>
 #include <iserverentity.h>
 #include <itoolentity.h>
+#include <shareddefs.h>
+#include "helpers.h"
 #include "servernetworkproperty.h"
 
 class INextBot;
+
+enum InvalidatePhysicsBits_t
+{
+	POSITION_CHANGED	= 0x1,
+	ANGLES_CHANGED		= 0x2,
+	VELOCITY_CHANGED	= 0x4,
+	ANIMATION_CHANGED	= 0x8,
+};
 
 extern float k_flMaxEntityEulerAngle;
 extern float k_flMaxEntityPosCoord;
 extern CGlobalVars* gpGlobals;
 extern IServerTools* servertools;
-
-enum InvalidatePhysicsBits_t
-{
-	POSITION_CHANGED = 0x1,
-	ANGLES_CHANGED = 0x2,
-	VELOCITY_CHANGED = 0x4,
-	ANIMATION_CHANGED = 0x8,
-};
-
-#define VCALLPREPARE(offset) \
-ThisClass* theThis = this; \
-void** this_ptr = *(void***)&theThis; \
-void** vtable = *(void***)this; \
-void* func = vtable[offset]
-
-#ifdef WIN32
-#define VCALLSETUP(returntype, params) \
-union \
-{ \
-	returntype(ThisClass::*mfpnew) params; \
-	void* addr; \
-} u; \
-u.addr = func;
-
-#else
-#define VCALLSETUP(returntype, paramscall) \
-union \
-{ \
-	returntype(ThisClass::*mfpnew) paramscall; \
-	struct { \
-		void* addr; \
-		intptr_t adjustor; \
-	} s; \
-} u; \
-u.s.addr = func; \
-u.s.adjustor = 0; \
-
-#endif
-
-#define VCALLEND(returntype, paramscall) \
-(returntype)(reinterpret_cast<ThisClass*>(this_ptr)->*u.mfpnew)paramscall;
 
 #define DECLAREVAR(type, var) \
 	static int32_t(offset_##var); \
@@ -103,94 +72,132 @@ offset_##var = offset_data_info.actual_offset
 	*var = value; \
 	this->NetworkStateChanged(var);
 
-#define DECLAREFUNCTION_virtual(name, returntype, parameters) \
-public: \
-	returntype name parameters; \
-	static int(offset_func_##name)
+class CBaseEntityHack;
 
-#define DECLAREFUNCTION(name, returntype, parameters) \
-public: \
-	returntype name parameters; \
-private: \
-	static returntype (ThisClass::*func_##name) parameters
+#define SetThink( a ) ThinkSet( static_cast <void (CBaseEntityHack::*)(void)> (a), 0, nullptr )
+#define SetContextThink( a, b, context ) ThinkSet( static_cast <void (CBaseEntityHack::*)(void)> (a), (b), context )
 
-#define DEFINEFUNCTION_virtual_void(classname, name, parameters, paramscall) \
-int (classname::offset_func_##name) = 0; \
-void classname::name parameters \
-{ \
-	VCALLPREPARE(this->offset_func_##name); \
-	VCALLSETUP(void, parameters); \
-	VCALLEND(void, paramscall); \
-}
-
-#define DEFINEFUNCTION_virtual(classname, name, returntype, parameters, paramscall) \
-int (classname::offset_func_##name) = 0; \
-returntype classname::name parameters \
-{ \
-	VCALLPREPARE(this->offset_func_##name); \
-	VCALLSETUP(returntype, parameters); \
-	return VCALLEND(returntype, paramscall); \
-}
-
-#define DEFINEFUNCTION_void(classname, name, parameters, paramscall) \
-void (classname::*classname::func_##name) parameters = nullptr; \
-void classname::name parameters \
-{ \
-	(this->*func_##name) paramscall; \
-}
-
-#define DEFINEFUNCTION(classname, name, returntype, parameters, paramscall) \
-returntype (classname::*classname::func_##name) parameters = nullptr; \
-returntype classname::name parameters \
-{ \
-	return (this->*func_##name) paramscall; \
-}
-
-#define FINDVTABLE(config, name, namestring) \
-if (!config->GetOffset(namestring, &ThisClass::offset_func_##name)) \
-{ \
-	snprintf(error, maxlength, "Failed to retrieve " namestring " offset!"); \
-	return false; \
-} \
-//ThisClass::offset_func_##name *= 4
-
-#define FINDSIG(config, name, namestring) \
-if (!config->GetMemSig(namestring, reinterpret_cast<void**>(&ThisClass::func_##name))) \
-{ \
-	snprintf(error, maxlength, "Couldn't locate function " namestring "!"); \
-	return false; \
-}
+typedef void(CBaseEntityHack::*HBASEPTR)(void);
 
 class CBaseCombatCharacterHack;
-class CBaseEntityHack : public IServerEntity
+class CBaseAnimatingHack;
+
+struct thinkfunc_t
+{
+	HBASEPTR	m_pfnThink;
+	string_t	m_iszContext;
+	int			m_nNextThinkTick;
+	int			m_nLastThinkTick;
+
+	DECLARE_SIMPLE_DATADESC();
+};
+
+// For seamless conversion from CBaseEntityHack to CBaseEntity
+class CBaseEntity : public IServerEntity
+{};
+
+class CBaseEntityHack : public CBaseEntity
 {
 public:
-	DECLARE_CLASS_NOBASE(CBaseEntityHack);
-
 	static bool Init(SourceMod::IGameConfig* config, char* error, size_t maxlength);
 
-	DECLAREFUNCTION(InvalidatePhysicsRecursive, void, (int nChangeFlags));
-	DECLAREFUNCTION_virtual(GetVectors, void, (Vector* forward, Vector* right, Vector* up));
-	DECLAREFUNCTION_virtual(Teleport, void, (const Vector* origin, const QAngle* ang, const Vector* velocity));
-	DECLAREFUNCTION_virtual(SetModel, void, (char const* model));
-	DECLAREFUNCTION_virtual(MyCombatCharacterPointer, CBaseCombatCharacterHack*, (void));
-	DECLAREFUNCTION_virtual(MyNextBotPointer, INextBot*, (void));
-	DECLAREFUNCTION_virtual(WorldSpaceCenter, const Vector&, (void));
+	static VCall<void, const char*> vPostConstructor;
+	void PostConstructor(const char*);
 
+	static VCall<void> CBaseEntityHack::vUpdateOnRemove;
+	void UpdateOnRemove(void);
+
+	static VCall<void> vSpawn;
+	void Spawn(void);
+
+	static VCall<void, Vector*, Vector*, Vector*> vGetVectors;
+	void GetVectors(Vector*, Vector*, Vector*);
+
+	static VCall<void, const Vector*, const QAngle*, const Vector*> vTeleport;
+	void Teleport(const Vector*, const QAngle*, const Vector*);
+
+	static VCall<void, char const*> vSetModel;
+	void SetModel(char const*);
+
+	static VCall<const QAngle &> vEyeAngles;
+	virtual const QAngle &EyeAngles(void);
+
+	static VCall<CBaseCombatCharacterHack*> vMyCombatCharacterPointer;
+	CBaseCombatCharacterHack* MyCombatCharacterPointer(void);
+	
+	static VCall<CBaseAnimatingHack*> vGetBaseAnimating;
+	CBaseAnimatingHack* GetBaseAnimating(void);
+
+	static VCall<INextBot*> vMyNextBotPointer;
+	INextBot* MyNextBotPointer(void);
+
+	static MCall<void, int> mInvalidatePhysicsRecursive;
+	void InvalidatePhysicsRecursive(int nChangeFlags);
+
+	static VCall<const Vector&> vWorldSpaceCenter;
+	const Vector& WorldSpaceCenter(void);
+
+	static MCall<void> mCalcAbsolutePosition;
+	void CalcAbsolutePosition(void);
+	void CalcAbsoluteVelocity(void);
+
+	static VCall<int, const CTakeDamageInfo&> vOnTakeDamage;
+	int OnTakeDamage(const CTakeDamageInfo& info);
+
+	//static MCall<void, const Vector&> mSetAbsVelocity;
+	//void SetAbsVelocity(const Vector&);
+
+	//static MCall<void, CBaseEntity*> mSetGroundEntity;
+	//void SetGroundEntity(CBaseEntity* ground);
+	
 public:
 	friend class CServerNetworkProperty;
 	CServerNetworkProperty* NetworkProp();
 	const CServerNetworkProperty* NetworkProp() const;
 
+	void DispatchUpdateTransmitState(void);
+
+	int	entindex(void) const;
+	bool IsWorld(void) const;
+
+	int				GetFlags(void) const;
+
+	int				GetEFlags(void) const;
+	bool			IsEFlagSet(int nEFlagMask) const;
+	void			SetEFlags(int iEFlags);
+	void			AddEFlags(int nEFlagMask);
+	void			RemoveEFlags(int nEFlagMask);
+
+	
+	int		 RegisterThinkContext(const char* szContext);
+	HBASEPTR ThinkSet(HBASEPTR func, float flNextThinkTime = 0, const char* szContext = nullptr);
+	void	 SetNextThink(float nextThinkTime, const char* szContext = nullptr);
+	float	 GetNextThink(const char* szContext = nullptr);
+	float	 GetLastThink(const char* szContext = nullptr);
+	int		 GetNextThinkTick(const char* szContext = nullptr);
+	int		 GetLastThinkTick(const char* szContext = nullptr);
+	bool	 WillThink(void);
+	void	 CheckHasThinkFunction(bool isThinking);
+
 	const Vector& GetAbsOrigin(void) const;
 	const QAngle& GetAbsAngles(void) const;
 	const Vector& GetAbsVelocity(void) const;
+
+	void SetAbsOrigin(const Vector& absOrigin);
+	void SetAbsAngles(const QAngle& absAngles);
+	void SetAbsVelocity(const Vector& vecAbsVelocity);
+	
+	matrix3x4_t&		EntityToWorldTransform(void);
+	const matrix3x4_t&	EntityToWorldTransform(void) const;
+	matrix3x4_t&		GetParentToWorldTransform(matrix3x4_t &tempMatrix);
+
+	CBaseEntity	*GetGroundEntity(void);
 
 	void	NetworkStateChanged(void);
 	void	NetworkStateChanged(void* pVar);
 
 	float GetSimulationTime(void) const;
-	void SetSimulationTime(float st);
+	void  SetSimulationTime(float st);
 
 	void SetLocalAngles(const QAngle& angles);
 	const QAngle& GetLocalAngles(void) const;
@@ -198,7 +205,7 @@ public:
 	void SetLocalOrigin(const Vector& origin);
 	const Vector& GetLocalOrigin(void) const;
 
-	int			GetParentAttachment(void);
+	int		   GetParentAttachment(void);
 	MoveType_t GetMoveType(void) const;
 	CBaseEntityHack* GetMoveParent(void);
 	CBaseEntityHack* FirstMoveChild(void);
@@ -208,13 +215,31 @@ public:
 
 	static int(offset_UpdateOnRemove);
 
+protected:
+	enum thinkmethods_t
+	{
+		THINK_FIRE_ALL_FUNCTIONS,
+		THINK_FIRE_BASE_ONLY,
+		THINK_FIRE_ALL_BUT_BASE,
+	};
+	int	GetIndexForThinkContext(const char*);
+
 private:
 	// Members
+	using think_ptr = void (CBaseEntityHack::*)(void);
+	DECLAREVAR(think_ptr, m_pfnThink);
 	DECLAREVAR(CServerNetworkProperty, m_Network);
 	DECLAREVAR(string_t, m_iClassname);
+	DECLAREVAR(short, m_nModelIndex);
 	DECLAREVAR(float, m_flSimulationTime);
 
+	DECLAREVAR(int, m_fFlags);
+	DECLAREVAR(int, m_iEFlags);
+
 	DECLAREVAR(unsigned char, m_iParentAttachment);
+	DECLAREVAR(CUtlVector<thinkfunc_t>, m_aThinkFunctions);
+	DECLAREVAR(int, m_nLastThinkTick);
+	DECLAREVAR(int, m_nNextThinkTick);
 	DECLAREVAR(unsigned char, m_MoveType);
 	DECLAREVAR(EHANDLE, m_hMoveParent);
 	DECLAREVAR(EHANDLE, m_hMoveChild);
@@ -226,8 +251,13 @@ private:
 
 	DECLAREVAR(Vector, m_vecOrigin);
 	DECLAREVAR(QAngle, m_angRotation);
+	DECLAREVAR(Vector, m_vecVelocity);
+
+	DECLAREVAR(matrix3x4_t, m_rgflCoordinateFrame);
 
 	DECLAREVAR(int, m_iTeamNum);
+	
+	DECLAREVAR(EHANDLE, m_hGroundEntity);
 };
 
 class CBasePropDoorHack : public CBaseEntityHack
@@ -256,31 +286,109 @@ inline void	CBaseEntityHack::NetworkStateChanged(void* pVar)
 	NetworkProp()->NetworkStateChanged((char*)pVar - (char*)this);
 }
 
+inline int CBaseEntityHack::entindex(void) const
+{
+	return m_Network()->entindex();
+}
+
+inline bool CBaseEntityHack::IsWorld(void) const 
+{
+	return entindex() == 0;
+}
+
+inline int CBaseEntityHack::GetFlags(void) const
+{
+	return *m_fFlags();
+}
+
+inline int CBaseEntityHack::GetEFlags(void) const
+{
+	return *m_iEFlags();
+}
+
+inline void CBaseEntityHack::SetEFlags(int iEFlags)
+{
+	*m_iEFlags() = iEFlags;
+
+	if (iEFlags & (EFL_FORCE_CHECK_TRANSMIT | EFL_IN_SKYBOX))
+	{
+		this->DispatchUpdateTransmitState();
+	}
+}
+
+inline void CBaseEntityHack::AddEFlags(int nEFlagMask)
+{
+	*m_iEFlags() |= nEFlagMask;
+
+	if (nEFlagMask & (EFL_FORCE_CHECK_TRANSMIT | EFL_IN_SKYBOX))
+	{
+		this->DispatchUpdateTransmitState();
+	}
+}
+
+inline void CBaseEntityHack::RemoveEFlags(int nEFlagMask)
+{
+	*m_iEFlags() &= ~nEFlagMask;
+	
+	if (nEFlagMask & (EFL_FORCE_CHECK_TRANSMIT | EFL_IN_SKYBOX))
+	{
+		this->DispatchUpdateTransmitState();
+	}
+}
+
+inline bool CBaseEntityHack::IsEFlagSet(int nEFlagMask) const
+{
+	return (*m_iEFlags() & nEFlagMask) != 0;
+}
+
+inline CBaseEntity* CBaseEntityHack::GetGroundEntity(void)
+{
+	return *(m_hGroundEntity());
+}
+
 inline const Vector& CBaseEntityHack::GetAbsOrigin(void) const
 {
-	/*if (IsEFlagSet(EFL_DIRTY_ABSTRANSFORM))
+	if (IsEFlagSet(EFL_DIRTY_ABSTRANSFORM))
 	{
-		const_cast<CBaseEntity*>(this)->CalcAbsolutePosition();
-	}*/
+		const_cast<CBaseEntityHack*>(this)->CalcAbsolutePosition();
+	}
 	return *m_vecAbsOrigin();
 }
 
 inline const QAngle& CBaseEntityHack::GetAbsAngles(void) const
 {
-	/*if (IsEFlagSet(EFL_DIRTY_ABSTRANSFORM))
+	if (IsEFlagSet(EFL_DIRTY_ABSTRANSFORM))
 	{
-		const_cast<CBaseEntity*>(this)->CalcAbsolutePosition();
-	}*/
+		const_cast<CBaseEntityHack*>(this)->CalcAbsolutePosition();
+	}
 	return *m_angAbsRotation();
 }
 
 inline const Vector& CBaseEntityHack::GetAbsVelocity() const
 {
-	/*if (IsEFlagSet(EFL_DIRTY_ABSVELOCITY))
+	if (IsEFlagSet(EFL_DIRTY_ABSVELOCITY))
 	{
-		const_cast<CBaseEntity*>(this)->CalcAbsoluteVelocity();
-	}*/
+		const_cast<CBaseEntityHack*>(this)->CalcAbsoluteVelocity();
+	}
 	return *m_vecAbsVelocity();
+}
+
+inline matrix3x4_t &CBaseEntityHack::EntityToWorldTransform() 
+{
+	if (IsEFlagSet(EFL_DIRTY_ABSTRANSFORM))
+	{
+		CalcAbsolutePosition();
+	}
+	return *m_rgflCoordinateFrame(); 
+}
+
+inline const matrix3x4_t &CBaseEntityHack::EntityToWorldTransform() const
+{
+	if (IsEFlagSet(EFL_DIRTY_ABSTRANSFORM))
+	{
+		const_cast<CBaseEntityHack*>(this)->CalcAbsolutePosition();
+	}
+	return *m_rgflCoordinateFrame(); 
 }
 
 inline float CBaseEntityHack::GetSimulationTime() const

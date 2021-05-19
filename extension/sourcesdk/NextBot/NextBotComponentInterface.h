@@ -8,16 +8,33 @@ class Path;
 class CGameTrace;
 class CTakeDamageInfo;
 
+class INextBotReply
+{
+public:
+	virtual void OnSuccess(INextBot *bot)  { };
+
+	enum FailureReason
+	{
+		DENIED,
+		INTERRUPTED,
+		FAILED
+	};
+	virtual void OnFail(INextBot *bot, FailureReason reason) { };
+};
+
 class INextBotComponent : public INextBotEventResponder
 {
 public:
-	virtual ~INextBotComponent() { }
+	INextBotComponent(INextBot *bot);
+	virtual ~INextBotComponent() { };
 
-	virtual void Reset( void )	{ m_lastUpdateTime = 0; m_curInterval = TICK_INTERVAL; }
-	virtual void Update( void ) = 0;
-	virtual void Upkeep( void ) { };
-	virtual INextBot *GetBot( void ) const  { return m_bot; }
-	inline float GetUpdateInterval();
+	virtual void Reset(void) { m_lastUpdateTime = 0; m_curInterval = TICK_INTERVAL; }
+	virtual void Update(void) = 0;
+	virtual void Upkeep(void) { };
+	virtual INextBot *GetBot(void) const  { return m_bot; }
+
+	inline bool ComputeUpdateInterval(void);
+	inline float GetUpdateInterval(void);
 
 private:
 	float m_lastUpdateTime;
@@ -29,8 +46,29 @@ private:
 	INextBotComponent *m_nextComponent;
 };
 
+inline bool INextBotComponent::ComputeUpdateInterval(void) 
+{ 
+	if (m_lastUpdateTime) 
+	{ 
+		float interval = gpGlobals->curtime - m_lastUpdateTime;
 
-inline float INextBotComponent::GetUpdateInterval()
+		const float minInterval = 0.0001f;
+		if (interval > minInterval)
+		{
+			m_curInterval = interval;
+			m_lastUpdateTime = gpGlobals->curtime;
+			return true;
+		}
+
+		return false;
+	}
+
+	m_curInterval = 0.033f;
+	m_lastUpdateTime = gpGlobals->curtime - m_curInterval;
+	return true;
+}
+
+inline float INextBotComponent::GetUpdateInterval(void)
 {
 	return m_curInterval;
 }

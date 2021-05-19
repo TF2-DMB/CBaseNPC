@@ -2,7 +2,7 @@
 #define NPC_TOOLS_H
 
 #define SMINTERFACE_NPCTOOLS_NAME		"NPCTools"
-#define SMINTERFACE_NPCTOOLS_VERSION	1
+#define SMINTERFACE_NPCTOOLS_VERSION	2
 #define MAX_NPCS						200
 #define INVALID_NPC_ID					-1
 
@@ -52,27 +52,6 @@ public:
 	 * @return			Returns nextbot interface, NULL otherwise
 	 */
 	virtual INextBot* GetNextBotOfEntity(CBaseEntity* pEntity) = 0;
-
-	/**
-	 * @brief Hooks and build a ILocomotion_Hook - You shouldn't have to call this directly
-	 *
-	 * @return			Internal ILocomotion_Hook pointer
-	 */
-	virtual ILocomotion_Hook* Hook_ILocomotion(ILocomotion* mover, ILocomotion_Hook* realHook) = 0;
-
-	/**
-	 * @brief Hooks and build a NextBotGroundLocomotion_Hook - You shouldn't have to call this directly
-	 *
-	 * @return			Internal NextBotGroundLocomotion_Hook pointer
-	 */
-	virtual NextBotGroundLocomotion_Hook* Hook_NextBotGroundLocomotion(NextBotGroundLocomotion* mover, NextBotGroundLocomotion_Hook* realHook) = 0;
-
-	/**
-	 * @brief Hooks and build a NextBotGroundLocomotion_Hook - You shouldn't have to call this directly
-	 *
-	 * @return			Internal NextBotGroundLocomotion_Hook pointer
-	 */
-	virtual IBody_Hook* Hook_IBody(IBody* mover, IBody_Hook* realHook) = 0;
 };
 
 extern IBaseNPC_Tools* g_pBaseNPCTools;

@@ -96,7 +96,7 @@ public:
 	virtual void AdjustPosture(const Vector& moveGoal) = 0;
 	virtual void StuckMonitor(void) = 0;
 
-private:
+protected:
 	Vector m_motionVector;
 	Vector m_groundMotionVector;
 	float m_speed;

@@ -33,10 +33,10 @@ bool Path::ComputePathDetails( INextBot *bot, const Vector &start )
 	IBody* body = bot->GetBodyInterface();
 	ILocomotion* mover = bot->GetLocomotionInterface();
 	
-	const float stepHeight = ( mover ) ? mover->GetStepHeight() : 18.0f;
+	const float stepHeight = (mover) ? mover->GetStepHeight() : 18.0f;
 
 	// inflate hull width slightly as a safety margin
-	const float hullWidth = ( body ) ? body->GetHullWidth() + 5.0f : 1.0f;
+	const float hullWidth = (body) ? body->GetHullWidth() + 5.0f : 1.0f;
 
 	// set first path position
 	if ( m_path[0].area->Contains( start ) )
@@ -94,13 +94,13 @@ bool Path::ComputePathDetails( INextBot *bot, const Vector &start )
 
 				// compute direction of path just prior to "jump down"
 				Vector2D dir;
-				DirectionToVector2D( (NavDirType)to->how, &dir );
+				DirectionToVector2D((NavDirType)to->how, &dir);
 
 				// shift top of "jump down" out a bit to "get over the ledge"
 				const float inc = 10.0f; // 0.25f * hullWidth;
 				const float maxPushDist = 2.0f * hullWidth; // 75.0f;
 				float halfWidth = hullWidth/2.0f;
-				float hullHeight = ( body ) ? body->GetCrouchHullHeight() : 1.0f;
+				float hullHeight = (body) ? body->GetCrouchHullHeight() : 1.0f;
 				
 				float pushDist;
 				for( pushDist = 0.0f; pushDist <= maxPushDist; pushDist += inc )
@@ -977,7 +977,7 @@ void Path::DrawInterpolated( float from, float to )
 
 	do
 	{
-		t += NextBotPathDrawIncrement.GetFloat();
+		t += NextBotPathDrawIncrement->GetFloat();
 
 		MoveCursor( t );
 		const Data &data = GetCursorData();
@@ -1434,26 +1434,26 @@ const Path::Data &Path::GetCursorData( void ) const
 
 						// curvature fades to zero along midpoint of long straight segments
 						// and is influenced as it nears ends of segment
-						if ( overlap < NextBotPathSegmentInfluenceRadius.GetFloat() )
+						if ( overlap < NextBotPathSegmentInfluenceRadius->GetFloat() )
 						{
-							if ( length - overlap < NextBotPathSegmentInfluenceRadius.GetFloat() )
+							if ( length - overlap < NextBotPathSegmentInfluenceRadius->GetFloat() )
 							{
 								// near start and end - interpolate
-								float startCurvature = segment->curvature * ( 1.0f - ( overlap / NextBotPathSegmentInfluenceRadius.GetFloat() ) );
-								float endCurvature = next->curvature * ( 1.0f - ( ( length - overlap ) / NextBotPathSegmentInfluenceRadius.GetFloat() ) );
+								float startCurvature = segment->curvature * ( 1.0f - ( overlap / NextBotPathSegmentInfluenceRadius->GetFloat() ) );
+								float endCurvature = next->curvature * ( 1.0f - ( ( length - overlap ) / NextBotPathSegmentInfluenceRadius->GetFloat() ) );
 
 								m_cursorData.curvature = ( startCurvature + endCurvature ) / 2.0f;
 							}
 							else
 							{
 								// near start only
-								m_cursorData.curvature = segment->curvature * ( 1.0f - ( overlap / NextBotPathSegmentInfluenceRadius.GetFloat() ) );
+								m_cursorData.curvature = segment->curvature * ( 1.0f - ( overlap / NextBotPathSegmentInfluenceRadius->GetFloat() ) );
 							}
 						}
-						else if ( length - overlap < NextBotPathSegmentInfluenceRadius.GetFloat() )
+						else if ( length - overlap < NextBotPathSegmentInfluenceRadius->GetFloat() )
 						{
 							// near end only
-							m_cursorData.curvature = next->curvature * ( 1.0f - ( ( length - overlap ) / NextBotPathSegmentInfluenceRadius.GetFloat() ) );
+							m_cursorData.curvature = next->curvature * ( 1.0f - ( ( length - overlap ) / NextBotPathSegmentInfluenceRadius->GetFloat() ) );
 						}
 
 						

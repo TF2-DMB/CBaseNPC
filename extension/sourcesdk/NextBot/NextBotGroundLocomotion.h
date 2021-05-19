@@ -10,6 +10,9 @@ class NextBotCombatCharacter;
 class NextBotGroundLocomotion : public ILocomotion
 {
 public:
+	static bool Init(SourceMod::IGameConfig* config, char* error, size_t maxlength);
+	static MCall<void, INextBot*> NextBotGroundLocomotion_Ctor;
+
 	virtual ~NextBotGroundLocomotion() = 0;
 
 	virtual void Reset(void) = 0;
@@ -81,7 +84,18 @@ public:
 	int TryNextBotMove(Vector* pFirstDest = NULL, trace_t* pFirstTrace = NULL);
 	void StepMove(Vector& vecDestination, trace_t& trace);
 
-private:
+	// Re-implement of the game's funcs without VPROF
+	/*void NonVirtualUpdate(void);
+	void UpdateGroundConstraint(void);
+	void ApplyAccumulatedApproach(void);
+	void UpdatePosition(const Vector&);
+	bool TraverseLadder(void);
+	bool DidJustJump(void) const;
+
+	static MCall<Vector, const Vector&, const Vector&, int> mResolveCollision;*/
+
+
+protected:
 	NextBotCombatCharacter* m_nextBot;
 
 	Vector m_priorPos;										// last update's position

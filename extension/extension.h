@@ -6,11 +6,12 @@
 #include <IEngineTrace.h>
 #include <convar.h>
 #include <utlmap.h>
-#include "helpers.h"
-#include <itoolentity.h>
 #include <ISDKHooks.h>
 #include <ISDKTools.h>
+#include <itoolentity.h>
+#include "helpers.h"
 #include "shared/npctools.h"
+
 
 extern CGlobalVars *gpGlobals;
 extern IBinTools *g_pBinTools;
@@ -37,10 +38,10 @@ extern HandleType_t HANDLENAME(TSurroundingAreasCollector);
 extern HandleType_t g_CellArrayHandle;
 extern HandleType_t g_KeyValueType;
 
-extern ConVar NextBotPathDrawIncrement;
-extern ConVar NextBotPathSegmentInfluenceRadius;
+extern ConVar* NextBotPathDrawIncrement;
+extern ConVar* NextBotPathSegmentInfluenceRadius;
 
-class CBaseNPCExt : public SDKExtension, public ISMEntityListener
+class CBaseNPCExt : public SDKExtension, public ISMEntityListener, public IConCommandBaseAccessor
 {
 	public: // SDKExtension
 		virtual bool SDK_OnLoad(char *error, size_t maxlength, bool late);
@@ -55,6 +56,8 @@ class CBaseNPCExt : public SDKExtension, public ISMEntityListener
 	public: // ISMEntityListener
 		virtual void OnEntityCreated(CBaseEntity* pEntity, const char* classname);
 		virtual void OnEntityDestroyed(CBaseEntity* pEntity);
+	public: // IConCommandBaseAccessor
+		bool RegisterConCommandBase(ConCommandBase *pVar);
 	public:
 		#if defined SMEXT_CONF_METAMOD
 			virtual bool SDK_OnMetamodLoad(ISmmAPI *ismm, char *error, size_t maxlength, bool late);

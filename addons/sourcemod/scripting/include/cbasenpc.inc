@@ -2874,7 +2874,7 @@ methodmap CBaseNPC < CExtNPC
 		#pragma deprecated Please use GetEntity() + GetEntProp() functions
 		public get() { return GetEntProp(this.GetEntity(), Prop_Data, "m_iMaxHealth"); }
 		#pragma deprecated Please use GetEntity() + SetEntProp() functions
-		public set(int value) { SetEntProp(this.GetEntity(), Prop_Data, "m_initialHealth", value); SetEntProp(this.GetEntity(), Prop_Data, "m_iMaxHealth", value); }
+		public set(int value) { SetEntProp(this.GetEntity(), Prop_Data, "m_iMaxHealth", value); }
 	}
 	property int iHealth
 	{
@@ -3122,6 +3122,7 @@ methodmap CBaseAnimating < CBaseEntity
 	public native int SelectWeightedSequence(Activity activity);
 	public native void ResetSequence(int sequence);
 	public native int LookupAttachment(const char[] sAttachmentName);
+    #pragma deprecated BEWARE THE USE OF THIS FUNCTION WILL CRASH YOUR SERVER!
 	public native bool GetAttachment(int iAttachmentIndex, float vecOrigin[3], float vecAngles[3]);
 	
 	public native Address GetModelPtr();

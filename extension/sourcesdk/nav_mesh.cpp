@@ -7,8 +7,8 @@
 #include "sourcesdk/nav_mesh.h"
 CNavMesh *TheNavMesh = nullptr;
 
-DEFINEFUNCTION(CNavMesh, GetNearestNavArea, CNavArea*, (const Vector& pos, bool anyZ, float maxDist, bool checkLOS, bool checkGround, int team), (pos, anyZ, maxDist, checkLOS, checkGround, team));
-DEFINEFUNCTION(CNavMesh, GetGroundHeight, bool, (const Vector& pos, float* height, Vector* normal), (pos, height, normal));
+MCall<CNavArea*, const Vector&, bool, float, bool, bool, int> CNavMesh::mGetNearestNavArea;
+MCall<bool, const Vector&, float*, Vector*> CNavMesh::mGetGroundHeight;
 
 bool CNavMesh::Init(SourceMod::IGameConfig* config, char* error, size_t maxlength)
 {
@@ -36,9 +36,28 @@ bool CNavMesh::Init(SourceMod::IGameConfig* config, char* error, size_t maxlengt
 
 	TheNavMesh = *ppTheNavMesh;
 
-	FINDSIG(config, GetNearestNavArea, "CNavMesh::GetNearestNavArea");
-	FINDSIG(config, GetGroundHeight, "CNavMesh::GetGroundHeight");
+	try
+	{
+		mGetNearestNavArea.Init(config, "CNavMesh::GetNearestNavArea");
+		mGetGroundHeight.Init(config, "CNavMesh::GetGroundHeight");
+	}
+	catch (const std::exception& e)
+	{
+		snprintf(error, maxlength, "%s", e.what());
+		return false;
+	}
+
 	return true;
+}
+
+CNavArea* CNavMesh::GetNearestNavArea(const Vector& v, bool b, float f, bool b2, bool b3, int t)
+{
+	return mGetNearestNavArea(this, v, b, f, b2, b3, t);
+}
+
+bool CNavMesh::GetGroundHeight(const Vector& vec, float* f, Vector* vec2)
+{
+	return mGetGroundHeight(this, vec, f, vec2);
 }
 
 //bool (*BuildPath)(CNavArea *, CNavArea *, Vector *, IPathCost&, CNavArea **, float, int, bool) = nullptr;

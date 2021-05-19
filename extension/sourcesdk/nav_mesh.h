@@ -25,16 +25,21 @@ extern CNavMesh *TheNavMesh;
 
 class CNavMesh
 {
+public:
+	DECLARE_CLASS_NOBASE(CNavMesh);
+	static bool Init(SourceMod::IGameConfig* config, char* error, size_t maxlength);
+
+	static MCall<CNavArea*, const Vector&, bool, float, bool, bool, int> mGetNearestNavArea;
+	CNavArea* GetNearestNavArea(const Vector&, bool, float, bool, bool, int);
+
+	static MCall<bool, const Vector&, float*, Vector*> mGetGroundHeight;
+	bool GetGroundHeight(const Vector&, float*, Vector*);
+
 	public:
-		DECLARE_CLASS_NOBASE(CNavMesh);
-		static bool Init(SourceMod::IGameConfig* config, char* error, size_t maxlength);
-		DECLAREFUNCTION(GetNearestNavArea, CNavArea*, (const Vector& pos, bool anyZ, float maxDist, bool checkLOS, bool checkGround, int team));
-		DECLAREFUNCTION(GetGroundHeight, bool, (const Vector& pos, float* height, Vector* normal));
-	public:
-		bool IsAuthoritative()
-		{
-			return true; //TF2 has simple geometry
-		}
+	bool IsAuthoritative()
+	{
+		return true; //TF2 has simple geometry
+	}
 };
 
 inline void CollectSurroundingAreas( CUtlVector< CNavArea * > *nearbyAreaVector, CNavArea *startArea, float travelDistanceLimit = 1500.0f, float maxStepUpLimit = StepHeight, float maxDropDownLimit = 100.0f )

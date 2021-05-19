@@ -5,6 +5,9 @@
 #endif
 
 #include "sourcesdk/baseanimatingoverlay.h"
+#include <ehandle.h>
+#include <isaverestore.h>
+#include <takedamageinfo.h>
 
 class CNavArea;
 class CBaseCombatCharacterHack : public CBaseAnimatingOverlayHack
@@ -13,8 +16,14 @@ public:
 	DECLARE_CLASS_NOBASE(CBaseCombatCharacterHack);
 	static bool Init(SourceMod::IGameConfig* config, char* error, size_t maxlength);
 
-	DECLAREFUNCTION_virtual(UpdateLastKnownArea, void, (void));
-	DECLAREFUNCTION_virtual(GetLastKnownArea, CNavArea*, (void));
+	static VCall<void> vUpdateLastKnownArea;
+	void UpdateLastKnownArea(void);
+
+	static VCall<CNavArea*> vGetLastKnownArea;
+	CNavArea* GetLastKnownArea(void);
+
+	static VCall<int, const CTakeDamageInfo&> vOnTakeDamage_Alive;
+	int CBaseCombatCharacterHack::OnTakeDamage_Alive(const CTakeDamageInfo& info);
 };
 
 #endif // H_COMBATCHARACTER_CBASENPC_

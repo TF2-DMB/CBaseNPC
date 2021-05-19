@@ -1,6 +1,7 @@
 #include "extension.h"
 #include "cbasenpc_internal.h"
 #include "sourcesdk/baseentity.h"
+#include "sourcesdk/tf_gamerules.h"
 #include "NextBot/Path/NextBotPathFollow.h"
 #include <bspflags.h>
 #include <ai_activity.h>
@@ -8,6 +9,10 @@
 
 // INextBotEventResponder
 SH_DECL_HOOK0_void(INextBotComponent, Update, SH_NOATTRIB, 0);
+
+// INextBot
+SH_DECL_HOOK0(INextBot, GetLocomotionInterface, const, 0, ILocomotion*);
+SH_DECL_HOOK0(INextBot, GetBodyInterface, const, 0, IBody*);
 
 // ILocomotion
 SH_DECL_HOOK1_void(ILocomotion, FaceTowards, SH_NOATTRIB, 0, Vector const&);
@@ -44,44 +49,189 @@ SH_DECL_HOOK0(IBody, GetHullMins, const, 0, const Vector&);
 SH_DECL_HOOK0(IBody, GetHullMaxs, const, 0, const Vector&);
 SH_DECL_HOOK0(IBody, GetSolidMask, const, 0, unsigned int);
 
-CBaseNPC::CBaseNPC()
-{
-	CBaseEntityHack* pBoss = (CBaseEntityHack*)servertools->CreateEntityByName("base_boss");
-	if (pBoss)
-	{
-		m_pBot = pBoss->MyNextBotPointer();
-		SetEntity((CBaseEntity *)pBoss);
-		servertools->SetKeyValue((CBaseEntity*)pBoss, "health", "2147483647");
+CBaseNPCFactory* g_pBaseNPCFactory = nullptr;
+void** CBaseNPC_Entity::vtable = nullptr;
+MCall<void> CBaseNPC_Entity::mOriginalSpawn;
+MCall<void> CBaseNPC_Entity::mOriginalUpdateOnRemove;
+MCall<int, const CTakeDamageInfo&> CBaseNPC_Entity::mOriginalOnTakeDamage;
+MCall<int, const CTakeDamageInfo&> CBaseNPC_Entity::mOriginalOnTakeDamage_Alive;
 
-		m_pBot = pBoss->MyNextBotPointer();
-		m_pMover = (NextBotGroundLocomotion*)m_pBot->GetLocomotionInterface();
-		m_pBody = m_pBot->GetBodyInterface();
-		m_pVision = m_pBot->GetVisionInterface();
-		m_mover = new CBaseNPC_Locomotion(m_pMover);
-		m_body = new CBaseNPC_Body(m_pBody);
-		m_type[0] = '\0';
+CBaseNPCFactory::CBaseNPCFactory()
+: CustomFactory("base_npc", &NextBotCombatCharacter::NextBotCombatCharacter_Ctor)
+{
+}
+
+void CBaseNPCFactory::Create_Extra(CBaseEntityHack* ent)
+{
+	// Replace the vtable with ours
+	if (CBaseNPC_Entity::vtable == nullptr)
+	{
+		CBaseNPC_Entity::vtable = vtable_dup(ent, NextBotCombatCharacter::vtable_entries);
+		void* original = nullptr;
+		original = CBaseEntityHack::vSpawn.Replace(CBaseNPC_Entity::vtable, &CBaseNPC_Entity::BotSpawn);
+		CBaseNPC_Entity::mOriginalSpawn.Init(original);
+		original = CBaseEntityHack::vUpdateOnRemove.Replace(CBaseNPC_Entity::vtable, &CBaseNPC_Entity::BotUpdateOnRemove);
+		CBaseNPC_Entity::mOriginalUpdateOnRemove.Init(original);
+		original = CBaseEntityHack::vOnTakeDamage.Replace(CBaseNPC_Entity::vtable, &CBaseNPC_Entity::OnTakeDamage);
+		CBaseNPC_Entity::mOriginalOnTakeDamage.Init(original);
+		original = CBaseCombatCharacterHack::vOnTakeDamage_Alive.Replace(CBaseNPC_Entity::vtable, &CBaseNPC_Entity::OnTakeDamage_Alive);
+		CBaseNPC_Entity::mOriginalOnTakeDamage_Alive.Init(original);
+	}
+	vtable_replace(ent, CBaseNPC_Entity::vtable);
+	new (((CBaseNPC_Entity*)ent)->GetNPC()) CBaseNPC_Entity::CBaseNPC((NextBotCombatCharacter*)ent);
+}
+
+void CBaseNPCFactory::Create_PostConstructor(CBaseEntityHack* ent)
+{
+	((CBaseNPC_Entity*)ent)->GetNPC()->SetEntity(ent);
+}
+
+size_t CBaseNPCFactory::GetEntitySize()
+{
+	return sizeof(CBaseNPC_Entity::CBaseNPC) + NextBotCombatCharacter::size_of;
+}
+
+CBaseNPC_Entity::CBaseNPC::CBaseNPC(NextBotCombatCharacter* ent) : CExtNPC()
+{
+	INextBot* bot = ent->MyNextBotPointer();
+	this->m_pMover = CBaseNPC_Locomotion::New(bot);
+	this->m_pBody = new CBaseNPC_Body(bot);
+	this->m_type[0] = '\0';
+	this->m_hookids.push_back(SH_ADD_HOOK(INextBot, GetLocomotionInterface, bot, SH_MEMBER(this, &CBaseNPC_Entity::CBaseNPC::Hook_GetLocomotionInterface), false));
+	this->m_hookids.push_back(SH_ADD_HOOK(INextBot, GetBodyInterface, bot, SH_MEMBER(this, &CBaseNPC_Entity::CBaseNPC::Hook_GetBodyInterface), false));
+}
+
+CBaseNPC_Entity::CBaseNPC::~CBaseNPC()
+{
+	this->m_pMover->Destroy();
+
+	delete this->m_pMover;
+	delete this->m_pBody;
+
+	for (auto it = m_hookids.begin(); it != m_hookids.end(); it++)
+	{
+		SH_REMOVE_HOOK_ID((*it));
 	}
 }
 
-CBaseNPC::~CBaseNPC()
+ILocomotion* CBaseNPC_Entity::CBaseNPC::Hook_GetLocomotionInterface(void) const
 {
-	if (m_mover)
+	RETURN_META_VALUE(MRES_SUPERCEDE, this->m_pMover);
+}
+
+IBody* CBaseNPC_Entity::CBaseNPC::Hook_GetBodyInterface(void) const
+{
+	RETURN_META_VALUE(MRES_SUPERCEDE, this->m_pBody);
+}
+
+void CBaseNPC_Entity::BotUpdateOnRemove(void)
+{
+	mOriginalUpdateOnRemove(this);
+
+	CBaseNPC* npc = this->GetNPC();
+	npc->~CBaseNPC();
+}
+
+void CBaseNPC_Entity::BotSpawn(void)
+{
+	CBaseNPC* npc = this->GetNPC();
+	mOriginalSpawn(this);
+
+	SetThink(&CBaseNPC_Entity::BotThink);
+	SetNextThink(gpGlobals->curtime);
+}
+
+void CBaseNPC_Entity::BotThink(void)
+{
+	INextBot* bot = MyNextBotPointer();
+
+	UpdateLastKnownArea();
+	bot->Update();
+
+	SetNextThink(gpGlobals->curtime + 0.06);
+}
+
+int CBaseNPC_Entity::OnTakeDamage(const CTakeDamageInfo& info)
+{
+	CTakeDamageInfo newInfo = info;
+	if (TFGameRules())
 	{
-		delete m_mover;
+		TFGameRules()->ApplyOnDamageModifyRules(newInfo, this, true);
 	}
-	if (m_body)
+	return mOriginalOnTakeDamage(this, newInfo);
+}
+
+int CBaseNPC_Entity::OnTakeDamage_Alive(const CTakeDamageInfo& info)
+{
+	CTakeDamageInfo newInfo = info;
+	if (TFGameRules())
 	{
-		delete m_body;
+		CTFGameRules::DamageModifyExtras_t outParams;
+		newInfo.SetDamage(TFGameRules()->ApplyOnDamageAliveModifyRules(info, this, outParams));
 	}
+	return mOriginalOnTakeDamage_Alive(this, newInfo);
+}
+
+CBaseNPC_Entity::CBaseNPC* CBaseNPC_Entity::GetNPC(void)
+{
+	return (CBaseNPC_Entity::CBaseNPC*)(((uint8_t*)this) + g_pBaseNPCFactory->GetEntitySize() - sizeof(CBaseNPC_Entity::CBaseNPC));
 }
 
 // ============================================
 // ILocomotion Hooks
 // ============================================
 
-void CBaseNPC_Locomotion::Update()
+void CBaseNPC_Locomotion::Init()
 {
-	VPROF_ENTER_SCOPE("CBaseNPC_Locomotion::Update");
+	this->m_hookids = std::vector<int>();
+	this->m_flJumpHeight = 0.0;
+	this->m_flStepSize = 18.0;
+	this->m_flGravity = 800.0;
+	this->m_flAcceleration = 4000.0,
+	this->m_flDeathDropHeight = 1000.0;
+	this->m_flWalkSpeed = 400.0;
+	this->m_flRunSpeed = 400.0;
+	this->m_flFrictionForward = 0.0;
+	this->m_flFrictionSideways = 3.0;
+}
+
+void CBaseNPC_Locomotion::Destroy()
+{
+	for (auto it = m_hookids.begin(); it != m_hookids.end(); it++)
+	{
+		SH_REMOVE_HOOK_ID((*it));
+	}
+}
+
+CBaseNPC_Locomotion* CBaseNPC_Locomotion::New(INextBot* bot)
+{
+	CBaseNPC_Locomotion* mover = (CBaseNPC_Locomotion*)calloc(1, sizeof(CBaseNPC_Locomotion));
+	mover->Init();
+	NextBotGroundLocomotion::NextBotGroundLocomotion_Ctor(mover, bot);
+
+	mover->m_hookids.push_back(SH_ADD_HOOK(INextBotComponent, Update, mover, SH_MEMBER(mover, &CBaseNPC_Locomotion::Hook_Update), false));
+	mover->m_hookids.push_back(SH_ADD_HOOK(ILocomotion, IsAbleToJumpAcrossGaps, mover, SH_MEMBER(mover, &CBaseNPC_Locomotion::Hook_IsAbleToJumpAcrossGaps), false));
+	mover->m_hookids.push_back(SH_ADD_HOOK(ILocomotion, IsAbleToClimb, mover, SH_MEMBER(mover, &CBaseNPC_Locomotion::Hook_IsAbleToClimb), false));
+	mover->m_hookids.push_back(SH_ADD_HOOK(ILocomotion, ClimbUpToLedge, mover, SH_MEMBER(mover, &CBaseNPC_Locomotion::Hook_ClimbUpToLedge), false));
+	mover->m_hookids.push_back(SH_ADD_HOOK(ILocomotion, GetStepHeight, mover, SH_MEMBER(mover, &CBaseNPC_Locomotion::Hook_GetStepHeight), false));
+	mover->m_hookids.push_back(SH_ADD_HOOK(ILocomotion, GetMaxJumpHeight, mover, SH_MEMBER(mover, &CBaseNPC_Locomotion::Hook_GetMaxJumpHeight), false));
+	mover->m_hookids.push_back(SH_ADD_HOOK(ILocomotion, GetDeathDropHeight, mover, SH_MEMBER(mover, &CBaseNPC_Locomotion::Hook_GetDeathDropHeight), false));
+	mover->m_hookids.push_back(SH_ADD_HOOK(ILocomotion, GetWalkSpeed, mover, SH_MEMBER(mover, &CBaseNPC_Locomotion::Hook_GetWalkSpeed), false));
+	mover->m_hookids.push_back(SH_ADD_HOOK(ILocomotion, GetRunSpeed, mover, SH_MEMBER(mover, &CBaseNPC_Locomotion::Hook_GetRunSpeed), false));
+	mover->m_hookids.push_back(SH_ADD_HOOK(ILocomotion, GetMaxAcceleration, mover, SH_MEMBER(mover, &CBaseNPC_Locomotion::Hook_GetMaxAcceleration), false));
+	mover->m_hookids.push_back(SH_ADD_HOOK(ILocomotion, ShouldCollideWith, mover, SH_MEMBER(mover, &CBaseNPC_Locomotion::Hook_ShouldCollideWith), false));
+	mover->m_hookids.push_back(SH_ADD_HOOK(ILocomotion, IsEntityTraversable, mover, SH_MEMBER(mover, &CBaseNPC_Locomotion::Hook_IsEntityTraversable), false));
+	mover->m_hookids.push_back(SH_ADD_HOOK(NextBotGroundLocomotion, GetGravity, mover, SH_MEMBER(mover, &CBaseNPC_Locomotion::Hook_GetGravity), false));
+	mover->m_hookids.push_back(SH_ADD_HOOK(NextBotGroundLocomotion, GetFrictionForward, mover, SH_MEMBER(mover, &CBaseNPC_Locomotion::Hook_GetFrictionForward), false));
+	mover->m_hookids.push_back(SH_ADD_HOOK(NextBotGroundLocomotion, GetFrictionSideways, mover, SH_MEMBER(mover, &CBaseNPC_Locomotion::Hook_GetFrictionSideways), false));
+	mover->m_hookids.push_back(SH_ADD_HOOK(NextBotGroundLocomotion, GetMaxYawRate, mover, SH_MEMBER(mover, &CBaseNPC_Locomotion::Hook_GetMaxYawRate), false));
+
+	return mover;
+}
+
+void CBaseNPC_Locomotion::Hook_Update()
+{
+	// VPROF_ENTER_SCOPE("CBaseNPC_Locomotion::Update");
 
 	CBaseCombatCharacterHack* entity = GetBot()->GetEntity();
 	entity->UpdateLastKnownArea();
@@ -120,54 +270,24 @@ void CBaseNPC_Locomotion::Update()
 			}
 		}
 	}
-	VPROF_EXIT_SCOPE();
-	INextBotComponent_Hook::Update();
+	// VPROF_EXIT_SCOPE();
+	// this->NonVirtualUpdate();
+	RETURN_META(MRES_IGNORED);
 }
 
-void CBaseNPC_Locomotion::FaceTowards(Vector const& vecGoal)
+bool CBaseNPC_Locomotion::Hook_IsAbleToJumpAcrossGaps() const
 {
-	VPROF_BUDGET("CBaseNPC_Locomotion::FaceTowards", "CBaseNPC" );
-	const float deltaT = GetUpdateInterval();
-
-	INextBot* bot = GetBot();
-	CBaseCombatCharacterHack* entity = bot->GetEntity();
-	QAngle angles = entity->GetLocalAngles();
-
-	float desiredYaw = UTIL_VecToYaw(vecGoal - bot->GetPosition());
-
-	float angleDiff = UTIL_AngleDiff(desiredYaw, angles.y);
-
-	float deltaYaw = GetMaxYawRate() * deltaT;
-
-	if (angleDiff < -deltaYaw)
-	{
-		angles.y -= deltaYaw;
-	}
-	else if (angleDiff > deltaYaw)
-	{
-		angles.y += deltaYaw;
-	}
-	else
-	{
-		angles.y += angleDiff;
-	}
-
-	entity->SetLocalAngles(angles);
+	RETURN_META_VALUE(MRES_SUPERCEDE, (m_flJumpHeight > 0.0));
 }
 
-bool CBaseNPC_Locomotion::IsAbleToJumpAcrossGaps() const
+bool CBaseNPC_Locomotion::Hook_IsAbleToClimb() const
 {
-	return (m_flJumpHeight > 0.0);
+	RETURN_META_VALUE(MRES_SUPERCEDE, (m_flJumpHeight > 0.0));
 }
 
-bool CBaseNPC_Locomotion::IsAbleToClimb() const
+bool CBaseNPC_Locomotion::Hook_ClimbUpToLedge(const Vector& vecGoal, const Vector& vecForward, const CBaseEntity* pEntity)
 {
-	return (m_flJumpHeight > 0.0);
-}
-
-bool CBaseNPC_Locomotion::ClimbUpToLedge(const Vector& vecGoal, const Vector& vecForward, const CBaseEntity* pEntity)
-{
-	VPROF_BUDGET("CBaseNPC_Locomotion::ClimbUpToLedge", "CBaseNPC" );
+	// VPROF_BUDGET("CBaseNPC_Locomotion::ClimbUpToLedge", "CBaseNPC" );
 	Vector vecMyPos = GetBot()->GetPosition();
 	vecMyPos.z += m_flStepSize;
 
@@ -206,84 +326,91 @@ bool CBaseNPC_Locomotion::ClimbUpToLedge(const Vector& vecGoal, const Vector& ve
 
 	GetBot()->SetPosition(vecMyPos);
 	SetVelocity(vecJumpVel);
-	return true;
+	RETURN_META_VALUE(MRES_SUPERCEDE, true);
 }
 
-float CBaseNPC_Locomotion::GetStepHeight() const
+float CBaseNPC_Locomotion::Hook_GetStepHeight() const
 {
-	return m_flStepSize;
+	RETURN_META_VALUE(MRES_SUPERCEDE, m_flStepSize);
 }
 
-float CBaseNPC_Locomotion::GetMaxJumpHeight() const
+float CBaseNPC_Locomotion::Hook_GetMaxJumpHeight() const
 {
-	return m_flJumpHeight;
+	RETURN_META_VALUE(MRES_SUPERCEDE, m_flJumpHeight);
 }
 
-float CBaseNPC_Locomotion::GetDeathDropHeight() const
+float CBaseNPC_Locomotion::Hook_GetDeathDropHeight() const
 {
-	return m_flDeathDropHeight;
+	RETURN_META_VALUE(MRES_SUPERCEDE, m_flDeathDropHeight);
 }
 
-float CBaseNPC_Locomotion::GetWalkSpeed() const
+float CBaseNPC_Locomotion::Hook_GetWalkSpeed() const
 {
-	return m_flWalkSpeed;
+	RETURN_META_VALUE(MRES_SUPERCEDE, m_flWalkSpeed);
 }
 
-float CBaseNPC_Locomotion::GetRunSpeed() const
+float CBaseNPC_Locomotion::Hook_GetRunSpeed() const
 {
-	return m_flRunSpeed;
+	RETURN_META_VALUE(MRES_SUPERCEDE, m_flRunSpeed);
 }
 
-float CBaseNPC_Locomotion::GetMaxAcceleration() const
+float CBaseNPC_Locomotion::Hook_GetMaxAcceleration() const
 {
-	return m_flAcceleration;
+	RETURN_META_VALUE(MRES_SUPERCEDE, m_flAcceleration);
 }
 
-float CBaseNPC_Locomotion::GetGravity() const
+float CBaseNPC_Locomotion::Hook_GetGravity() const
 {
-	return m_flGravity;
+	RETURN_META_VALUE(MRES_SUPERCEDE, m_flGravity);
 }
 
-bool CBaseNPC_Locomotion::ShouldCollideWith(const CBaseEntity* pEntity) const
+bool CBaseNPC_Locomotion::Hook_ShouldCollideWith(const CBaseEntity* pEntity) const
 {
-	return false;
+	RETURN_META_VALUE(MRES_SUPERCEDE, false);
 }
 
-bool CBaseNPC_Locomotion::IsEntityTraversable(CBaseEntity* pEntity, ILocomotion::TraverseWhenType when) const
+bool CBaseNPC_Locomotion::Hook_IsEntityTraversable(CBaseEntity* pEntity, ILocomotion::TraverseWhenType when) const
 {
 	VPROF_BUDGET("CBaseNPC_Locomotion::IsEntityTraversable", "CBaseNPC" );
-	CBaseEntityHack* ent = (CBaseEntityHack*)pEntity;
-	if (ent->MyCombatCharacterPointer()) return true;
-	return false;
+	if (((CBaseEntityHack *)pEntity)->MyCombatCharacterPointer())
+	{
+		RETURN_META_VALUE(MRES_SUPERCEDE, true);
+	}
+	RETURN_META_VALUE(MRES_SUPERCEDE, false);
 }
 
-float CBaseNPC_Locomotion::GetFrictionForward() const
+float CBaseNPC_Locomotion::Hook_GetFrictionForward() const
 {
-	return m_flFrictionForward;
+	RETURN_META_VALUE(MRES_SUPERCEDE, m_flFrictionForward);
 }
 
-float CBaseNPC_Locomotion::GetFrictionSideways() const
+float CBaseNPC_Locomotion::Hook_GetFrictionSideways() const
 {
-	return m_flFrictionSideways;
+	RETURN_META_VALUE(MRES_SUPERCEDE, m_flFrictionSideways);
 }
 
-float CBaseNPC_Locomotion::GetMaxYawRate() const
+float CBaseNPC_Locomotion::Hook_GetMaxYawRate() const
 {
-	return 1250.0f;
+	RETURN_META_VALUE(MRES_SUPERCEDE, 1250.0f);
 }
 
 // ============================================
 // IBody Hooks
 // ============================================
 
+CBaseNPC_Body::CBaseNPC_Body(INextBot* bot) : IBody(bot)
+{
+	this->m_vecBodyMins = Vector(-10.0, -10.0, 0.0);
+	this->m_vecBodyMaxs = Vector(10.0, 10.0, 90.0);
+}
+
 void CBaseNPC_Body::Update()
 {
-	VPROF_ENTER_SCOPE("CBaseNPC_Body::Update");
+	// VPROF_ENTER_SCOPE("CBaseNPC_Body::Update");
 	CBaseCombatCharacterHack* entity = GetBot()->GetEntity();
 	entity->DispatchAnimEvents(entity);
 	entity->StudioFrameAdvance();
-	VPROF_EXIT_SCOPE();
-	INextBotComponent_Hook::Update();
+	// VPROF_EXIT_SCOPE();
 }
 
 bool CBaseNPC_Body::StartActivity(Activity aAct, unsigned int iFlags)
@@ -328,100 +455,3 @@ unsigned int CBaseNPC_Body::GetSolidMask() const
 {
 	return (MASK_NPCSOLID | MASK_PLAYERSOLID);
 }
-
-// ============================================
-// ILocomotion Hooks for Extensions
-// ============================================
-
-NPC_BEGIN_HOOK(INextBotComponent)
-{
-	NPC_COPY_FACE(INextBotComponent);
-	NPC_ADD_HOOK(INextBotComponent, Update);
-}
-
-NPC_INTERFACE_DECLARE_HANDLER_void(INextBotComponent_Hook, INextBotComponent, Update, SH_NOATTRIB, (), ());
-
-NPC_BEGIN_HOOK(ILocomotion)
-{
-	NPC_COPY_FACE(ILocomotion);
-	NPC_COPY_HOOK(INextBotComponent);
-	NPC_ADD_HOOK(ILocomotion, FaceTowards);
-	NPC_ADD_HOOK(ILocomotion, IsAbleToJumpAcrossGaps);
-	NPC_ADD_HOOK(ILocomotion, IsAbleToClimb);
-	NPC_ADD_HOOK(ILocomotion, ClimbUpToLedge);
-	NPC_ADD_HOOK(ILocomotion, GetStepHeight);
-	NPC_ADD_HOOK(ILocomotion, GetMaxJumpHeight);
-	NPC_ADD_HOOK(ILocomotion, GetDeathDropHeight);
-	NPC_ADD_HOOK(ILocomotion, GetWalkSpeed);
-	NPC_ADD_HOOK(ILocomotion, GetRunSpeed);
-	NPC_ADD_HOOK(ILocomotion, GetMaxAcceleration);
-	NPC_ADD_HOOK(ILocomotion, ShouldCollideWith);
-	NPC_ADD_HOOK(ILocomotion, IsEntityTraversable);
-	NPC_ADD_HOOK(ILocomotion, IsStuck);
-	NPC_ADD_HOOK(ILocomotion, GetStuckDuration);
-	NPC_ADD_HOOK(ILocomotion, ClearStuckStatus);
-}
-
-NPC_INTERFACE_DECLARE_HANDLER_void(ILocomotion_Hook, ILocomotion, FaceTowards, SH_NOATTRIB, (Vector const& vecGoal), (vecGoal));
-NPC_INTERFACE_DECLARE_HANDLER(ILocomotion_Hook, ILocomotion, IsAbleToJumpAcrossGaps, const, bool, (), ());
-NPC_INTERFACE_DECLARE_HANDLER(ILocomotion_Hook, ILocomotion, IsAbleToClimb, const, bool, (), ());
-NPC_INTERFACE_DECLARE_HANDLER(ILocomotion_Hook, ILocomotion, ClimbUpToLedge, SH_NOATTRIB, bool, (const Vector& a, const Vector& b, const CBaseEntity* c), (a,b,c));
-NPC_INTERFACE_DECLARE_HANDLER(ILocomotion_Hook, ILocomotion, GetStepHeight, const, float, (), ());
-NPC_INTERFACE_DECLARE_HANDLER(ILocomotion_Hook, ILocomotion, GetMaxJumpHeight, const, float, (), ());
-NPC_INTERFACE_DECLARE_HANDLER(ILocomotion_Hook, ILocomotion, GetDeathDropHeight, const, float, (), ());
-NPC_INTERFACE_DECLARE_HANDLER(ILocomotion_Hook, ILocomotion, GetWalkSpeed, const, float, (), ());
-NPC_INTERFACE_DECLARE_HANDLER(ILocomotion_Hook, ILocomotion, GetRunSpeed, const, float, (), ());
-NPC_INTERFACE_DECLARE_HANDLER(ILocomotion_Hook, ILocomotion, GetMaxAcceleration, const, float, (), ());
-NPC_INTERFACE_DECLARE_HANDLER(ILocomotion_Hook, ILocomotion, ShouldCollideWith, const, bool, (const CBaseEntity* a), (a));
-NPC_INTERFACE_DECLARE_HANDLER(ILocomotion_Hook, ILocomotion, IsEntityTraversable, const, bool, (CBaseEntity* a, ILocomotion::TraverseWhenType b), (a,b));
-NPC_INTERFACE_DECLARE_HANDLER(ILocomotion_Hook, ILocomotion, IsStuck, const, bool, (), ());
-NPC_INTERFACE_DECLARE_HANDLER(ILocomotion_Hook, ILocomotion, GetStuckDuration, const, float, (), ());
-NPC_INTERFACE_DECLARE_HANDLER_void(ILocomotion_Hook, ILocomotion, ClearStuckStatus, SH_NOATTRIB, (const char* name), (name));
-
-NPC_BEGIN_HOOK(NextBotGroundLocomotion)
-{
-	NPC_COPY_FACE(NextBotGroundLocomotion);
-	NPC_COPY_HOOK(ILocomotion);
-	NPC_ADD_HOOK(NextBotGroundLocomotion, SetAcceleration);
-	NPC_ADD_HOOK(NextBotGroundLocomotion, GetAcceleration);
-	NPC_ADD_HOOK(NextBotGroundLocomotion, SetVelocity);
-	NPC_ADD_HOOK(NextBotGroundLocomotion, GetGravity);
-	NPC_ADD_HOOK(NextBotGroundLocomotion, GetFrictionForward);
-	NPC_ADD_HOOK(NextBotGroundLocomotion, GetFrictionSideways);
-	NPC_ADD_HOOK(NextBotGroundLocomotion, GetMaxYawRate);
-}
-
-NPC_INTERFACE_DECLARE_HANDLER(NextBotGroundLocomotion_Hook, NextBotGroundLocomotion, GetAcceleration, const, const Vector&, (), ());
-NPC_INTERFACE_DECLARE_HANDLER_void(NextBotGroundLocomotion_Hook, NextBotGroundLocomotion, SetAcceleration, SH_NOATTRIB, (const Vector& accel), (accel));
-NPC_INTERFACE_DECLARE_HANDLER_void(NextBotGroundLocomotion_Hook, NextBotGroundLocomotion, SetVelocity, SH_NOATTRIB, (const Vector& vel), (vel));
-NPC_INTERFACE_DECLARE_HANDLER(NextBotGroundLocomotion_Hook, NextBotGroundLocomotion, GetGravity, const, float, (), ());
-NPC_INTERFACE_DECLARE_HANDLER(NextBotGroundLocomotion_Hook, NextBotGroundLocomotion, GetFrictionForward, const, float, (), ());
-NPC_INTERFACE_DECLARE_HANDLER(NextBotGroundLocomotion_Hook, NextBotGroundLocomotion, GetFrictionSideways, const, float, (), ());
-NPC_INTERFACE_DECLARE_HANDLER(NextBotGroundLocomotion_Hook, NextBotGroundLocomotion, GetMaxYawRate, const, float, (), ());
-
-// ============================================
-// IBody Hooks for Extensions
-// ============================================
-
-NPC_BEGIN_HOOK(IBody)
-{
-	NPC_COPY_FACE(IBody);
-	NPC_COPY_HOOK(INextBotComponent);
-	NPC_ADD_HOOK(IBody, StartActivity);
-	NPC_ADD_HOOK(IBody, GetHullWidth);
-	NPC_ADD_HOOK(IBody, GetHullHeight);
-	NPC_ADD_HOOK(IBody, GetStandHullHeight);
-	NPC_ADD_HOOK(IBody, GetCrouchHullHeight);
-	NPC_ADD_HOOK(IBody, GetHullMins);
-	NPC_ADD_HOOK(IBody, GetHullMaxs);
-	NPC_ADD_HOOK(IBody, GetSolidMask);
-}
-
-NPC_INTERFACE_DECLARE_HANDLER(IBody_Hook, IBody, StartActivity, SH_NOATTRIB, bool, (Activity aAct, unsigned int iFlags), (aAct, iFlags))
-NPC_INTERFACE_DECLARE_HANDLER(IBody_Hook, IBody, GetHullWidth, const, float, (), ());
-NPC_INTERFACE_DECLARE_HANDLER(IBody_Hook, IBody, GetHullHeight, const, float, (), ());
-NPC_INTERFACE_DECLARE_HANDLER(IBody_Hook, IBody, GetStandHullHeight, const, float, (), ());
-NPC_INTERFACE_DECLARE_HANDLER(IBody_Hook, IBody, GetCrouchHullHeight, const, float, (), ());
-NPC_INTERFACE_DECLARE_HANDLER(IBody_Hook, IBody, GetHullMins, const, const Vector&, (), ());
-NPC_INTERFACE_DECLARE_HANDLER(IBody_Hook, IBody, GetHullMaxs, const, const Vector&, (), ());
-NPC_INTERFACE_DECLARE_HANDLER(IBody_Hook, IBody, GetSolidMask, const, unsigned int, (), ());

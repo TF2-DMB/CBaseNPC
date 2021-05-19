@@ -1,4 +1,7 @@
 #include "helpers.h"
+#include <itoolentity.h>
+
+extern IServerTools *servertools;
 
 int nothing;
 
@@ -164,4 +167,94 @@ const char *HandleErrorToString(HandleError err)
 	}
 
 	return "";
+}
+
+string_t AllocPooledString(const char *pszValue)
+{
+	CBaseEntity* pEntity = ((IServerUnknown*)servertools->FirstEntity())->GetBaseEntity();
+	datamap_t* pDataMap = gamehelpers->GetDataMap( pEntity );
+
+	static int offset = -1;
+	if (offset == -1)
+	{
+		sm_datatable_info_t info;
+		bool found = gamehelpers->FindDataMapInfo(pDataMap, "m_iName", &info);
+		offset = info.actual_offset;
+	}
+
+	string_t *pProp = (string_t*)((intp)pEntity + offset);
+	string_t backup = *pProp;
+	servertools->SetKeyValue(pEntity, "targetname", pszValue);
+	string_t newString = *pProp;
+	*pProp = backup;
+	return newString;
+}
+
+#ifndef __linux__
+struct RTTIBaseClassArray;
+struct TypeDescriptor;
+// http://www.openrce.org/articles/full_view/23
+struct RTTIClassHierarchyDescriptor
+{
+	DWORD signature;
+	DWORD attributes;
+	DWORD numBaseClasses;
+	struct RTTIBaseClassArray* pBaseClassArray;
+};
+struct RTTICompleteObjectLocator
+{
+	DWORD signature;
+	DWORD offset;
+	DWORD cdOffset;
+	struct TypeDescriptor* pTypeDescriptor;
+	struct RTTIClassHierarchyDescriptor* pClassDescriptor;
+};
+#else
+class __class_type_info;
+// https://github.com/gcc-mirror/gcc/blob/master/libstdc%2B%2B-v3/libsupc%2B%2B/tinfo.h
+struct vtable_prefix
+{
+  ptrdiff_t whole_object;
+#ifdef _GLIBCXX_VTABLE_PADDING
+  ptrdiff_t padding1;               
+#endif
+  const __class_type_info *whole_type;  
+#ifdef _GLIBCXX_VTABLE_PADDING
+  ptrdiff_t padding2;               
+#endif
+  const void *origin;               
+};
+#endif
+
+void** vtable_dup(void* thisPtr, size_t numFuncs)
+{
+
+#ifndef __linux__
+	size_t size = sizeof(RTTICompleteObjectLocator*) + (sizeof(void*) * numFuncs);
+#else
+	size_t size = sizeof(vtable_prefix) + (sizeof(void*) * numFuncs);
+#endif
+
+	uint8_t* newvtable = (uint8_t*)calloc(1, size);
+	uint8_t* vtable = *(uint8_t**)thisPtr;
+
+#ifndef __linux__
+	uint8_t* vtable_start = vtable - sizeof(RTTICompleteObjectLocator*);
+#else
+	uint8_t* vtable_start = vtable - sizeof(vtable_prefix);
+#endif
+	memcpy(newvtable, vtable_start, size);
+
+#ifndef __linux__
+	newvtable += sizeof(RTTICompleteObjectLocator*);
+#else
+	newvtable += sizeof(vtable_prefix);
+#endif
+
+	return (void **)newvtable;
+}
+
+void vtable_replace(void* thisPtr, void** newVtable)
+{
+	*(void ***)thisPtr = newVtable;
 }

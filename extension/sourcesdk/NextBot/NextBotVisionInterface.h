@@ -9,7 +9,7 @@ class INextBotEntityFilter;
 class IVision : public INextBotComponent
 {
 public:
-	IVision( INextBot *bot ) {};
+	IVision( INextBot *bot ) : INextBotComponent(bot) {};
 	virtual ~IVision() = 0;
 
 	virtual void Reset( void ) = 0;

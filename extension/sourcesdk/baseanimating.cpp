@@ -48,22 +48,20 @@ public:
 	void FireOutput(CBaseEntity* pActivator, CBaseEntity* pCaller, float fDelay = 0);
 };
 
-DEFINEFUNCTION(CBaseAnimatingHack, SequenceDuration, float, (CStudioHdr* studio, int sequence), (studio, sequence));
-DEFINEFUNCTION_void(CBaseAnimatingHack, ResetSequence, (int sequence), (sequence));
-DEFINEFUNCTION(CBaseAnimatingHack, GetAttachment, bool, (int attachment, Vector& absOrigin, QAngle& absAngles), (attachment, absOrigin, absAngles));
-DEFINEFUNCTION(CBaseAnimatingHack, LookupPoseParameter, int, (CStudioHdr* studio, const char* name), (studio, name));
-DEFINEFUNCTION(CBaseAnimatingHack, SetPoseParameter, float, (CStudioHdr* studio, int parameter, float value), (studio, parameter, value));
-DEFINEFUNCTION(CBaseAnimatingHack, GetPoseParameter, float, (int parameter), (parameter));
-DEFINEFUNCTION_virtual_void(CBaseAnimatingHack, StudioFrameAdvance, (), ());
-DEFINEFUNCTION_virtual_void(CBaseAnimatingHack, DispatchAnimEvents, (CBaseAnimatingHack* animating), (animating));
+FCall<int, CStudioHdr*, const char*> fStudio_LookupSequence;
+FCall<int, const CStudioHdr*, const char*> fStudio_FindAttachment;
+FCall<int, CStudioHdr*, int, int> fStudio_SelectWeightedSequence;
 
+int CBaseAnimatingHack::offset_HandleAnimEvent = 0;
 
-int (*Studio_LookupSequence)(CStudioHdr* pstudiohdr, const char* label) = nullptr;
-int (*Studio_FindAttachment)(const CStudioHdr* pStudioHdr, const char* pAttachmentName) = nullptr;
-int (*Studio_SelectWeightedSequence)(CStudioHdr* pstudiohdr, int activity, int curSequence) = nullptr;
-
-// Vtable
-int (CBaseAnimatingHack::CBaseAnimatingHack::offset_HandleAnimEvent) = 0;
+VCall<void> CBaseAnimatingHack::vStudioFrameAdvance;
+VCall<void, CBaseAnimatingHack*> CBaseAnimatingHack::vDispatchAnimEvents;
+VCall<bool, int, matrix3x4_t> CBaseAnimatingHack::vGetAttachment;
+MCall<float, CStudioHdr*, int> CBaseAnimatingHack::mSequenceDuration;
+MCall<void, int> CBaseAnimatingHack::mResetSequence;
+MCall<int, CStudioHdr*, const char*> CBaseAnimatingHack::mLookupPoseParameter;
+MCall<float, int> CBaseAnimatingHack::mGetPoseParameter;
+MCall<float, CStudioHdr*, int, float> CBaseAnimatingHack::mSetPoseParameter;
 
 // Members
 DEFINEVAR(CBaseAnimatingHack, m_pStudioHdr);
@@ -73,30 +71,26 @@ DEFINEVAR(CBaseAnimatingHack, m_flModelScale);
 
 bool CBaseAnimatingHack::Init(SourceMod::IGameConfig* config, char* error, size_t maxlength)
 {
-	FINDSIG(config, SetPoseParameter, "CBaseAnimating::SetPoseParameter");
-	FINDSIG(config, GetPoseParameter, "CBaseAnimating::GetPoseParameter");
-	FINDSIG(config, LookupPoseParameter, "CBaseAnimating::LookupPoseParameter");
-	FINDSIG(config, SequenceDuration, "CBaseAnimating::SequenceDuration");
-	FINDSIG(config, ResetSequence, "CBaseAnimating::ResetSequence");
-	FINDSIG(config, GetAttachment, "CBaseAnimating::GetAttachment");
-	FINDVTABLE(config, StudioFrameAdvance, "CBaseAnimating::StudioFrameAdvance");
-	FINDVTABLE(config, DispatchAnimEvents, "CBaseAnimating::DispatchAnimEvents");
-
-	if (!config->GetMemSig("Studio_LookupSequence", reinterpret_cast<void**>(&Studio_LookupSequence)))
+	try
 	{
-		snprintf(error, maxlength, "Couldn't locate function Studio_LookupSequence!");
-		return false;
+		fStudio_LookupSequence.Init(config, "Studio_LookupSequence");
+		fStudio_FindAttachment.Init(config, "Studio_FindAttachment");
+		fStudio_SelectWeightedSequence.Init(config, "Studio_SelectWeightedSequence");
+
+		mSequenceDuration.Init(config, "CBaseAnimating::SequenceDuration");
+		mResetSequence.Init(config, "CBaseAnimating::ResetSequence");
+		mLookupPoseParameter.Init(config, "CBaseAnimating::LookupPoseParameter");
+		mSetPoseParameter.Init(config, "CBaseAnimating::SetPoseParameter");
+		mGetPoseParameter.Init(config, "CBaseAnimating::GetPoseParameter");
+
+		vGetAttachment.Init(config, "CBaseAnimating::GetAttachment");
+		vStudioFrameAdvance.Init(config, "CBaseAnimating::StudioFrameAdvance");
+		vDispatchAnimEvents.Init(config, "CBaseAnimating::DispatchAnimEvents");
 	}
-
-	if (!config->GetMemSig("Studio_FindAttachment", reinterpret_cast<void**>(&Studio_FindAttachment)))
+	catch (const std::exception& e)
 	{
-		snprintf(error, maxlength, "Couldn't locate function Studio_FindAttachment!");
-		return false;
-	}
-
-	if (!config->GetMemSig("Studio_SelectWeightedSequence", reinterpret_cast<void**>(&Studio_SelectWeightedSequence)))
-	{
-		snprintf(error, maxlength, "Couldn't locate function Studio_SelectWeightedSequence!");
+		// Could use strncpy, but compiler complains
+		snprintf(error, maxlength, "%s", e.what());
 		return false;
 	}
 
@@ -135,24 +129,34 @@ bool CBaseAnimatingHack::Init(SourceMod::IGameConfig* config, char* error, size_
 	return true;
 }
 
+void CBaseAnimatingHack::StudioFrameAdvance(void)
+{
+	vStudioFrameAdvance(this);
+}
+
+void CBaseAnimatingHack::DispatchAnimEvents(CBaseAnimatingHack* other)
+{
+	vDispatchAnimEvents(this, other);
+}
+
 int CBaseAnimatingHack::LookupSequence(const char* label)
 {
-	return (*Studio_LookupSequence)(GetModelPtr(), label);
+	return fStudio_LookupSequence(GetModelPtr(), label);
 }
 
 int CBaseAnimatingHack::SelectWeightedSequence(Activity activity)
 {
-	return (*Studio_SelectWeightedSequence)(GetModelPtr(), activity, GetSequence());
+	return fStudio_SelectWeightedSequence(GetModelPtr(), activity, GetSequence());
 }
 
 int CBaseAnimatingHack::SelectWeightedSequence(Activity activity, int cursequence)
 {
-	return (*Studio_SelectWeightedSequence)(GetModelPtr(), activity, cursequence);
+	return fStudio_SelectWeightedSequence(GetModelPtr(), activity, cursequence);
 }
 
 int CBaseAnimatingHack::LookupAttachment(const char* name)
 {
-	return (Studio_FindAttachment(GetModelPtr(), name))+1;
+	return fStudio_FindAttachment(GetModelPtr(), name) + 1;
 }
 
 float CBaseAnimatingHack::SetPoseParameter(CStudioHdr* studio, const char* name, float value)
@@ -166,3 +170,46 @@ float CBaseAnimatingHack::GetPoseParameter(const char* name)
 	return GetPoseParameter(LookupPoseParameter(name));
 }
 
+float CBaseAnimatingHack::SequenceDuration(CStudioHdr* studio, int sequence)
+{
+	return mSequenceDuration(this, studio, sequence);
+}
+
+void CBaseAnimatingHack::ResetSequence(int sequence)
+{
+	mResetSequence(this, sequence);
+}
+
+bool CBaseAnimatingHack::GetAttachment(const char *szName, Vector &absOrigin, QAngle &absAngles)
+{																
+	return GetAttachment(LookupAttachment(szName), absOrigin, absAngles);
+}
+
+bool CBaseAnimatingHack::GetAttachment(int iAttachment, Vector &absOrigin, QAngle &absAngles)
+{
+	matrix3x4_t attachmentToWorld;
+
+	bool bRet = GetAttachment(iAttachment, attachmentToWorld);
+	MatrixAngles(attachmentToWorld, absAngles, absOrigin);
+	return bRet;
+}
+
+bool CBaseAnimatingHack::GetAttachment(int iAttachment, matrix3x4_t& attachmentToWorld)
+{
+	return vGetAttachment(this, iAttachment, attachmentToWorld);
+}
+
+int CBaseAnimatingHack::LookupPoseParameter(CStudioHdr* studio, const char* name)
+{
+	return mLookupPoseParameter(this, studio, name);
+}
+
+float CBaseAnimatingHack::GetPoseParameter(int parameter)
+{
+	return mGetPoseParameter(this, parameter);
+}
+
+float CBaseAnimatingHack::SetPoseParameter(CStudioHdr* studio, int parameter, float val)
+{
+	return mSetPoseParameter(this, studio, parameter, val);
+}

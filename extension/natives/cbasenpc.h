@@ -10,7 +10,7 @@
 #define CEXTNPCNATIVE(name) \
 	cell_t CExtNPC_##name(IPluginContext *pContext, const cell_t *params) \
 	{ \
-		CExtNPC *npc = g_objNPC[params[1]]; \
+		CExtNPC* npc = g_objNPC[params[1]]; \
 		if (!npc) \
 		{ \
 			return pContext->ThrowNativeError("Invalid NPC %i", params[1]); \
@@ -19,7 +19,7 @@
 #define CBASENPCNATIVE(name) \
 	cell_t CBaseNPC_##name(IPluginContext *pContext, const cell_t *params) \
 	{ \
-		CBaseNPC *npc = (CBaseNPC *)(g_objNPC[params[1]]); \
+		CBaseNPC_Entity::CBaseNPC* npc = (CBaseNPC_Entity::CBaseNPC *)(g_objNPC[params[1]]); \
 		if (!npc) \
 		{ \
 			return pContext->ThrowNativeError("Invalid NPC %i", params[1]); \
@@ -40,19 +40,23 @@ CEXTNPCNATIVE(GetEntity)
 
 cell_t CBaseNPC_CBaseNPC(IPluginContext * pContext, const cell_t * params)
 {
-	CBaseNPC *npc = new CBaseNPC;
-	if (!npc) return INVALID_NPC_ID;
+	CBaseNPC_Entity *npc = (CBaseNPC_Entity*)servertools->CreateEntityByName("base_npc");
+	if (!npc)
+	{
+		return INVALID_NPC_ID;
+	}
 
-	int index = npc->GetID();
+	int index = npc->GetNPC()->GetID();
 	if (index == INVALID_NPC_ID)
 	{
-		delete npc;
+		servertools->RemoveEntityImmediate(npc);
+		return INVALID_NPC_ID;
 	}
 	return index;
 }
 
 CBASENPCNATIVE(GetBot)
-	return (cell_t)npc->m_pBot;
+	return (cell_t)npc->GetEntity()->MyNextBotPointer();
 }
 
 CBASENPCNATIVE(GetLocomotion)
@@ -64,7 +68,7 @@ CBASENPCNATIVE(GetBody)
 }
 
 CBASENPCNATIVE(GetVision)
-	return (cell_t)npc->m_pVision;
+	return (cell_t)npc->GetEntity()->MyNextBotPointer()->GetVisionInterface();
 }
 
 CBASENPCNATIVE(SetType)
@@ -86,7 +90,7 @@ CBASENPCNATIVE(SetBodyMins)
 
 	Vector mins;
 	PawnVectorToVector(addVec, mins);
-	npc->m_body->m_vecBodyMins = mins;
+	npc->m_pBody->m_vecBodyMins = mins;
 
 	return 0;
 }
@@ -97,7 +101,7 @@ CBASENPCNATIVE(SetBodyMaxs)
 
 	Vector maxs;
 	PawnVectorToVector(addVec, maxs);
-	npc->m_body->m_vecBodyMaxs = maxs;
+	npc->m_pBody->m_vecBodyMaxs = maxs;
 
 	return 0;
 }
@@ -105,110 +109,122 @@ CBASENPCNATIVE(SetBodyMaxs)
 CBASENPCNATIVE(GetBodyMins)
 	cell_t* addVec = nullptr;
 	pContext->LocalToPhysAddr(params[2], &addVec);
-	VectorToPawnVector(addVec, npc->m_body->m_vecBodyMins);
+	VectorToPawnVector(addVec, npc->m_pBody->m_vecBodyMins);
 	return 0;
 }
 
 CBASENPCNATIVE(GetBodyMaxs)
 	cell_t* addVec = nullptr;
 	pContext->LocalToPhysAddr(params[2], &addVec);
-	VectorToPawnVector(addVec, npc->m_body->m_vecBodyMaxs);
+	VectorToPawnVector(addVec, npc->m_pBody->m_vecBodyMaxs);
 	return 0;
 }
 
 CBASENPCNATIVE(flStepSizeGet)
-	return sp_ftoc(npc->m_mover->m_flStepSize);
+	return sp_ftoc(npc->m_pMover->m_flStepSize);
 }
 
 CBASENPCNATIVE(flStepSizeSet)
-	npc->m_mover->m_flStepSize = sp_ctof(params[2]);
+	npc->m_pMover->m_flStepSize = sp_ctof(params[2]);
 	return 0;
 }
 
 CBASENPCNATIVE(flGravityGet)
-	return sp_ftoc(npc->m_mover->m_flGravity);
+	return sp_ftoc(npc->m_pMover->m_flGravity);
 }
 
 CBASENPCNATIVE(flGravitySet)
-	npc->m_mover->m_flGravity = sp_ctof(params[2]);
+	npc->m_pMover->m_flGravity = sp_ctof(params[2]);
 	return 0;
 }
 
 CBASENPCNATIVE(flAccelerationGet)
-	return sp_ftoc(npc->m_mover->m_flAcceleration);
+	return sp_ftoc(npc->m_pMover->m_flAcceleration);
 }
 
 CBASENPCNATIVE(flAccelerationSet)
-	npc->m_mover->m_flAcceleration = sp_ctof(params[2]);
+	npc->m_pMover->m_flAcceleration = sp_ctof(params[2]);
 	return 0;
 }
 
 CBASENPCNATIVE(flJumpHeightGet)
-	return sp_ftoc(npc->m_mover->m_flJumpHeight);
+	return sp_ftoc(npc->m_pMover->m_flJumpHeight);
 }
 
 CBASENPCNATIVE(flJumpHeightSet)
-	npc->m_mover->m_flJumpHeight = sp_ctof(params[2]);
+	npc->m_pMover->m_flJumpHeight = sp_ctof(params[2]);
 	return 0;
 }
 
 CBASENPCNATIVE(flDeathDropHeightGet)
-	return sp_ftoc(npc->m_mover->m_flDeathDropHeight);
+	return sp_ftoc(npc->m_pMover->m_flDeathDropHeight);
 }
 
 CBASENPCNATIVE(flDeathDropHeightSet)
-	npc->m_mover->m_flDeathDropHeight = sp_ctof(params[2]);
+	npc->m_pMover->m_flDeathDropHeight = sp_ctof(params[2]);
 	return 0;
 }
 
 CBASENPCNATIVE(flWalkSpeedGet)
-	return sp_ftoc(npc->m_mover->m_flWalkSpeed);
+	return sp_ftoc(npc->m_pMover->m_flWalkSpeed);
 }
 
 CBASENPCNATIVE(flWalkSpeedSet)
-	npc->m_mover->m_flWalkSpeed = sp_ctof(params[2]);
+	npc->m_pMover->m_flWalkSpeed = sp_ctof(params[2]);
 	return 0;
 }
 
 CBASENPCNATIVE(flRunSpeedGet)
-	return sp_ftoc(npc->m_mover->m_flRunSpeed);
+	return sp_ftoc(npc->m_pMover->m_flRunSpeed);
 }
 
 CBASENPCNATIVE(flRunSpeedSet)
-	npc->m_mover->m_flRunSpeed = sp_ctof(params[2]);
+	npc->m_pMover->m_flRunSpeed = sp_ctof(params[2]);
 	return 0;
 }
 
 CBASENPCNATIVE(flFrictionForwardGet)
-	return sp_ftoc(npc->m_mover->m_flFrictionForward);
+	return sp_ftoc(npc->m_pMover->m_flFrictionForward);
 }
 
 CBASENPCNATIVE(flFrictionForwardSet)
-	npc->m_mover->m_flFrictionForward = sp_ctof(params[2]);
+	npc->m_pMover->m_flFrictionForward = sp_ctof(params[2]);
 	return 0;
 }
 
 CBASENPCNATIVE(flFrictionSidewaysGet)
-	return sp_ftoc(npc->m_mover->m_flFrictionSideways);
+	return sp_ftoc(npc->m_pMover->m_flFrictionSideways);
 }
 
 CBASENPCNATIVE(flFrictionSidewaysSet)
-	npc->m_mover->m_flFrictionSideways = sp_ctof(params[2]);
+	npc->m_pMover->m_flFrictionSideways = sp_ctof(params[2]);
 	return 0;
 }
 
 CNPCSNATIVE(IsValidNPC)
-	if (params[2] < 0 || params[2] >= MAX_NPCS) return 0;
+	if (params[2] < 0 || params[2] >= MAX_NPCS)
+	{
+		return 0;
+	}
 	CExtNPC *npc = g_objNPC[params[2]];
-	if (!npc || !(npc->GetEntity())) return 0;
+	if (!npc || !(npc->GetEntity()))
+	{
+		return 0;
+	}
 
 	return 1;
 }
 
 CNPCSNATIVE(FindNPCByEntIndex)
-	if (params[2] <= 0 || params[2] > 2048) return INVALID_NPC_ID;
+	if (params[2] <= 0 || params[2] > 2048)
+	{
+		return INVALID_NPC_ID;
+	}
 	CBaseEntity* ent = gamehelpers->ReferenceToEntity(params[2]);
-	if (!ent || !g_objNPC2[params[2]] || g_objNPC2[params[2]]->GetEntity() != ent) return INVALID_NPC_ID;
+	if (!ent || !g_objNPC2[params[2]] || g_objNPC2[params[2]]->GetEntity() != ent)
+	{
+		return INVALID_NPC_ID;
+	}
 
 	return g_objNPC2[params[2]]->GetID();
 }
@@ -307,7 +323,7 @@ CBASENPCNATIVE(Teleport)
 	{
 		return pContext->ThrowNativeError("Invalid linked entity to NPC");
 	}
-	entity->Teleport((originAdd == nullAdd) ? NULL : &origin, (angAdd == nullAdd) ? NULL : &ang, (velAdd == nullAdd) ? NULL : &vel);
+	entity->Teleport((originAdd == nullAdd) ? nullptr : &origin, (angAdd == nullAdd) ? nullptr : &ang, (velAdd == nullAdd) ? nullptr : &vel);
 	
 	return 0;
 }
@@ -325,7 +341,7 @@ CBASENPCNATIVE(GetVectors)
 	PawnVectorToVector(rigthAdd, right);
 	PawnVectorToVector(upAdd, up);
 
-	((CBaseEntityHack*)npc->GetEntity())->GetVectors((forwardAdd == nullAdd) ? nullptr : &forward, (rigthAdd == nullAdd) ? nullptr : &right, (upAdd == nullAdd) ? nullptr : &up);
+	((CBaseEntityHack *)npc->GetEntity())->GetVectors((forwardAdd == nullAdd) ? nullptr : &forward, (rigthAdd == nullAdd) ? nullptr : &right, (upAdd == nullAdd) ? nullptr : &up);
 
 	VectorToPawnVector(forwardAdd, forward);
 	VectorToPawnVector(rigthAdd, right);
@@ -337,7 +353,7 @@ CBASENPCNATIVE(GetVectors)
 CBASENPCNATIVE(SetModel)
 	char* model = nullptr;
 	pContext->LocalToString(params[2], &model);
-	((CBaseEntityHack*)npc->GetEntity())->SetModel(model);
+	((CBaseEntityHack *)npc->GetEntity())->SetModel(model);
 	return 0;
 }
 

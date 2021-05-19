@@ -59,8 +59,15 @@ int BaseNPC_Tools_API::GrantID(CBaseEntity* ent, CExtNPC* npc)
 
 CExtNPC* BaseNPC_Tools_API::DeleteNPC(CExtNPC* npc)
 {
-	if (npc->GetID() == INVALID_NPC_ID) return nullptr;
-	if (npc->GetEntity() != g_registeredNPCS[npc->GetID()].Get()) return nullptr;
+	if (npc->GetID() == INVALID_NPC_ID)
+	{
+		return nullptr;
+	}
+	
+	if (npc->GetEntity() != g_registeredNPCS[npc->GetID()].Get())
+	{
+		return nullptr;
+	}
 
 	g_objNPC[npc->GetID()] = nullptr;
 	g_objNPC2[gamehelpers->EntityToBCompatRef(npc->GetEntity())] = nullptr;
@@ -70,7 +77,10 @@ CExtNPC* BaseNPC_Tools_API::DeleteNPC(CExtNPC* npc)
 
 CExtNPC* BaseNPC_Tools_API::DeleteNPCByEntIndex(int index)
 {
-	if (index <= 0 || index > 2048) return nullptr;
+	if (index <= 0 || index > 2048)
+	{
+		return nullptr;
+	}
 
 	CExtNPC* npc = g_objNPC2[index];
 	g_objNPC2[index] = nullptr;
@@ -85,31 +95,4 @@ CExtNPC* BaseNPC_Tools_API::DeleteNPCByEntIndex(int index)
 INextBot* BaseNPC_Tools_API::GetNextBotOfEntity(CBaseEntity* pEntity)
 {
 	return ((CBaseEntityHack *)pEntity)->MyNextBotPointer();
-}
-
-ILocomotion_Hook* BaseNPC_Tools_API::Hook_ILocomotion(ILocomotion* mover, ILocomotion_Hook* realHook)
-{
-	auto iface_internal = new ILocomotion_Hook_Internal();
-	realHook->m_pInternalHook = iface_internal;
-	realHook->m_pRealInterface = mover;
-	iface_internal->SetupHook(mover, realHook);
-	return (ILocomotion_Hook*)iface_internal;
-}
-
-NextBotGroundLocomotion_Hook* BaseNPC_Tools_API::Hook_NextBotGroundLocomotion(NextBotGroundLocomotion* mover, NextBotGroundLocomotion_Hook* realHook)
-{
-	auto iface_internal = new NextBotGroundLocomotion_Hook_Internal();
-	realHook->m_pInternalHook = iface_internal;
-	realHook->m_pRealInterface = mover;
-	iface_internal->SetupHook(mover, realHook);
-	return (NextBotGroundLocomotion_Hook*)iface_internal;
-}
-
-IBody_Hook* BaseNPC_Tools_API::Hook_IBody(IBody* body, IBody_Hook* realHook)
-{
-	auto iface_internal = new IBody_Hook_Internal();
-	realHook->m_pInternalHook = iface_internal;
-	realHook->m_pRealInterface = body;
-	iface_internal->SetupHook(body, realHook);
-	return (IBody_Hook*)iface_internal;
 }

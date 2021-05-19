@@ -1,8 +1,8 @@
 ﻿/**
  * vim: set ts=4 :
  * =============================================================================
- * SourceMod Sample Extension
- * Copyright (C) 2004-2008 AlliedModders LLC.  All rights reserved.
+ * CBASENPC Extension
+ * Copyright (C) 2017-2021  All rights reserved.
  * =============================================================================
  *
  * This program is free software; you can redistribute it and/or modify it under
@@ -16,16 +16,6 @@
  *
  * You should have received a copy of the GNU General Public License along with
  * this program.  If not, see <http://www.gnu.org/licenses/>.
- *
- * As a special exception, AlliedModders LLC gives you permission to link the
- * code of this program (as well as its derivative works) to "Half-Life 2," the
- * "Source Engine," the "SourcePawn JIT," and any Game MODs that run on software
- * by the Valve Corporation.  You must obey the GNU General Public License in
- * all respects for all other code used.  Additionally, AlliedModders LLC grants
- * this exception to all derivative works.  AlliedModders LLC defines further
- * exceptions, found in LICENSE.txt (as of this writing, version JULY-31-2007),
- * or <http://www.sourcemod.net/license.php>.
- *
  * Version: $Id$
  */
 #ifndef _INCLUDE_SOURCEMOD_EXTENSION_CONFIG_H_
@@ -37,9 +27,9 @@
  */
  
 /* Basic information exposed publicly */
-#define SMEXT_CONF_NAME			"CBaseNPC Ext"
-#define SMEXT_CONF_DESCRIPTION	"Expose NextBot and some SDK functions to plugins"
-#define SMEXT_CONF_VERSION		"1.0"
+#define SMEXT_CONF_NAME			"CBaseNPC"
+#define SMEXT_CONF_DESCRIPTION	"Primarily exposes valve's NextBot framework. But also various functions from public SDK."
+#define SMEXT_CONF_VERSION		"1.5"
 #define SMEXT_CONF_AUTHOR		"Kenzzer & Arthurdead & Pelipoika"
 #define SMEXT_CONF_URL			""
 #define SMEXT_CONF_LOGTAG		"CBASENPC"

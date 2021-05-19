@@ -2,6 +2,7 @@
 #include "CDetour/detours.h"
 #include "helpers.h"
 #include "sourcesdk/nav_mesh.h"
+#include "sourcesdk/tf_gamerules.h"
 #include "natives.h"
 #include <ihandleentity.h>
 #include "npc_tools_internal.h"
@@ -16,14 +17,16 @@ IEngineTrace* enginetrace = nullptr;
 IdentityType_t g_CoreIdent;
 CBaseEntityList* g_pEntityList = nullptr;
 IServerTools* servertools = nullptr;
+IMDLCache* mdlcache = nullptr;
 CSharedEdictChangeInfo* g_pSharedChangeInfo = nullptr;
+IStaticPropMgrServer* staticpropmgr = nullptr;
 IBaseNPC_Tools* g_pBaseNPCTools = new BaseNPC_Tools_API;
 
 DEFINEHANDLEOBJ(SurroundingAreasCollector, CUtlVector< CNavArea* >);
 DEFINEHANDLEOBJ(TSurroundingAreasCollector, CUtlVector< CTNavArea >);
 
-ConVar NextBotPathDrawIncrement("cnb_path_draw_inc", "0", 0, "");                     
-ConVar NextBotPathSegmentInfluenceRadius("cnb_path_segment_influence", "0", 0, "");
+ConVar* NextBotPathDrawIncrement = nullptr;
+ConVar* NextBotPathSegmentInfluenceRadius = nullptr;
 
 HandleType_t g_CellArrayHandle;
 HandleType_t g_KeyValueType;
@@ -62,6 +65,9 @@ bool CBaseNPCExt::SDK_OnLoad(char *error, size_t maxlength, bool late)
 		|| !CNavMesh::Init(g_pGameConf, error, maxlength)
 		|| !CBaseCombatCharacterHack::Init(g_pGameConf, error, maxlength)
 		|| !CTraceFilterSimpleHack::Init(g_pGameConf, error, maxlength)
+		|| !NextBotCombatCharacter::Init(g_pGameConf, error, maxlength)
+		|| !NextBotGroundLocomotion::Init(g_pGameConf, error, maxlength)
+		|| !CTFGameRules::Init(g_pGameConf, error, maxlength)
 		)
 	{
 		return false;
@@ -71,9 +77,9 @@ bool CBaseNPCExt::SDK_OnLoad(char *error, size_t maxlength, bool late)
 	if (g_pNavMeshAddArea != nullptr)
 	{
 		g_pNavMeshAddArea->EnableDetour();
-		g_pSM->LogMessage(myself, "CNavMesh::AddNavArea detour enabled.");
 	}
 	g_pForwardEventKilled = forwards->CreateForward("CBaseCombatCharacter_EventKilled", ET_Event, 9, nullptr, Param_Cell, Param_CellByRef, Param_CellByRef, Param_FloatByRef, Param_CellByRef, Param_CellByRef, Param_Array, Param_Array, Param_Cell);
+	g_pBaseNPCFactory = new CBaseNPCFactory;
 	
 	int iOffset = 0;
 	GETGAMEDATAOFFSET("CBaseCombatCharacter::EventKilled", iOffset);
@@ -100,9 +106,31 @@ bool CBaseNPCExt::SDK_OnMetamodLoad(ISmmAPI *ismm, char *error, size_t maxlen, b
 	GET_V_IFACE_ANY(GetServerFactory, gameents, IServerGameEnts, INTERFACEVERSION_SERVERGAMEENTS);
 	GET_V_IFACE_ANY(GetEngineFactory, enginetrace, IEngineTrace, INTERFACEVERSION_ENGINETRACE_SERVER);
 	GET_V_IFACE_ANY(GetServerFactory, servertools, IServerTools, VSERVERTOOLS_INTERFACE_VERSION);
+	GET_V_IFACE_ANY(GetEngineFactory, staticpropmgr, IStaticPropMgrServer, INTERFACEVERSION_STATICPROPMGR_SERVER);
+	GET_V_IFACE_ANY(GetEngineFactory, g_pCVar, ICvar, CVAR_INTERFACE_VERSION);
+	GET_V_IFACE_ANY(GetEngineFactory, mdlcache, IMDLCache, MDLCACHE_INTERFACE_VERSION);
+
+	ConVar_Register(0, this);
+
+	NextBotSpeedLookAheadRange = g_pCVar->FindVar("nb_speed_look_ahead_range");
+	NextBotGoalLookAheadRange = g_pCVar->FindVar("nb_goal_look_ahead_range");
+	NextBotLadderAlignRange = g_pCVar->FindVar("nb_ladder_align_range");
+	NextBotAllowAvoiding = g_pCVar->FindVar("nb_allow_avoiding");
+	NextBotAllowClimbing = g_pCVar->FindVar("nb_allow_climbing");
+	NextBotAllowGapJumping = g_pCVar->FindVar("nb_allow_gap_jumping");
+	NextBotDebugClimbing = g_pCVar->FindVar("nb_debug_climbing");
+	NextBotPathDrawIncrement = g_pCVar->FindVar("nb_path_draw_inc");
+	NextBotPathSegmentInfluenceRadius = g_pCVar->FindVar("nb_path_segment_influence_radius");
+
 	g_pSharedChangeInfo = engine->GetSharedEdictChangeInfo();
 	gpGlobals = ismm->GetCGlobals();
 	return true;
+}
+
+bool CBaseNPCExt::RegisterConCommandBase(ConCommandBase *pVar)
+{
+	/* Always call META_REGCVAR instead of going through the engine. */
+	return META_REGCVAR(pVar);
 }
 
 void CBaseNPCExt::OnCoreMapStart(edict_t *pEdictList, int edictCount, int clientMax)
@@ -122,7 +150,10 @@ void CBaseNPCExt::OnEntityCreated(CBaseEntity* pEntity, const char* classname)
 
 void CBaseNPCExt::OnEntityDestroyed(CBaseEntity* pEntity)
 {
-	if (!pEntity) return;
+	if (!pEntity)
+	{
+		return;
+	}
 
 	g_pBaseNPCTools->DeleteNPCByEntIndex(gamehelpers->EntityToBCompatRef(pEntity));
 
@@ -143,10 +174,7 @@ void CBaseNPCExt::SDK_OnAllLoaded()
 	if (g_pSDKHooks)
 	{
 		g_pSDKHooks->AddEntityListener(this);
-	}
-	g_pSM->LogMessage(myself, "0x%08x IBinTools", g_pBinTools);
-	g_pSM->LogMessage(myself, "0x%08x ISDKTools", g_pSDKTools);
-	g_pSM->LogMessage(myself, "0x%08x ISDKHooks", g_pSDKHooks);
+	} 
 
 	handlesys->FindHandleType("CellArray", &g_CellArrayHandle);
 	handlesys->FindHandleType("KeyValues", &g_KeyValueType);
@@ -154,7 +182,13 @@ void CBaseNPCExt::SDK_OnAllLoaded()
 	
 	g_pEntityList = (CBaseEntityList *)gamehelpers->GetGlobalEntityList();
 	CTNavMesh::RefreshHooks();
-	CBaseNPC npc;
+
+	CBaseNPC_Entity *npc = (CBaseNPC_Entity*)servertools->CreateEntityByName("base_npc");
+	if (npc)
+	{
+		servertools->RemoveEntityImmediate(npc);
+		g_pSM->LogMessage(myself, "Successfully created & destroyed dummy NPC");
+	}
 }
 
 bool CBaseNPCExt::QueryRunning(char *error, size_t maxlength)
@@ -193,10 +227,15 @@ void CBaseNPCExt::NotifyInterfaceDrop(SMInterface *pInterface)
 void CBaseNPCExt::SDK_OnUnload()
 {
 	gameconfs->CloseGameConfigFile(g_pGameConf);
-
 	forwards->ReleaseForward(g_pForwardEventKilled);
 
-	if (g_pNavMeshAddArea != nullptr) g_pNavMeshAddArea->Destroy();
+	if (g_pNavMeshAddArea != nullptr)
+	{
+		g_pNavMeshAddArea->Destroy();
+	}
+
+	delete g_pBaseNPCFactory;
+	g_pBaseNPCFactory = nullptr;
 	
 	gameconfs->CloseGameConfigFile(g_pGameConf);
 

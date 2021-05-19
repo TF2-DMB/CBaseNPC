@@ -7,7 +7,7 @@
 #define NAVMESHNATIVE(name) \
 	cell_t CNavMesh_##name(IPluginContext *pContext, const cell_t *params) \
 	{ \
-		if(!TheNavMesh) \
+		if (!TheNavMesh) \
 		{ \
 			return pContext->ThrowNativeError("TheNavMesh isn't initialized!"); \
 		} \
@@ -71,8 +71,11 @@ COLLECTORNATIVE(Count)
 
 COLLECTORNATIVE(Get)
 	int ID = params[2];
-	if ( ID > pCollector->Count()) return NULL;
-	return (cell_t) pCollector->Element(ID);
+	if (ID > pCollector->Count())
+	{
+		return 0;
+	}
+	return (cell_t)pCollector->Element(ID);
 }
 
 TCOLLECTORNATIVE(Count)
@@ -82,7 +85,10 @@ TCOLLECTORNATIVE(Count)
 
 TCOLLECTORNATIVE(Get)
 	int ID = params[2];
-	if (ID > pCollector->Count()) return NULL;
+	if (ID > pCollector->Count())
+	{
+		return 0;
+	}
 	return (cell_t)&(pCollector->Element(ID));
 }
 

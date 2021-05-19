@@ -10,15 +10,15 @@
 #include "NextBotBodyInterface.h"
 #include "NextBotEventResponderInterface.h"
 
-ConVar NextBotSpeedLookAheadRange( "cnb_speed_look_ahead_range", "150", FCVAR_CHEAT );
-ConVar NextBotGoalLookAheadRange( "cnb_goal_look_ahead_range", "50", FCVAR_CHEAT );
-ConVar NextBotLadderAlignRange( "cnb_ladder_align_range", "50", FCVAR_CHEAT );
+ConVar* NextBotSpeedLookAheadRange = nullptr;
+ConVar* NextBotGoalLookAheadRange = nullptr;
+ConVar* NextBotLadderAlignRange = nullptr;
 
-ConVar NextBotAllowAvoiding( "cnb_allow_avoiding", "1", FCVAR_CHEAT );
-ConVar NextBotAllowClimbing( "cnb_allow_climbing", "1", FCVAR_CHEAT );
-ConVar NextBotAllowGapJumping( "cnb_allow_gap_jumping", "1", FCVAR_CHEAT );
+ConVar* NextBotAllowAvoiding = nullptr;
+ConVar* NextBotAllowClimbing = nullptr;
+ConVar* NextBotAllowGapJumping = nullptr;
 
-ConVar NextBotDebugClimbing( "cnb_debug_climbing", "0", FCVAR_CHEAT );
+ConVar* NextBotDebugClimbing = nullptr;
 
 float RandomFloatEx(float a, float b) {
 	float random = ((float)rand()) / (float)RAND_MAX;
@@ -343,7 +343,7 @@ bool PathFollower::LadderUpdate( INextBot *bot )
 							  "Mounting upward ladder" );
 
 		float range = to.NormalizeInPlace();
-		if ( range < NextBotLadderAlignRange.GetFloat() )
+		if ( range < NextBotLadderAlignRange->GetFloat() )
 		{
 			// getting close - line up
 			Vector2D ladderNormal2D = m_goal->ladder->GetNormal().AsVector2D();
@@ -369,7 +369,7 @@ bool PathFollower::LadderUpdate( INextBot *bot )
 
 				Vector goal = m_goal->ladder->m_bottom;
 				
-				float alignRange = NextBotLadderAlignRange.GetFloat();
+				float alignRange = NextBotLadderAlignRange->GetFloat();
 				
 				if ( dot < 0.0f )
 				{
@@ -869,7 +869,7 @@ Vector PathFollower::Avoid( INextBot *bot, const Vector &goalPos, const Vector &
 {
 	VPROF_BUDGET( "PathFollower::Avoid", "NextBotExpensive" );
 
-	if ( !NextBotAllowAvoiding.GetBool() )
+	if ( !NextBotAllowAvoiding->GetBool() )
 	{
 		return goalPos;
 	}
@@ -1140,7 +1140,7 @@ bool PathFollower::Climbing( INextBot *bot, const Path::Segment *goal, const Vec
 	IBody *body = bot->GetBodyInterface();
 	CNavArea *myArea = bot->GetEntity()->GetLastKnownArea();
 
-	if ( !mover->IsAbleToClimb() || !NextBotAllowClimbing.GetBool() )
+	if ( !mover->IsAbleToClimb() || !NextBotAllowClimbing->GetBool() )
 	{
 		return false;
 	}
@@ -1367,7 +1367,7 @@ bool PathFollower::Climbing( INextBot *bot, const Path::Segment *goal, const Vec
 					  feet + climbDirection * ledgeLookAheadRange, 
 					  skipStepHeightHullMin, climbHullMax, mask, &filter, &result );
 
-	if ( bot->IsDebugging( NEXTBOT_PATH ) && NextBotDebugClimbing.GetBool() )
+	if ( bot->IsDebugging( NEXTBOT_PATH ) && NextBotDebugClimbing->GetBool() )
 	{
 		// show ledge-finding hull as we move
 	}
@@ -1379,7 +1379,7 @@ bool PathFollower::Climbing( INextBot *bot, const Path::Segment *goal, const Vec
 	{
 		////VPROF_BUDGET( "PathFollower::Climbing( Search for ledge to climb )", "NextBot" );
 
-		if ( bot->IsDebugging( NEXTBOT_PATH ) && NextBotDebugClimbing.GetBool() )
+		if ( bot->IsDebugging( NEXTBOT_PATH ) && NextBotDebugClimbing->GetBool() )
 		{
 			// show ledge-finding hull that found a ledge candidate 
 			//NDebugOverlay::SweptBox( feet, feet + climbDirection * ledgeLookAheadRange, skipStepHeightHullMin, climbHullMax, vec3_angle,255, 100, 0, 100, 999.9f );
@@ -1532,7 +1532,7 @@ bool PathFollower::Climbing( INextBot *bot, const Path::Segment *goal, const Vec
 													climbHullMin, climbHullMax, mask, &filter, &result );
 
 									
-									if ( bot->IsDebugging( NEXTBOT_PATH ) && NextBotDebugClimbing.GetBool() )
+									if ( bot->IsDebugging( NEXTBOT_PATH ) && NextBotDebugClimbing->GetBool() )
 									{
 										// show edge-finder hulls
 										//NDebugOverlay::SweptBox( testPos,testPos + Vector( 0, 0, -mover->GetStepHeight() ), climbHullMin, climbHullMax, vec3_angle, 255, 0, 0, 255, 999.9f );
@@ -1623,7 +1623,7 @@ bool PathFollower::Climbing( INextBot *bot, const Path::Segment *goal, const Vec
 						if ( bot->IsDebugging( NEXTBOT_PATH ) )
 						{
 							DevMsg( "%3.2f: Climbing - found wall.\n", gpGlobals->curtime );
-							if ( NextBotDebugClimbing.GetBool() )
+							if ( NextBotDebugClimbing->GetBool() )
 							{
 								//NDebugOverlay::HorzArrow( result.endpos, result.endpos + 20.0f * result.plane.normal, 5.0f, 255, 100, 0, 255, true, 9999.9f );
 							}
@@ -1663,7 +1663,7 @@ bool PathFollower::Climbing( INextBot *bot, const Path::Segment *goal, const Vec
 				{
 					DevMsg( "%3.2f: STARTING LEDGE CLIMB UP\n", gpGlobals->curtime );
 
-					if ( NextBotDebugClimbing.GetBool() ) 
+					if ( NextBotDebugClimbing->GetBool() ) 
 					{
 						//NDebugOverlay::Cross3D( ledgePos, 10.0f, 0, 255, 0, true, 9999.9f );
 
@@ -1720,7 +1720,7 @@ bool PathFollower::JumpOverGaps( INextBot *bot, const Path::Segment *goal, const
 	ILocomotion *mover = bot->GetLocomotionInterface();
 	IBody *body = bot->GetBodyInterface();
 
-	if ( !mover->IsAbleToJumpAcrossGaps() || !NextBotAllowGapJumping.GetBool() )
+	if ( !mover->IsAbleToJumpAcrossGaps() || !NextBotAllowGapJumping->GetBool() )
 	{
 		return false;
 	}
