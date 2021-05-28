@@ -80,11 +80,6 @@
 		return pContext->ThrowNativeError("Invalid Handle %x (error %i: %s)", hnd, chnderr, HandleErrorToString(chnderr)); \
 	} \
 
-extern int nothing;
-	
-SendProp *GetEntSendProp(CBaseEntity *pEntity, const char *prop);
-int GetEntPropOffset(CBaseEntity *pEntity, const char *prop, bool local=false, int &fieldsize=nothing, int &fieldsizeinbytes=nothing);
-
 void VectorToPawnVector(cell_t *vecAddr, const Vector vector);
 void VectorToPawnVector(cell_t *vecAddr, const Vector *vector);
 void VectorToPawnVector(cell_t *angAddr, const QAngle angle);

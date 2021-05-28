@@ -199,17 +199,6 @@ PATHNATIVE(GetSubject)
 	return gamehelpers->EntityToBCompatRef(pEntity);
 }
 
-#if SOURCE_ENGINE == SE_LEFT4DEAD2
-PATHNATIVE(SetSubject)
-	CBaseEntity *pEntity = gamehelpers->ReferenceToEntity(params[2]);
-	if(!pEntity) {
-		return pContext->ThrowNativeError("Invalid Entity Reference/Index %i", params[2]);
-	}
-	pPath->SetSubject(pEntity);
-	return 0;
-}
-#endif
-
 PATHNATIVE(GetCurrentGoal)
 	return (cell_t)(pPath->GetCurrentGoal());
 }

@@ -25,7 +25,7 @@ PossibleSDKs = {
 #  'hl2dm':  SDK('HL2SDKHL2DM', '2.hl2dm', '7', 'HL2DM', WinLinuxMac, 'hl2dm'),
 #  'dods': SDK('HL2SDKDODS', '2.dods', '8', 'DODS', WinLinuxMac, 'dods'),
 #  'sdk2013': SDK('HL2SDK2013', '2.sdk2013', '9', 'SDK2013', WinLinuxMac, 'sdk2013'),
-  'tf2':  SDK('HL2SDK2013', '2.tf2', '9', 'SDK2013', WinLinuxMac, 'tf2')
+  'tf2':  SDK('HL2SDK2013', '2.tf2', '9', 'SDK2013', WinLinuxMac, 'sdk2013')
 #  'l4d':  SDK('HL2SDKL4D', '2.l4d', '12', 'LEFT4DEAD', WinLinuxMac, 'l4d'),
 #  'nucleardawn': SDK('HL2SDKND', '2.nd', '13', 'NUCLEARDAWN', WinLinuxMac, 'nucleardawn'),
 #  'l4d2': SDK('HL2SDKL4D2', '2.l4d2', '15', 'LEFT4DEAD2', WinLinuxMac, 'l4d2'),

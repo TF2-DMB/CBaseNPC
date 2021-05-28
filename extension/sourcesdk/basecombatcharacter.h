@@ -23,7 +23,7 @@ public:
 	CNavArea* GetLastKnownArea(void);
 
 	static VCall<int, const CTakeDamageInfo&> vOnTakeDamage_Alive;
-	int CBaseCombatCharacterHack::OnTakeDamage_Alive(const CTakeDamageInfo& info);
+	int OnTakeDamage_Alive(const CTakeDamageInfo& info);
 };
 
 #endif // H_COMBATCHARACTER_CBASENPC_

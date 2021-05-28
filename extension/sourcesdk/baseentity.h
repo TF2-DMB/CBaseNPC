@@ -27,7 +27,7 @@ extern CGlobalVars* gpGlobals;
 extern IServerTools* servertools;
 
 #define DECLAREVAR(type, var) \
-	static int32_t(offset_##var); \
+	static int32_t offset_##var; \
 	inline type* var() const \
 	{ \
 		return (type*)((uint8_t*)this + offset_##var); \
@@ -104,7 +104,7 @@ public:
 	static VCall<void, const char*> vPostConstructor;
 	void PostConstructor(const char*);
 
-	static VCall<void> CBaseEntityHack::vUpdateOnRemove;
+	static VCall<void> vUpdateOnRemove;
 	void UpdateOnRemove(void);
 
 	static VCall<void> vSpawn;
@@ -213,7 +213,7 @@ public:
 
 	int GetTeamNumber(void) const;
 
-	static int(offset_UpdateOnRemove);
+	static int offset_UpdateOnRemove;
 
 protected:
 	enum thinkmethods_t

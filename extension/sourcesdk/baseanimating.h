@@ -34,7 +34,7 @@ public:
 
 	float	GetPoseParameter(const char* name);
 
-	static int (offset_HandleAnimEvent);
+	static int offset_HandleAnimEvent;
 
 	static VCall<void> vStudioFrameAdvance;
 	void StudioFrameAdvance(void);
