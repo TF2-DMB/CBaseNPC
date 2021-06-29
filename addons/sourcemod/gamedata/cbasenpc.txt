@@ -55,33 +55,33 @@
 			}
 			"CBaseAnimating::StudioFrameAdvance"
 			{
-				"linux"		"194"
-				"windows"	"193"
+				"linux"		"195"
+				"windows"	"194"
 			}
 			"CBaseAnimating::DispatchAnimEvents"
-			{
-				"linux"		"206"
-				"windows"	"205"
-			}
-			"CBaseAnimating::HandleAnimEvent"
 			{
 				"linux"		"207"
 				"windows"	"206"
 			}
+			"CBaseAnimating::HandleAnimEvent"
+			{
+				"linux"		"208"
+				"windows"	"207"
+			}
 			"CBaseAnimating::GetAttachment"
 			{
-				"linux"		"209"
-				"windows"	"208"
+				"linux"		"210"
+				"windows"	"209"
 			}
 			"CBaseCombatCharacter::GetLastKnownArea"
 			{
-				"linux"		"316"
-				"windows"	"315"
+				"linux"		"317"
+				"windows"	"316"
 			}
 			"CBaseCombatCharacter::UpdateLastKnownArea"
 			{
-				"linux"		"319"
-				"windows"	"318"
+				"linux"		"320"
+				"windows"	"319"
 			}
 			// This offset value doesn't matter if it's precise
 			// For as long it's above what the class requires
@@ -92,8 +92,8 @@
 			}
 			"NextBotCombatCharacter::vtable_entries"
 			{
-				"windows"	"330"
-				"linux"		"330"
+				"windows"	"331"
+				"linux"		"331"
 			}
 		}
 		"Signatures"
@@ -115,10 +115,12 @@
 				"library"		"server"
 				"linux"			"@TheNavMesh"
 			}
+			// To find signature: find string "NavEndArea: Out of memory\n", then look for EmitSound("EDIT_END_AREA.Creating") within func
 			"CNavMesh::AddNavArea"
 			{
 				"library"		"server"
 				"linux"			"@_ZN8CNavMesh10AddNavAreaEP8CNavArea"
+				"windows"		"\x55\x8B\xEC\x83\xEC\x20\x53\x8B\xD9\x56\x57\x89\x5D\xEC\x83" 
 			}
 			"CNavMesh::GetNearestNavArea"
 			{
