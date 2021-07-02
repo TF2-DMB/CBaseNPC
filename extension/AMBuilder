@@ -8,6 +8,7 @@ sourceFiles = [
   'extension.cpp',
   'cbasenpc_internal.cpp',
   'npc_tools_internal.cpp',
+  'pluginentityfactory.cpp',
   'CDetour/detours.cpp',
   'asm/asm.c',
   'helpers.cpp',
