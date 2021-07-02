@@ -6,6 +6,7 @@
 #include "natives.h"
 #include <ihandleentity.h>
 #include "npc_tools_internal.h"
+#include "pluginentityfactory.h"
 
 CGlobalVars* gpGlobals = nullptr;
 IGameConfig* g_pGameConf = nullptr;
@@ -87,6 +88,7 @@ bool CBaseNPCExt::SDK_OnLoad(char *error, size_t maxlength, bool late)
 	
 	CREATEHANDLETYPE(SurroundingAreasCollector);
 	CREATEHANDLETYPE(TSurroundingAreasCollector);
+	CREATEHANDLETYPE(PluginEntityFactory);
 
 	sharesys->AddDependency(myself, "bintools.ext", true, true);
 	sharesys->AddDependency(myself, "sdktools.ext", true, true);

@@ -15,6 +15,7 @@
 #include "cbasecombatcharacter.h"
 #include "vision.h"
 #include "cbasenpc.h"
+#include "smn_pluginentityfactory.h"
 #include <takedamageinfo.h>
 
 #pragma once
@@ -548,6 +549,11 @@ const sp_nativeinfo_t g_NativesInfo[] =
 	NATIVENAME(CTNavArea, GetCostSoFar)
 	NATIVENAME(CTNavArea, GetRealNavArea)
 	
+	{ "CEntityFactory.CEntityFactory", &CPluginEntityFactory_CPluginEntityFactory },
+	{ "CEntityFactory.DeriveFromClass", &CPluginEntityFactory_DeriveFromClass },
+	{ "CEntityFactory.DeriveFromNPC", &CPluginEntityFactory_DeriveFromNPC },
+	{ "CEntityFactory.Install", &CPluginEntityFactory_Install },
+
 	{ nullptr, nullptr },
 };
 
