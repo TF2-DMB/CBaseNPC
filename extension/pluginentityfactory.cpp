@@ -25,7 +25,14 @@ void CPluginEntityFactory::Install()
 	if (pFactoryDict) 
 	{
 		const char* classname = m_iClassname.c_str();
-		pFactoryDict->InstallFactory(this, classname);
+
+		if (pFactoryDict->FindFactory(classname))
+			return;
+		
+		// DO NOT USE IEntityFactoryDictionary::InstallFactory()!
+		// It's a virtual function, which means memory allocation is handled by server.dll, not by this extension.
+		// If you use it anyway and you try to uninstall, it will result in heap corruption error. (at least on Windows)
+		pFactoryDict->m_Factories.Insert( classname, this );
 
 		m_bInstalled = true;
 
@@ -43,7 +50,14 @@ void CPluginEntityFactory::Uninstall()
 	{
 		const char* classname = m_iClassname.c_str();
 
-		pFactoryDict->UninstallFactory(this);
+		for (size_t i = 0; i < pFactoryDict->m_Factories.Count(); i++)
+		{
+			if (pFactoryDict->m_Factories[i] == this)
+			{
+				pFactoryDict->m_Factories.RemoveAt(i);
+				break;
+			}
+		}
 
 		m_bInstalled = false;
 
@@ -119,7 +133,6 @@ IServerNetworkable* CPluginEntityFactory::Create(const char* classname)
 
 	if (m_pConstructor && m_pConstructor->IsRunnable())
 	{
-		IPluginContext* pContext = m_pConstructor->GetParentRuntime()->GetDefaultContext();
 		m_pConstructor->PushCell(pEnt->entindex());
 		m_pConstructor->Execute(0);
 	}
