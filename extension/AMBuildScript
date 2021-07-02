@@ -278,7 +278,7 @@ class ExtensionConfig(object):
     cxx.cxxflags += ['-stdlib=libstdc++']
 
   def configure_windows(self, cxx):
-    cxx.defines += ['WIN32', '_WINDOWS']
+    cxx.defines += ['WIN32', '_WINDOWS', 'RAD_TELEMETRY_DISABLED']
 	
   def ConfigureForExtension(self, context, compiler):
     compiler.cxxincludes += [

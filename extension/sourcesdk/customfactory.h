@@ -4,6 +4,7 @@
 #include <itoolentity.h>
 #include <tier0/platform.h>
 #include <IEngineTrace.h>
+#include <shareddefs.h>
 #include <util.h>
 
 #include "helpers.h"
