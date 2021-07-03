@@ -32,7 +32,7 @@ cell_t CPluginEntityFactory_CPluginEntityFactory(IPluginContext * pContext, cons
 
 PLUGINENTITYFACTORYNATIVE(DeriveFromNPC)
 
-    pFactory->m_Derive.m_DeriveFrom = BASE;
+    pFactory->m_Derive.m_DeriveFrom = BASECLASS;
     pFactory->m_Derive.m_BaseType = NPC;
 
     return 1;
@@ -69,6 +69,17 @@ PLUGINENTITYFACTORYNATIVE(Install)
 
     pFactory->Install();
     return 1;
+}
+
+PLUGINENTITYFACTORYNATIVE(Uninstall)
+
+    pFactory->Uninstall();
+    return 1;
+}
+
+PLUGINENTITYFACTORYNATIVE(Installed)
+
+    return pFactory->m_bInstalled;
 }
 
 #endif

@@ -3229,7 +3229,16 @@ methodmap CEntityFactory
 	public native void DeriveFromNPC();
 	public native void DeriveFromClass(const char[] classname);
 	public native void Install();
+	public native void Uninstall();
+
+	property bool IsInstalled
+	{
+		public native get();
+	}
 }
+
+forward void CEntityFactory_OnInstalled(const char[] classname, CEntityFactory factory);
+forward void CEntityFactory_OnUninstalled(const char[] classname, CEntityFactory factory);
 
 #if !defined _navmesh_included
 public float Path_Cost(INextBot bot, CNavArea area, CNavArea fromArea, CNavLadder ladder, int iElevator, float length)

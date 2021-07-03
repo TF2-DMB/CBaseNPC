@@ -69,6 +69,7 @@ bool CBaseNPCExt::SDK_OnLoad(char *error, size_t maxlength, bool late)
 		|| !NextBotCombatCharacter::Init(g_pGameConf, error, maxlength)
 		|| !NextBotGroundLocomotion::Init(g_pGameConf, error, maxlength)
 		|| !CTFGameRules::Init(g_pGameConf, error, maxlength)
+		|| !CPluginEntityFactory::Init(g_pGameConf, error, maxlength)
 		)
 	{
 		return false;

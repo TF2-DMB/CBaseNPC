@@ -553,6 +553,8 @@ const sp_nativeinfo_t g_NativesInfo[] =
 	{ "CEntityFactory.DeriveFromClass", &CPluginEntityFactory_DeriveFromClass },
 	{ "CEntityFactory.DeriveFromNPC", &CPluginEntityFactory_DeriveFromNPC },
 	{ "CEntityFactory.Install", &CPluginEntityFactory_Install },
+	{ "CEntityFactory.Uninstall", &CPluginEntityFactory_Uninstall },
+	{ "CEntityFactory.IsInstalled.get", &CPluginEntityFactory_Installed },
 
 	{ nullptr, nullptr },
 };

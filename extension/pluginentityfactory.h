@@ -12,7 +12,7 @@
 enum PluginEntityFactoryDeriveType_t
 {
     NONE,
-    BASE,
+    BASECLASS,
     CLASSNAME
 };
 
@@ -28,6 +28,7 @@ struct PluginEntityFactoryDeriveInfo_t
 
     PluginEntityFactoryDeriveFromBaseType_t m_BaseType;
     std::string m_iBaseClassname;
+    bool m_bBaseEntityServerOnly;
 };
 
 class CPluginEntityFactory : public IEntityFactory
@@ -46,8 +47,19 @@ public:
     virtual size_t GetEntitySize() override final;
     virtual void Destroy(IServerNetworkable*) override final;
 
+    static bool Init(SourceMod::IGameConfig* config, char* error, size_t maxlength);
+
 protected:
     IEntityFactory * GetBaseFactory();
+
+    CPluginEntityFactory* m_pBasePluginEntityFactory;
+    CUtlVector< CPluginEntityFactory* > m_ChildFactories;
+
+    void SetBasePluginEntityFactory(CPluginEntityFactory* pFactory);
+
+private:
+    static void OnFactoryInstall( CPluginEntityFactory* pFactory );
+    static void OnFactoryUninstall( CPluginEntityFactory* pFactory );
 };
 
 class CPluginEntityFactoryHandler : public IHandleTypeDispatch
