@@ -3218,14 +3218,14 @@ methodmap CBaseCombatCharacter < CBaseAnimatingOverlay
 	public native CNavArea GetLastKnownArea();
 };
 
-typeset CEntityFactoryEntityConstructor
+typeset CEntityFactoryEntityPostConstructor
 {
 	function void (int entity);
 }
 
 methodmap CEntityFactory
 {
-	public native CEntityFactory(const char[] classname, CEntityFactoryEntityConstructor constructorFunc=INVALID_FUNCTION);
+	public native CEntityFactory(const char[] classname, CEntityFactoryEntityPostConstructor postConstructor=INVALID_FUNCTION);
 	public native void DeriveFromNPC();
 	public native void DeriveFromBaseEntity(bool bServerOnly=false);
 	public native void DeriveFromClass(const char[] classname);
