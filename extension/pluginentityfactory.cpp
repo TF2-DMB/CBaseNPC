@@ -178,8 +178,7 @@ size_t CPluginEntityFactory::GetEntitySize()
 	}
 	else if (m_Derive.m_DeriveFrom == BASECLASS && m_Derive.m_BaseType == ENTITY)
 	{
-		// TODO: CBaseEntity size?
-		return 0;
+		return CBaseEntityHack::size_of;
 	}
 
 	return 0;
@@ -200,14 +199,9 @@ IServerNetworkable* CPluginEntityFactory::Create(const char* classname)
 	}
 	else if (m_Derive.m_DeriveFrom == BASECLASS && m_Derive.m_BaseType == ENTITY)
 	{
-		// TODO: A barebones CBaseEntity maybe???
-		/*
-		pEnt = (CBaseEntityHack*)engine->PvAllocEntPrivateData(this->GetEntitySize());
+		pEnt = (CBaseEntityHack*)engine->PvAllocEntPrivateData(CBaseEntityHack::size_of);
 		CBaseEntityHack::CBaseEntity_Ctor.operator()(pEnt, m_Derive.m_bBaseEntityServerOnly);
 		pEnt->PostConstructor(classname);
-		*/
-		
-		return nullptr;
 	}
 	else
 	{

@@ -550,6 +550,7 @@ const sp_nativeinfo_t g_NativesInfo[] =
 	NATIVENAME(CTNavArea, GetRealNavArea)
 	
 	{ "CEntityFactory.CEntityFactory", &CPluginEntityFactory_CPluginEntityFactory },
+	{ "CEntityFactory.DeriveFromBaseEntity", &CPluginEntityFactory_DeriveFromBaseEntity },
 	{ "CEntityFactory.DeriveFromClass", &CPluginEntityFactory_DeriveFromClass },
 	{ "CEntityFactory.DeriveFromNPC", &CPluginEntityFactory_DeriveFromNPC },
 	{ "CEntityFactory.Install", &CPluginEntityFactory_Install },

@@ -30,6 +30,15 @@ cell_t CPluginEntityFactory_CPluginEntityFactory(IPluginContext * pContext, cons
     return CREATEHANDLE(PluginEntityFactory, pFactory);
 }
 
+PLUGINENTITYFACTORYNATIVE(DeriveFromBaseEntity)
+
+    pFactory->m_Derive.m_DeriveFrom = BASECLASS;
+    pFactory->m_Derive.m_BaseType = ENTITY;
+    pFactory->m_Derive.m_bBaseEntityServerOnly = !!params[1];
+
+    return 1;
+}
+
 PLUGINENTITYFACTORYNATIVE(DeriveFromNPC)
 
     pFactory->m_Derive.m_DeriveFrom = BASECLASS;

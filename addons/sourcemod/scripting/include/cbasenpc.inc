@@ -3227,6 +3227,7 @@ methodmap CEntityFactory
 {
 	public native CEntityFactory(const char[] classname, CEntityFactoryEntityConstructor constructorFunc=INVALID_FUNCTION);
 	public native void DeriveFromNPC();
+	public native void DeriveFromBaseEntity(bool bServerOnly=false);
 	public native void DeriveFromClass(const char[] classname);
 	public native void Install();
 	public native void Uninstall();

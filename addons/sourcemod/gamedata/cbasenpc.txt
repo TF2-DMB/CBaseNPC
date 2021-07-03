@@ -13,6 +13,11 @@
 			{
 				"windows"	"5"
 			}
+			"sizeof(CBaseEntity)"
+			{
+				"windows"	"1000"
+				"linux"		"1000"
+			}
 			"CBaseEntity::PostConstructor"
 			{
 				"windows"	"26"
@@ -174,6 +179,15 @@
 				"library"		"server"
 				"windows"		"\x55\x8B\xEC\x53\x57\x8B\x7D\x08\x8B\xD9\xF6\x87\x14\x01\x00\x00\x01"
 				"linux"			"@_Z22SimThink_EntityChangedP11CBaseEntity"
+			}
+			// Find ".?AVCRallyPoint@@" to get to CRallyPoint's type descriptor -> complete object locator -> vtable
+			// goto xref to vtable to enter CRallyPoint's constructor
+			// CBaseEntity constructor is second call that takes additional argument (bServerOnly set to 0)
+			"CBaseEntity::CBaseEntity"
+			{
+				"library"		"server"
+				"windows"		"\x55\x8B\xEC\x83\xEC\x14\x53\x56\x8B\xF1\x57\x8D\x2A\x2A\xC7\x06"
+				"linux"			"@_ZN11CBaseEntityC1Eb"
 			}
 			"CBaseEntity::CalcAbsolutePosition"
 			{

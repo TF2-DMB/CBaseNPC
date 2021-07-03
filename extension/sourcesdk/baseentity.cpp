@@ -7,7 +7,9 @@
 #include <enginecallback.h>
 
 int(CBaseEntityHack::CBaseEntityHack::offset_UpdateOnRemove) = 0;
+int CBaseEntityHack::size_of = 0;
 
+MCall<void, bool> CBaseEntityHack::CBaseEntity_Ctor;
 VCall<void, const char*> CBaseEntityHack::vPostConstructor;
 VCall<void> CBaseEntityHack::vUpdateOnRemove;
 VCall<void> CBaseEntityHack::vSpawn;
@@ -85,6 +87,7 @@ bool CBaseEntityHack::Init(SourceMod::IGameConfig* config, char* error, size_t m
 
 	try
 	{
+		CBaseEntity_Ctor.Init(config, "CBaseEntity::CBaseEntity");
 		mInvalidatePhysicsRecursive.Init(config, "CBaseEntity::InvalidatePhysicsRecursive");
 		mCalcAbsolutePosition.Init(config, "CBaseEntity::CalcAbsolutePosition");
 		vPostConstructor.Init(config, "CBaseEntity::PostConstructor");
@@ -110,6 +113,12 @@ bool CBaseEntityHack::Init(SourceMod::IGameConfig* config, char* error, size_t m
 	{
 		// Could use strncpy, but compiler complains
 		snprintf(error, maxlength, "%s", e.what());
+		return false;
+	}
+
+	if (!config->GetOffset("sizeof(CBaseEntity)", &CBaseEntityHack::size_of))
+	{
+		snprintf(error, maxlength, "Couldn't find sizeof(CBaseEntity) offset!");
 		return false;
 	}
 
