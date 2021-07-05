@@ -7,7 +7,6 @@
 #include <shareddefs.h>
 #include <util.h>
 #include <ISDKHooks.h>
-#include <functional>
 
 #include "helpers.h"
 
@@ -33,15 +32,19 @@ struct PluginEntityFactoryDeriveInfo_t
 	bool m_bBaseEntityServerOnly;
 };
 
-class CBaseEntityHack;
+class CBaseEntity;
 class CPluginEntityFactory;
 
 struct PluginFactoryEntityRecord_t
 {
-	CBaseEntityHack* pEntity;
+	CBaseEntity* pEntity;
 	CPluginEntityFactory* pFactory;
-	int m_bGetDataDescMapHooked;
+	bool m_bDataMapHooked;
+	bool m_bServerClassHooked;
 };
+
+// Returns the CPluginEntityFactory the entity belongs to.
+CPluginEntityFactory* GetPluginEntityFactory(CBaseEntity* pEntity);
 
 class CPluginEntityFactory : public IEntityFactory
 {    
@@ -52,6 +55,8 @@ public:
 	PluginEntityFactoryDeriveInfo_t m_Derive;
 	bool m_bInstalled;
 
+	Handle_t m_Handle;
+
 	CPluginEntityFactory(const char* classname, IPluginFunction *postConstructor=nullptr, IPluginFunction *onRemove=nullptr);
 	~CPluginEntityFactory();
 	void Install();
@@ -60,23 +65,42 @@ public:
 	virtual size_t GetEntitySize() override final;
 	virtual void Destroy(IServerNetworkable*) override final;
 
+	void OnRemove(CBaseEntity* pEntity);
+
 	// The size of the entity created by the factory without overriding the datamap.
 	size_t GetBaseEntitySize();
 
+protected:
+
+	CPluginEntityFactory* m_pCreatingFactory;
+
+
+
+public:
+
 	// Collects all entities that were created by this factory.
 	// This does not include entities that are created by factories derived from this factory.
-	void GetEntities(CUtlVector< CBaseEntityHack* > *pVec);
+	void GetEntities(CUtlVector< CBaseEntity* > *pVec);
 
 	// Whether or not this factory is allowed to use a custom datamap.
-	// Only factories that are allowed are those that directly inherit from CBaseNPC, CBaseEntity, or an existing plugin factory that is also allowed to use datamaps.
 	bool CanUseDataMap();
 
+private:
 	std::string m_iDataClassname;
-	datamap_t* m_pEntityDataMap;
-	
-	void OnRemove(CBaseEntityHack* pEntity);
+
+	ServerClass* m_pEntityServerClass;
+
+public:
+
+	ServerClass* GetServerClass() { return m_pEntityServerClass; }
 
 private:
+	ServerClass* CreateServerClass(ServerClass* pBaseServerClass);
+
+	void DestroyServerClass();
+
+private:
+	datamap_t* m_pEntityDataMap;
 
 	size_t m_DataMapDescSizeInBytes;
 	CUtlVector<typedescription_t> m_vecEntityDataTypeDescriptors;
@@ -94,7 +118,7 @@ public:
 	bool m_bHasDataMapDesc;
 
 	// The datamap used by entities created by this factory.
-	datamap_t* GetDataMap() { return m_pEntityDataMap; }
+	datamap_t* GetDataMap();
 
 	// Initializes the list of type descriptors to be used by the factory's datamap.
 	void BeginDataMapDesc(const char* dataClassName);
@@ -107,7 +131,7 @@ protected:
 
 public:
 	// Adds a field type descriptor to the type descriptor list with the specified name and type.
-	void DefineField(const char* name, fieldtype_t fieldType);
+	void DefineField(const char* name, fieldtype_t fieldType, int numElements=1);
 
 	// Adds a field type descriptor to the type descriptor list with the specified name and type, additionally with key name to be used by maps/fgd.
 	void DefineKeyField(const char* name, fieldtype_t fieldType, const char* mapname);
@@ -120,7 +144,7 @@ public:
 
 protected:
 
-	void DestroyUserEntityData(CBaseEntityHack* pEntity);
+	void DestroyUserEntityData(CBaseEntity* pEntity);
 
 public:
 

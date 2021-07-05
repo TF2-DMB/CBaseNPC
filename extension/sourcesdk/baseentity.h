@@ -109,8 +109,7 @@ public:
 	void PostConstructor(const char*);
 
 	static int offset_GetDataDescMap;
-	static VCall<datamap_t*> vGetDataDescMap;
-	datamap_t* GetDataDescMap();
+	static int offset_GetServerClass;
 
 	static VCall<void> vUpdateOnRemove;
 	void UpdateOnRemove(void);

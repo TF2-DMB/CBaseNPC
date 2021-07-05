@@ -556,10 +556,20 @@ const sp_nativeinfo_t g_NativesInfo[] =
 	{ "CEntityFactory.Install", &CPluginEntityFactory_Install },
 	{ "CEntityFactory.Uninstall", &CPluginEntityFactory_Uninstall },
 	{ "CEntityFactory.IsInstalled.get", &CPluginEntityFactory_Installed },
+
+	{ "CEntityFactory.GetClassname", &CPluginEntityFactory_GetClassname },
+
+	{ "CEntityFactory.GetFactoryOfEntity", &CPluginEntityFactory_GetFactoryOfEntity },
+
 	{ "CEntityFactory.BeginDataMapDesc", &CPluginEntityFactory_BeginDataMapDesc },
+	{ "CEntityFactory.DefineIntField", &CPluginEntityFactory_DefineIntField },
+	{ "CEntityFactory.DefineFloatField", &CPluginEntityFactory_DefineFloatField },
+	{ "CEntityFactory.DefineCharField", &CPluginEntityFactory_DefineCharField },
+	{ "CEntityFactory.DefineBoolField", &CPluginEntityFactory_DefineBoolField },
+	{ "CEntityFactory.DefineVectorField", &CPluginEntityFactory_DefineVectorField },
+	{ "CEntityFactory.DefineStringField", &CPluginEntityFactory_DefineStringField },
+	{ "CEntityFactory.DefineEntityField", &CPluginEntityFactory_DefineEntityField },
 	{ "CEntityFactory.EndDataMapDesc", &CPluginEntityFactory_EndDataMapDesc },
-	{ "CEntityFactory.DefineField", &CPluginEntityFactory_DefineField },
-	{ "CEntityFactory.DefineKeyField", &CPluginEntityFactory_DefineKeyField },
 
 	{ nullptr, nullptr },
 };

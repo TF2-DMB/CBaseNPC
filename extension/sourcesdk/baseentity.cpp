@@ -9,10 +9,10 @@
 int(CBaseEntityHack::CBaseEntityHack::offset_UpdateOnRemove) = 0;
 int CBaseEntityHack::size_of = 0;
 int CBaseEntityHack::offset_GetDataDescMap = 0;
+int CBaseEntityHack::offset_GetServerClass = 0;
 
 MCall<void, bool> CBaseEntityHack::CBaseEntity_Ctor;
 VCall<void, const char*> CBaseEntityHack::vPostConstructor;
-VCall<datamap_t*> CBaseEntityHack::vGetDataDescMap;
 VCall<void> CBaseEntityHack::vUpdateOnRemove;
 VCall<void> CBaseEntityHack::vSpawn;
 VCall<void, Vector*, Vector*, Vector*> CBaseEntityHack::vGetVectors;
@@ -96,7 +96,6 @@ bool CBaseEntityHack::Init(SourceMod::IGameConfig* config, char* error, size_t m
 	try
 	{
 		CBaseEntity_Ctor.Init(config, "CBaseEntity::CBaseEntity");
-		vGetDataDescMap.Init(configCore, "GetDataDescMap");
 		mInvalidatePhysicsRecursive.Init(config, "CBaseEntity::InvalidatePhysicsRecursive");
 		mCalcAbsolutePosition.Init(config, "CBaseEntity::CalcAbsolutePosition");
 		vPostConstructor.Init(config, "CBaseEntity::PostConstructor");
@@ -134,6 +133,12 @@ bool CBaseEntityHack::Init(SourceMod::IGameConfig* config, char* error, size_t m
 	if (!config->GetOffset("sizeof(CBaseEntity)", &CBaseEntityHack::size_of))
 	{
 		snprintf(error, maxlength, "Couldn't find sizeof(CBaseEntity) offset!");
+		return false;
+	}
+
+	if (!config->GetOffset("CBaseEntity::GetServerClass", &CBaseEntityHack::offset_GetServerClass))
+	{
+		snprintf(error, maxlength, "Failed to retrieve CBaseEntity::GetServerClass offset!");
 		return false;
 	}
 
@@ -214,11 +219,6 @@ void CBaseEntityHack::InvalidatePhysicsRecursive(int nChangeFlags)
 void CBaseEntityHack::PostConstructor(const char* name)
 {
 	vPostConstructor(this, name);
-}
-
-datamap_t* CBaseEntityHack::GetDataDescMap()
-{
-	return vGetDataDescMap(this);
 }
 
 void CBaseEntityHack::UpdateOnRemove(void)
