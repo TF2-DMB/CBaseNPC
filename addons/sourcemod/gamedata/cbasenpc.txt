@@ -13,11 +13,6 @@
 			{
 				"windows"	"5"
 			}
-			"sizeof(CBaseEntity)"
-			{
-				"windows"	"1000"
-				"linux"		"1000"
-			}
 			"CBaseEntity::GetServerClass"
 			{
 				"windows"	"9"

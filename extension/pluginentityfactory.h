@@ -10,38 +10,10 @@
 
 #include "helpers.h"
 
-enum PluginEntityFactoryDeriveType_t
-{
-	NONE,
-	BASECLASS,
-	CLASSNAME
-};
-
-enum PluginEntityFactoryDeriveFromBaseType_t
-{
-	ENTITY,
-	NPC
-};
-
-struct PluginEntityFactoryDeriveInfo_t
-{
-	PluginEntityFactoryDeriveType_t m_DeriveFrom;
-
-	PluginEntityFactoryDeriveFromBaseType_t m_BaseType;
-	std::string m_iBaseClassname;
-	bool m_bBaseEntityServerOnly;
-};
+#include "ICellArray.h"
 
 class CBaseEntity;
 class CPluginEntityFactory;
-
-struct PluginFactoryEntityRecord_t
-{
-	CBaseEntity* pEntity;
-	CPluginEntityFactory* pFactory;
-	bool m_bDataMapHooked;
-	bool m_bServerClassHooked;
-};
 
 // Returns the CPluginEntityFactory the entity belongs to.
 CPluginEntityFactory* GetPluginEntityFactory(CBaseEntity* pEntity);
@@ -52,38 +24,73 @@ public:
 	std::string m_iClassname;
 	IPluginFunction *m_pPostConstructor;
 	IPluginFunction *m_pOnRemove;
-	PluginEntityFactoryDeriveInfo_t m_Derive;
 	bool m_bInstalled;
 
 	Handle_t m_Handle;
 
 	CPluginEntityFactory(const char* classname, IPluginFunction *postConstructor=nullptr, IPluginFunction *onRemove=nullptr);
 	~CPluginEntityFactory();
+
 	void Install();
 	void Uninstall();
+
+	// IEntityFactory
 	virtual IServerNetworkable* Create(const char*) override final;
 	virtual size_t GetEntitySize() override final;
 	virtual void Destroy(IServerNetworkable*) override final;
 
 	void OnRemove(CBaseEntity* pEntity);
 
-	// The size of the entity created by the factory without overriding the datamap.
-	size_t GetBaseEntitySize();
+protected:
+	enum PluginEntityFactoryDeriveType_t
+	{
+		DERIVETYPE_NONE,
+		DERIVETYPE_BASECLASS,
+		DERIVETYPE_CBASENPC,
+		DERIVETYPE_CLASSNAME,
+		DERIVETYPE_MAX
+	};
+
+	enum PluginEntityFactoryDeriveFromBaseType_t
+	{
+		DERIVEBASECLASSTYPE_ENTITY,
+		DERIVEBASECLASSTYPE_MAX
+	};
+
+	struct PluginEntityFactoryDeriveInfo_t
+	{
+		PluginEntityFactoryDeriveType_t m_DeriveFrom;
+
+		PluginEntityFactoryDeriveFromBaseType_t m_BaseType;
+		std::string m_iBaseClassname;
+		bool m_bBaseEntityServerOnly;
+	} m_Derive;
+
+	static size_t m_DeriveBaseClassSizes[DERIVEBASECLASSTYPE_MAX];
+
+public:
+
+	bool DoesNotDerive() const { return (m_Derive.m_DeriveFrom == DERIVETYPE_NONE); }
+
+	void DeriveFromBaseEntity(bool bServerOnly=false);
+	void DeriveFromNPC();
+	void DeriveFromClass(const char* classname);
+
+	// The size of the entity created by the factory without adding user datamap fields.
+	size_t GetBaseEntitySize() const;
 
 protected:
 
 	CPluginEntityFactory* m_pCreatingFactory;
 
-
-
 public:
 
 	// Collects all entities that were created by this factory.
-	// This does not include entities that are created by factories derived from this factory.
-	void GetEntities(CUtlVector< CBaseEntity* > *pVec);
+	// This does not include entities that are created by factories that derive from this one.
+	void GetEntities(CUtlVector< CBaseEntity* > *pVec) const;
 
-	// Whether or not this factory is allowed to use a custom datamap.
-	bool CanUseDataMap();
+	// Whether or not this factory is allowed to use a custom user datamap.
+	bool CanUseDataMap() const;
 
 private:
 	std::string m_iDataClassname;
@@ -91,7 +98,6 @@ private:
 	ServerClass* m_pEntityServerClass;
 
 public:
-
 	ServerClass* GetServerClass() { return m_pEntityServerClass; }
 
 private:
@@ -108,8 +114,8 @@ private:
 	// Creates the datamap used by entities created by the factory if it doesn't already exist.
 	datamap_t* CreateDataMap(datamap_t* pBaseMap);
 
-	// Destroys the user-defined type descriptor.
-	void DestroyDataMapTypeDescriptor(typedescription_t *desc);
+	// Destroys a user-defined type descriptor.
+	void DestroyDataMapTypeDescriptor(typedescription_t *desc) const;
 
 	// Destroys the entity datamap.
 	void DestroyDataMap();
@@ -118,7 +124,7 @@ public:
 	bool m_bHasDataMapDesc;
 
 	// The datamap used by entities created by this factory.
-	datamap_t* GetDataMap();
+	datamap_t* GetDataMap() const;
 
 	// Initializes the list of type descriptors to be used by the factory's datamap.
 	void BeginDataMapDesc(const char* dataClassName);
@@ -137,10 +143,10 @@ public:
 	void DefineKeyField(const char* name, fieldtype_t fieldType, const char* mapname);
 
 	// The size of the fields in the factory's type descriptor list, in bytes.
-	size_t GetUserEntityDataSize();
+	size_t GetUserEntityDataSize() const;
 
 	// The starting offset of the user-defined datamap fields stored on the entity.
-	int GetUserEntityDataOffset();
+	int GetUserEntityDataOffset() const;
 
 protected:
 
@@ -152,19 +158,28 @@ public:
 
 	static void SDK_OnAllLoaded();
 
+	static void SDK_OnUnload();
+
+	static void OnEntityDestroyed( CBaseEntity* pEntity );
+
 	static CPluginEntityFactory* ToPluginEntityFactory( IEntityFactory* pFactory );
 
-protected:
-	// The entity factory that is called while creating this factory's entity.
-	IEntityFactory * GetBaseFactory();
+	static int GetInstalledFactoryHandles( Handle_t* pHandleArray, int arraySize );
 
+	// The entity factory that is called while creating this factory's entity.
+	IEntityFactory * GetBaseFactory() const;
+
+protected:
 	CPluginEntityFactory* m_pBasePluginEntityFactory;
-	CUtlVector< CPluginEntityFactory* > m_ChildFactories;
+	CUtlVector< CPluginEntityFactory* > m_DerivedFactories;
+
+public:
+	// Returns the base factory as CPluginEntityFactory*, or nullptr if not a CPluginEntityFactory*.
+	CPluginEntityFactory* GetBasePluginEntityFactory() const { return m_pBasePluginEntityFactory; }
+
+private:
 
 	void SetBasePluginEntityFactory(CPluginEntityFactory* pFactory);
-
-	// Removes all records of entities that were created by this factory.
-	void RemoveEntityRecords();
 
 private:
 	static void OnFactoryInstall( CPluginEntityFactory* pFactory );

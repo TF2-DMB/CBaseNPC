@@ -561,6 +561,9 @@ const sp_nativeinfo_t g_NativesInfo[] =
 
 	{ "CEntityFactory.GetFactoryOfEntity", &CPluginEntityFactory_GetFactoryOfEntity },
 
+	{ "CEntityFactory.GetNumInstalledFactories", &CPluginEntityFactory_GetNumInstalledFactories },
+	{ "CEntityFactory.GetInstalledFactories", &CPluginEntityFactory_GetInstalledFactories },
+
 	{ "CEntityFactory.BeginDataMapDesc", &CPluginEntityFactory_BeginDataMapDesc },
 	{ "CEntityFactory.DefineIntField", &CPluginEntityFactory_DefineIntField },
 	{ "CEntityFactory.DefineFloatField", &CPluginEntityFactory_DefineFloatField },

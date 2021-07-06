@@ -3245,6 +3245,8 @@ methodmap CEntityFactory < Handle
 	public native void GetClassname(char[] sBuffer, int iBufferLen);
 
 	public static native CEntityFactory GetFactoryOfEntity(int entity);
+	public static native int GetNumInstalledFactories();
+	public static native int GetInstalledFactories(CEntityFactory[] array, int arraySize);
 
 	// Datamap
 	public native CEntityFactory BeginDataMapDesc(const char[] sDataClass=NULL_STRING);

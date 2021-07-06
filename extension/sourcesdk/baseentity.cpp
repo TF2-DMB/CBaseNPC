@@ -7,7 +7,6 @@
 #include <enginecallback.h>
 
 int(CBaseEntityHack::CBaseEntityHack::offset_UpdateOnRemove) = 0;
-int CBaseEntityHack::size_of = 0;
 int CBaseEntityHack::offset_GetDataDescMap = 0;
 int CBaseEntityHack::offset_GetServerClass = 0;
 
@@ -127,12 +126,6 @@ bool CBaseEntityHack::Init(SourceMod::IGameConfig* config, char* error, size_t m
 	if (!configCore->GetOffset("GetDataDescMap", &CBaseEntityHack::offset_GetDataDescMap))
 	{
 		snprintf(error, maxlength, "Couldn't find GetDataDescMap offset!");
-		return false;
-	}
-
-	if (!config->GetOffset("sizeof(CBaseEntity)", &CBaseEntityHack::size_of))
-	{
-		snprintf(error, maxlength, "Couldn't find sizeof(CBaseEntity) offset!");
 		return false;
 	}
 

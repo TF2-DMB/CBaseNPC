@@ -73,14 +73,28 @@ cell_t CPluginEntityFactory_GetFactoryOfEntity(IPluginContext * pContext, const 
 	return pFactory->m_Handle;
 }
 
+cell_t CPluginEntityFactory_GetNumInstalledFactories(IPluginContext * pContext, const cell_t * params)
+{
+	return CPluginEntityFactory::GetInstalledFactoryHandles(nullptr, 0);
+}
+
+cell_t CPluginEntityFactory_GetInstalledFactories(IPluginContext * pContext, const cell_t * params)
+{
+	cell_t * addr;
+	pContext->LocalToPhysAddr(params[1], &addr);
+	Handle_t * pArray = reinterpret_cast<Handle_t *>(addr);
+
+	int arraySize = params[2];
+
+	return CPluginEntityFactory::GetInstalledFactoryHandles(pArray, arraySize);
+}
+
 PLUGINENTITYFACTORYNATIVE(DeriveFromBaseEntity)
 
 	if (pFactory->m_bInstalled) 
 		return pContext->ThrowNativeError("Cannot change base factory while factory is installed");
 
-	pFactory->m_Derive.m_DeriveFrom = BASECLASS;
-	pFactory->m_Derive.m_BaseType = ENTITY;
-	pFactory->m_Derive.m_bBaseEntityServerOnly = !!params[2];
+	pFactory->DeriveFromBaseEntity(!!params[2]);
 
 	return 0;
 }
@@ -90,8 +104,7 @@ PLUGINENTITYFACTORYNATIVE(DeriveFromNPC)
 	if (pFactory->m_bInstalled) 
 		return pContext->ThrowNativeError("Cannot change base factory while factory is installed");
 
-	pFactory->m_Derive.m_DeriveFrom = BASECLASS;
-	pFactory->m_Derive.m_BaseType = NPC;
+	pFactory->DeriveFromNPC();
 
 	return 0;
 }
@@ -111,8 +124,7 @@ PLUGINENTITYFACTORYNATIVE(DeriveFromClass)
 	if (pDeriveFromFactory == pFactory)
 		return pContext->ThrowNativeError("Cannot derive from self");
 	
-	pFactory->m_Derive.m_DeriveFrom = CLASSNAME;
-	pFactory->m_Derive.m_iBaseClassname = classname;
+	pFactory->DeriveFromClass(classname);
 
 	return 0;
 }
@@ -125,8 +137,8 @@ PLUGINENTITYFACTORYNATIVE(Install)
 	if (EntityFactoryDictionaryHack()->FindFactory(pFactory->m_iClassname.c_str()))
 		return pContext->ThrowNativeError("Entity factory already exists with the same classname");
 
-	if (pFactory->m_Derive.m_DeriveFrom == NONE)
-		return pContext->ThrowNativeError("Entity factory must derive from an existing class");
+	if (pFactory->DoesNotDerive())
+		return pContext->ThrowNativeError("Entity factory must derive from an existing class or classname");
 
 	pFactory->Install();
 	return 0;
@@ -143,7 +155,7 @@ PLUGINENTITYFACTORYNATIVE(Installed)
 	return pFactory->m_bInstalled;
 }
 
-PLUGINENTITYFACTORYDATAMAPNATIVE(GetClassname)
+PLUGINENTITYFACTORYNATIVE(GetClassname)
 
 	size_t bufferSize = params[3];
 
