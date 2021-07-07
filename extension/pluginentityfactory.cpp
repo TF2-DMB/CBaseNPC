@@ -3,10 +3,11 @@
 #include "entityfactorydictionary.h"
 #include "cbasenpc_internal.h"
 
+#include "baseentityoutput.h"
+
 extern ISDKHooks* g_pSDKHooks;
 
 SH_DECL_MANUALHOOK0(MHook_GetDataDescMap, 0, 0, 0, datamap_t* );
-SH_DECL_MANUALHOOK0(MHook_GetServerClass, 0, 0, 0, ServerClass* );
 
 SH_DECL_HOOK1(IVEngineServer, PvAllocEntPrivateData, SH_NOATTRIB, false, void *, long);
 
@@ -96,7 +97,7 @@ struct PluginFactoryEntityRecord_t
 	CBaseEntity* pEntity;
 	CPluginEntityFactory* pFactory;
 	bool m_bDataMapHooked;
-	bool m_bServerClassHooked;
+	datamap_t* m_pDataMap;
 };
 
 PluginFactoryEntityRecord_t* GetPluginFactoryEntityRecord(CBaseEntity* pEntity, bool create=false)
@@ -110,7 +111,7 @@ PluginFactoryEntityRecord_t* GetPluginFactoryEntityRecord(CBaseEntity* pEntity, 
 	{
 		if (create)
 		{
-			index = g_EntityRecords.Insert(key, { pEntity, nullptr, false });
+			index = g_EntityRecords.Insert(key, { pEntity, nullptr, false, nullptr });
 		}
 		else
 		{
@@ -155,29 +156,19 @@ CPluginEntityFactory* GetPluginEntityFactory(CBaseEntity* pEntity)
 datamap_t* Hook_GetDataDescMap()
 {
 	CBaseEntity *pEntity = META_IFACEPTR(CBaseEntity);
-	if (!pEntity) RETURN_META_VALUE(MRES_IGNORED, 0);
+	if (!pEntity) RETURN_META_VALUE(MRES_IGNORED, nullptr);
 
-	CPluginEntityFactory* pFactory = GetPluginEntityFactory(pEntity);
-	if (!pFactory) RETURN_META_VALUE(MRES_IGNORED, 0);
+	PluginFactoryEntityRecord_t* pEntityRecord = GetPluginFactoryEntityRecord(pEntity);
+	if (!pEntityRecord)
+		return nullptr;
 
-	datamap_t* pDataMap = pFactory->GetDataMap();
+	datamap_t* pDataMap = pEntityRecord->m_pDataMap;
 	if (pDataMap)
 	{
 		RETURN_META_VALUE(MRES_SUPERCEDE, pDataMap);
 	}
 	
-	RETURN_META_VALUE(MRES_IGNORED, 0);
-}
-
-ServerClass* Hook_GetServerClass()
-{
-	CBaseEntity *pEntity = META_IFACEPTR(CBaseEntity);
-	if (!pEntity) RETURN_META_VALUE(MRES_IGNORED, 0);
-
-	CPluginEntityFactory* pFactory = GetPluginEntityFactory(pEntity);
-	if (!pFactory) RETURN_META_VALUE(MRES_IGNORED, 0);
-
-	RETURN_META_VALUE(MRES_SUPERCEDE, pFactory->GetServerClass());
+	RETURN_META_VALUE(MRES_IGNORED, nullptr);
 }
 
 bool CPluginEntityFactory::Init(SourceMod::IGameConfig* config, char* error, size_t maxlength)
@@ -190,26 +181,23 @@ bool CPluginEntityFactory::Init(SourceMod::IGameConfig* config, char* error, siz
 	g_EntityMemAllocHook.Init();
 
 	IEntityFactoryDictionary* factoryDictionary = servertools->GetEntityFactoryDictionary();
-	IEntityFactory* factory = nullptr;
-	if (!factoryDictionary)
 	{
-		snprintf(error, maxlength, "Failed to get IEntityFactoryDictionary");
-		return false;
+		IEntityFactory* factory = nullptr;
+
+		// CBaseEntity
+		int entitySize = 0;
+		factory = factoryDictionary->FindFactory("info_target");
+		
+		if (factory) entitySize = factory->GetEntitySize();
+
+		if (!entitySize)
+		{
+			snprintf(error, maxlength, "Failed to get size of CBaseEntity");
+			return false;
+		}
+
+		m_DeriveBaseClassSizes[DERIVEBASECLASSTYPE_ENTITY] = entitySize;
 	}
-
-	// CBaseEntity
-	int entitySize = 0;
-	factory = factoryDictionary->FindFactory("info_target");
-	
-	if (factory) entitySize = factory->GetEntitySize();
-
-	if (!entitySize)
-	{
-		snprintf(error, maxlength, "Failed to get size of CBaseEntity");
-		return false;
-	}
-
-	m_DeriveBaseClassSizes[DERIVEBASECLASSTYPE_ENTITY] = entitySize;
 
 	return true;
 }
@@ -217,7 +205,6 @@ bool CPluginEntityFactory::Init(SourceMod::IGameConfig* config, char* error, siz
 void CPluginEntityFactory::SDK_OnAllLoaded()
 {
 	SH_MANUALHOOK_RECONFIGURE(MHook_GetDataDescMap, CBaseEntityHack::offset_GetDataDescMap, 0, 0);
-	SH_MANUALHOOK_RECONFIGURE(MHook_GetServerClass, CBaseEntityHack::offset_GetServerClass, 0, 0);
 }
 
 void CPluginEntityFactory::SDK_OnUnload()
@@ -270,11 +257,9 @@ CPluginEntityFactory::CPluginEntityFactory(const char* classname, IPluginFunctio
 	m_Derive.m_DeriveFrom = DERIVETYPE_NONE;
 	m_bInstalled = false;
 
-	m_Handle = 0;
+	m_Handle = BAD_HANDLE;
 
 	m_pCreatingFactory = nullptr;
-
-	m_pEntityServerClass = nullptr;
 
 	m_pEntityDataMap = nullptr;
 	m_bHasDataMapDesc = false;
@@ -291,8 +276,6 @@ CPluginEntityFactory::~CPluginEntityFactory()
 
 	DestroyDataMap();
 	
-	DestroyServerClass();
-
 	g_PluginEntityFactories.FindAndRemove(this);
 }
 
@@ -343,6 +326,8 @@ void CPluginEntityFactory::OnRemove(CBaseEntity* pEntity)
 		m_pOnRemove->Execute(nullptr);
 	}
 
+	DestroyUserEntityData(pEntity);
+
 	if (m_pBasePluginEntityFactory)
 	{
 		m_pBasePluginEntityFactory->OnRemove(pEntity);
@@ -356,14 +341,6 @@ void CPluginEntityFactory::OnRemove(CBaseEntity* pEntity)
 			SH_REMOVE_MANUALHOOK(MHook_GetDataDescMap, pEntity, SH_STATIC(Hook_GetDataDescMap), false);
 			pEntityRecord->m_bDataMapHooked = false;
 		}
-
-		if (pEntityRecord->m_bServerClassHooked)
-		{
-			SH_REMOVE_MANUALHOOK(MHook_GetServerClass, pEntity, SH_STATIC(Hook_GetServerClass), false);
-			pEntityRecord->m_bServerClassHooked = false;
-		}
-
-		DestroyUserEntityData(pEntity);
 
 		RemovePluginFactoryEntityRecord(pEntity);
 	}
@@ -574,36 +551,20 @@ IServerNetworkable* CPluginEntityFactory::Create(const char* classname)
 				CreateDataMap( gamehelpers->GetDataMap(pEnt) );
 		}
 
-		if (false)
-		{
-			if (!m_pEntityServerClass)
-			{
-				CreateServerClass( pEnt->NetworkProp()->GetServerClass() );
-			}
-		}
-
 		PluginFactoryEntityRecord_t * pEntityRecord = GetPluginFactoryEntityRecord(pEnt, true);
 		pEntityRecord->pFactory = this;
 
-		// SH manual hook to GetDataDescMap and GetServerClass; can also check if hooked
-		// already; we only need to hook it once.
-
 		if (m_pEntityDataMap)
 		{
+			pEntityRecord->m_pDataMap = m_pEntityDataMap;
+
 			if (!pEntityRecord->m_bDataMapHooked)
 			{
 				SH_ADD_MANUALHOOK(MHook_GetDataDescMap, pEnt, SH_STATIC(Hook_GetDataDescMap), false);
 				pEntityRecord->m_bDataMapHooked = true;
 			}
-		}
 
-		if (m_pEntityServerClass)
-		{
-			if (!pEntityRecord->m_bServerClassHooked)
-			{
-				SH_ADD_MANUALHOOK(MHook_GetServerClass, pEnt, SH_STATIC(Hook_GetServerClass), false);
-				pEntityRecord->m_bServerClassHooked = true;
-			}
+			CreateUserEntityData(pEnt);
 		}
 
 		if (m_pPostConstructor && m_pPostConstructor->IsRunnable())
@@ -619,22 +580,6 @@ IServerNetworkable* CPluginEntityFactory::Create(const char* classname)
 	}
 
 	return pNet;
-}
-
-ServerClass* CPluginEntityFactory::CreateServerClass(ServerClass* pBaseServerClass)
-{
-	if (!m_pEntityServerClass)
-	{
-		
-	}
-
-	return m_pEntityServerClass;
-}
-
-void CPluginEntityFactory::DestroyServerClass()
-{
-	if (!m_pEntityServerClass)
-		return;
 }
 
 bool CPluginEntityFactory::CanUseDataMap() const
@@ -660,6 +605,8 @@ datamap_t* CPluginEntityFactory::CreateDataMap(datamap_t* pBaseMap)
 		m_pEntityDataMap = new datamap_t;
 		m_pEntityDataMap->baseMap = pBaseMap;
 		m_pEntityDataMap->dataClassName = strdup(m_iDataClassname.c_str());
+		m_pEntityDataMap->packed_offsets_computed = false;
+		m_pEntityDataMap->packed_size = 0;
 
 		int numDataDesc = m_vecEntityDataTypeDescriptors.Count();
 		typedescription_t * dataDesc = new typedescription_t[numDataDesc];
@@ -811,6 +758,32 @@ void CPluginEntityFactory::DefineKeyField(const char* name, fieldtype_t fieldTyp
 	DefineField(name, fieldType, 1, FTYPEDESC_KEY | FTYPEDESC_SAVE, strdup(mapname), 0);
 }
 
+void CPluginEntityFactory::DefineOutput(const char* name, const char* externalName)
+{
+	int fieldOffset = GetUserEntityDataOffset() + m_DataMapDescSizeInBytes;
+	int fieldSizeInBytes = sizeof(CBaseEntityOutputHack);
+
+	name = name ? strdup(name) : NULL;
+	externalName = externalName ? strdup(externalName) : NULL;
+
+	m_vecEntityDataTypeDescriptors.AddToTail({ 
+		FIELD_CUSTOM, 
+		name, 
+		{ fieldOffset, 0 }, 
+		1,
+		FTYPEDESC_OUTPUT | FTYPEDESC_SAVE | FTYPEDESC_KEY,
+		externalName,
+		eventFuncs, 
+		NULL, NULL,
+		fieldSizeInBytes,
+		NULL,
+		0,
+		0
+	});
+
+	m_DataMapDescSizeInBytes += fieldSizeInBytes;
+}
+
 int CPluginEntityFactory::GetUserEntityDataOffset() const
 {
 	return GetBaseEntitySize();
@@ -824,15 +797,35 @@ size_t CPluginEntityFactory::GetUserEntityDataSize() const
 	return m_DataMapDescSizeInBytes;
 }
 
+void CPluginEntityFactory::CreateUserEntityData(CBaseEntity* pEntity)
+{
+	if (!m_pEntityDataMap)
+		return;
+	
+	for (int i = 0; i < m_pEntityDataMap->dataNumFields; i++)
+	{
+		typedescription_t * pTypeDesc = &m_pEntityDataMap->dataDesc[i];
+		if ( ( pTypeDesc->fieldType == FIELD_CUSTOM ) && ( pTypeDesc->flags & FTYPEDESC_OUTPUT ) )
+		{
+			CBaseEntityOutputHack *pOutput = (CBaseEntityOutputHack *)((uint8_t*)pEntity + pTypeDesc->fieldOffset[0]);
+			pOutput->Init();
+		}
+	}
+}
+
 void CPluginEntityFactory::DestroyUserEntityData(CBaseEntity* pEntity)
 {
-	if (m_pEntityDataMap)
-	{
-	}
+	if (!m_pEntityDataMap)
+		return;
 
-	if (m_pBasePluginEntityFactory)
+	for (int i = 0; i < m_pEntityDataMap->dataNumFields; i++)
 	{
-		m_pBasePluginEntityFactory->DestroyUserEntityData(pEntity);
+		typedescription_t * pTypeDesc = &m_pEntityDataMap->dataDesc[i];
+		if ( ( pTypeDesc->fieldType == FIELD_CUSTOM ) && ( pTypeDesc->flags & FTYPEDESC_OUTPUT ) )
+		{
+			CBaseEntityOutputHack *pOutput = (CBaseEntityOutputHack *)((uint8_t*)pEntity + pTypeDesc->fieldOffset[0]);
+			pOutput->Destroy();
+		}
 	}
 }
 

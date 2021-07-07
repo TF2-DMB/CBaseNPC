@@ -3257,6 +3257,7 @@ methodmap CEntityFactory < Handle
 	public native CEntityFactory DefineVectorField(const char[] sFieldName, int iNumElements=1, const char[] sKeyName=NULL_STRING);
 	public native CEntityFactory DefineStringField(const char[] sFieldName, int iNumElements=1, const char[] sKeyName=NULL_STRING);
 	public native CEntityFactory DefineEntityField(const char[] sFieldName, int iNumElements=1);
+	public native CEntityFactory DefineOutput(const char[] sFieldName, const char[] sOutputName);
 	public native void EndDataMapDesc();
 }
 

@@ -64,11 +64,11 @@ cell_t CPluginEntityFactory_GetFactoryOfEntity(IPluginContext * pContext, const 
 	CBaseEntity* pEnt;
 	ENTINDEX_TO_CBASEENTITY(params[1], pEnt);
 	if (!pEnt)
-		return 0;
+		return BAD_HANDLE;
 	
 	CPluginEntityFactory* pFactory = GetPluginEntityFactory(pEnt);
 	if (!pFactory)
-		return 0;
+		return BAD_HANDLE;
 	
 	return pFactory->m_Handle;
 }
@@ -248,6 +248,21 @@ PLUGINENTITYFACTORYDATAMAP_DECLKEYFIELDNATIVE(DefineStringField)
 PLUGINENTITYFACTORYDATAMAP_DECLFIELDNATIVE(DefineEntityField)
 
 	pFactory->DefineField(fieldName, FIELD_EHANDLE, numElements);
+
+	return params[1];
+}
+
+PLUGINENTITYFACTORYDATAMAPNATIVE(DefineOutput)
+
+	char* fieldName;
+	pContext->LocalToString(params[2], &fieldName);
+	if (!fieldName || (fieldName && !fieldName[0])) return pContext->ThrowNativeError("Field name cannot be NULL or empty");
+
+	char* keyName;
+	pContext->LocalToString(params[3], &keyName);
+	if (!keyName || (keyName && !keyName[0])) return pContext->ThrowNativeError("Key name cannot be NULL or empty");
+
+	pFactory->DefineOutput(fieldName, keyName);
 
 	return params[1];
 }

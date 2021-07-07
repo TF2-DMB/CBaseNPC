@@ -6,6 +6,7 @@
 #include "natives.h"
 #include <ihandleentity.h>
 #include "npc_tools_internal.h"
+#include "baseentityoutput.h"
 #include "pluginentityfactory.h"
 
 CGlobalVars* gpGlobals = nullptr;
@@ -69,6 +70,7 @@ bool CBaseNPCExt::SDK_OnLoad(char *error, size_t maxlength, bool late)
 		|| !NextBotCombatCharacter::Init(g_pGameConf, error, maxlength)
 		|| !NextBotGroundLocomotion::Init(g_pGameConf, error, maxlength)
 		|| !CTFGameRules::Init(g_pGameConf, error, maxlength)
+		|| !CBaseEntityOutputHack::Init(g_pGameConf, error, maxlength)
 		|| !CPluginEntityFactory::Init(g_pGameConf, error, maxlength)
 		)
 	{

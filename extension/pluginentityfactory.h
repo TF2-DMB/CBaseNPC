@@ -6,11 +6,8 @@
 #include <IEngineTrace.h>
 #include <shareddefs.h>
 #include <util.h>
-#include <ISDKHooks.h>
 
 #include "helpers.h"
-
-#include "ICellArray.h"
 
 class CBaseEntity;
 class CPluginEntityFactory;
@@ -81,6 +78,7 @@ public:
 
 protected:
 
+	// The factory that first called Create in the entity creation chain.
 	CPluginEntityFactory* m_pCreatingFactory;
 
 public:
@@ -95,17 +93,6 @@ public:
 private:
 	std::string m_iDataClassname;
 
-	ServerClass* m_pEntityServerClass;
-
-public:
-	ServerClass* GetServerClass() { return m_pEntityServerClass; }
-
-private:
-	ServerClass* CreateServerClass(ServerClass* pBaseServerClass);
-
-	void DestroyServerClass();
-
-private:
 	datamap_t* m_pEntityDataMap;
 
 	size_t m_DataMapDescSizeInBytes;
@@ -142,6 +129,8 @@ public:
 	// Adds a field type descriptor to the type descriptor list with the specified name and type, additionally with key name to be used by maps/fgd.
 	void DefineKeyField(const char* name, fieldtype_t fieldType, const char* mapname);
 
+	void DefineOutput(const char* name, const char* externalName);
+
 	// The size of the fields in the factory's type descriptor list, in bytes.
 	size_t GetUserEntityDataSize() const;
 
@@ -149,6 +138,7 @@ public:
 	int GetUserEntityDataOffset() const;
 
 protected:
+	void CreateUserEntityData(CBaseEntity* pEntity);
 
 	void DestroyUserEntityData(CBaseEntity* pEntity);
 

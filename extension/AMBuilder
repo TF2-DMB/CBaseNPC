@@ -26,6 +26,7 @@ sourceFiles = [
   'sourcesdk/entityfactorydictionary.cpp',
   'sourcesdk/customfactory.cpp',
   'sourcesdk/baseentity.cpp',
+  'sourcesdk/baseentityoutput.cpp',
   'sourcesdk/baseanimating.cpp',
   'sourcesdk/baseanimatingoverlay.cpp',
   'sourcesdk/basecombatcharacter.cpp',
