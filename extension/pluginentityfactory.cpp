@@ -2,10 +2,8 @@
 #include "pluginentityfactory.h"
 #include "entityfactorydictionary.h"
 #include "cbasenpc_internal.h"
-
 #include "baseentityoutput.h"
-
-extern ISDKHooks* g_pSDKHooks;
+#include "sh_pagealloc.h"
 
 SH_DECL_MANUALHOOK0(MHook_GetDataDescMap, 0, 0, 0, datamap_t* );
 
@@ -275,6 +273,8 @@ CPluginEntityFactory::~CPluginEntityFactory()
 	Uninstall();
 
 	DestroyDataMap();
+
+	m_pEntityInputFuncDelegates.PurgeAndDeleteElements();
 	
 	g_PluginEntityFactories.FindAndRemove(this);
 }
@@ -469,7 +469,7 @@ IEntityFactory* CPluginEntityFactory::GetBaseFactory() const
 		case DERIVETYPE_CBASENPC:
 			return g_pBaseNPCFactory;
 		case DERIVETYPE_CLASSNAME:
-			return EntityFactoryDictionaryHack()->FindFactory(m_Derive.m_iBaseClassname.c_str());
+			return servertools->GetEntityFactoryDictionary()->FindFactory(m_Derive.m_iBaseClassname.c_str());
 	}
 
 	return nullptr;
@@ -661,6 +661,8 @@ void CPluginEntityFactory::BeginDataMapDesc(const char* dataClassName)
 
 	m_bHasDataMapDesc = false;
 
+	m_pEntityInputFuncDelegates.PurgeAndDeleteElements();
+
 	for (int i = 0; i < m_vecEntityDataTypeDescriptors.Count(); i++)
 	{
 		DestroyDataMapTypeDescriptor( &m_vecEntityDataTypeDescriptors[i] );
@@ -758,13 +760,42 @@ void CPluginEntityFactory::DefineKeyField(const char* name, fieldtype_t fieldTyp
 	DefineField(name, fieldType, 1, FTYPEDESC_KEY | FTYPEDESC_SAVE, strdup(mapname), 0);
 }
 
-void CPluginEntityFactory::DefineOutput(const char* name, const char* externalName)
+void CPluginEntityFactory::DefineInputFunc(const char* name, fieldtype_t fieldType, const char* mapname, IPluginFunction *inputFunc)
+{
+	name = name ? strdup(name) : NULL;
+	mapname = mapname ? strdup(mapname) : NULL;
+
+	typedescription_t typeDesc = { 
+		fieldType, 
+		name, 
+		{ 0, 0 }, 
+		1,
+		FTYPEDESC_INPUT,
+		mapname,
+		NULL, 
+		NULL, NULL,
+		0,
+		NULL,
+		0,
+		0
+	};
+
+	InputFuncDelegate* pDelegate = new InputFuncDelegate(inputFunc);
+	m_pEntityInputFuncDelegates.AddToTail(pDelegate);
+	
+	// this shuts up the compiler
+	*(uint32_t*)(&(typeDesc.inputFunc)) = (uint32_t)pDelegate->m_pInputFuncPtr;
+
+	m_vecEntityDataTypeDescriptors.AddToTail(typeDesc);
+}
+
+void CPluginEntityFactory::DefineOutput(const char* name, const char* mapname)
 {
 	int fieldOffset = GetUserEntityDataOffset() + m_DataMapDescSizeInBytes;
 	int fieldSizeInBytes = sizeof(CBaseEntityOutputHack);
 
 	name = name ? strdup(name) : NULL;
-	externalName = externalName ? strdup(externalName) : NULL;
+	mapname = mapname ? strdup(mapname) : NULL;
 
 	m_vecEntityDataTypeDescriptors.AddToTail({ 
 		FIELD_CUSTOM, 
@@ -772,10 +803,10 @@ void CPluginEntityFactory::DefineOutput(const char* name, const char* externalNa
 		{ fieldOffset, 0 }, 
 		1,
 		FTYPEDESC_OUTPUT | FTYPEDESC_SAVE | FTYPEDESC_KEY,
-		externalName,
+		mapname,
 		eventFuncs, 
 		NULL, NULL,
-		fieldSizeInBytes,
+		0,
 		NULL,
 		0,
 		0
@@ -834,6 +865,144 @@ void CPluginEntityFactory::Destroy(IServerNetworkable* pNetworkable)
 	if (pNetworkable)
 	{
 		pNetworkable->Release();
+	}
+}
+
+SourceHook::CPageAlloc g_InputFuncAlloc;
+
+void CPluginEntityFactory::InputFuncDelegate::OnInput(InputFuncDelegate* pDelegate, CBaseEntity* pEntity, inputdata_t &data)
+{
+	IPluginFunction* m_pCallback = pDelegate->m_pCallback;
+
+	if (m_pCallback && m_pCallback->IsRunnable())
+	{
+		m_pCallback->PushCell(gamehelpers->EntityToBCompatRef(pEntity));
+		m_pCallback->PushCell(gamehelpers->EntityToBCompatRef(data.pActivator));
+		m_pCallback->PushCell(gamehelpers->EntityToBCompatRef(data.pCaller));
+
+		variant_t &value = data.value;
+
+		switch (value.fieldType)
+		{
+			case FIELD_STRING:
+				m_pCallback->PushString(value.iszVal.ToCStr());
+				break;
+			case FIELD_BOOLEAN:
+				m_pCallback->PushCell(value.bVal);
+				break;
+			case FIELD_COLOR32:
+			{
+				cell_t color[4] = { 
+					value.rgbaVal.r,
+					value.rgbaVal.g,
+					value.rgbaVal.b,
+					value.rgbaVal.a
+				};
+
+				m_pCallback->PushArray(color, 4);
+				break;
+			}
+			case FIELD_FLOAT:
+				m_pCallback->PushCell(value.flVal);
+				break;
+			case FIELD_INTEGER:
+				m_pCallback->PushCell(value.iVal);
+				break;
+			case FIELD_VECTOR:
+			{
+				cell_t vec[3] = {
+					sp_ftoc(value.vecVal[0]),
+					sp_ftoc(value.vecVal[1]),
+					sp_ftoc(value.vecVal[2])
+				};
+				m_pCallback->PushArray(vec, 3);
+				break;
+			}	
+			case FIELD_VOID:
+				break;
+			default:
+				m_pCallback->PushCell(value.iVal);
+				break;
+		}
+
+		m_pCallback->Execute(nullptr);
+	}
+}
+
+CPluginEntityFactory::InputFuncDelegate::InputFuncDelegate(IPluginFunction* pCallback)
+	: m_pCallback(pCallback)
+{
+	uint32_t thisAddr = (uint32_t)this;
+	uint32_t callFuncAddr = (uint32_t)(&InputFuncDelegate::OnInput);
+
+	uint8_t funcBytes[] = { 
+#ifdef WIN32
+		// MSVC __thiscall
+		0x55,									// push ebp
+		0x89, 0xe5,								// mov ebp, esp
+		0x57,									// push edi
+		0x51,									// push ecx
+		0x8B, 0x7D, 0x08,						// mov edi, [ebp+8] (inputdata_t*)
+		0x57,									// push edi
+		0x51,									// push ecx (CBaseEntity*)
+		0x68, 0, 0, 0, 0,						// push thisAddr
+		0xBA, 0, 0, 0, 0, 						// mov edx, callFuncAddr
+		0xFF, 0xD2,								// call edx
+		0x83, 0xC4, 0x0C,						// add esp,12
+		0x59,									// pop ecx
+		0x5f,									// pop edi
+		0x89, 0xec,								// mov esp, ebp
+		0x5d,									// pop ebp
+		0xc2, 0x04, 0x00						// ret 4
+#else
+		// GCC __thiscall
+		0x55,									// push ebp
+		0x89, 0xE5,								// mov ebp, esp
+		0x52,									// push edx
+		0x57,									// push edi
+		0x8B, 0x7D, 0x0C,						// mov edi, [ebp+12] (inputdata_t*)
+		0x57,									// push edi
+		0x8B, 0x7D, 0x08,						// mov edi, [ebp+8] (CBaseEntity*)
+		0x57,									// push edi
+		0x68, 0, 0, 0, 0,						// push thisAddr
+		0xBA, 0, 0, 0, 0,						// mov edx, callFuncAddr
+		0xFF, 0xD2,								// call edx
+		0x83, 0xC4, 0x0C,						// add esp,12
+		0x5A,									// pop edi
+		0x5F,									// pop edx
+		0x89, 0xEC,								// mov esp, ebp
+		0x5D,									// pop ebp
+		0xC3									// ret
+#endif
+	};
+
+	m_iInputFuncSize = sizeof(funcBytes);
+	m_pInputFuncPtr = g_InputFuncAlloc.Alloc(m_iInputFuncSize);
+
+	if (m_pInputFuncPtr)
+	{
+		g_InputFuncAlloc.SetRW(m_pInputFuncPtr);
+
+#ifdef WIN32
+		*((uint32_t*)(&funcBytes[11])) = thisAddr;
+		*((uint32_t*)(&funcBytes[16])) = callFuncAddr;
+#else
+		*((uint32_t*)(&funcBytes[14])) = thisAddr;
+		*((uint32_t*)(&funcBytes[19])) = callFuncAddr;
+#endif
+
+		memcpy(m_pInputFuncPtr, funcBytes, m_iInputFuncSize);
+
+		g_InputFuncAlloc.SetRE(m_pInputFuncPtr);
+	}
+}
+
+CPluginEntityFactory::InputFuncDelegate::~InputFuncDelegate()
+{
+	if (m_pInputFuncPtr)
+	{
+		g_InputFuncAlloc.Free(m_pInputFuncPtr);
+		m_pInputFuncPtr = nullptr;
 	}
 }
 

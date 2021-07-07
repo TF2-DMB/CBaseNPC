@@ -252,18 +252,51 @@ PLUGINENTITYFACTORYDATAMAP_DECLFIELDNATIVE(DefineEntityField)
 	return params[1];
 }
 
-PLUGINENTITYFACTORYDATAMAPNATIVE(DefineOutput)
-
-	char* fieldName;
-	pContext->LocalToString(params[2], &fieldName);
-	if (!fieldName || (fieldName && !fieldName[0])) return pContext->ThrowNativeError("Field name cannot be NULL or empty");
+PLUGINENTITYFACTORYDATAMAPNATIVE(DefineInputFunc)
 
 	char* keyName;
-	pContext->LocalToString(params[3], &keyName);
-	if (!keyName || (keyName && !keyName[0])) return pContext->ThrowNativeError("Key name cannot be NULL or empty");
+	pContext->LocalToString(params[2], &keyName);
+	if (!keyName || (keyName && !keyName[0])) return pContext->ThrowNativeError("Input name cannot be NULL or empty");
+
+	cell_t handlerType = params[3];
+	IPluginFunction *handlerFunc = pContext->GetFunctionById(params[4]);
+
+	fieldtype_t fieldType;
+	switch (handlerType)
+	{
+		case 0: fieldType = FIELD_VOID; break;
+		case 1: fieldType = FIELD_STRING; break;
+		case 2: fieldType = FIELD_BOOLEAN; break;
+		case 3: fieldType = FIELD_COLOR32; break;
+		case 4: fieldType = FIELD_FLOAT; break;
+		case 5:	fieldType = FIELD_INTEGER; break;
+		case 6: fieldType = FIELD_VECTOR; break;
+		default: fieldType = FIELD_CUSTOM; break;
+	}
+
+	int fieldNameSize = strlen(keyName) + 7;
+	char* fieldName = new char[fieldNameSize];
+	snprintf(fieldName, fieldNameSize, "Input%s", keyName);
+
+	pFactory->DefineInputFunc(fieldName, fieldType, keyName, handlerFunc);
+
+	delete fieldName;
+	return params[1];
+}
+
+PLUGINENTITYFACTORYDATAMAPNATIVE(DefineOutput)
+
+	char* keyName;
+	pContext->LocalToString(params[2], &keyName);
+	if (!keyName || (keyName && !keyName[0])) return pContext->ThrowNativeError("Output name cannot be NULL or empty");
+
+	int fieldNameSize = strlen(keyName) + 7;
+	char* fieldName = new char[fieldNameSize];
+	snprintf(fieldName, fieldNameSize, "m_%s", keyName);
 
 	pFactory->DefineOutput(fieldName, keyName);
 
+	delete fieldName;
 	return params[1];
 }
 

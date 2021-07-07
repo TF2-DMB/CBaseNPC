@@ -16,7 +16,7 @@ extern ISaveRestoreOps *eventFuncs;
 class CEventActionHack
 {
 public:
-    string_t m_iTarget; // name of the entity(s) to cause the action in
+	string_t m_iTarget; // name of the entity(s) to cause the action in
 	string_t m_iTargetInput; // the name of the action to fire
 	string_t m_iParameter; // parameter to send, 0 if none
 	float m_flDelay; // the number of seconds to wait before firing the action
@@ -24,19 +24,19 @@ public:
 
 	int m_iIDStamp;	// unique identifier stamp
 
-    CEventActionHack *m_pNext;
+	CEventActionHack *m_pNext;
 
 private:
-    CEventActionHack() {} // don't even instantiate this, we can't manage its memory
+	CEventActionHack() {} // don't even instantiate this, we can't manage its memory
 };
 
 class CBaseEntityOutputHack
 {
 public:
-    static bool Init(SourceMod::IGameConfig* config, char* error, size_t maxlength);
+	static bool Init(SourceMod::IGameConfig* config, char* error, size_t maxlength);
 
-    void Init();
-    void Destroy();
+	void Init();
+	void Destroy();
 
 	int NumberOfElements( void );
 

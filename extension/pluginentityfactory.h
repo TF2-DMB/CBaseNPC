@@ -87,6 +87,26 @@ public:
 	// This does not include entities that are created by factories that derive from this one.
 	void GetEntities(CUtlVector< CBaseEntity* > *pVec) const;
 
+protected:
+
+	class InputFuncDelegate
+	{
+	public:
+		IPluginFunction* m_pCallback;
+
+		void* m_pInputFuncPtr;
+		int m_iInputFuncSize;
+
+		InputFuncDelegate(IPluginFunction* pCallback);
+		~InputFuncDelegate();
+
+		static void OnInput(InputFuncDelegate*, CBaseEntity* pEntity, inputdata_t &data);
+	};
+
+	CUtlVector<InputFuncDelegate*> m_pEntityInputFuncDelegates;
+
+public:
+
 	// Whether or not this factory is allowed to use a custom user datamap.
 	bool CanUseDataMap() const;
 
@@ -129,6 +149,10 @@ public:
 	// Adds a field type descriptor to the type descriptor list with the specified name and type, additionally with key name to be used by maps/fgd.
 	void DefineKeyField(const char* name, fieldtype_t fieldType, const char* mapname);
 
+	// Assigns an input function to a plugin callback for use with the entity I/O system.
+	void DefineInputFunc(const char* name, fieldtype_t fieldType, const char* mapname, IPluginFunction* inputFunc);
+
+	// Adds an output for use with the entity I/O system.
 	void DefineOutput(const char* name, const char* externalName);
 
 	// The size of the fields in the factory's type descriptor list, in bytes.

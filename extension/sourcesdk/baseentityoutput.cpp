@@ -1,5 +1,6 @@
 
 #include "baseentityoutput.h"
+#include "baseentity.h"
 
 CUtlMemoryPool * g_pEntityListPool = nullptr;
 ISaveRestoreOps *eventFuncs = nullptr;
@@ -9,17 +10,6 @@ bool CBaseEntityOutputHack::Init(SourceMod::IGameConfig* config, char* error, si
 	SourceMod::IGameConfig* configCore;
 	if (!gameconfs->LoadGameConfigFile("core.games", &configCore, error, maxlength))
 	{
-		return false;
-	}
-
-    try
-    {
-        //mFireOutput.Init(configCore, "FireOutput");
-    }
-    catch (const std::exception & e)
-	{
-		// Could use strncpy, but compiler complains
-		snprintf(error, maxlength, "%s", e.what());
 		return false;
 	}
 
@@ -47,21 +37,29 @@ bool CBaseEntityOutputHack::Init(SourceMod::IGameConfig* config, char* error, si
 	}
 
 	// eventFuncs
-	if (config->GetMemSig("eventFuncs", (void**)&addr) && addr)
+	CBaseEntity* pOffsetEnt = servertools->CreateEntityByName("info_target");
+	if (pOffsetEnt)
 	{
-#ifndef WIN32
-		eventFuncs = *reinterpret_cast<ISaveRestoreOps**>(addr);
-#else
-		int offset;
-		if (!config->GetOffset("eventFuncs", &offset) || !offset)
+		for (datamap_t* pDataMap = gamehelpers->GetDataMap(pOffsetEnt); pDataMap; pDataMap = pDataMap->baseMap)
 		{
-			snprintf(error, maxlength, "Couldn't find offset for eventFuncs ptr!");
-			return false;
+			for (int i = 0; i < pDataMap->dataNumFields; i++)
+			{
+				typedescription_t *pTypeDesc = &pDataMap->dataDesc[i];
+				if (pTypeDesc->fieldType == FIELD_CUSTOM && ( pTypeDesc->flags & FTYPEDESC_OUTPUT ) )
+				{
+					if (pTypeDesc->pSaveRestoreOps)
+					{
+						eventFuncs = pTypeDesc->pSaveRestoreOps;
+						break;
+					}
+				}
+			}
 		}
-		eventFuncs = **reinterpret_cast<ISaveRestoreOps***>(addr + offset);
-#endif
+
+		servertools->RemoveEntityImmediate(pOffsetEnt);
 	}
-	else
+
+	if (!eventFuncs)
 	{
 		snprintf(error, maxlength, "Couldn't find eventFuncs!");
 		return false;
@@ -94,6 +92,9 @@ void CBaseEntityOutputHack::DeleteAllElements( void )
 		CEventActionHack *strikeThis = pNext;
 		pNext = pNext->m_pNext;
 
+		// This can be directly called like this because CUtlMemoryPool::Free() 
+		// doesn't physically free memory, rather it marks the given memory 
+		// block as free in its internal structure.
 		g_pEntityListPool->Free(strikeThis);
 	}
 }

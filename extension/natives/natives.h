@@ -572,6 +572,7 @@ const sp_nativeinfo_t g_NativesInfo[] =
 	{ "CEntityFactory.DefineVectorField", &CPluginEntityFactory_DefineVectorField },
 	{ "CEntityFactory.DefineStringField", &CPluginEntityFactory_DefineStringField },
 	{ "CEntityFactory.DefineEntityField", &CPluginEntityFactory_DefineEntityField },
+	{ "CEntityFactory.DefineInputFunc", &CPluginEntityFactory_DefineInputFunc },
 	{ "CEntityFactory.DefineOutput", &CPluginEntityFactory_DefineOutput },
 	{ "CEntityFactory.EndDataMapDesc", &CPluginEntityFactory_EndDataMapDesc },
 

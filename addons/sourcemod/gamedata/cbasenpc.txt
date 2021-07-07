@@ -62,10 +62,6 @@
 			{
 				"windows"	"17"
 			}
-			"eventFuncs"
-			{
-				"windows"	"37"
-			}
 			"CBaseAnimating::StudioFrameAdvance"
 			{
 				"linux"		"195"
@@ -214,15 +210,6 @@
 				"library"		"server"
 				"linux"			"@g_EntityListPool"
 				"windows"		"\x6A\x00\x68\x2A\x2A\x2A\x2A\x6A\x01\x68\x00\x02\x00\x00\x6A\x1C"
-			}
-			// "CBaseAnimating" - used in static datamap initializer function (where a lot of globals being assigned)
-			// Inside the function will be a lot of typedescriptor_t assignments; go to one equivalent to DEFINE_OUTPUT
-			// Find assignment to pSaveRestoreOps member which will be eventFuncs
-			"eventFuncs"
-			{
-				"library"		"server"
-				"linux"			"@eventFuncs"
-				"windows"		"\xC7\x05\x2A\x2A\x2A\x2A\x2A\x2A\x2A\x2A\xA8\x02\x0F\x85\x62\x02\x00\x00"
 			}
 			"CBaseAnimating::SetPoseParameter"
 			{
