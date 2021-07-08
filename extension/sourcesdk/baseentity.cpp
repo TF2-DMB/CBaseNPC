@@ -8,7 +8,6 @@
 
 int(CBaseEntityHack::CBaseEntityHack::offset_UpdateOnRemove) = 0;
 int CBaseEntityHack::offset_GetDataDescMap = 0;
-int CBaseEntityHack::offset_GetServerClass = 0;
 
 MCall<void, bool> CBaseEntityHack::CBaseEntity_Ctor;
 VCall<void, const char*> CBaseEntityHack::vPostConstructor;
@@ -126,12 +125,6 @@ bool CBaseEntityHack::Init(SourceMod::IGameConfig* config, char* error, size_t m
 	if (!configCore->GetOffset("GetDataDescMap", &CBaseEntityHack::offset_GetDataDescMap))
 	{
 		snprintf(error, maxlength, "Couldn't find GetDataDescMap offset!");
-		return false;
-	}
-
-	if (!config->GetOffset("CBaseEntity::GetServerClass", &CBaseEntityHack::offset_GetServerClass))
-	{
-		snprintf(error, maxlength, "Failed to retrieve CBaseEntity::GetServerClass offset!");
 		return false;
 	}
 

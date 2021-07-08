@@ -3317,7 +3317,9 @@ methodmap CEntityFactory < Handle
 	public native void DeriveFromFactory(CEntityFactory baseFactory);
 
 	/**
-	 * Installs the factory into the game's entity factory dictionary.
+	 * Installs the factory. This marks the factory available for use.
+	 * For non-abstract factories, the factory will be added to the global
+	 * entity factory dictionary.
 	 *
 	 * @error	An installed factory already has classname, or base factory/class
 	 *          doesn't exist.
@@ -3347,10 +3349,9 @@ methodmap CEntityFactory < Handle
 	 * Tells if the factory is abstract or not.
 	 * 
 	 * An abstract factory is never added to the entity factory dictionary,
-	 * and is used only as a base for other factories. It will never directly
-	 * create entities; it only initializes them. This is synonymous with 
+	 * and is used only as a base for other factories. This is synonymous with
 	 * abstract classes in C++.
-	 
+	 *
 	 * You are still required to install abstract factories in order for them
 	 * to be used by other factories.
 	 *
@@ -3409,10 +3410,10 @@ methodmap CEntityFactory < Handle
 	 * factory's datamap during/after defining this factory's datamap, as this
 	 * will lead to undefined behavior.
 	 *
-	 * For Define*Field functions(): If sKeyName is given, this will declare 
-	 * the property as a key field, which can be accessed by the map and the 
-	 * DispatchKeyValue function using sKeyName. Key fields cannot be declared 
-	 * as an array, meaning iNumElements must be set to 1.
+	 * About key fields: If sKeyName is given, this will declare the property
+	 * as a key field, which can be accessed by the map and the DispatchKeyValue
+	 * function using sKeyName. Key fields cannot be declared as an array,
+	 * meaning iNumElements must be set to 1.
 	 *
 	 * @param sDataClass      Name of the datamap. If null or empty, will use
 	 *                        entity's classname.

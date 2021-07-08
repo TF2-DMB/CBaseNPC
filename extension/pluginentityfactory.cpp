@@ -215,12 +215,10 @@ void CPluginEntityFactory::SDK_OnUnload()
 
 void CPluginEntityFactory::OnEntityDestroyed(CBaseEntity* pEntity)
 {
-	CBaseEntityHack* pEnt = reinterpret_cast<CBaseEntityHack*>(pEntity);
-
-	CPluginEntityFactory* pFactory = GetPluginEntityFactory(pEnt);
+	CPluginEntityFactory* pFactory = GetPluginEntityFactory(pEntity);
 	if (pFactory)
 	{
-		pFactory->OnRemove(pEnt);
+		pFactory->OnRemove(pEntity);
 	}
 }
 
@@ -589,7 +587,8 @@ IServerNetworkable* CPluginEntityFactory::Create(const char* classname)
 		}
 
 		PluginFactoryEntityRecord_t * pEntityRecord = GetPluginFactoryEntityRecord(pEnt, true);
-		pEntityRecord->pFactory = this;
+		if (!pEntityRecord->pFactory)
+			pEntityRecord->pFactory = m_pCreatingFactory;
 
 		if (m_pEntityDataMap)
 		{
