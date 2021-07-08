@@ -13,11 +13,6 @@
 			{
 				"windows"	"5"
 			}
-			"CBaseEntity::GetServerClass"
-			{
-				"windows"	"9"
-				"linux"		"10"
-			}
 			"CBaseEntity::PostConstructor"
 			{
 				"windows"	"26"

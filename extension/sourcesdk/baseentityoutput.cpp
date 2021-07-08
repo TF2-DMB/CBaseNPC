@@ -40,7 +40,7 @@ bool CBaseEntityOutputHack::Init(SourceMod::IGameConfig* config, char* error, si
 	CBaseEntity* pOffsetEnt = servertools->CreateEntityByName("info_target");
 	if (pOffsetEnt)
 	{
-		for (datamap_t* pDataMap = gamehelpers->GetDataMap(pOffsetEnt); pDataMap; pDataMap = pDataMap->baseMap)
+		for (datamap_t* pDataMap = gamehelpers->GetDataMap(pOffsetEnt); pDataMap && !eventFuncs; pDataMap = pDataMap->baseMap)
 		{
 			for (int i = 0; i < pDataMap->dataNumFields; i++)
 			{
@@ -49,6 +49,7 @@ bool CBaseEntityOutputHack::Init(SourceMod::IGameConfig* config, char* error, si
 				{
 					if (pTypeDesc->pSaveRestoreOps)
 					{
+						// All outputs use eventFuncs as pSaveRestoreOps
 						eventFuncs = pTypeDesc->pSaveRestoreOps;
 						break;
 					}

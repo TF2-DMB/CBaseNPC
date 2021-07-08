@@ -129,18 +129,35 @@ PLUGINENTITYFACTORYNATIVE(DeriveFromClass)
 	return 0;
 }
 
+PLUGINENTITYFACTORYNATIVE(DeriveFromFactory)
+
+	if (pFactory->m_bInstalled) 
+		return pContext->ThrowNativeError("Cannot change base factory while factory is installed");
+	
+	pFactory->DeriveFromHandle(params[2]);
+
+	return 0;
+}
+
 PLUGINENTITYFACTORYNATIVE(Install)
 
 	if (pFactory->m_bInstalled) 
 		return 0;
 	
-	if (EntityFactoryDictionaryHack()->FindFactory(pFactory->m_iClassname.c_str()))
-		return pContext->ThrowNativeError("Entity factory already exists with the same classname");
+	if (!pFactory->IsAbstract())
+	{
+		const char* classname = pFactory->m_iClassname.c_str();
+
+		if (EntityFactoryDictionaryHack()->FindFactory(classname))
+			return pContext->ThrowNativeError("Entity factory already exists with the same classname");
+	}
 
 	if (pFactory->DoesNotDerive())
 		return pContext->ThrowNativeError("Entity factory must derive from an existing class or classname");
 
-	pFactory->Install();
+	if (!pFactory->Install())
+		return pContext->ThrowNativeError("Failed to install; make sure base factory is installed first");
+	
 	return 0;
 }
 
@@ -155,6 +172,20 @@ PLUGINENTITYFACTORYNATIVE(Installed)
 	return pFactory->m_bInstalled;
 }
 
+PLUGINENTITYFACTORYNATIVE(AbstractGet)
+
+	return pFactory->IsAbstract();
+}
+
+PLUGINENTITYFACTORYNATIVE(AbstractSet)
+
+	if (pFactory->m_bInstalled)
+		return pContext->ThrowNativeError("Cannot change IsAbstract while factory is installed");
+
+	pFactory->SetAbstract(!!params[2]);
+	return 0;
+}
+
 PLUGINENTITYFACTORYNATIVE(GetClassname)
 
 	size_t bufferSize = params[3];
@@ -167,14 +198,18 @@ PLUGINENTITYFACTORYDATAMAPNATIVE(BeginDataMapDesc)
 
 	char* dataClassName;
 	pContext->LocalToStringNULL(params[2], &dataClassName);
+	bool startedDesc;
 	if (!dataClassName)
 	{
-		pFactory->BeginDataMapDesc(pFactory->m_iClassname.c_str());
+		startedDesc = pFactory->BeginDataMapDesc(pFactory->m_iClassname.c_str());
 	}
 	else 
 	{
-		pFactory->BeginDataMapDesc(dataClassName);
+		startedDesc = pFactory->BeginDataMapDesc(dataClassName);
 	}
+
+	if (!startedDesc)
+		return pContext->ThrowNativeError("Base factory was not installed before datamap definition");
 
 	return params[1];
 }

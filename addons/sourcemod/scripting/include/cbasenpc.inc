@@ -3281,7 +3281,7 @@ methodmap CEntityFactory < Handle
 	 *                          This is the best place to initialize your entity.
 	 * @param onRemove          Called when an entity created by this factory is removed.
 	 *                          Perform any needed cleanup for your entity here.
-	 * @param error             Invalid Handle or out of memory.
+	 * @param error             Classname is NULL or empty, or out of memory.
 	 */
 	public native CEntityFactory(const char[] classname, CEntityFactoryPostConstructor postConstructor=INVALID_FUNCTION, CEntityFactoryOnRemoveCallback onRemove=INVALID_FUNCTION);
 	
@@ -3310,6 +3310,13 @@ methodmap CEntityFactory < Handle
 	public native void DeriveFromClass(const char[] classname);
 
 	/**
+	 * Instructs the factory to use the specified factory as a base.
+	 *
+	 * @param baseFactory     The base factory
+	 */
+	public native void DeriveFromFactory(CEntityFactory baseFactory);
+
+	/**
 	 * Installs the factory into the game's entity factory dictionary.
 	 *
 	 * @error	An installed factory already has classname, or base factory/class
@@ -3334,6 +3341,25 @@ methodmap CEntityFactory < Handle
 	property bool IsInstalled
 	{
 		public native get();
+	}
+
+	/**
+	 * Tells if the factory is abstract or not.
+	 * 
+	 * An abstract factory is never added to the entity factory dictionary,
+	 * and is used only as a base for other factories. It will never directly
+	 * create entities; it only initializes them. This is synonymous with 
+	 * abstract classes in C++.
+	 
+	 * You are still required to install abstract factories in order for them
+	 * to be used by other factories.
+	 *
+	 * To use an abstract factory as a base, you need to use DeriveFromFactory().
+	 */
+	property bool IsAbstract
+	{
+		public native get();
+		public native set(bool bIsAbstract);
 	}
 
 	/**
@@ -3376,6 +3402,13 @@ methodmap CEntityFactory < Handle
 	 * properties can be accessed using Get/SetEntProp. Use EndDataMapDesc()
 	 * to finish defining the datamap.
 	 *
+	 * If deriving from another CEntityFactory (whether by factory or classname), 
+	 * you must specify and install the base factory before calling 
+	 * BeginDataMapDesc() on this factory, as offsets are calculated based on 
+	 * the entity size of the base factory. You also must not change the base
+	 * factory's datamap during/after defining this factory's datamap, as this
+	 * will lead to undefined behavior.
+	 *
 	 * For Define*Field functions(): If sKeyName is given, this will declare 
 	 * the property as a key field, which can be accessed by the map and the 
 	 * DispatchKeyValue function using sKeyName. Key fields cannot be declared 
@@ -3384,6 +3417,8 @@ methodmap CEntityFactory < Handle
 	 * @param sDataClass      Name of the datamap. If null or empty, will use
 	 *                        entity's classname.
 	 * @return                The CEntityFactory to chain calls
+	 * @error                 Beginning datamap definition before base factory 
+	 *                        is installed
 	 */
 	public native CEntityFactory BeginDataMapDesc(const char[] sDataClass=NULL_STRING);
 

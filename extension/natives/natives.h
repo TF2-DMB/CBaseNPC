@@ -553,9 +553,12 @@ const sp_nativeinfo_t g_NativesInfo[] =
 	{ "CEntityFactory.DeriveFromBaseEntity", &CPluginEntityFactory_DeriveFromBaseEntity },
 	{ "CEntityFactory.DeriveFromClass", &CPluginEntityFactory_DeriveFromClass },
 	{ "CEntityFactory.DeriveFromNPC", &CPluginEntityFactory_DeriveFromNPC },
+	{ "CEntityFactory.DeriveFromFactory", &CPluginEntityFactory_DeriveFromFactory },
 	{ "CEntityFactory.Install", &CPluginEntityFactory_Install },
 	{ "CEntityFactory.Uninstall", &CPluginEntityFactory_Uninstall },
 	{ "CEntityFactory.IsInstalled.get", &CPluginEntityFactory_Installed },
+	{ "CEntityFactory.IsAbstract.get", &CPluginEntityFactory_AbstractGet },
+	{ "CEntityFactory.IsAbstract.set", &CPluginEntityFactory_AbstractSet },
 
 	{ "CEntityFactory.GetClassname", &CPluginEntityFactory_GetClassname },
 

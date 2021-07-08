@@ -158,7 +158,7 @@ datamap_t* Hook_GetDataDescMap()
 
 	PluginFactoryEntityRecord_t* pEntityRecord = GetPluginFactoryEntityRecord(pEntity);
 	if (!pEntityRecord)
-		return nullptr;
+		RETURN_META_VALUE(MRES_IGNORED, nullptr);
 
 	datamap_t* pDataMap = pEntityRecord->m_pDataMap;
 	if (pDataMap)
@@ -262,8 +262,10 @@ CPluginEntityFactory::CPluginEntityFactory(const char* classname, IPluginFunctio
 	m_pEntityDataMap = nullptr;
 	m_bHasDataMapDesc = false;
 	m_DataMapDescSizeInBytes = 0;
+	m_iDataMapStartOffset = 0;
 
-	m_pBasePluginEntityFactory = nullptr;
+	m_bIsAbstract = false;
+	m_pBaseFactory = nullptr;
 
 	g_PluginEntityFactories.AddToTail(this);
 }
@@ -297,22 +299,10 @@ void CPluginEntityFactory::DeriveFromClass(const char* classname)
 	m_Derive.m_iBaseClassname = classname;
 }
 
-void CPluginEntityFactory::SetBasePluginEntityFactory(CPluginEntityFactory* pFactory)
+void CPluginEntityFactory::DeriveFromHandle(Handle_t handle)
 {
-	if (pFactory == m_pBasePluginEntityFactory)
-		return;
-	
-	if (m_pBasePluginEntityFactory)
-	{
-		m_pBasePluginEntityFactory->m_DerivedFactories.FindAndRemove(this);
-		m_pBasePluginEntityFactory = nullptr;
-	}
-
-	if (pFactory)
-	{
-		m_pBasePluginEntityFactory = pFactory;
-		pFactory->m_DerivedFactories.AddToTail(this);
-	}
+	m_Derive.m_DeriveFrom = DERIVETYPE_HANDLE;
+	m_Derive.m_BaseFactoryHandle = handle;
 }
 
 void CPluginEntityFactory::OnRemove(CBaseEntity* pEntity)
@@ -328,9 +318,10 @@ void CPluginEntityFactory::OnRemove(CBaseEntity* pEntity)
 
 	DestroyUserEntityData(pEntity);
 
-	if (m_pBasePluginEntityFactory)
+	CPluginEntityFactory* pBasePluginFactory = ToPluginEntityFactory(GetBaseFactory());
+	if (pBasePluginFactory)
 	{
-		m_pBasePluginEntityFactory->OnRemove(pEntity);
+		pBasePluginFactory->OnRemove(pEntity);
 	}
 
 	if (bBelongsToFactory)
@@ -376,32 +367,38 @@ int CPluginEntityFactory::GetInstalledFactoryHandles(Handle_t* pHandleArray, int
 	return j;
 }
 
-void CPluginEntityFactory::Install()
+bool CPluginEntityFactory::Install()
 {
 	if (m_bInstalled)
-		return;
+		return true;
 
-	CEntityFactoryDictionaryHack* pFactoryDict = EntityFactoryDictionaryHack();
-	if (!pFactoryDict) 
-		return;
+	IEntityFactory *pBaseFactory = FindBaseFactory();
+	if ((m_Derive.m_DeriveFrom == DERIVETYPE_HANDLE || m_Derive.m_DeriveFrom == DERIVETYPE_CLASSNAME) && !pBaseFactory)
+		return false;
 
 	const char* classname = m_iClassname.c_str();
 
-	if (pFactoryDict->FindFactory(classname))
-		return;
-	
-	// DO NOT USE IEntityFactoryDictionary::InstallFactory()!
-	// It's a virtual function, which means memory allocation is handled by server.dll, not by this extension.
-	// If you use it anyway and you try to uninstall, it will result in heap corruption error. (at least on Windows)
-	pFactoryDict->m_Factories.Insert( classname, this );
+	if (!IsAbstract())
+	{
+		CEntityFactoryDictionaryHack* pFactoryDict = EntityFactoryDictionaryHack();
+		if (pFactoryDict->FindFactory(classname))
+			return false;
+		
+		// DO NOT USE IEntityFactoryDictionary::InstallFactory()!
+		// It's a virtual function, which means memory allocation is handled by server.dll, not by this extension.
+		// If you use it anyway and you try to uninstall, it will result in heap corruption error. (at least on Windows)
+		pFactoryDict->m_Factories.Insert( classname, this );
+	}
 
-	SetBasePluginEntityFactory(ToPluginEntityFactory(GetBaseFactory()));
-	
+	SetBaseFactory(pBaseFactory);
+
 	m_bInstalled = true;
 
 	OnFactoryInstall(this);
 
 	g_pSM->LogMessage(myself, "Installed %s entity factory", classname);
+
+	return true;
 }
 
 void CPluginEntityFactory::Uninstall()
@@ -409,18 +406,19 @@ void CPluginEntityFactory::Uninstall()
 	if (!m_bInstalled)
 		return;
 
-	CEntityFactoryDictionaryHack* pFactoryDict = EntityFactoryDictionaryHack();
-	if (!pFactoryDict)
-		return;
-
 	const char* classname = m_iClassname.c_str();
 
-	for (size_t i = 0; i < pFactoryDict->m_Factories.Count(); i++)
+	if (!IsAbstract())
 	{
-		if (pFactoryDict->m_Factories[i] == this)
+		CEntityFactoryDictionaryHack* pFactoryDict = EntityFactoryDictionaryHack();
+
+		for (size_t i = 0; i < pFactoryDict->m_Factories.Count(); i++)
 		{
-			pFactoryDict->m_Factories.RemoveAt(i);
-			break;
+			if (pFactoryDict->m_Factories[i] == this)
+			{
+				pFactoryDict->m_Factories.RemoveAt(i);
+				break;
+			}
 		}
 	}
 
@@ -451,7 +449,7 @@ void CPluginEntityFactory::Uninstall()
 		servertools->RemoveEntity(pEntity);
 	}
 
-	SetBasePluginEntityFactory(nullptr);
+	SetBaseFactory(nullptr);
 
 	m_bInstalled = false;
 
@@ -460,7 +458,7 @@ void CPluginEntityFactory::Uninstall()
 	g_pSM->LogMessage(myself, "Uninstalled %s entity factory", classname);
 }
 
-IEntityFactory* CPluginEntityFactory::GetBaseFactory() const
+IEntityFactory* CPluginEntityFactory::FindBaseFactory() const
 {
 	switch (m_Derive.m_DeriveFrom)
 	{
@@ -470,9 +468,48 @@ IEntityFactory* CPluginEntityFactory::GetBaseFactory() const
 			return g_pBaseNPCFactory;
 		case DERIVETYPE_CLASSNAME:
 			return servertools->GetEntityFactoryDictionary()->FindFactory(m_Derive.m_iBaseClassname.c_str());
+		case DERIVETYPE_HANDLE:
+		{
+			Handle_t handle = m_Derive.m_BaseFactoryHandle;
+			HandleSecurity security(nullptr, myself->GetIdentity());
+			CPluginEntityFactory* pFactory;
+			HandleError err = handlesys->ReadHandle(handle, g_PluginEntityFactoryHandle, &security, (void **)&pFactory);
+			if (err != HandleError_None)
+				return nullptr;
+			if (!pFactory->m_bInstalled)
+				return nullptr;
+			return pFactory;
+		}
 	}
 
 	return nullptr;
+}
+
+void CPluginEntityFactory::SetBaseFactory(IEntityFactory* pBaseFactory)
+{
+	IEntityFactory* pOldBaseFactory = m_pBaseFactory;
+	if (pOldBaseFactory == pBaseFactory)
+		return;
+	
+	m_pBaseFactory = pBaseFactory;
+
+	if (pOldBaseFactory)
+	{
+		CPluginEntityFactory* pPluginFactory = ToPluginEntityFactory(pOldBaseFactory);
+		if (pPluginFactory)
+		{
+			pPluginFactory->m_DerivedFactories.FindAndRemove(this);
+		}
+	}
+
+	if (m_pBaseFactory)
+	{
+		CPluginEntityFactory* pPluginFactory = ToPluginEntityFactory(m_pBaseFactory);
+		if (pPluginFactory)
+		{
+			pPluginFactory->m_DerivedFactories.AddToTail(this);
+		}
+	}
 }
 
 size_t CPluginEntityFactory::GetBaseEntitySize() const
@@ -569,7 +606,7 @@ IServerNetworkable* CPluginEntityFactory::Create(const char* classname)
 
 		if (m_pPostConstructor && m_pPostConstructor->IsRunnable())
 		{
-			m_pPostConstructor->PushCell(pEnt->entindex());
+			m_pPostConstructor->PushCell(gamehelpers->EntityToBCompatRef(pEnt));
 			m_pPostConstructor->Execute(nullptr);
 		}
 	}
@@ -592,8 +629,9 @@ datamap_t* CPluginEntityFactory::GetDataMap() const
 	if (m_pEntityDataMap)
 		return m_pEntityDataMap;
 	
-	if (m_pBasePluginEntityFactory)
-		return m_pBasePluginEntityFactory->GetDataMap();
+	CPluginEntityFactory* pBasePluginFactory = ToPluginEntityFactory(GetBaseFactory());
+	if (pBasePluginFactory)
+		return pBasePluginFactory->GetDataMap();
 
 	return nullptr;
 }
@@ -655,8 +693,14 @@ void CPluginEntityFactory::DestroyDataMapTypeDescriptor(typedescription_t *desc)
 	}
 }
 
-void CPluginEntityFactory::BeginDataMapDesc(const char* dataClassName)
+bool CPluginEntityFactory::BeginDataMapDesc(const char* dataClassName)
 {
+	IEntityFactory *pBaseFactory = FindBaseFactory();
+	if (pBaseFactory == nullptr)
+		return false;
+
+	m_iDataMapStartOffset = pBaseFactory->GetEntitySize();
+
 	DestroyDataMap();
 
 	m_bHasDataMapDesc = false;
@@ -672,6 +716,8 @@ void CPluginEntityFactory::BeginDataMapDesc(const char* dataClassName)
 
 	m_iDataClassname = dataClassName;
 	m_DataMapDescSizeInBytes = 0;
+
+	return true;
 }
 
 void CPluginEntityFactory::EndDataMapDesc()
@@ -728,7 +774,7 @@ int g_DataMapDescFieldSizes[] = {
 void CPluginEntityFactory::DefineField(const char* name, fieldtype_t fieldType, unsigned short count, short flags, const char* externalName, float fieldTolerance)
 {
 	int fieldOffset = GetUserEntityDataOffset() + m_DataMapDescSizeInBytes;
-	int fieldSizeInBytes = g_DataMapDescFieldSizes[fieldType];
+	int fieldSizeInBytes = g_DataMapDescFieldSizes[fieldType] * count;
 
 	name = name ? strdup(name) : NULL;
 	externalName = externalName ? strdup(externalName) : NULL;
@@ -747,7 +793,7 @@ void CPluginEntityFactory::DefineField(const char* name, fieldtype_t fieldType, 
 		fieldTolerance
 	});
 
-	m_DataMapDescSizeInBytes += (count * fieldSizeInBytes);
+	m_DataMapDescSizeInBytes += fieldSizeInBytes;
 }
 
 void CPluginEntityFactory::DefineField(const char* name, fieldtype_t fieldType, int numElements)
@@ -817,7 +863,7 @@ void CPluginEntityFactory::DefineOutput(const char* name, const char* mapname)
 
 int CPluginEntityFactory::GetUserEntityDataOffset() const
 {
-	return GetBaseEntitySize();
+	return m_iDataMapStartOffset;
 }
 
 size_t CPluginEntityFactory::GetUserEntityDataSize() const
