@@ -160,9 +160,6 @@ void CBaseNPCExt::OnEntityDestroyed(CBaseEntity* pEntity)
 		return;
 	}
 
-	// Placed before BaseNPC's cleanup so plugins can perform their own cleanup on CBaseNPC-based entities.
-	CPluginEntityFactory::OnEntityDestroyed(pEntity);
-
 	g_pBaseNPCTools->DeleteNPCByEntIndex(gamehelpers->EntityToBCompatRef(pEntity));
 
 	auto iIndex = g_EntitiesHooks.Find(gamehelpers->EntityToReference(pEntity));

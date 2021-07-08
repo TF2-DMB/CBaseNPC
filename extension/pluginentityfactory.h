@@ -201,8 +201,6 @@ public:
 
 	static void SDK_OnUnload();
 
-	static void OnEntityDestroyed( CBaseEntity* pEntity );
-
 	static CPluginEntityFactory* ToPluginEntityFactory( IEntityFactory* pFactory );
 
 	static int GetInstalledFactoryHandles( Handle_t* pHandleArray, int arraySize );
