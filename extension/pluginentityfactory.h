@@ -95,11 +95,17 @@ protected:
 
 public:
 	// The entity factory that is called while creating this factory's entity.
+	// The base factory is only set when the factory is installed to
+	// establish a clear and stable hierarchy.
 	IEntityFactory * GetBaseFactory() const { return m_pBaseFactory; };
 	
 	void SetBaseFactory(IEntityFactory* pBaseFactory);
 
-	// The size of the entity created by the factory without adding user datamap fields.
+	bool IsBaseFactoryRequired() const;
+
+	// If uses a base factory, then returns the size of the entity created by
+	// the base factory. If not, returns the size of the entity created by
+	// this factory.
 	size_t GetBaseEntitySize() const;
 
 protected:

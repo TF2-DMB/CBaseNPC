@@ -384,7 +384,7 @@ bool CPluginEntityFactory::Install()
 		return true;
 
 	IEntityFactory *pBaseFactory = FindBaseFactory();
-	if ((m_Derive.m_DeriveFrom == DERIVETYPE_HANDLE || m_Derive.m_DeriveFrom == DERIVETYPE_CLASSNAME) && !pBaseFactory)
+	if (!pBaseFactory && IsBaseFactoryRequired())
 		return false;
 
 	const char* classname = m_iClassname.c_str();
@@ -489,6 +489,15 @@ IEntityFactory* CPluginEntityFactory::FindBaseFactory() const
 	}
 
 	return nullptr;
+}
+
+bool CPluginEntityFactory::IsBaseFactoryRequired() const
+{
+	auto deriveFrom = m_Derive.m_DeriveFrom;
+	if (deriveFrom == DERIVETYPE_CBASENPC || deriveFrom == DERIVETYPE_CLASSNAME || deriveFrom == DERIVETYPE_HANDLE)
+		return true;
+
+	return false;
 }
 
 void CPluginEntityFactory::SetBaseFactory(IEntityFactory* pBaseFactory)
@@ -708,10 +717,13 @@ void CPluginEntityFactory::DestroyDataMapTypeDescriptor(typedescription_t *desc)
 bool CPluginEntityFactory::BeginDataMapDesc(const char* dataClassName)
 {
 	IEntityFactory *pBaseFactory = FindBaseFactory();
-	if (pBaseFactory == nullptr)
+	if (!pBaseFactory && IsBaseFactoryRequired())
 		return false;
 
-	m_iDataMapStartOffset = pBaseFactory->GetEntitySize();
+	// Don't use GetBaseEntitySize() if base factory is required because 
+	// the base factory hasn't been set yet. The base factory is only set when
+	// the factory is installed.
+	m_iDataMapStartOffset = pBaseFactory ? pBaseFactory->GetEntitySize() : GetBaseEntitySize();
 
 	DestroyDataMap();
 
