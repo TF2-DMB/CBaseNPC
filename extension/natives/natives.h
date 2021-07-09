@@ -15,7 +15,7 @@
 #include "cbasecombatcharacter.h"
 #include "vision.h"
 #include "cbasenpc.h"
-#include "smn_pluginentityfactory.h"
+#include "entityfactory.h"
 #include <takedamageinfo.h>
 
 #pragma once

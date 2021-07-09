@@ -6,6 +6,13 @@
 #include "pluginentityfactory.h"
 #include "entityfactorydictionary.h"
 
+#define ENTINDEX_TO_CBASEENTITY(ref, buffer) \
+	buffer = gamehelpers->ReferenceToEntity(ref); \
+	if (!buffer) \
+	{ \
+		return pContext->ThrowNativeError("Entity %d (%d) is not a CBaseEntity", gamehelpers->ReferenceToIndex(ref), ref); \
+	}
+
 #define PLUGINENTITYFACTORYNATIVE(name) \
 	cell_t CPluginEntityFactory_##name(IPluginContext *pContext, const cell_t *params) \
 	{ \

@@ -232,14 +232,14 @@ void CPluginEntityFactory::SDK_OnUnload()
 void CPluginEntityFactory::OnFactoryInstall(CPluginEntityFactory * pFactory)
 {
 	g_fwdInstalledFactory->PushString(pFactory->m_iClassname.c_str());
-	g_fwdInstalledFactory->PushCell((cell_t)pFactory);
+	g_fwdInstalledFactory->PushCell(pFactory->m_Handle);
 	g_fwdInstalledFactory->Execute();
 }
 
 void CPluginEntityFactory::OnFactoryUninstall(CPluginEntityFactory * pFactory)
 {
 	g_fwdUninstalledFactory->PushString(pFactory->m_iClassname.c_str());
-	g_fwdUninstalledFactory->PushCell((cell_t)pFactory);
+	g_fwdUninstalledFactory->PushCell(pFactory->m_Handle);
 	g_fwdUninstalledFactory->Execute();
 }
 
@@ -579,7 +579,7 @@ IServerNetworkable* CPluginEntityFactory::Create(const char* classname)
 	else if (m_Derive.m_DeriveFrom == DERIVETYPE_BASECLASS && m_Derive.m_BaseType == DERIVEBASECLASSTYPE_ENTITY)
 	{
 		CBaseEntityHack* pEnt = (CBaseEntityHack*)engine->PvAllocEntPrivateData(entitySize);
-		CBaseEntityHack::CBaseEntity_Ctor.operator()(pEnt, m_Derive.m_bBaseEntityServerOnly);
+		CBaseEntityHack::CBaseEntity_Ctor(pEnt, m_Derive.m_bBaseEntityServerOnly);
 		pEnt->PostConstructor(classname);
 		pNet = pEnt->NetworkProp();
 	}
@@ -655,7 +655,7 @@ datamap_t* CPluginEntityFactory::CreateDataMap(datamap_t* pBaseMap)
 	{
 		m_pEntityDataMap = new datamap_t;
 		m_pEntityDataMap->baseMap = pBaseMap;
-		m_pEntityDataMap->dataClassName = strdup(m_iDataClassname.c_str());
+		m_pEntityDataMap->dataClassName = m_iDataClassname.c_str();
 		m_pEntityDataMap->packed_offsets_computed = false;
 		m_pEntityDataMap->packed_size = 0;
 
@@ -684,8 +684,7 @@ void CPluginEntityFactory::DestroyDataMap()
 		DestroyDataMapTypeDescriptor(dataDesc);
 	}
 
-	delete m_pEntityDataMap->dataDesc;
-	free((void*)m_pEntityDataMap->dataClassName);
+	delete[] m_pEntityDataMap->dataDesc;
 	delete m_pEntityDataMap;
 
 	m_pEntityDataMap = nullptr;
