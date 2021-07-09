@@ -973,7 +973,7 @@ void CPluginEntityFactory::InputFuncDelegate::OnInput(InputFuncDelegate* pDelega
 				break;
 			}
 			case FIELD_FLOAT:
-				m_pCallback->PushCell(value.flVal);
+				m_pCallback->PushCell(sp_ftoc(value.flVal));
 				break;
 			case FIELD_INTEGER:
 				m_pCallback->PushCell(value.iVal);
