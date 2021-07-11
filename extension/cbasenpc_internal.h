@@ -105,7 +105,7 @@ public:
 	static MCall<int, const CTakeDamageInfo&> mOriginalOnTakeDamage_Alive;
 };
 
-class CBaseNPCFactory : CustomFactory
+class CBaseNPCFactory : public CustomFactory
 {
 public:
 	CBaseNPCFactory();

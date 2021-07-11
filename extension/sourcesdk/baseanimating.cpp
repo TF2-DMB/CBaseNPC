@@ -2,51 +2,8 @@
 #include <smsdk_ext.h>
 #include <sh_memory.h>
 #include <IGameHelpers.h>
-#include <variant_t.h>
 
-class CEventAction;
-class CBaseEntityOutput
-{
-public:
-	~CBaseEntityOutput();
-
-	void ParseEventAction(const char* EventData);
-	void AddEventAction(CEventAction* pEventAction);
-
-	int Save(ISave& save);
-	int Restore(IRestore& restore, int elementCount);
-
-	int NumberOfElements(void);
-
-	float GetMaxDelay(void);
-
-	fieldtype_t ValueFieldType() { return m_Value.FieldType(); }
-
-	void FireOutput(variant_t Value, CBaseEntity* pActivator, CBaseEntity* pCaller, float fDelay = 0);
-
-	/// Delete every single action in the action list. 
-	void DeleteAllElements(void);
-
-protected:
-	variant_t m_Value;
-	CEventAction* m_ActionList;
-	DECLARE_SIMPLE_DATADESC();
-
-	CBaseEntityOutput() {} // this class cannot be created, only it's children
-
-private:
-	CBaseEntityOutput(CBaseEntityOutput&); // protect from accidental copying
-};
-
-//-----------------------------------------------------------------------------
-// Purpose: parameterless entity event
-//-----------------------------------------------------------------------------
-class COutputEvent : public CBaseEntityOutput
-{
-public:
-	// void Firing, no parameter
-	void FireOutput(CBaseEntity* pActivator, CBaseEntity* pCaller, float fDelay = 0);
-};
+#include "baseentityoutput.h"
 
 FCall<int, CStudioHdr*, const char*> fStudio_LookupSequence;
 FCall<int, const CStudioHdr*, const char*> fStudio_FindAttachment;
@@ -110,7 +67,7 @@ bool CBaseAnimatingHack::Init(SourceMod::IGameConfig* config, char* error, size_
 	OFFSETVAR_SEND(CBaseAnimating, m_nSequence);
 	OFFSETVAR_SEND(CBaseAnimating, m_flModelScale);
 	// m_pStudioHdr is in front of m_OnIgnite
-	VAR_OFFSET_SET(m_pStudioHdr, VAR_OFFSET(m_OnIgnite) + sizeof(COutputEvent));
+	VAR_OFFSET_SET(m_pStudioHdr, VAR_OFFSET(m_OnIgnite) + sizeof(COutputEventHack));
 	END_VAR;
 
 	void* aVal = nullptr;

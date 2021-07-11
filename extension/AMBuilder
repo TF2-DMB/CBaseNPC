@@ -8,6 +8,7 @@ sourceFiles = [
   'extension.cpp',
   'cbasenpc_internal.cpp',
   'npc_tools_internal.cpp',
+  'pluginentityfactory.cpp',
   'CDetour/detours.cpp',
   'asm/asm.c',
   'helpers.cpp',
@@ -25,11 +26,13 @@ sourceFiles = [
   'sourcesdk/entityfactorydictionary.cpp',
   'sourcesdk/customfactory.cpp',
   'sourcesdk/baseentity.cpp',
+  'sourcesdk/baseentityoutput.cpp',
   'sourcesdk/baseanimating.cpp',
   'sourcesdk/baseanimatingoverlay.cpp',
   'sourcesdk/basecombatcharacter.cpp',
   'sourcesdk/servernetworkproperty.cpp',
-  'sourcesdk/tracefilter_simple.cpp',
+  'sourcesdk/tf_gamerules.cpp',
+  'sourcesdk/tracefilter_simple.cpp'
 ]
 
 ###############
@@ -65,7 +68,6 @@ for sdk_name in Extension.sdks:
   
   project.compiler.cxxincludes += [os.path.join(sdk.path, 'game/server')]
   project.compiler.cxxincludes += [os.path.join(sdk.path, 'game/shared')]
-  project.compiler.cxxincludes += [os.path.join(sdk.path, 'game/client')]
   
   binary = Extension.HL2Config(project, projectName + '.ext.' + sdk.ext, sdk)
 

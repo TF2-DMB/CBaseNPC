@@ -101,8 +101,12 @@ class CBaseEntityHack : public CBaseEntity
 public:
 	static bool Init(SourceMod::IGameConfig* config, char* error, size_t maxlength);
 
+	static MCall<void, bool> CBaseEntity_Ctor;
+
 	static VCall<void, const char*> vPostConstructor;
 	void PostConstructor(const char*);
+
+	static int offset_GetDataDescMap;
 
 	static VCall<void> vUpdateOnRemove;
 	void UpdateOnRemove(void);

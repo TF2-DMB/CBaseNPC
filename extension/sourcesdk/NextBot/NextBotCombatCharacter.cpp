@@ -1,4 +1,6 @@
 #include "sourcesdk/NextBot/NextBotCombatCharacter.h"
+#include <shareddefs.h>
+#include <util.h>
 
 MCall<void> NextBotCombatCharacter::NextBotCombatCharacter_Ctor;
 
@@ -16,10 +18,22 @@ bool NextBotCombatCharacter::Init(SourceMod::IGameConfig* config, char* error, s
 		snprintf(error, maxlength, "%s", e.what());
 		return false;
 	}
-	
-	if (!config->GetOffset("sizeof(NextBotCombatCharacter)", &NextBotCombatCharacter::size_of))
+
+	IEntityFactoryDictionary* factoryDictionary = servertools->GetEntityFactoryDictionary();
 	{
-		snprintf(error, maxlength, "Couldn't find sizeof(NextBotCombatCharacter) offset!");
+		IEntityFactory* factory = nullptr;
+
+		int entitySize = 0;
+		factory = factoryDictionary->FindFactory("simple_bot");
+		
+		if (factory) entitySize = factory->GetEntitySize();
+		
+		NextBotCombatCharacter::size_of = entitySize;
+	}
+
+	if (!NextBotCombatCharacter::size_of)
+	{
+		snprintf(error, maxlength, "Failed to get size of NextBotCombatCharacter");
 		return false;
 	}
 

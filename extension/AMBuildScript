@@ -162,6 +162,7 @@ class ExtensionConfig(object):
       '_stricmp=strcasecmp',
       '_snprintf=snprintf',
       '_vsnprintf=vsnprintf',
+      'typeof=__typeof__',
       'HAVE_STDINT_H',
       'GNUC',
     ]
@@ -182,19 +183,28 @@ class ExtensionConfig(object):
       '-Wno-non-virtual-dtor',
       '-Wno-overloaded-virtual',
       '-fvisibility-inlines-hidden',
+      '-fpermissive'
     ]
     cxx.linkflags += ['-m32']
 
     have_gcc = cxx.vendor == 'gcc'
     have_clang = cxx.vendor == 'clang'
-    if cxx.version >= 'clang-3.6':
+    if cxx.version >= 'clang-3.9' or cxx.version == 'clang-3.4' or cxx.version > 'apple-clang-6.0':
+      cxx.cxxflags += ['-Wno-expansion-to-defined']
+    if cxx.version == 'clang-3.9' or cxx.version == 'apple-clang-8.0':
+      cxx.cflags += ['-Wno-varargs']
+    if cxx.version >= 'clang-3.4' or cxx.version >= 'apple-clang-7.0':
       cxx.cxxflags += ['-Wno-inconsistent-missing-override']
+    if cxx.version >= 'clang-2.9' or cxx.version >= 'apple-clang-3.0':
+      cxx.cxxflags += ['-Wno-null-dereference']
     if have_clang or (cxx.version >= 'gcc-4.6'):
       cxx.cflags += ['-Wno-narrowing']
     if have_clang or (cxx.version >= 'gcc-4.7'):
       cxx.cxxflags += ['-Wno-delete-non-virtual-dtor']
     if cxx.version >= 'gcc-4.8':
       cxx.cflags += ['-Wno-unused-result']
+    if cxx.version >= 'gcc-9.0':
+      cxx.cxxflags += ['-Wno-class-memaccess', '-Wno-packed-not-aligned']
 
     if have_clang:
       cxx.cxxflags += ['-Wno-implicit-exception-spec-mismatch']
@@ -203,6 +213,10 @@ class ExtensionConfig(object):
       else:
         cxx.cxxflags += ['-Wno-deprecated']
       cxx.cflags += ['-Wno-sometimes-uninitialized']
+
+    # Work around SDK warnings.
+    if cxx.version >= 'clang-10.0':
+      cxx.cflags += ['-Wno-implicit-int-float-conversion', '-Wno-tautological-overlap-compare']
 
     if have_gcc:
       cxx.cflags += ['-mfpmath=sse']
@@ -268,9 +282,9 @@ class ExtensionConfig(object):
 
   def configure_mac(self, cxx):
     cxx.defines += ['OSX', '_OSX', 'POSIX']
-    cxx.cflags += ['-mmacosx-version-min=10.5']
+    cxx.cflags += ['-mmacosx-version-min=10.7']
     cxx.linkflags += [
-      '-mmacosx-version-min=10.5',
+      '-mmacosx-version-min=10.7',
       '-arch', 'i386',
       '-lstdc++',
       '-stdlib=libstdc++',
@@ -322,6 +336,9 @@ class ExtensionConfig(object):
 
       if sdk.name in ['blade', 'insurgency', 'csgo', 'dota']:
         compiler.postlink += [compiler.Dep(os.path.join(lib_folder, 'interfaces_i486.a'))]
+
+    # vprof
+    compiler.defines += ['RAD_TELEMETRY_DISABLED']
 
     dynamic_libs = []
     if builder.target_platform == 'linux':

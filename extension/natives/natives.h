@@ -15,6 +15,7 @@
 #include "cbasecombatcharacter.h"
 #include "vision.h"
 #include "cbasenpc.h"
+#include "entityfactory.h"
 #include <takedamageinfo.h>
 
 #pragma once
@@ -548,6 +549,36 @@ const sp_nativeinfo_t g_NativesInfo[] =
 	NATIVENAME(CTNavArea, GetCostSoFar)
 	NATIVENAME(CTNavArea, GetRealNavArea)
 	
+	{ "CEntityFactory.CEntityFactory", &CPluginEntityFactory_CPluginEntityFactory },
+	{ "CEntityFactory.DeriveFromBaseEntity", &CPluginEntityFactory_DeriveFromBaseEntity },
+	{ "CEntityFactory.DeriveFromClass", &CPluginEntityFactory_DeriveFromClass },
+	{ "CEntityFactory.DeriveFromNPC", &CPluginEntityFactory_DeriveFromNPC },
+	{ "CEntityFactory.DeriveFromFactory", &CPluginEntityFactory_DeriveFromFactory },
+	{ "CEntityFactory.Install", &CPluginEntityFactory_Install },
+	{ "CEntityFactory.Uninstall", &CPluginEntityFactory_Uninstall },
+	{ "CEntityFactory.IsInstalled.get", &CPluginEntityFactory_Installed },
+	{ "CEntityFactory.IsAbstract.get", &CPluginEntityFactory_AbstractGet },
+	{ "CEntityFactory.IsAbstract.set", &CPluginEntityFactory_AbstractSet },
+
+	{ "CEntityFactory.GetClassname", &CPluginEntityFactory_GetClassname },
+
+	{ "CEntityFactory.GetFactoryOfEntity", &CPluginEntityFactory_GetFactoryOfEntity },
+
+	{ "CEntityFactory.GetNumInstalledFactories", &CPluginEntityFactory_GetNumInstalledFactories },
+	{ "CEntityFactory.GetInstalledFactories", &CPluginEntityFactory_GetInstalledFactories },
+
+	{ "CEntityFactory.BeginDataMapDesc", &CPluginEntityFactory_BeginDataMapDesc },
+	{ "CEntityFactory.DefineIntField", &CPluginEntityFactory_DefineIntField },
+	{ "CEntityFactory.DefineFloatField", &CPluginEntityFactory_DefineFloatField },
+	{ "CEntityFactory.DefineCharField", &CPluginEntityFactory_DefineCharField },
+	{ "CEntityFactory.DefineBoolField", &CPluginEntityFactory_DefineBoolField },
+	{ "CEntityFactory.DefineVectorField", &CPluginEntityFactory_DefineVectorField },
+	{ "CEntityFactory.DefineStringField", &CPluginEntityFactory_DefineStringField },
+	{ "CEntityFactory.DefineEntityField", &CPluginEntityFactory_DefineEntityField },
+	{ "CEntityFactory.DefineInputFunc", &CPluginEntityFactory_DefineInputFunc },
+	{ "CEntityFactory.DefineOutput", &CPluginEntityFactory_DefineOutput },
+	{ "CEntityFactory.EndDataMapDesc", &CPluginEntityFactory_EndDataMapDesc },
+
 	{ nullptr, nullptr },
 };
 

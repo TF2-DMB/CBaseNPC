@@ -6,6 +6,8 @@
 #include "natives.h"
 #include <ihandleentity.h>
 #include "npc_tools_internal.h"
+#include "baseentityoutput.h"
+#include "pluginentityfactory.h"
 
 CGlobalVars* gpGlobals = nullptr;
 IGameConfig* g_pGameConf = nullptr;
@@ -68,6 +70,8 @@ bool CBaseNPCExt::SDK_OnLoad(char *error, size_t maxlength, bool late)
 		|| !NextBotCombatCharacter::Init(g_pGameConf, error, maxlength)
 		|| !NextBotGroundLocomotion::Init(g_pGameConf, error, maxlength)
 		|| !CTFGameRules::Init(g_pGameConf, error, maxlength)
+		|| !CBaseEntityOutputHack::Init(g_pGameConf, error, maxlength)
+		|| !CPluginEntityFactory::Init(g_pGameConf, error, maxlength)
 		)
 	{
 		return false;
@@ -87,6 +91,7 @@ bool CBaseNPCExt::SDK_OnLoad(char *error, size_t maxlength, bool late)
 	
 	CREATEHANDLETYPE(SurroundingAreasCollector);
 	CREATEHANDLETYPE(TSurroundingAreasCollector);
+	CREATEHANDLETYPE(PluginEntityFactory);
 
 	sharesys->AddDependency(myself, "bintools.ext", true, true);
 	sharesys->AddDependency(myself, "sdktools.ext", true, true);
@@ -183,6 +188,8 @@ void CBaseNPCExt::SDK_OnAllLoaded()
 	g_pEntityList = (CBaseEntityList *)gamehelpers->GetGlobalEntityList();
 	CTNavMesh::RefreshHooks();
 
+	CPluginEntityFactory::SDK_OnAllLoaded();
+
 	CBaseNPC_Entity *npc = (CBaseNPC_Entity*)servertools->CreateEntityByName("base_npc");
 	if (npc)
 	{
@@ -233,6 +240,8 @@ void CBaseNPCExt::SDK_OnUnload()
 	{
 		g_pNavMeshAddArea->Destroy();
 	}
+
+	CPluginEntityFactory::SDK_OnUnload();
 
 	delete g_pBaseNPCFactory;
 	g_pBaseNPCFactory = nullptr;

@@ -6,6 +6,7 @@
 #include <itoolentity.h>
 #include <IEngineTrace.h>
 #include <IStaticPropMgr.h>
+#include <shareddefs.h>
 #include <util.h>
 
 #include "sourcesdk/customfactory.h"

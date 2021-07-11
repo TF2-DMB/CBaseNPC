@@ -53,6 +53,10 @@
 				"windows"	"149"		
 				"linux"		"150"
 			}
+			"g_EntityListPool"
+			{
+				"windows"	"17"
+			}
 			"CBaseAnimating::StudioFrameAdvance"
 			{
 				"linux"		"195"
@@ -83,13 +87,6 @@
 				"linux"		"320"
 				"windows"	"319"
 			}
-			// This offset value doesn't matter if it's precise
-			// For as long it's above what the class requires
-			"sizeof(NextBotCombatCharacter)"
-			{
-				"windows"	"8000" // Incorrect but big enough
-				"linux"		"7604"
-			}
 			"NextBotCombatCharacter::vtable_entries"
 			{
 				"windows"	"331"
@@ -115,7 +112,7 @@
 				"library"		"server"
 				"linux"			"@TheNavMesh"
 			}
-			// To find signature: find string "NavEndArea: Out of memory\n", then look for EmitSound("EDIT_END_AREA.Creating") within func
+			// Find string "NavEndArea: Out of memory\n", then look for EmitSound("EDIT_END_AREA.Creating") within func
 			"CNavMesh::AddNavArea"
 			{
 				"library"		"server"
@@ -175,6 +172,15 @@
 				"windows"		"\x55\x8B\xEC\x53\x57\x8B\x7D\x08\x8B\xD9\xF6\x87\x14\x01\x00\x00\x01"
 				"linux"			"@_Z22SimThink_EntityChangedP11CBaseEntity"
 			}
+			// Find ".?AVCRallyPoint@@" to get to CRallyPoint's type descriptor -> complete object locator -> vtable
+			// goto xref to vtable to enter CRallyPoint's constructor
+			// CBaseEntity constructor is second call that takes additional argument (bServerOnly set to 0)
+			"CBaseEntity::CBaseEntity"
+			{
+				"library"		"server"
+				"windows"		"\x55\x8B\xEC\x83\xEC\x14\x53\x56\x8B\xF1\x57\x8D\x2A\x2A\xC7\x06"
+				"linux"			"@_ZN11CBaseEntityC1Eb"
+			}
 			"CBaseEntity::CalcAbsolutePosition"
 			{
 				"library"		"server"
@@ -192,6 +198,13 @@
 				"library"		"server"
 				"windows"		""
 				"linux"			"@_ZN11CBaseEntity15SetGroundEntityEPS_"
+			}
+			// "g_EntityListPool"
+			"g_EntityListPool"
+			{
+				"library"		"server"
+				"linux"			"@g_EntityListPool"
+				"windows"		"\x6A\x00\x68\x2A\x2A\x2A\x2A\x6A\x01\x68\x00\x02\x00\x00\x6A\x1C"
 			}
 			"CBaseAnimating::SetPoseParameter"
 			{

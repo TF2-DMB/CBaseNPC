@@ -7,7 +7,9 @@
 #include <enginecallback.h>
 
 int(CBaseEntityHack::CBaseEntityHack::offset_UpdateOnRemove) = 0;
+int CBaseEntityHack::offset_GetDataDescMap = 0;
 
+MCall<void, bool> CBaseEntityHack::CBaseEntity_Ctor;
 VCall<void, const char*> CBaseEntityHack::vPostConstructor;
 VCall<void> CBaseEntityHack::vUpdateOnRemove;
 VCall<void> CBaseEntityHack::vSpawn;
@@ -72,6 +74,12 @@ DEFINEVAR(CBaseEntityHack, m_hGroundEntity);
 bool CBaseEntityHack::Init(SourceMod::IGameConfig* config, char* error, size_t maxlength)
 {
 	// Some function signatures & offsets can be fetched from Sourcemod, yay!
+	SourceMod::IGameConfig* configCore;
+	if (!gameconfs->LoadGameConfigFile("core.games", &configCore, error, maxlength))
+	{
+		return false;
+	}
+
 	SourceMod::IGameConfig* configSDKTools;
 	if (!gameconfs->LoadGameConfigFile("sdktools.games", &configSDKTools, error, maxlength))
 	{
@@ -85,6 +93,7 @@ bool CBaseEntityHack::Init(SourceMod::IGameConfig* config, char* error, size_t m
 
 	try
 	{
+		CBaseEntity_Ctor.Init(config, "CBaseEntity::CBaseEntity");
 		mInvalidatePhysicsRecursive.Init(config, "CBaseEntity::InvalidatePhysicsRecursive");
 		mCalcAbsolutePosition.Init(config, "CBaseEntity::CalcAbsolutePosition");
 		vPostConstructor.Init(config, "CBaseEntity::PostConstructor");
@@ -110,6 +119,12 @@ bool CBaseEntityHack::Init(SourceMod::IGameConfig* config, char* error, size_t m
 	{
 		// Could use strncpy, but compiler complains
 		snprintf(error, maxlength, "%s", e.what());
+		return false;
+	}
+
+	if (!configCore->GetOffset("GetDataDescMap", &CBaseEntityHack::offset_GetDataDescMap))
+	{
+		snprintf(error, maxlength, "Couldn't find GetDataDescMap offset!");
 		return false;
 	}
 
@@ -150,6 +165,7 @@ bool CBaseEntityHack::Init(SourceMod::IGameConfig* config, char* error, size_t m
 
 	gameconfs->CloseGameConfigFile(configSDKTools);
 	gameconfs->CloseGameConfigFile(configSDKHooks);
+	gameconfs->CloseGameConfigFile(configCore);
 
 #ifndef __linux__
 	if (g_pSimThinkManager == nullptr)
