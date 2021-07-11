@@ -322,7 +322,7 @@ PLUGINENTITYFACTORYDATAMAPNATIVE(DefineInputFunc)
 
 	pFactory->DefineInputFunc(fieldName, fieldType, keyName, handlerFunc);
 
-	delete fieldName;
+	delete[] fieldName;
 	return params[1];
 }
 
@@ -338,7 +338,7 @@ PLUGINENTITYFACTORYDATAMAPNATIVE(DefineOutput)
 
 	pFactory->DefineOutput(fieldName, keyName);
 
-	delete fieldName;
+	delete[] fieldName;
 	return params[1];
 }
 
