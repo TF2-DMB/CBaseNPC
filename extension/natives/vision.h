@@ -268,7 +268,7 @@ VISIONNATIVE(IsLookingAtTarget)
 		return pContext->ThrowNativeError("Invalid Entity Reference/Index %i", params[2]);
 	}
 	
-	return pVision->IsLookingAt((const CBaseCombatCharacter *)pEntity, sp_ctof(params[3]));
+	return pVision->IsLookingAt((const CBaseCombatCharacterHack *)pEntity, sp_ctof(params[3]));
 }
 
 VISIONNATIVE(IsLookingAt)

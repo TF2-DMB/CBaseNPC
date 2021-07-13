@@ -6,6 +6,10 @@
 #include "shared/cbasenpc.h"
 #include "extension.h"
 #include "sourcesdk/customfactory.h"
+#include "NextBot/NextBotIntentionInterface.h"
+#include "NextBot/NextBotBehavior.h"
+
+class CBaseNPC_Entity;
 
 // ======================
 // CBaseNPC for plugins
@@ -68,6 +72,19 @@ public:
 	float m_flFrictionSideways;
 };
 
+class CBaseNPCIntention : public IIntention
+{
+public:
+	CBaseNPCIntention( INextBot * me );
+	~CBaseNPCIntention();
+	virtual void Reset();
+	virtual void Update();
+	virtual INextBotEventResponder *FirstContainedResponder() const { return m_pBehavior; };
+
+private:
+	Behavior< CBaseNPC_Entity > * m_pBehavior;
+};
+
 class NextBotCombatCharacter;
 
 class CBaseNPC_Entity : public NextBotCombatCharacter
@@ -80,11 +97,13 @@ public:
 		~CBaseNPC();
 
 		std::vector<int> m_hookids;
+		IIntention* m_pIntention;
 		CBaseNPC_Locomotion* m_pMover;
 		CBaseNPC_Body* m_pBody;
 		char m_type[64];
 
 		void Hook_Spawn(void);
+		IIntention* Hook_GetIntentionInterface(void) const;
 		ILocomotion* Hook_GetLocomotionInterface(void) const;
 		IBody* Hook_GetBodyInterface(void) const;
 	};
@@ -95,8 +114,11 @@ public:
 	int OnTakeDamage(const CTakeDamageInfo& info);
 	int OnTakeDamage_Alive(const CTakeDamageInfo& info);
 
-	ILocomotion* GetLocomotionInterface() const;
-	IBody* GetBodyInterface() const;
+	// Debugging for Behavior
+	bool IsDebugging(unsigned int type) { return MyNextBotPointer()->IsDebugging(type); }
+	const char* GetDebugIdentifier() { return MyNextBotPointer()->GetDebugIdentifier(); }
+	void DebugConColorMsg( NextBotDebugType debugType, const Color &color, const char *fmt, ... );
+	void DisplayDebugText( const char *text ) const { };
 
 	static void** vtable;
 	static MCall<void> mOriginalSpawn;

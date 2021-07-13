@@ -2,6 +2,11 @@
 #define NEXT_BOT_KNOWN_ENTITY_H
 
 #include "NextBotInterface.h"
+#include <mathlib/vector.h>
+#include <itoolentity.h>
+
+class CBaseEntity;
+class CNavArea;
 
 class CKnownEntity
 {
@@ -12,26 +17,26 @@ public:
 	virtual ~CKnownEntity() = 0;
 	virtual void Destroy( void ) = 0;
 	virtual void UpdatePosition( void ) = 0;
-	virtual CBaseEntity *GetEntity( void ) = 0;
-	virtual const Vector &GetLastKnownPosition( void ) = 0;
-	virtual bool HasLastKnownPositionBeenSeen( void ) = 0;
+	virtual CBaseEntity *GetEntity( void ) const = 0;
+	virtual const Vector &GetLastKnownPosition( void ) const = 0;
+	virtual bool HasLastKnownPositionBeenSeen( void ) const = 0;
 	virtual void MarkLastKnownPositionAsSeen( void ) = 0;
-	virtual const CNavArea *GetLastKnownArea( void ) = 0;
-	virtual float GetTimeSinceLastKnown( void ) = 0;
-	virtual float GetTimeSinceBecameKnown( void ) = 0;
+	virtual const CNavArea *GetLastKnownArea( void ) const = 0;
+	virtual float GetTimeSinceLastKnown( void ) const = 0;
+	virtual float GetTimeSinceBecameKnown( void ) const = 0;
 	virtual void UpdateVisibilityStatus( bool visible ) = 0;
-	virtual bool IsVisibleInFOVNow( void ) = 0;
-	virtual bool IsVisibleRecently( void ) = 0;
-	virtual float GetTimeSinceBecameVisible( void ) = 0;
-	virtual float GetTimeWhenBecameVisible( void ) = 0;
-	virtual float GetTimeSinceLastSeen( void ) = 0;
-	virtual bool WasEverVisible( void ) = 0;
-	virtual bool IsObsolete( void ) = 0;
-	virtual bool operator==( const CKnownEntity &other ) = 0;
-	virtual bool Is( CBaseEntity *who ) = 0;
+	virtual bool IsVisibleInFOVNow( void ) const = 0;
+	virtual bool IsVisibleRecently( void ) const = 0;
+	virtual float GetTimeSinceBecameVisible( void ) const = 0;
+	virtual float GetTimeWhenBecameVisible( void ) const = 0;
+	virtual float GetTimeSinceLastSeen( void ) const = 0;
+	virtual bool WasEverVisible( void ) const = 0;
+	virtual bool IsObsolete( void ) const = 0;
+	virtual bool operator==( const CKnownEntity &other ) const = 0;
+	virtual bool Is( CBaseEntity *who ) const = 0;
 
 private:
-	CHandle< CBaseEntity > m_who;
+	CBaseHandle m_who;
 	Vector m_lastKnownPostion;
 	bool m_hasLastKnownPositionBeenSeen;
 	CNavArea *m_lastKnownArea;

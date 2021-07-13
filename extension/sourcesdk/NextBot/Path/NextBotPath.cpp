@@ -6,6 +6,9 @@ CTNavArea* area;
 CTNavMesh* mesh;
 CTNavMesh::NavPathThreadedData* data;
 
+ConVar* NextBotPathDrawIncrement = nullptr;
+ConVar* NextBotPathSegmentInfluenceRadius = nullptr;
+
 //--------------------------------------------------------------------------------------------------------------
 Path::Path( void )
 {

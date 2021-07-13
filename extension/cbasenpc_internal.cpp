@@ -11,6 +11,7 @@
 SH_DECL_HOOK0_void(INextBotComponent, Update, SH_NOATTRIB, 0);
 
 // INextBot
+SH_DECL_HOOK0(INextBot, GetIntentionInterface, const, 0, IIntention*);
 SH_DECL_HOOK0(INextBot, GetLocomotionInterface, const, 0, ILocomotion*);
 SH_DECL_HOOK0(INextBot, GetBodyInterface, const, 0, IBody*);
 
@@ -94,34 +95,44 @@ size_t CBaseNPCFactory::GetEntitySize()
 CBaseNPC_Entity::CBaseNPC::CBaseNPC(NextBotCombatCharacter* ent) : CExtNPC()
 {
 	INextBot* bot = ent->MyNextBotPointer();
+	m_pIntention = new CBaseNPCIntention(bot);
 	this->m_pMover = CBaseNPC_Locomotion::New(bot);
 	this->m_pBody = new CBaseNPC_Body(bot);
 	this->m_type[0] = '\0';
+	this->m_hookids.push_back(SH_ADD_HOOK(INextBot, GetIntentionInterface, bot, SH_MEMBER(this, &CBaseNPC_Entity::CBaseNPC::Hook_GetIntentionInterface), false));
 	this->m_hookids.push_back(SH_ADD_HOOK(INextBot, GetLocomotionInterface, bot, SH_MEMBER(this, &CBaseNPC_Entity::CBaseNPC::Hook_GetLocomotionInterface), false));
 	this->m_hookids.push_back(SH_ADD_HOOK(INextBot, GetBodyInterface, bot, SH_MEMBER(this, &CBaseNPC_Entity::CBaseNPC::Hook_GetBodyInterface), false));
 }
 
 CBaseNPC_Entity::CBaseNPC::~CBaseNPC()
 {
-	this->m_pMover->Destroy();
+	m_pMover->Destroy();
 
-	delete this->m_pMover;
-	delete this->m_pBody;
+	delete m_pIntention;
+	delete m_pMover;
+	delete m_pBody;
 
 	for (auto it = m_hookids.begin(); it != m_hookids.end(); it++)
 	{
 		SH_REMOVE_HOOK_ID((*it));
 	}
+
+	GetEntity()->MyNextBotPointer()->Destroy();
+}
+
+IIntention* CBaseNPC_Entity::CBaseNPC::Hook_GetIntentionInterface(void) const
+{
+	RETURN_META_VALUE(MRES_SUPERCEDE, m_pIntention);
 }
 
 ILocomotion* CBaseNPC_Entity::CBaseNPC::Hook_GetLocomotionInterface(void) const
 {
-	RETURN_META_VALUE(MRES_SUPERCEDE, this->m_pMover);
+	RETURN_META_VALUE(MRES_SUPERCEDE, m_pMover);
 }
 
 IBody* CBaseNPC_Entity::CBaseNPC::Hook_GetBodyInterface(void) const
 {
-	RETURN_META_VALUE(MRES_SUPERCEDE, this->m_pBody);
+	RETURN_META_VALUE(MRES_SUPERCEDE, m_pBody);
 }
 
 void CBaseNPC_Entity::BotUpdateOnRemove(void)
@@ -175,6 +186,57 @@ int CBaseNPC_Entity::OnTakeDamage_Alive(const CTakeDamageInfo& info)
 CBaseNPC_Entity::CBaseNPC* CBaseNPC_Entity::GetNPC(void)
 {
 	return (CBaseNPC_Entity::CBaseNPC*)(((uint8_t*)this) + g_pBaseNPCFactory->GetEntitySize() - sizeof(CBaseNPC_Entity::CBaseNPC));
+}
+
+void CBaseNPC_Entity::DebugConColorMsg( NextBotDebugType debugType, const Color &color, const char *fmt, ... )
+{ 
+	va_list argptr;
+	va_start(argptr, fmt);
+	MyNextBotPointer()->DebugConColorMsg( debugType, color, fmt, argptr); 
+	va_end(argptr);
+}
+
+// ============================================
+// IIntention
+// ============================================
+
+class CBaseNPCMainAction : public Action <CBaseNPC_Entity>
+{
+public:
+	virtual Action< CBaseNPC_Entity > *InitialContainedAction( CBaseNPC_Entity *me )	
+	{
+		return nullptr;
+	}
+
+	virtual ActionResult< CBaseNPC_Entity >	Update( CBaseNPC_Entity *me, float interval )
+	{
+		return Continue();
+	}
+
+	virtual const char *GetName( void ) const	{ return "CBaseNPCMainAction"; }
+};
+
+CBaseNPCIntention::CBaseNPCIntention( INextBot * me ) : IIntention( me )
+{
+	m_pBehavior = new Behavior< CBaseNPC_Entity >( new CBaseNPCMainAction );
+}
+
+CBaseNPCIntention::~CBaseNPCIntention()
+{
+	delete m_pBehavior;
+}
+
+void CBaseNPCIntention::Reset()
+{ 
+	delete m_pBehavior; 
+	m_pBehavior = new Behavior< CBaseNPC_Entity >( new CBaseNPCMainAction );
+}
+
+void CBaseNPCIntention::Update()
+{
+	CBaseNPC_Entity* me = reinterpret_cast<CBaseNPC_Entity*>(GetBot()->GetEntity());
+
+	m_pBehavior->Update( me, GetUpdateInterval() );
 }
 
 // ============================================

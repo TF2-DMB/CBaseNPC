@@ -266,7 +266,7 @@ public:
 
 		return pathResult;
 	}
-	bool ComputeThreaded(INextBot *bot, CBaseCombatCharacter *subject, float maxPathLength = 0.0f, bool includeGoalIfPathFails = true);
+	bool ComputeThreaded(INextBot *bot, CBaseCombatCharacterHack *subject, float maxPathLength = 0.0f, bool includeGoalIfPathFails = true);
 
 
 	//-----------------------------------------------------------------------------------------------------------------

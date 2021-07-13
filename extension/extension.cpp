@@ -27,8 +27,10 @@ IBaseNPC_Tools* g_pBaseNPCTools = new BaseNPC_Tools_API;
 DEFINEHANDLEOBJ(SurroundingAreasCollector, CUtlVector< CNavArea* >);
 DEFINEHANDLEOBJ(TSurroundingAreasCollector, CUtlVector< CTNavArea >);
 
-ConVar* NextBotPathDrawIncrement = nullptr;
-ConVar* NextBotPathSegmentInfluenceRadius = nullptr;
+ConVar* g_cvDeveloper = nullptr;
+extern ConVar* NextBotDebugHistory;
+extern ConVar* NextBotPathDrawIncrement;
+extern ConVar* NextBotPathSegmentInfluenceRadius;
 
 HandleType_t g_CellArrayHandle;
 HandleType_t g_KeyValueType;
@@ -117,6 +119,8 @@ bool CBaseNPCExt::SDK_OnMetamodLoad(ISmmAPI *ismm, char *error, size_t maxlen, b
 
 	ConVar_Register(0, this);
 
+	g_cvDeveloper = g_pCVar->FindVar("developer");
+
 	NextBotSpeedLookAheadRange = g_pCVar->FindVar("nb_speed_look_ahead_range");
 	NextBotGoalLookAheadRange = g_pCVar->FindVar("nb_goal_look_ahead_range");
 	NextBotLadderAlignRange = g_pCVar->FindVar("nb_ladder_align_range");
@@ -124,6 +128,7 @@ bool CBaseNPCExt::SDK_OnMetamodLoad(ISmmAPI *ismm, char *error, size_t maxlen, b
 	NextBotAllowClimbing = g_pCVar->FindVar("nb_allow_climbing");
 	NextBotAllowGapJumping = g_pCVar->FindVar("nb_allow_gap_jumping");
 	NextBotDebugClimbing = g_pCVar->FindVar("nb_debug_climbing");
+	NextBotDebugHistory = g_pCVar->FindVar("nb_debug_history");
 	NextBotPathDrawIncrement = g_pCVar->FindVar("nb_path_draw_inc");
 	NextBotPathSegmentInfluenceRadius = g_pCVar->FindVar("nb_path_segment_influence_radius");
 

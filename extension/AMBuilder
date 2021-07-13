@@ -20,6 +20,7 @@ sourceFiles = [
   'sourcesdk/NextBot/NextBotCombatCharacter.cpp',
   'sourcesdk/NextBot/NextBotComponentInterface.cpp',
   'sourcesdk/NextBot/NextBotInterface.cpp',
+  'sourcesdk/NextBot/NextBotIntentionInterface.cpp',
   'sourcesdk/nav_area.cpp',
   'sourcesdk/nav_mesh.cpp',
   'sourcesdk/nav_threaded.cpp',
@@ -31,6 +32,7 @@ sourceFiles = [
   'sourcesdk/baseanimatingoverlay.cpp',
   'sourcesdk/basecombatcharacter.cpp',
   'sourcesdk/servernetworkproperty.cpp',
+  'sourcesdk/collisionproperty.cpp',
   'sourcesdk/tf_gamerules.cpp',
   'sourcesdk/tracefilter_simple.cpp'
 ]

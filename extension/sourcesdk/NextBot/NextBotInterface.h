@@ -3,7 +3,9 @@
 
 #pragma once
 
+#include "NextBotKnownEntity.h"
 #include "NextBotEventResponderInterface.h"
+#include "NextBotDebug.h"
 #include "sourcesdk/tracefilter_simple.h"
 #include <enginecallback.h>
 #include <util_shared.h>
@@ -19,6 +21,8 @@ class NextBotCombatCharacter;
 class CBaseEntityHack;
 class CBaseCombatCharacterHack;
 
+extern ConVar* NextBotDebugHistory;
+
 bool IgnoreActorsTraceFilterFunction( IHandleEntity *pServerEntity, int contentsMask );
 
 class NextBotTraceFilterIgnoreActors : public CTraceFilterSimpleHack
@@ -32,28 +36,10 @@ public:
 class INextBot : public INextBotEventResponder
 {
 public:
-	enum NextBotDebugType : unsigned int
-	{
-		DEBUG_NONE = 0x0000,
-		DEBUG_ANY  = 0xffff,
+	static bool Init(SourceMod::IGameConfig* config, char* error, size_t maxlength);
 
-		DEBUG_BEHAVIOR   = (1 << 0), // NextBotBehavior
-		DEBUG_LOOK_AT    = (1 << 1), // NextBotBodyInterface
-		DEBUG_PATH       = (1 << 2), // NextBotPath, NextBotPathFollow, NextBotChasePath
-		DEBUG_ANIMATION  = (1 << 3),
-		DEBUG_LOCOMOTION = (1 << 4), // NextBotLocomotionInterface
-		DEBUG_VISION     = (1 << 5), // NextBotVisionInterface
-		DEBUG_HEARING    = (1 << 6),
-		DEBUG_EVENTS     = (1 << 7), // NextBotEventResponderInterface
-		DEBUG_ERRORS     = (1 << 8),
-	};
-	
-	struct NextBotDebugLineType
-	{
-		NextBotDebugType type; // +0x000
-		char buf[0x100];       // +0x004
-	};
-	
+	void Destroy();
+
 	INextBot() {}
 	virtual ~INextBot() = 0;
 
@@ -104,9 +90,23 @@ public:
 	virtual float GetRangeSquaredTo(const Vector& vec) const = 0;
 	
 	virtual bool IsDebugging(unsigned int type) const = 0;
-	virtual char *GetDebugIdentifier() const = 0;
+	virtual const char *GetDebugIdentifier() const;
 	virtual bool IsDebugFilterMatch(const char *filter) const = 0;
 	virtual void DisplayDebugText(const char *text) const = 0;
+	void DebugConColorMsg( NextBotDebugType debugType, const Color &color, const char *fmt, ... );
+	void ResetDebugHistory( );
+
+	enum
+	{
+		MAX_NEXTBOT_DEBUG_HISTORY = 100,
+		MAX_NEXTBOT_DEBUG_LINE_LENGTH = 256,
+	};
+
+	struct NextBotDebugLineType
+	{
+		NextBotDebugType debugType; // +0x000
+		char data[MAX_NEXTBOT_DEBUG_LINE_LENGTH];       // +0x004
+	};
 	
 	friend class INextBotComponent;
 	void RegisterComponent(INextBotComponent *component);
@@ -128,7 +128,7 @@ public:
 	IBody *m_BodyInterface;                          // +0x40
 	IIntention *m_IntentionInterface;                // +0x44
 	IVision *m_VisionInterface;                      // +0x48
-	CUtlVector<NextBotDebugLineType *> m_DebugLines; // +0x4c
+	CUtlVector<NextBotDebugLineType *> m_debugHistory; // +0x4c
 };
 
 #endif

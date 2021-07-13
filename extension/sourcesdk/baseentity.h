@@ -10,6 +10,7 @@
 #include <shareddefs.h>
 #include "helpers.h"
 #include "servernetworkproperty.h"
+#include "collisionproperty.h"
 
 class INextBot;
 
@@ -158,8 +159,12 @@ public:
 	friend class CServerNetworkProperty;
 	CServerNetworkProperty* NetworkProp();
 	const CServerNetworkProperty* NetworkProp() const;
+	CCollisionPropertyHack* CollisionProp();
+	const CCollisionPropertyHack* CollisionProp() const;
 
 	void DispatchUpdateTransmitState(void);
+
+	const char* GetClassname() const;
 
 	int	entindex(void) const;
 	bool IsWorld(void) const;
@@ -248,6 +253,7 @@ private:
 	DECLAREVAR(EHANDLE, m_hMoveParent);
 	DECLAREVAR(EHANDLE, m_hMoveChild);
 	DECLAREVAR(EHANDLE, m_hMovePeer);
+	DECLAREVAR(CCollisionPropertyHack, m_Collision);
 
 	DECLAREVAR(Vector, m_vecAbsOrigin);
 	DECLAREVAR(QAngle, m_angAbsRotation);
@@ -278,6 +284,16 @@ inline const CServerNetworkProperty* CBaseEntityHack::NetworkProp() const
 	return m_Network();
 }
 
+inline CCollisionPropertyHack* CBaseEntityHack::CollisionProp()
+{
+	return m_Collision();
+}
+
+inline const CCollisionPropertyHack* CBaseEntityHack::CollisionProp() const
+{
+	return m_Collision();
+}
+
 inline void	CBaseEntityHack::NetworkStateChanged()
 {
 	NetworkProp()->NetworkStateChanged();
@@ -293,6 +309,11 @@ inline void	CBaseEntityHack::NetworkStateChanged(void* pVar)
 inline int CBaseEntityHack::entindex(void) const
 {
 	return m_Network()->entindex();
+}
+
+inline const char* CBaseEntityHack::GetClassname() const
+{
+	return m_iClassname()->ToCStr();
 }
 
 inline bool CBaseEntityHack::IsWorld(void) const 

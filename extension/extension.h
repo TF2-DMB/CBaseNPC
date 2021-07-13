@@ -38,8 +38,7 @@ extern HandleType_t HANDLENAME(TSurroundingAreasCollector);
 extern HandleType_t g_CellArrayHandle;
 extern HandleType_t g_KeyValueType;
 
-extern ConVar* NextBotPathDrawIncrement;
-extern ConVar* NextBotPathSegmentInfluenceRadius;
+extern ConVar* g_cvDeveloper;
 
 class CBaseNPCExt : public SDKExtension, public ISMEntityListener, public IConCommandBaseAccessor
 {
