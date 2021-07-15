@@ -6,8 +6,6 @@
 #include "shared/cbasenpc.h"
 #include "extension.h"
 #include "sourcesdk/customfactory.h"
-#include "NextBot/NextBotIntentionInterface.h"
-#include "NextBot/NextBotBehavior.h"
 
 class CBaseNPC_Entity;
 
@@ -72,20 +70,8 @@ public:
 	float m_flFrictionSideways;
 };
 
-class CBaseNPCIntention : public IIntention
-{
-public:
-	CBaseNPCIntention( INextBot * me );
-	~CBaseNPCIntention();
-	virtual void Reset();
-	virtual void Update();
-	virtual INextBotEventResponder *FirstContainedResponder() const { return m_pBehavior; };
-
-private:
-	Behavior< CBaseNPC_Entity > * m_pBehavior;
-};
-
 class NextBotCombatCharacter;
+class CBaseNPCPluginActionFactory;
 
 class CBaseNPC_Entity : public NextBotCombatCharacter
 {
@@ -93,7 +79,7 @@ public:
 	class CBaseNPC : public CExtNPC
 	{
 	public:
-		CBaseNPC(NextBotCombatCharacter* ent);
+		CBaseNPC(NextBotCombatCharacter* ent, CBaseNPCPluginActionFactory* initialActionFactory=nullptr);
 		~CBaseNPC();
 
 		std::vector<int> m_hookids;
@@ -129,11 +115,16 @@ public:
 
 class CBaseNPCFactory : public CustomFactory
 {
+private:
+	CBaseNPCPluginActionFactory* m_pInitialActionFactory;
+
 public:
 	CBaseNPCFactory();
 	virtual size_t GetEntitySize() override final;
 	virtual void Create_Extra(CBaseEntityHack* ent) override final;
 	virtual void Create_PostConstructor(CBaseEntityHack* ent) override final;
+
+	void SetInitialActionFactory(CBaseNPCPluginActionFactory* pFactory) { m_pInitialActionFactory = pFactory; };
 };
 
 extern CBaseNPCFactory* g_pBaseNPCFactory;

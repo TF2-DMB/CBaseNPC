@@ -5,6 +5,7 @@
 #include "helpers.h"
 #include "pluginentityfactory.h"
 #include "entityfactorydictionary.h"
+#include "cbasenpc_behavior.h"
 
 #define ENTINDEX_TO_CBASEENTITY(ref, buffer) \
 	buffer = gamehelpers->ReferenceToEntity(ref); \
@@ -26,9 +27,7 @@
 #define PLUGINENTITYFACTORYDATAMAPNATIVE(name) \
 PLUGINENTITYFACTORYNATIVE(name) \
 	if (pFactory->m_bInstalled) \
-		return pContext->ThrowNativeError("Cannot edit entity datamap while factory is installed"); \
-	if (!pFactory->CanUseDataMap()) \
-		return pContext->ThrowNativeError("This factory cannot use a custom datamap");
+		return pContext->ThrowNativeError("Cannot edit entity datamap while factory is installed");
 
 // the naming is getting pretty wild ngl
 #define PLUGINENTITYFACTORYDATAMAP_DECLFIELDNATIVE(name) \
@@ -113,6 +112,22 @@ PLUGINENTITYFACTORYNATIVE(DeriveFromNPC)
 
 	pFactory->DeriveFromNPC();
 
+	return 0;
+}
+
+PLUGINENTITYFACTORYNATIVE(SetInitialActionFactory)
+
+	if (pFactory->m_bInstalled) 
+		return pContext->ThrowNativeError("Cannot change the initial action factory while factory is installed");
+
+	hndlObject = static_cast<Handle_t>(params[2]);
+	CBaseNPCPluginActionFactory *pActionFactory = nullptr;
+	if (hndlObject != BAD_HANDLE)
+	{
+		READHANDLE(hndlObject, BaseNPCPluginActionFactory, pActionFactory)
+	}
+
+	pFactory->SetBaseNPCInitialActionFactory( pActionFactory );
 	return 0;
 }
 
@@ -208,11 +223,11 @@ PLUGINENTITYFACTORYDATAMAPNATIVE(BeginDataMapDesc)
 	bool startedDesc;
 	if (!dataClassName)
 	{
-		startedDesc = pFactory->BeginDataMapDesc(pFactory->m_iClassname.c_str());
+		startedDesc = pFactory->BeginDataDesc(pFactory->m_iClassname.c_str());
 	}
 	else 
 	{
-		startedDesc = pFactory->BeginDataMapDesc(dataClassName);
+		startedDesc = pFactory->BeginDataDesc(dataClassName);
 	}
 
 	if (!startedDesc)
@@ -223,7 +238,7 @@ PLUGINENTITYFACTORYDATAMAPNATIVE(BeginDataMapDesc)
 
 PLUGINENTITYFACTORYDATAMAPNATIVE(EndDataMapDesc)
 
-	pFactory->EndDataMapDesc();
+	pFactory->EndDataDesc();
 	return 0;
 }
 
@@ -320,7 +335,7 @@ PLUGINENTITYFACTORYDATAMAPNATIVE(DefineInputFunc)
 	char* fieldName = new char[fieldNameSize];
 	snprintf(fieldName, fieldNameSize, "Input%s", keyName);
 
-	pFactory->DefineInputFunc(fieldName, fieldType, keyName, handlerFunc);
+	pFactory->DefineInputFunc(fieldName, fieldType, keyName, pFactory->CreateInputFuncDelegate(handlerFunc) );
 
 	delete[] fieldName;
 	return params[1];

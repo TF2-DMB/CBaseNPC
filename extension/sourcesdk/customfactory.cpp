@@ -3,7 +3,7 @@
 
 CustomFactory::CustomFactory(const char* classname, MCall<void>* entConstructor) : constructor(nullptr)
 {
-	EntityFactoryDictionaryHack()->InstallFactory(this, classname);
+	EntityFactoryDictionaryHack()->m_Factories.Insert( classname, this );
 	this->constructor = entConstructor;
 }
 

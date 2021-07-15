@@ -658,7 +658,7 @@ public:
 	virtual EventDesiredResult< Actor > OnLostSight( Actor *me, CBaseEntity *subject )							{ return TryContinue(); }
 	virtual EventDesiredResult< Actor > OnSound( Actor *me, CBaseEntity *source, const Vector &pos, KeyValues *keys )	{ return TryContinue(); }
 	virtual EventDesiredResult< Actor > OnSpokeConcept( Actor *me, CBaseCombatCharacterHack *who, AIConcept_t concept, AI_Response *response )	{ return TryContinue(); }
-	virtual EventDesiredResult< Actor > OnWeaponFired( Actor *me, CBaseCombatCharacterHack *whoFired, CBaseCombatWeapon *weapon )	{ return TryContinue(); }
+	virtual EventDesiredResult< Actor > OnWeaponFired( Actor *me, CBaseCombatCharacterHack *whoFired, CBaseEntity *weapon )	{ return TryContinue(); }
 	virtual EventDesiredResult< Actor > OnNavAreaChanged( Actor *me, CNavArea *newArea, CNavArea *oldArea )		{ return TryContinue(); }
 	virtual EventDesiredResult< Actor > OnModelChanged( Actor *me )												{ return TryContinue(); }
 	virtual EventDesiredResult< Actor > OnPickUp( Actor *me, CBaseEntity *item, CBaseCombatCharacterHack *giver )	{ return TryContinue(); }
@@ -890,63 +890,63 @@ private:
 	 * Translate incoming events into Action events
 	 * DO NOT OVERRIDE THESE METHODS
 	 */
-	virtual void OnLeaveGround( CBaseEntity *ground )					{ PROCESS_EVENT_WITH_1_ARG( OnLeaveGround, ground ); }
-	virtual void OnLandOnGround( CBaseEntity *ground )					{ PROCESS_EVENT_WITH_1_ARG( OnLandOnGround, ground ); }
-	virtual void OnContact( CBaseEntity *other, CGameTrace *result )	{ PROCESS_EVENT_WITH_2_ARGS( OnContact, other, result ); }
-	virtual void OnMoveToSuccess( const Path *path )					{ PROCESS_EVENT_WITH_1_ARG( OnMoveToSuccess, path ); }
-	virtual void OnMoveToFailure( const Path *path, MoveToFailureType reason )	{ PROCESS_EVENT_WITH_2_ARGS( OnMoveToFailure, path, reason ); }
-	virtual void OnStuck( void )										{ PROCESS_EVENT( OnStuck ); }
-	virtual void OnUnStuck( void )										{ PROCESS_EVENT( OnUnStuck ); }
-	virtual void OnPostureChanged( void )								{ PROCESS_EVENT( OnPostureChanged ); }
-	virtual void OnAnimationActivityComplete( int activity )			{ PROCESS_EVENT_WITH_1_ARG( OnAnimationActivityComplete, activity ); }
-	virtual void OnAnimationActivityInterrupted( int activity )			{ PROCESS_EVENT_WITH_1_ARG( OnAnimationActivityInterrupted, activity ); }
-	virtual void OnAnimationEvent( animevent_t *event )					{ PROCESS_EVENT_WITH_1_ARG( OnAnimationEvent, event ); }
-	virtual void OnIgnite( void )										{ PROCESS_EVENT( OnIgnite ); }
-	virtual void OnInjured( const CTakeDamageInfo &info )				{ PROCESS_EVENT_WITH_1_ARG( OnInjured, info ); }
-	virtual void OnKilled( const CTakeDamageInfo &info )				{ PROCESS_EVENT_WITH_1_ARG( OnKilled, info ); }
-	virtual void OnOtherKilled( CBaseCombatCharacterHack *victim, const CTakeDamageInfo &info )	{ PROCESS_EVENT_WITH_2_ARGS( OnOtherKilled, victim, info ); }
-	virtual void OnSight( CBaseEntity *subject )						{ PROCESS_EVENT_WITH_1_ARG( OnSight, subject ); }
-	virtual void OnLostSight( CBaseEntity *subject )					{ PROCESS_EVENT_WITH_1_ARG( OnLostSight, subject ); }
-	virtual void OnSound( CBaseEntity *source, const Vector &pos, KeyValues *keys )					{ PROCESS_EVENT_WITH_3_ARGS( OnSound, source, pos, keys ); }
-	virtual void OnSpokeConcept( CBaseCombatCharacterHack *who, AIConcept_t concept, AI_Response *response )	{ PROCESS_EVENT_WITH_3_ARGS( OnSpokeConcept, who, concept, response ); }
-	virtual void OnWeaponFired( CBaseCombatCharacterHack *whoFired, CBaseCombatWeapon *weapon )			{ PROCESS_EVENT_WITH_2_ARGS( OnWeaponFired, whoFired, weapon ); }
-	virtual void OnNavAreaChanged( CNavArea *newArea, CNavArea *oldArea )	{ PROCESS_EVENT_WITH_2_ARGS( OnNavAreaChanged, newArea, oldArea ); }
-	virtual void OnModelChanged( void )									{ PROCESS_EVENT( OnModelChanged ); }
-	virtual void OnPickUp( CBaseEntity *item, CBaseCombatCharacterHack *giver )	{ PROCESS_EVENT_WITH_2_ARGS( OnPickUp, item, giver ); }
-	virtual void OnDrop( CBaseEntity *item )							{ PROCESS_EVENT_WITH_1_ARG( OnDrop, item ); }
-	virtual void OnActorEmoted( CBaseCombatCharacterHack *emoter, int emote )	{ PROCESS_EVENT_WITH_2_ARGS( OnActorEmoted, emoter, emote ); }
+	virtual void OnLeaveGround( CBaseEntity *ground )					override { PROCESS_EVENT_WITH_1_ARG( OnLeaveGround, ground ); }
+	virtual void OnLandOnGround( CBaseEntity *ground )					override { PROCESS_EVENT_WITH_1_ARG( OnLandOnGround, ground ); }
+	virtual void OnContact( CBaseEntity *other, CGameTrace *result )	override { PROCESS_EVENT_WITH_2_ARGS( OnContact, other, result ); }
+	virtual void OnMoveToSuccess( const Path *path )					override { PROCESS_EVENT_WITH_1_ARG( OnMoveToSuccess, path ); }
+	virtual void OnMoveToFailure( const Path *path, MoveToFailureType reason )	override { PROCESS_EVENT_WITH_2_ARGS( OnMoveToFailure, path, reason ); }
+	virtual void OnStuck( void )										override { PROCESS_EVENT( OnStuck ); }
+	virtual void OnUnStuck( void )										override { PROCESS_EVENT( OnUnStuck ); }
+	virtual void OnPostureChanged( void )								override { PROCESS_EVENT( OnPostureChanged ); }
+	virtual void OnAnimationActivityComplete( int activity )			override { PROCESS_EVENT_WITH_1_ARG( OnAnimationActivityComplete, activity ); }
+	virtual void OnAnimationActivityInterrupted( int activity )			override { PROCESS_EVENT_WITH_1_ARG( OnAnimationActivityInterrupted, activity ); }
+	virtual void OnAnimationEvent( animevent_t *event )					override { PROCESS_EVENT_WITH_1_ARG( OnAnimationEvent, event ); }
+	virtual void OnIgnite( void )										override { PROCESS_EVENT( OnIgnite ); }
+	virtual void OnInjured( const CTakeDamageInfo &info )				override { PROCESS_EVENT_WITH_1_ARG( OnInjured, info ); }
+	virtual void OnKilled( const CTakeDamageInfo &info )				override { PROCESS_EVENT_WITH_1_ARG( OnKilled, info ); }
+	virtual void OnOtherKilled( CBaseCombatCharacterHack *victim, const CTakeDamageInfo &info )	override { PROCESS_EVENT_WITH_2_ARGS( OnOtherKilled, victim, info ); }
+	virtual void OnSight( CBaseEntity *subject )						override { PROCESS_EVENT_WITH_1_ARG( OnSight, subject ); }
+	virtual void OnLostSight( CBaseEntity *subject )					override { PROCESS_EVENT_WITH_1_ARG( OnLostSight, subject ); }
+	virtual void OnSound( CBaseEntity *source, const Vector &pos, KeyValues *keys )					override { PROCESS_EVENT_WITH_3_ARGS( OnSound, source, pos, keys ); }
+	virtual void OnSpokeConcept( CBaseCombatCharacterHack *who, AIConcept_t concept, AI_Response *response )	override { PROCESS_EVENT_WITH_3_ARGS( OnSpokeConcept, who, concept, response ); }
+	virtual void OnWeaponFired( CBaseCombatCharacterHack *whoFired, CBaseEntity *weapon )			override { PROCESS_EVENT_WITH_2_ARGS( OnWeaponFired, whoFired, weapon ); }
+	virtual void OnNavAreaChanged( CNavArea *newArea, CNavArea *oldArea )	override { PROCESS_EVENT_WITH_2_ARGS( OnNavAreaChanged, newArea, oldArea ); }
+	virtual void OnModelChanged( void )									override { PROCESS_EVENT( OnModelChanged ); }
+	virtual void OnPickUp( CBaseEntity *item, CBaseCombatCharacterHack *giver )	override { PROCESS_EVENT_WITH_2_ARGS( OnPickUp, item, giver ); }
+	virtual void OnDrop( CBaseEntity *item )							override { PROCESS_EVENT_WITH_1_ARG( OnDrop, item ); }
+	virtual void OnActorEmoted( CBaseCombatCharacterHack *emoter, int emote )	override { PROCESS_EVENT_WITH_2_ARGS( OnActorEmoted, emoter, emote ); }
 
-	virtual void OnCommandAttack( CBaseEntity *victim )					{ PROCESS_EVENT_WITH_1_ARG( OnCommandAttack, victim ); }
-	virtual void OnCommandApproach( const Vector &pos, float range )	{ PROCESS_EVENT_WITH_2_ARGS( OnCommandApproach, pos, range ); }
-	virtual void OnCommandApproach( CBaseEntity *goal )					{ PROCESS_EVENT_WITH_1_ARG( OnCommandApproach, goal ); }
-	virtual void OnCommandRetreat( CBaseEntity *threat, float range )	{ PROCESS_EVENT_WITH_2_ARGS( OnCommandRetreat, threat, range ); }
-	virtual void OnCommandPause( float duration )						{ PROCESS_EVENT_WITH_1_ARG( OnCommandPause, duration ); }
-	virtual void OnCommandResume( void )								{ PROCESS_EVENT( OnCommandResume ); }
-	virtual void OnCommandString( const char *command )					{ PROCESS_EVENT_WITH_1_ARG( OnCommandString, command ); }
+	virtual void OnCommandAttack( CBaseEntity *victim )					override { PROCESS_EVENT_WITH_1_ARG( OnCommandAttack, victim ); }
+	virtual void OnCommandApproach( const Vector &pos, float range )	override { PROCESS_EVENT_WITH_2_ARGS( OnCommandApproach, pos, range ); }
+	virtual void OnCommandApproach( CBaseEntity *goal )					override { PROCESS_EVENT_WITH_1_ARG( OnCommandApproach, goal ); }
+	virtual void OnCommandRetreat( CBaseEntity *threat, float range )	override { PROCESS_EVENT_WITH_2_ARGS( OnCommandRetreat, threat, range ); }
+	virtual void OnCommandPause( float duration )						override { PROCESS_EVENT_WITH_1_ARG( OnCommandPause, duration ); }
+	virtual void OnCommandResume( void )								override { PROCESS_EVENT( OnCommandResume ); }
+	virtual void OnCommandString( const char *command )					override { PROCESS_EVENT_WITH_1_ARG( OnCommandString, command ); }
 
-	virtual void OnShoved( CBaseEntity *pusher )						{ PROCESS_EVENT_WITH_1_ARG( OnShoved, pusher ); }
-	virtual void OnBlinded( CBaseEntity *blinder )						{ PROCESS_EVENT_WITH_1_ARG( OnBlinded, blinder ); }
-	virtual void OnTerritoryContested( int territoryID )				{ PROCESS_EVENT_WITH_1_ARG( OnTerritoryContested, territoryID ); }
-	virtual void OnTerritoryCaptured( int territoryID )					{ PROCESS_EVENT_WITH_1_ARG( OnTerritoryCaptured, territoryID ); }
-	virtual void OnTerritoryLost( int territoryID )						{ PROCESS_EVENT_WITH_1_ARG( OnTerritoryLost, territoryID ); }
-	virtual void OnWin( void )											{ PROCESS_EVENT( OnWin ); }
-	virtual void OnLose( void )											{ PROCESS_EVENT( OnLose ); }
+	virtual void OnShoved( CBaseEntity *pusher )						override { PROCESS_EVENT_WITH_1_ARG( OnShoved, pusher ); }
+	virtual void OnBlinded( CBaseEntity *blinder )						override { PROCESS_EVENT_WITH_1_ARG( OnBlinded, blinder ); }
+	virtual void OnTerritoryContested( int territoryID )				override { PROCESS_EVENT_WITH_1_ARG( OnTerritoryContested, territoryID ); }
+	virtual void OnTerritoryCaptured( int territoryID )					override { PROCESS_EVENT_WITH_1_ARG( OnTerritoryCaptured, territoryID ); }
+	virtual void OnTerritoryLost( int territoryID )						override { PROCESS_EVENT_WITH_1_ARG( OnTerritoryLost, territoryID ); }
+	virtual void OnWin( void )											override { PROCESS_EVENT( OnWin ); }
+	virtual void OnLose( void )											override { PROCESS_EVENT( OnLose ); }
 
 #ifdef DOTA_SERVER_DLL
-	virtual void OnCommandMoveTo( const Vector &pos ) { PROCESS_EVENT_WITH_1_ARG( OnCommandMoveTo, pos ); }
-	virtual void OnCommandMoveToAggressive( const Vector &pos ) { PROCESS_EVENT_WITH_1_ARG( OnCommandMoveToAggressive, pos ); }
-	virtual void OnCommandAttack( CBaseEntity *victim, bool bDeny ) { PROCESS_EVENT_WITH_2_ARGS( OnCommandAttack, victim, bDeny ); }
-	virtual void OnCastAbilityNoTarget( CDOTABaseAbility *ability ) { PROCESS_EVENT_WITH_1_ARG( OnCastAbilityNoTarget, ability ); }
-	virtual void OnCastAbilityOnPosition( CDOTABaseAbility *ability, const Vector &pos ) { PROCESS_EVENT_WITH_2_ARGS( OnCastAbilityOnPosition, ability, pos ); }
-	virtual void OnCastAbilityOnTarget( CDOTABaseAbility *ability, CBaseEntity *target ) { PROCESS_EVENT_WITH_2_ARGS( OnCastAbilityOnTarget, ability, target ); }
-	virtual void OnDropItem( const Vector &pos, CBaseEntity *item ) { PROCESS_EVENT_WITH_2_ARGS( OnDropItem, pos, item ); }
-	virtual void OnPickupItem( CBaseEntity *item ) { PROCESS_EVENT_WITH_1_ARG( OnPickupItem, item ); }
-	virtual void OnPickupRune( CBaseEntity *item ) { PROCESS_EVENT_WITH_1_ARG( OnPickupRune, item ); }
-	virtual void OnStop() { PROCESS_EVENT( OnStop ); }
-	virtual void OnFriendThreatened( CBaseEntity *friendly, CBaseEntity *threat ) { PROCESS_EVENT_WITH_2_ARGS( OnFriendThreatened, friendly, threat ); }
-	virtual void OnCancelAttack( CBaseEntity *pTarget ) { PROCESS_EVENT_WITH_1_ARG( OnCancelAttack, pTarget ); }
-	virtual void OnDominated() { PROCESS_EVENT( OnDominated ); }
-	virtual void OnWarped( Vector vStartPos ) { PROCESS_EVENT_WITH_1_ARG( OnWarped, vStartPos ); }
+	virtual void OnCommandMoveTo( const Vector &pos ) override { PROCESS_EVENT_WITH_1_ARG( OnCommandMoveTo, pos ); }
+	virtual void OnCommandMoveToAggressive( const Vector &pos ) override { PROCESS_EVENT_WITH_1_ARG( OnCommandMoveToAggressive, pos ); }
+	virtual void OnCommandAttack( CBaseEntity *victim, bool bDeny ) override { PROCESS_EVENT_WITH_2_ARGS( OnCommandAttack, victim, bDeny ); }
+	virtual void OnCastAbilityNoTarget( CDOTABaseAbility *ability ) override { PROCESS_EVENT_WITH_1_ARG( OnCastAbilityNoTarget, ability ); }
+	virtual void OnCastAbilityOnPosition( CDOTABaseAbility *ability, const Vector &pos ) override { PROCESS_EVENT_WITH_2_ARGS( OnCastAbilityOnPosition, ability, pos ); }
+	virtual void OnCastAbilityOnTarget( CDOTABaseAbility *ability, CBaseEntity *target ) override { PROCESS_EVENT_WITH_2_ARGS( OnCastAbilityOnTarget, ability, target ); }
+	virtual void OnDropItem( const Vector &pos, CBaseEntity *item ) override { PROCESS_EVENT_WITH_2_ARGS( OnDropItem, pos, item ); }
+	virtual void OnPickupItem( CBaseEntity *item ) override { PROCESS_EVENT_WITH_1_ARG( OnPickupItem, item ); }
+	virtual void OnPickupRune( CBaseEntity *item ) override { PROCESS_EVENT_WITH_1_ARG( OnPickupRune, item ); }
+	virtual void OnStop() override { PROCESS_EVENT( OnStop ); }
+	virtual void OnFriendThreatened( CBaseEntity *friendly, CBaseEntity *threat ) override { PROCESS_EVENT_WITH_2_ARGS( OnFriendThreatened, friendly, threat ); }
+	virtual void OnCancelAttack( CBaseEntity *pTarget ) override { PROCESS_EVENT_WITH_1_ARG( OnCancelAttack, pTarget ); }
+	virtual void OnDominated() override { PROCESS_EVENT( OnDominated ); }
+	virtual void OnWarped( Vector vStartPos ) override { PROCESS_EVENT_WITH_1_ARG( OnWarped, vStartPos ); }
 #endif
 
 	friend class Behavior< Actor>;							// the containing Behavior class

@@ -6,7 +6,7 @@ void CEntityFactoryDictionaryHack::UninstallFactory(IEntityFactory* factory)
 	{
 		if (this->m_Factories[i] == factory)
 		{
-			m_Factories.Remove(m_Factories.GetElementName(i));
+			m_Factories.RemoveAt(i);
 		}
 	}
 }

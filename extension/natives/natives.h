@@ -16,6 +16,7 @@
 #include "vision.h"
 #include "cbasenpc.h"
 #include "entityfactory.h"
+#include "behavior.h"
 #include <takedamageinfo.h>
 
 #pragma once
@@ -554,6 +555,7 @@ const sp_nativeinfo_t g_NativesInfo[] =
 	{ "CEntityFactory.DeriveFromClass", &CPluginEntityFactory_DeriveFromClass },
 	{ "CEntityFactory.DeriveFromNPC", &CPluginEntityFactory_DeriveFromNPC },
 	{ "CEntityFactory.DeriveFromFactory", &CPluginEntityFactory_DeriveFromFactory },
+	{ "CEntityFactory.SetInitialActionFactory", &CPluginEntityFactory_SetInitialActionFactory },
 	{ "CEntityFactory.Install", &CPluginEntityFactory_Install },
 	{ "CEntityFactory.Uninstall", &CPluginEntityFactory_Uninstall },
 	{ "CEntityFactory.IsInstalled.get", &CPluginEntityFactory_Installed },
@@ -578,6 +580,47 @@ const sp_nativeinfo_t g_NativesInfo[] =
 	{ "CEntityFactory.DefineInputFunc", &CPluginEntityFactory_DefineInputFunc },
 	{ "CEntityFactory.DefineOutput", &CPluginEntityFactory_DefineOutput },
 	{ "CEntityFactory.EndDataMapDesc", &CPluginEntityFactory_EndDataMapDesc },
+
+	// NextBotAction
+	{ "NextBotAction.Actor.get", &NextBotAction_GetActor },
+	NATIVENAME(NextBotAction, GetName)
+	NATIVENAME(NextBotAction, GetFullName)
+
+	NATIVENAME(NextBotAction, GetData)
+	NATIVENAME(NextBotAction, SetData)
+	NATIVENAME(NextBotAction, GetDataFloat)
+	NATIVENAME(NextBotAction, SetDataFloat)
+	NATIVENAME(NextBotAction, GetDataVector)
+	NATIVENAME(NextBotAction, SetDataVector)
+	NATIVENAME(NextBotAction, GetDataString)
+	NATIVENAME(NextBotAction, SetDataString)
+
+	{ "NextBotAction.IsSuspended.get", &NextBotAction_IsSuspended },
+
+	NATIVENAME(NextBotAction, Continue)
+	NATIVENAME(NextBotAction, ChangeTo)
+	NATIVENAME(NextBotAction, SuspendFor)
+	NATIVENAME(NextBotAction, Done)
+
+	NATIVENAME(NextBotAction, TryContinue)
+	NATIVENAME(NextBotAction, TryChangeTo)
+	NATIVENAME(NextBotAction, TrySuspendFor)
+	NATIVENAME(NextBotAction, TryDone)
+	NATIVENAME(NextBotAction, TryToSustain)
+
+	NATIVENAME(NextBotActionFactory, NextBotActionFactory)
+	NATIVENAME(NextBotActionFactory, SetCallback)
+	NATIVENAME(NextBotActionFactory, SetQueryCallback)
+	NATIVENAME(NextBotActionFactory, SetEventCallback)
+	NATIVENAME(NextBotActionFactory, Create)
+	NATIVENAME(NextBotActionFactory, BeginDataMapDesc)
+	NATIVENAME(NextBotActionFactory, DefineIntField)
+	NATIVENAME(NextBotActionFactory, DefineFloatField)
+	NATIVENAME(NextBotActionFactory, DefineCharField)
+	NATIVENAME(NextBotActionFactory, DefineBoolField)
+	NATIVENAME(NextBotActionFactory, DefineVectorField)
+	NATIVENAME(NextBotActionFactory, DefineStringField)
+	NATIVENAME(NextBotActionFactory, EndDataMapDesc)
 
 	{ nullptr, nullptr },
 };

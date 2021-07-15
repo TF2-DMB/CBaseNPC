@@ -6,8 +6,10 @@ projectName = 'cbasenpc'
 # smsdk_ext.cpp will be automatically added later
 sourceFiles = [
   'extension.cpp',
+  'cbasenpc_behavior.cpp',
   'cbasenpc_internal.cpp',
   'npc_tools_internal.cpp',
+  'idatamapcontainer.cpp',
   'pluginentityfactory.cpp',
   'CDetour/detours.cpp',
   'asm/asm.c',

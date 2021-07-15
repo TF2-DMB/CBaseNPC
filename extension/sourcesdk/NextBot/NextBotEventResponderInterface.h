@@ -59,7 +59,7 @@ public:
 	virtual void OnLostSight(CBaseEntity*);
 	virtual void OnSound(CBaseEntity*, const Vector&, KeyValues *);
 	virtual void OnSpokeConcept(CBaseCombatCharacterHack*, AIConcept_t, AI_Response *);
-	virtual void OnWeaponFired(CBaseCombatCharacterHack*, CBaseCombatWeapon* );
+	virtual void OnWeaponFired(CBaseCombatCharacterHack*, CBaseEntity* );
 	
 	virtual void OnNavAreaChanged(CNavArea*, CNavArea*);
 	virtual void OnModelChanged(void);
@@ -239,7 +239,7 @@ inline void INextBotEventResponder::OnSpokeConcept(CBaseCombatCharacterHack* who
 	}
 }
 
-inline void INextBotEventResponder::OnWeaponFired(CBaseCombatCharacterHack* whoFired, CBaseCombatWeapon* weapon)
+inline void INextBotEventResponder::OnWeaponFired(CBaseCombatCharacterHack* whoFired, CBaseEntity* weapon)
 {
 	for (INextBotEventResponder *it = FirstContainedResponder(); it; it = NextContainedResponder(it))
 	{

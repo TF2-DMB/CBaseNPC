@@ -21,8 +21,6 @@ class NextBotCombatCharacter;
 class CBaseEntityHack;
 class CBaseCombatCharacterHack;
 
-extern ConVar* NextBotDebugHistory;
-
 bool IgnoreActorsTraceFilterFunction( IHandleEntity *pServerEntity, int contentsMask );
 
 class NextBotTraceFilterIgnoreActors : public CTraceFilterSimpleHack
@@ -36,8 +34,6 @@ public:
 class INextBot : public INextBotEventResponder
 {
 public:
-	static bool Init(SourceMod::IGameConfig* config, char* error, size_t maxlength);
-
 	void Destroy();
 
 	INextBot() {}

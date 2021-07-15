@@ -2224,6 +2224,8 @@ enum NextBotDebugType
 const CBaseNPC INVALID_NPC = view_as<CBaseNPC>(-1);
 const CNavArea NULL_AREA = view_as<CNavArea>(0);
 const CNavLadder NULL_LADDER_AREA = view_as<CNavLadder>(0);
+const CKnownEntity NULL_KNOWN_ENTITY = view_as<CKnownEntity>(0);
+const NextBotAction NULL_ACTION = view_as<NextBotAction>(0);
 
 native INextBot CBaseNPC_GetNextBotOfEntity(int iEntity);
 native void CBaseNPC_HookEventKilled(int iEntity);
@@ -2627,6 +2629,13 @@ enum MoveCursorType
 	MOVECUR_ABS = 0,
 	MOVECUR_REL = 1,
 	MOVECUR_MAX,
+};
+
+enum MoveToFailureType
+{
+	FAIL_NO_PATH_EXISTS = 0,
+	FAIL_STUCK        = 1,
+	FAIL_FELL_OFF     = 2,
 };
 
 methodmap Segment
@@ -3218,6 +3227,275 @@ methodmap CBaseCombatCharacter < CBaseAnimatingOverlay
 	public native CNavArea GetLastKnownArea();
 };
 
+enum EventResponderType
+{
+	EventResponderType_OnLeaveGround = 0,
+	EventResponderType_OnLandOnGround,
+	EventResponderType_OnContact,
+	EventResponderType_OnMoveToSuccess,
+	EventResponderType_OnMoveToFailure,
+	EventResponderType_OnStuck,
+	EventResponderType_OnUnStuck,
+	EventResponderType_OnPostureChanged,
+	EventResponderType_OnAnimationActivityComplete,
+	EventResponderType_OnAnimationActivityInterrupted,
+	EventResponderType_OnAnimationEvent,
+	EventResponderType_OnIgnite,
+	EventResponderType_OnInjured,
+	EventResponderType_OnKilled,
+	EventResponderType_OnOtherKilled,
+	EventResponderType_OnSight,
+	EventResponderType_OnLostSight,
+	EventResponderType_OnSound,
+	EventResponderType_OnSpokeConcept,
+	EventResponderType_OnWeaponFired,
+	EventResponderType_OnNavAreaChanged,
+	EventResponderType_OnModelChanged,
+	EventResponderType_OnPickUp,
+	EventResponderType_OnDrop,
+	EventResponderType_OnActorEmoted,
+
+	EventResponderType_OnCommandAttack,
+	EventResponderType_OnCommandApproach,
+	EventResponderType_OnCommandApproachEntity,
+	EventResponderType_OnCommandRetreat,
+	EventResponderType_OnCommandPause,
+	EventResponderType_OnCommandResume,
+	EventResponderType_OnCommandString,
+
+	EventResponderType_OnShoved,
+	EventResponderType_OnBlinded,
+	EventResponderType_OnTerritoryContested,
+	EventResponderType_OnTerritoryCaptured,
+	EventResponderType_OnTerritoryLost,
+	EventResponderType_OnWin,
+	EventResponderType_OnLose,
+
+	EventResponderType_Max
+}
+
+enum EventResultPriorityType
+{
+	RESULT_NONE = 0,
+	RESULT_TRY,
+	RESULT_IMPORTANT,
+	RESULT_CRITICAL
+}
+
+enum ContextualQueryType
+{
+	ContextualQueryType_ShouldPickup = 0,
+	ContextualQueryType_ShouldHurry,
+	ContextualQueryType_ShouldRetreat,
+	ContextualQueryType_ShouldAttack,
+	ContextualQueryType_IsHindrance,
+	ContextualQueryType_SelectTargetPoint,
+	ContextualQueryType_IsPositionAllowed,
+	ContextualQueryType_SelectMoreDangerousThreat,
+	ContextualQueryType_Max
+}
+
+enum QueryResultType
+{
+	ANSWER_NO,
+	ANSWER_YES,
+	ANSWER_UNDEFINED
+}
+
+methodmap NextBotAction < INextBotEventResponder
+{
+	property int Actor
+	{
+		public native get();
+	}
+
+	public native void GetName(char[] sBuffer, int iBufferLen);
+	public native void GetFullName(char[] sBuffer, int iBufferLen);
+
+	public native any GetData(const char[] sPropName, int element=0);
+	public native void SetData(const char[] sPropName, any value, int element=0);
+	public native float GetDataFloat(const char[] sPropName, int element=0);
+	public native void SetDataFloat(const char[] sPropName, float value, int element=0);
+	public native void GetDataVector(const char[] sPropName, float buffer[3], int element=0);
+	public native void SetDataVector(const char[] sPropName, const float buffer[3], int element=0);
+	public native int GetDataString(const char[] sPropName, char[] sBuffer, int iBufferLen, int element=0);
+	public native int SetDataString(const char[] sPropName, const char[] sBuffer, int element=0);
+
+	property bool IsSuspended
+	{
+		public native get();
+	}
+
+	public native int Continue();
+	public native int ChangeTo( NextBotAction action, const char[] reason=NULL_STRING );
+	public native int SuspendFor( NextBotAction action, const char[] reason=NULL_STRING );
+	public native int Done( const char[] reason=NULL_STRING );
+
+	public native int TryContinue( EventResultPriorityType priority = RESULT_TRY );
+	public native int TryChangeTo( NextBotAction action, EventResultPriorityType priority = RESULT_TRY, const char[] reason=NULL_STRING );
+	public native int TrySuspendFor( NextBotAction action, EventResultPriorityType priority = RESULT_TRY, const char[] reason=NULL_STRING );
+	public native int TryDone( EventResultPriorityType priority = RESULT_TRY, const char[] reason=NULL_STRING );
+	public native int TryToSustain( EventResultPriorityType priority = RESULT_TRY, const char[] reason=NULL_STRING );
+}
+
+typeset ActionEventResponderCallback
+{
+	// OnLeaveGround
+	// OnLandOnGround
+	// OnSight
+	// OnLostSight
+	// OnDrop (item = ground)
+	// OnCommandApproachEntity (goal = ground)
+	function int ( NextBotAction action, int actor, int ground );
+	
+	// OnContact
+	// result is a CGameTrace structure
+	function int ( NextBotAction action, int actor, int other, Address result );
+
+	// OnMoveToSuccess
+	function int ( NextBotAction action, int actor, Path path );
+
+	// OnMoveToFailure
+	function int ( NextBotAction action, int actor, Path path, MoveToFailureType reason );
+
+	// OnStuck
+	// OnUnStuck
+	// OnPostureChanged
+	// OnIgnite
+	// OnModelChanged
+	// OnCommandResume
+	// OnWin
+	// OnLose
+	function int ( NextBotAction action, int actor );
+
+	// OnAnimationActivityComplete
+	// OnAnimationActivityInterrupted
+	// OnCommandAttack (victim = activity)
+	// OnShoved (pusher = activity)
+	// OnBlinded (blinder = activity)
+	// OnTerritoryContested (territoryID = activity)
+	// OnTerritoryCaptured (territoryID = activity)
+	// OnTerritoryLost (territoryID = activity)
+	function int ( NextBotAction action, int actor, int activity );
+
+	// OnAnimationEvent
+	function int ( NextBotAction action, int actor, int event );
+	function int ( NextBotAction action, int actor, int event, const char[] options );
+	function int ( NextBotAction action, int actor, int event, const char[] options, float cycle, float eventtime );
+	function int ( NextBotAction action, int actor, int event, const char[] options, float cycle, float eventtime, int eventtype );
+	function int ( NextBotAction action, int actor, int event, const char[] options, float cycle, float eventtime, int eventSourceEntity );
+
+	// OnInjured
+	// OnKilled
+	function int ( NextBotAction action, int actor, int attacker, int inflictor, float damage, int damagetype );
+	function int ( NextBotAction action, int actor, int attacker, int inflictor, float damage, int damagetype, int weapon, const float damageForce[3], const float damagePosition[3] );
+	function int ( NextBotAction action, int actor, int attacker, int inflictor, float damage, int damagetype, int weapon, const float damageForce[3], const float damagePosition[3], int damagecustom );
+
+	// OnOtherKilled
+	function int ( NextBotAction action, int actor, int victim, int attacker, int inflictor, float damage, int damagetype );
+	function int ( NextBotAction action, int actor, int victim, int attacker, int inflictor, float damage, int damagetype, int weapon, const float damageForce[3], const float damagePosition[3] );
+	function int ( NextBotAction action, int actor, int victim, int attacker, int inflictor, float damage, int damagetype, int weapon, const float damageForce[3], const float damagePosition[3], int damagecustom );
+
+	// OnSound
+	function int ( NextBotAction action, int actor, int sourceEntity, const float pos[3], KeyValues keys );
+
+	// OnSpokeConcept
+	// response is AI_Response*
+	function int ( NextBotAction action, int actor, int who, const char[] concept, Address response );
+
+	// OnWeaponFired
+	// OnPickUp (item = whoFired, giver = weapon)
+	// OnActorEmoted (emoter = whoFired, emote = weapon)
+	function int ( NextBotAction action, int actor, int whoFired, int weapon );
+
+	// OnNavAreaChanged
+	function int ( NextBotAction action, int actor, CNavArea newArea, CNavArea oldArea );
+
+	// OnCommandApproach
+	function int ( NextBotAction action, int actor, const float pos[3], float range );
+
+	// OnCommandRetreat
+	function int ( NextBotAction action, int actor, int threat, float range );
+
+	// OnCommandPause
+	function int ( NextBotAction action, int actor, float duration );
+
+	// OnCommandString
+	function int ( NextBotAction action, int actor, const char[] command );
+}
+
+typeset ActionContextualQueryCallback
+{
+	// ShouldPickup
+	// IsHindrance
+	function QueryResultType (NextBotAction action, INextBot bot, int item);
+
+	// ShouldHurry
+	// ShouldRetreat
+	function QueryResultType (NextBotAction action, INextBot bot);
+
+	// ShouldAttack
+	function QueryResultType (NextBotAction action, INextBot bot, CKnownEntity knownEntity);
+
+	// SelectTargetPoint
+	// Leave pos unmodified for no response
+	function void (NextBotAction action, INextBot bot, int subject, float pos[3]);
+
+	// IsPositionAllowed
+	function QueryResultType (NextBotAction action, INextBot bot, const float pos[3]);
+
+	// SelectMoreDangerousThreat
+	// Return NULL_KNOWN_ENTITY for no response
+	function CKnownEntity (NextBotAction action, INextBot bot, int botEntity, CKnownEntity threat1, CKnownEntity threat2); 
+}
+
+enum NextBotActionCallbackType
+{
+	NextBotActionCallbackType_OnStart = 0,
+	NextBotActionCallbackType_Update,
+	NextBotActionCallbackType_OnSuspend,
+	NextBotActionCallbackType_OnResume,
+	NextBotActionCallbackType_OnEnd,
+	NextBotActionCallbackType_InitialContainedAction,
+	NextBotActionCallbackType_Max
+}
+
+typeset NextBotActionCallback
+{
+	// OnStart
+	// OnSuspend (interruptingAction = priorAction)
+	// OnResume (interruptingAction = priorAction)
+	function int ( NextBotAction action, int actor, NextBotAction priorAction );
+
+	// Update
+	function int ( NextBotAction action, int actor, float interval );
+
+	// OnEnd
+	function void ( NextBotAction action, int actor, NextBotAction nextAction );
+
+	// InitialContainedAction
+	function NextBotAction ( NextBotAction action, int actor );
+}
+
+methodmap NextBotActionFactory < Handle
+{
+	public native NextBotActionFactory(const char[] sName);
+	public native void SetCallback(NextBotActionCallbackType callbackType, NextBotActionCallback callback);
+	public native void SetQueryCallback(ContextualQueryType queryType, ActionContextualQueryCallback queryCallback);
+	public native void SetEventCallback(EventResponderType eventType, ActionEventResponderCallback eventCallback);
+
+	public native NextBotAction Create();
+
+	public native NextBotActionFactory BeginDataMapDesc();
+	public native NextBotActionFactory DefineIntField(const char[] sFieldName, int iNumElements=1);
+	public native NextBotActionFactory DefineFloatField(const char[] sFieldName, int iNumElements=1);
+	public native NextBotActionFactory DefineCharField(const char[] sFieldName, int iNumElements=1);
+	public native NextBotActionFactory DefineBoolField(const char[] sFieldName, int iNumElements=1);
+	public native NextBotActionFactory DefineVectorField(const char[] sFieldName, int iNumElements=1);
+	public native NextBotActionFactory DefineStringField(const char[] sFieldName, int iNumElements=1);
+	public native void EndDataMapDesc();
+}
+
 typeset CEntityFactoryPostConstructor
 {
 	function void (int entity);
@@ -3289,6 +3567,8 @@ methodmap CEntityFactory < Handle
 	 * Instructs the factory to use CBaseNPC (NextBot) as the base class.
 	 */
 	public native void DeriveFromNPC();
+
+	public native void SetInitialActionFactory( NextBotActionFactory factory );
 
 	/**
 	 * Instructs the factory to use CBaseEntity as the base class.

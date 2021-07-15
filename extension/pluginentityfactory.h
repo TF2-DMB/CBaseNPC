@@ -7,15 +7,17 @@
 #include <shareddefs.h>
 #include <util.h>
 
+#include "idatamapcontainer.h"
 #include "helpers.h"
 
 class CBaseEntity;
 class CPluginEntityFactory;
+class CBaseNPCPluginActionFactory;
 
 // Returns the CPluginEntityFactory the entity belongs to.
 CPluginEntityFactory* GetPluginEntityFactory(CBaseEntity* pEntity);
 
-class CPluginEntityFactory : public IEntityFactory
+class CPluginEntityFactory : public IEntityFactory, public IEntityDataMapContainer
 {    
 public:
 	std::string m_iClassname;
@@ -26,14 +28,14 @@ public:
 	Handle_t m_Handle;
 
 	CPluginEntityFactory(const char* classname, IPluginFunction *postConstructor=nullptr, IPluginFunction *onRemove=nullptr);
-	~CPluginEntityFactory();
+	virtual ~CPluginEntityFactory();
 
 	bool Install();
 	void Uninstall();
 
 	// IEntityFactory
 	virtual IServerNetworkable* Create(const char*) override final;
-	virtual size_t GetEntitySize() override final;
+	virtual size_t GetEntitySize() override final { return GetBaseEntitySize() + GetDataDescSize(); };
 	virtual void Destroy(IServerNetworkable*) override final;
 
 	void OnRemove(CBaseEntity* pEntity);
@@ -72,6 +74,8 @@ protected:
 
 	static size_t m_DeriveBaseClassSizes[DERIVEBASECLASSTYPE_MAX];
 
+	CBaseNPCPluginActionFactory* m_pBaseNPCInitialActionFactory;
+
 public:
 	bool DoesNotDerive() const { return (m_Derive.m_DeriveFrom == DERIVETYPE_NONE); }
 
@@ -79,6 +83,9 @@ public:
 	void DeriveFromNPC();
 	void DeriveFromClass(const char* classname);
 	void DeriveFromHandle(Handle_t handle);
+
+	CBaseNPCPluginActionFactory* GetBaseNPCInitialActionFactory() const { return m_pBaseNPCInitialActionFactory; }
+	void SetBaseNPCInitialActionFactory( CBaseNPCPluginActionFactory* pFactory ) { m_pBaseNPCInitialActionFactory = pFactory; }
 
 protected:
 	bool m_bIsAbstract;
@@ -119,80 +126,22 @@ public:
 	// This does not include entities that are created by factories that derive from this one.
 	void GetEntities(CUtlVector< CBaseEntity* > *pVec) const;
 
-protected:
-
-	class InputFuncDelegate
-	{
-	public:
-		IPluginFunction* m_pCallback;
-
-		void* m_pInputFuncPtr;
-		int m_iInputFuncSize;
-
-		InputFuncDelegate(IPluginFunction* pCallback);
-		~InputFuncDelegate();
-
-		static void OnInput(InputFuncDelegate*, CBaseEntity* pEntity, inputdata_t &data);
-	};
-
-	CUtlVector<InputFuncDelegate*> m_pEntityInputFuncDelegates;
-
-public:
-
-	// Whether or not this factory is allowed to use a custom user datamap.
-	bool CanUseDataMap() const;
-
 private:
+	// Datamap
+
 	std::string m_iDataClassname;
-
-	datamap_t* m_pEntityDataMap;
-
-	size_t m_DataMapDescSizeInBytes;
-	CUtlVector<typedescription_t> m_vecEntityDataTypeDescriptors;
 	int m_iDataMapStartOffset;
 
-	// Creates the datamap used by entities created by the factory if it doesn't already exist.
-	datamap_t* CreateDataMap(datamap_t* pBaseMap);
-
-	// Destroys a user-defined type descriptor.
-	void DestroyDataMapTypeDescriptor(typedescription_t *desc) const;
-
-	// Destroys the entity datamap.
-	void DestroyDataMap();
-
 public:
-	bool m_bHasDataMapDesc;
+	virtual const char* GetDataDescMapClass() const override final { return m_iDataClassname.c_str(); }
+	virtual int GetDataDescOffset() const override final { return m_iDataMapStartOffset; }
 
-	// The datamap used by entities created by this factory.
-	datamap_t* GetDataMap() const;
+	using IEntityDataMapContainer::BeginDataDesc;
 
 	// Initializes the list of type descriptors to be used by the factory's datamap.
-	bool BeginDataMapDesc(const char* dataClassName);
+	bool BeginDataDesc(const char* dataClassName);
 
-	// Finalizes the entity factory's type descriptor list.
-	void EndDataMapDesc();
-
-protected:
-	void DefineField(const char* name, fieldtype_t fieldType, unsigned short count, short flags, const char* externalName, float fieldTolerance);
-
-public:
-	// Adds a field type descriptor to the type descriptor list with the specified name and type.
-	void DefineField(const char* name, fieldtype_t fieldType, int numElements=1);
-
-	// Adds a field type descriptor to the type descriptor list with the specified name and type, additionally with key name to be used by maps/fgd.
-	void DefineKeyField(const char* name, fieldtype_t fieldType, const char* mapname);
-
-	// Assigns an input function to a plugin callback for use with the entity I/O system.
-	void DefineInputFunc(const char* name, fieldtype_t fieldType, const char* mapname, IPluginFunction* inputFunc);
-
-	// Adds an output for use with the entity I/O system.
-	void DefineOutput(const char* name, const char* externalName);
-
-	// The size of the fields in the factory's type descriptor list, in bytes.
-	size_t GetUserEntityDataSize() const;
-
-	// The starting offset of the user-defined datamap fields stored on the entity.
-	int GetUserEntityDataOffset() const;
+	IEntityDataMapInputFuncDelegate * CreateInputFuncDelegate(IPluginFunction* pCallback);
 
 protected:
 	void CreateUserEntityData(CBaseEntity* pEntity);

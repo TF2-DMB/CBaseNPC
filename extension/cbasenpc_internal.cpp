@@ -1,5 +1,6 @@
 #include "extension.h"
 #include "cbasenpc_internal.h"
+#include "cbasenpc_behavior.h"
 #include "sourcesdk/baseentity.h"
 #include "sourcesdk/tf_gamerules.h"
 #include "NextBot/Path/NextBotPathFollow.h"
@@ -60,6 +61,7 @@ MCall<int, const CTakeDamageInfo&> CBaseNPC_Entity::mOriginalOnTakeDamage_Alive;
 CBaseNPCFactory::CBaseNPCFactory()
 : CustomFactory("base_npc", &NextBotCombatCharacter::NextBotCombatCharacter_Ctor)
 {
+	m_pInitialActionFactory = nullptr;
 }
 
 void CBaseNPCFactory::Create_Extra(CBaseEntityHack* ent)
@@ -79,7 +81,7 @@ void CBaseNPCFactory::Create_Extra(CBaseEntityHack* ent)
 		CBaseNPC_Entity::mOriginalOnTakeDamage_Alive.Init(original);
 	}
 	vtable_replace(ent, CBaseNPC_Entity::vtable);
-	new (((CBaseNPC_Entity*)ent)->GetNPC()) CBaseNPC_Entity::CBaseNPC((NextBotCombatCharacter*)ent);
+	new (((CBaseNPC_Entity*)ent)->GetNPC()) CBaseNPC_Entity::CBaseNPC((NextBotCombatCharacter*)ent, m_pInitialActionFactory);
 }
 
 void CBaseNPCFactory::Create_PostConstructor(CBaseEntityHack* ent)
@@ -92,16 +94,16 @@ size_t CBaseNPCFactory::GetEntitySize()
 	return sizeof(CBaseNPC_Entity::CBaseNPC) + NextBotCombatCharacter::size_of;
 }
 
-CBaseNPC_Entity::CBaseNPC::CBaseNPC(NextBotCombatCharacter* ent) : CExtNPC()
+CBaseNPC_Entity::CBaseNPC::CBaseNPC(NextBotCombatCharacter* ent, CBaseNPCPluginActionFactory* initialActionFactory) : CExtNPC()
 {
 	INextBot* bot = ent->MyNextBotPointer();
-	m_pIntention = new CBaseNPCIntention(bot);
-	this->m_pMover = CBaseNPC_Locomotion::New(bot);
-	this->m_pBody = new CBaseNPC_Body(bot);
-	this->m_type[0] = '\0';
-	this->m_hookids.push_back(SH_ADD_HOOK(INextBot, GetIntentionInterface, bot, SH_MEMBER(this, &CBaseNPC_Entity::CBaseNPC::Hook_GetIntentionInterface), false));
-	this->m_hookids.push_back(SH_ADD_HOOK(INextBot, GetLocomotionInterface, bot, SH_MEMBER(this, &CBaseNPC_Entity::CBaseNPC::Hook_GetLocomotionInterface), false));
-	this->m_hookids.push_back(SH_ADD_HOOK(INextBot, GetBodyInterface, bot, SH_MEMBER(this, &CBaseNPC_Entity::CBaseNPC::Hook_GetBodyInterface), false));
+	m_pIntention = new CBaseNPCIntention(bot, initialActionFactory);
+	m_pMover = CBaseNPC_Locomotion::New(bot);
+	m_pBody = new CBaseNPC_Body(bot);
+	m_type[0] = '\0';
+	m_hookids.push_back(SH_ADD_HOOK(INextBot, GetIntentionInterface, bot, SH_MEMBER(this, &CBaseNPC_Entity::CBaseNPC::Hook_GetIntentionInterface), false));
+	m_hookids.push_back(SH_ADD_HOOK(INextBot, GetLocomotionInterface, bot, SH_MEMBER(this, &CBaseNPC_Entity::CBaseNPC::Hook_GetLocomotionInterface), false));
+	m_hookids.push_back(SH_ADD_HOOK(INextBot, GetBodyInterface, bot, SH_MEMBER(this, &CBaseNPC_Entity::CBaseNPC::Hook_GetBodyInterface), false));
 }
 
 CBaseNPC_Entity::CBaseNPC::~CBaseNPC()
@@ -194,49 +196,6 @@ void CBaseNPC_Entity::DebugConColorMsg( NextBotDebugType debugType, const Color 
 	va_start(argptr, fmt);
 	MyNextBotPointer()->DebugConColorMsg( debugType, color, fmt, argptr); 
 	va_end(argptr);
-}
-
-// ============================================
-// IIntention
-// ============================================
-
-class CBaseNPCMainAction : public Action <CBaseNPC_Entity>
-{
-public:
-	virtual Action< CBaseNPC_Entity > *InitialContainedAction( CBaseNPC_Entity *me )	
-	{
-		return nullptr;
-	}
-
-	virtual ActionResult< CBaseNPC_Entity >	Update( CBaseNPC_Entity *me, float interval )
-	{
-		return Continue();
-	}
-
-	virtual const char *GetName( void ) const	{ return "CBaseNPCMainAction"; }
-};
-
-CBaseNPCIntention::CBaseNPCIntention( INextBot * me ) : IIntention( me )
-{
-	m_pBehavior = new Behavior< CBaseNPC_Entity >( new CBaseNPCMainAction );
-}
-
-CBaseNPCIntention::~CBaseNPCIntention()
-{
-	delete m_pBehavior;
-}
-
-void CBaseNPCIntention::Reset()
-{ 
-	delete m_pBehavior; 
-	m_pBehavior = new Behavior< CBaseNPC_Entity >( new CBaseNPCMainAction );
-}
-
-void CBaseNPCIntention::Update()
-{
-	CBaseNPC_Entity* me = reinterpret_cast<CBaseNPC_Entity*>(GetBot()->GetEntity());
-
-	m_pBehavior->Update( me, GetUpdateInterval() );
 }
 
 // ============================================
