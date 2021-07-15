@@ -18,7 +18,7 @@ cell_t NextBotAction_##name(IPluginContext *pContext, const cell_t *params) \
 { \
 	CBaseNPCPluginAction *pAction = (CBaseNPCPluginAction*)params[1]; \
 	if (!pAction) return pContext->ThrowNativeError("CBaseNPCPluginAction is NULL"); \
-	CBaseNPCPluginActionFactory *pFactory = pAction->m_pFactory; \
+	CBaseNPCPluginActionFactory *pFactory = pAction->GetFactory(); \
 	if (!pFactory) return pContext->ThrowNativeError("pFactory is NULL");
 
 #define ACTIONDATANATIVE(name) \

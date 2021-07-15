@@ -1,7 +1,6 @@
 
 #include "cbasenpc_behavior.h"
 
-
 #define CBPUSHCELL(cell) pCallback->PushCell((cell_t)(cell));
 #define CBPUSHFLOAT(fl) pCallback->PushCell(sp_ftoc(fl));
 #define CBPUSHENTITY(ent) CBPUSHCELL(gamehelpers->EntityToBCompatRef((CBaseEntity*)(ent)))
@@ -466,29 +465,45 @@ ENDEVENTCALLBACK()
 CBaseNPCIntention::CBaseNPCIntention( INextBot * bot, CBaseNPCPluginActionFactory* initialActionFactory ) 
 	: IIntention( bot ), m_pInitialActionFactory(initialActionFactory)
 {
-	// TODO: Add SP callback to allow customization of initial action
-
 	CBaseNPC_Entity* me = (CBaseNPC_Entity*)bot->GetEntity();
 
-	if (initialActionFactory)
-		m_pBehavior = new Behavior< CBaseNPC_Entity >( initialActionFactory->Create() );
-	else
-		m_pBehavior = nullptr;
+	m_pBehavior = nullptr;
+
+	InitBehavior();
 }
 
 CBaseNPCIntention::~CBaseNPCIntention()
 {
-	delete m_pBehavior;
+	if (m_pBehavior)
+	{
+		delete m_pBehavior;
+	}
 }
 
 void CBaseNPCIntention::Reset()
 { 
+	if (m_pBehavior)
+	{
+		delete m_pBehavior;
 	delete m_pBehavior; 
+		delete m_pBehavior;
+	}
 
+	InitBehavior();
+}
+
+void CBaseNPCIntention::InitBehavior()
+{
 	if (m_pInitialActionFactory)
-		m_pBehavior = new Behavior< CBaseNPC_Entity >( m_pInitialActionFactory->Create() );
-	else
+	{
+		Action< CBaseNPC_Entity > * pAction = m_pInitialActionFactory->Create();
+		m_pInitialActionFactory->OnCreateInitialAction( pAction );
+		m_pBehavior = new Behavior< CBaseNPC_Entity >( pAction );
+	}
+	else 
+	{
 		m_pBehavior = nullptr;
+	}
 }
 
 void CBaseNPCIntention::Update()
@@ -514,6 +529,9 @@ CBaseNPCPluginActionFactory::~CBaseNPCPluginActionFactory()
 {
 	if (m_Actions.Count())
 	{
+		// Remove entities that use Actions created from this factory to prevent
+		// undefined behavior.
+
 		CUtlVector< CBaseEntity* > entities;
 		for (int i = 0; i < m_Actions.Count(); i++)
 		{
@@ -595,6 +613,15 @@ void CBaseNPCPluginActionFactory::OnActionRemoved(Action <CBaseNPC_Entity>* pAct
 	m_Actions.FindAndRemove(pAction);
 }
 
+void CBaseNPCPluginActionFactory::OnCreateInitialAction(Action <CBaseNPC_Entity>* pAction)
+{
+	IPluginFunction * pCallback = GetCallback( CreateInitialAction );
+	if (pCallback && pCallback->IsRunnable())
+	{
+		pCallback->PushCell((cell_t)pAction);
+		pCallback->Execute(nullptr);
+	}
+}
 
 HandleType_t g_BaseNPCPluginActionFactoryHandle;
 CBaseNPCActionFactoryHandler g_BaseNPCPluginActionFactoryHandler;

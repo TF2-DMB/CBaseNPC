@@ -22,15 +22,17 @@ private:
 
 	void * m_pData;
 
-public:
 	CBaseNPCPluginActionFactory * m_pFactory;
 
+public:
     CBaseNPCPluginAction(CBaseNPCPluginActionFactory * pFactory);
 	virtual ~CBaseNPCPluginAction();
 	virtual const char* GetName() const override final;
 
-	void* GetData() { return m_pData; }
+	void* GetData() const { return m_pData; }
 	datamap_t* GetDataDescMap() const;
+
+	CBaseNPCPluginActionFactory * GetFactory() const { return m_pFactory; };
 
 	void ResetPluginActionResult();
 	void PluginContinue();
@@ -120,6 +122,8 @@ public:
 	virtual void Update() override;
 	virtual INextBotEventResponder *FirstContainedResponder() const override { return m_pBehavior; };
 
+	void InitBehavior();
+
 private:
 	Behavior< CBaseNPC_Entity > * m_pBehavior;
 };
@@ -134,7 +138,8 @@ public:
 		OnSuspend,
 		OnResume,
 		OnEnd,
-		InitialContainedAction
+		InitialContainedAction,
+		CreateInitialAction
 	};
 
 	enum QueryCallbackType
@@ -227,6 +232,7 @@ public:
 	Action <CBaseNPC_Entity>* Create();
 	void OnActionCreated( Action <CBaseNPC_Entity>* pAction );
 	void OnActionRemoved( Action <CBaseNPC_Entity>* pAction );
+	void OnCreateInitialAction( Action <CBaseNPC_Entity>* pAction );
 };
 
 class CBaseNPCActionFactoryHandler : public IHandleTypeDispatch

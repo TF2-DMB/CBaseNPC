@@ -3457,6 +3457,7 @@ enum NextBotActionCallbackType
 	NextBotActionCallbackType_OnResume,
 	NextBotActionCallbackType_OnEnd,
 	NextBotActionCallbackType_InitialContainedAction,
+	NextBotActionCallbackType_CreateInitialAction,
 	NextBotActionCallbackType_Max
 }
 
@@ -3475,6 +3476,9 @@ typeset NextBotActionCallback
 
 	// InitialContainedAction
 	function NextBotAction ( NextBotAction action, int actor );
+
+	// CreateInitialAction
+	function void ( NextBotAction action );
 }
 
 methodmap NextBotActionFactory < Handle
