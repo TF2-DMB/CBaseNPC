@@ -4,7 +4,7 @@
 
 #define CBPUSHCELL(cell) pCallback->PushCell((cell_t)(cell));
 #define CBPUSHFLOAT(fl) pCallback->PushCell(sp_ftoc(fl));
-#define CBPUSHENTITY(ent) EVENTPUSHCELL(gamehelpers->EntityToBCompatRef((CBaseEntity*)(ent)))
+#define CBPUSHENTITY(ent) CBPUSHCELL(gamehelpers->EntityToBCompatRef((CBaseEntity*)(ent)))
 #define CBPUSHSTRING(str) pCallback->PushString(str);
 #define CBPUSHVECTOR(vec) \
 	{ \
