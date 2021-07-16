@@ -168,7 +168,7 @@ private:
 class CPluginEntityFactoryHandler : public IHandleTypeDispatch
 {
 public:
-	void OnHandleDestroy(HandleType_t type, void * object);
+	virtual void OnHandleDestroy(HandleType_t type, void * object) override;
 };
 
 extern HandleType_t g_PluginEntityFactoryHandle;

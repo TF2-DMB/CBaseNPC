@@ -6,6 +6,7 @@
 #include <IEngineTrace.h>
 #include <shareddefs.h>
 #include <util.h>
+#include <utldict.h>
 
 #include "helpers.h"
 
@@ -17,21 +18,26 @@ protected:
 	size_t m_DataMapDescSizeInBytes;
 	CUtlVector<typedescription_t> m_vecEntityDataTypeDescriptors;
 
+	CUtlDict<sm_datatable_info_t, unsigned short> m_DataMapCache;
+
 public:
+	IDataMapContainer();
 	virtual ~IDataMapContainer();
+
+	virtual IDataMapContainer* DataMapContainerPointer() final { return dynamic_cast< IDataMapContainer* >(this); }
 
 	// Creates a datamap (if it doesn't exist) that uses the defined type
 	// descriptors.
-	datamap_t* CreateDataDescMap(datamap_t* pBaseMap);
+	virtual datamap_t* CreateDataDescMap(datamap_t* pBaseMap);
 
 	// Destroys the instantiated datamap.
-	void DestroyDataDescMap();
+	virtual void DestroyDataDescMap();
 
 	// Returns the instantiated datamap.
-	datamap_t* GetDataDescMap() const { return m_pDataMap; }
+	virtual datamap_t* GetDataDescMap() const final { return m_pDataMap; }
 
 	// True if type descriptors were defined for a datamap, false otheriwse.
-	bool HasDataDesc() const { return m_bHasDataMapDesc; }
+	virtual bool HasDataDesc() const final { return m_bHasDataMapDesc; }
 
 	// The classname that an instantiated datamap will use.
 	virtual const char* GetDataDescMapClass() const=0;
@@ -41,23 +47,63 @@ public:
 	virtual int GetDataDescOffset() const=0;
 
 	// The total size of the data defined by the type descriptors.
-	size_t GetDataDescSize() const { return HasDataDesc() ? m_DataMapDescSizeInBytes : 0; }
+	virtual size_t GetDataDescSize() const final { return HasDataDesc() ? m_DataMapDescSizeInBytes : 0; }
 
 	// Starts defining the type descriptors of the datamap.
 	virtual void BeginDataDesc();
 
 	// Defines a data property type descriptor of the datamap.
-	void DefineField(const char* name, fieldtype_t fieldType, unsigned short count, short flags, const char* externalName, float fieldTolerance);
+	virtual void DefineField(const char* name, fieldtype_t fieldType, unsigned short count, short flags, const char* externalName, float fieldTolerance);
 
 	// Finishes defining type descriptors.
 	virtual void EndDataDesc();
 
-	int FindDataOffset(const char* propName, unsigned short element=0, fieldtype_t * fieldType=nullptr, unsigned short * elements=nullptr);
+	// Destroys the datamap and stored type descriptors. This must be called to
+	// clean up the object. Because it is a virtual function, you must call
+	// this before destructing the object.
+	virtual void DestroyDataDesc();
+
+	// Finds data property info inside the container's datamap.
+	virtual bool FindDataMapInfo(const char* name, sm_datatable_info_t *pDataTable, char* error=nullptr, size_t maxlen=0);
+
+	// Finds the data offset using the provided info.
+	virtual bool GetDataOffset( const sm_datatable_info_t &info, int &offset, int element=0, char* error=nullptr, size_t maxlen=0 ) const;
+
+	// Gets data stored at the int/short/char/bool within the provided object.
+	// This class's datamap is used to calculate offsets.
+	virtual bool GetObjectData( void* obj, const char* prop, int &data, int element=0, char* error=nullptr, size_t maxlen=0 );
+
+	// Sets data stored at the int/short/char/bool within the provided object.
+	// This class's datamap is used to calculate offsets.
+	virtual bool SetObjectData( void* obj, const char* prop, int data, int element=0, char* error=nullptr, size_t maxlen=0 );
+
+	// Gets data stored at the float within the provided object.
+	// This class's datamap is used to calculate offsets.
+	virtual bool GetObjectDataFloat( void* obj, const char* prop, float &data, int element=0, char* error=nullptr, size_t maxlen=0 );
+
+	// Sets data stored at the int/short/char/bool within the provided object.
+	// This class's datamap is used to calculate offsets.
+	virtual bool SetObjectDataFloat( void* obj, const char* prop, float data, int element=0, char* error=nullptr, size_t maxlen=0 );
+
+	// Gets data stored at the Vector within the provided object.
+	// This class's datamap is used to calculate offsets.
+	virtual bool GetObjectDataVector( void* obj, const char* prop, float data[3], int element=0, char* error=nullptr, size_t maxlen=0 );
+
+	// Sets data stored at the Vector within the provided object.
+	// This class's datamap is used to calculate offsets.
+	virtual bool SetObjectDataVector( void* obj, const char* prop, const float data[3], int element=0, char* error=nullptr, size_t maxlen=0 );
+
+	// Gets data stored at the char[]/string_t within the provided object.
+	// This class's datamap is used to calculate offsets.
+	virtual bool GetObjectDataString( void* obj, const char* prop, char* data, size_t datamaxlen, int element=0, char* error=nullptr, size_t maxlen=0 );
+
+	// Sets data stored at the char[]/string_t within the provided object.
+	// This class's datamap is used to calculate offsets.
+	virtual bool SetObjectDataString( void* obj, const char* prop, const char* data, int element=0, char* error=nullptr, size_t maxlen=0 );
 
 protected:
-	void DestroyDataTypeDescriptor(typedescription_t *desc) const;
-
-	virtual void DestroyDataDesc();
+	// Destroys a type description object allocated by this class.
+	virtual void DestroyDataTypeDescriptor(typedescription_t *desc) const;
 };
 
 class IEntityDataMapInputFuncDelegate
@@ -87,37 +133,30 @@ class IEntityDataMapContainer : public IDataMapContainer
 protected:
 	CUtlVector<IEntityDataMapInputFuncDelegate*> m_pEntityInputFuncDelegates;
 
+public:
 	virtual void DestroyDataDesc() override;
 
-public:
+	virtual void DestroyDataDescMap() override;
+
 	using IDataMapContainer::DefineField;
 
 	// Adds a field type descriptor with the specified name and type.
-	void DefineField(const char* name, fieldtype_t fieldType, unsigned short count=1);
+	virtual void DefineField(const char* name, fieldtype_t fieldType, unsigned short count=1);
 
 	// Adds a field type descriptor with the specified name and type,
 	// additionally with key name to be used by maps/fgd.
-	void DefineKeyField(const char* name, fieldtype_t fieldType, const char* mapname);
+	virtual void DefineKeyField(const char* name, fieldtype_t fieldType, const char* mapname);
 
 	// Assigns an input function to a plugin callback for use with the entity
 	// I/O system.
-	void DefineInputFunc(const char* name, fieldtype_t fieldType, const char* mapname, IEntityDataMapInputFuncDelegate* inputFunc);
+	virtual void DefineInputFunc(const char* name, fieldtype_t fieldType, const char* mapname, IEntityDataMapInputFuncDelegate* inputFunc);
 
 	// Adds an output for use with the entity I/O system.
-	void DefineOutput(const char* name, const char* externalName);
+	virtual void DefineOutput(const char* name, const char* externalName);
 
 	virtual void CreateFields(CBaseEntity* pEntity);
 
 	virtual void DestroyFields(CBaseEntity* pEntity);
 };
-
-cell_t GetObjectProp( IPluginContext *pContext, void* obj, datamap_t* datamap, const char* prop, int element=0 );
-cell_t SetObjectProp( IPluginContext *pContext, void* obj, datamap_t* datamap, const char* prop, cell_t value, int element=0 );
-cell_t GetObjectPropFloat( IPluginContext *pContext, void* obj, datamap_t* datamap, const char* prop, int element=0 );
-cell_t SetObjectPropFloat( IPluginContext *pContext, void* obj, datamap_t* datamap, const char* prop, cell_t value, int element=0 );
-cell_t GetObjectPropVector( IPluginContext *pContext, void* obj, datamap_t* datamap, const char* prop, cell_t buffer, int element=0 );
-cell_t SetObjectPropVector( IPluginContext *pContext, void* obj, datamap_t* datamap, const char* prop, cell_t src, int element=0 );
-cell_t GetObjectPropString( IPluginContext *pContext, void* obj, datamap_t* datamap, const char* prop, cell_t buffer, size_t bufferSize, int element=0 );
-cell_t SetObjectPropString( IPluginContext *pContext, void* obj, datamap_t* datamap, const char* prop, cell_t src, int element=0 );
 
 #endif

@@ -238,11 +238,7 @@ public:
 class CBaseNPCActionFactoryHandler : public IHandleTypeDispatch
 {
 public:
-	void OnHandleDestroy(HandleType_t type, void * object)
-	{
-		CBaseNPCPluginActionFactory* factory = (CBaseNPCPluginActionFactory*)object;
-		delete factory;
-	}
+	virtual void OnHandleDestroy(HandleType_t type, void * object) override;
 };
 
 extern HandleType_t g_BaseNPCPluginActionFactoryHandle;

@@ -771,6 +771,6 @@ CPluginEntityFactoryHandler g_PluginEntityFactoryHandler;
 void CPluginEntityFactoryHandler::OnHandleDestroy(HandleType_t type, void * object)
 {
 	CPluginEntityFactory* factory = (CPluginEntityFactory*)object;
-
+	factory->DestroyDataDesc();
 	delete factory;
 }

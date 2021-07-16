@@ -485,8 +485,6 @@ void CBaseNPCIntention::Reset()
 	if (m_pBehavior)
 	{
 		delete m_pBehavior;
-	delete m_pBehavior; 
-		delete m_pBehavior;
 	}
 
 	InitBehavior();
@@ -621,6 +619,13 @@ void CBaseNPCPluginActionFactory::OnCreateInitialAction(Action <CBaseNPC_Entity>
 		pCallback->PushCell((cell_t)pAction);
 		pCallback->Execute(nullptr);
 	}
+}
+
+void CBaseNPCActionFactoryHandler::OnHandleDestroy(HandleType_t type, void * object)
+{
+	CBaseNPCPluginActionFactory* factory = (CBaseNPCPluginActionFactory*)object;
+	factory->DestroyDataDesc();
+	delete factory;
 }
 
 HandleType_t g_BaseNPCPluginActionFactoryHandle;

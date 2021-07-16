@@ -4,9 +4,20 @@
 #include "sh_pagealloc.h"
 #include "baseentityoutput.h"
 
+// For datamap cache deletion hacking purposes
+#include <am-hashmap.h>
+#include <sm_namehashset.h>
+#include <sh_stack.h>
+
+IDataMapContainer::IDataMapContainer()
+{
+	m_pDataMap = nullptr;
+	m_bHasDataMapDesc = false;
+	m_DataMapDescSizeInBytes = 0;
+}
+
 IDataMapContainer::~IDataMapContainer()
 {
-	DestroyDataDesc();
 }
 
 datamap_t* IDataMapContainer::CreateDataDescMap(datamap_t* pBaseMap)
@@ -40,6 +51,8 @@ void IDataMapContainer::DestroyDataDescMap()
 	if (!m_pDataMap)
 		return;
 	
+	m_DataMapCache.Purge();
+
 	if (m_pDataMap->dataClassName)
 		delete m_pDataMap->dataClassName;
 	
@@ -159,35 +172,328 @@ void IDataMapContainer::DefineField(const char* name, fieldtype_t fieldType, uns
 	m_DataMapDescSizeInBytes += fieldSizeInBytes;
 }
 
-int IDataMapContainer::FindDataOffset(const char* propName, unsigned short element, fieldtype_t *fieldType, unsigned short* elements)
+// from sourcemod/public/compat_wrappers.h
+// NOTE: Adjust if expanding to other games
+inline int GetTypeDescOffs(typedescription_t *td)
 {
-	datamap_t* pDataMap = GetDataDescMap();
+	return td->fieldOffset[TD_OFFSET_NORMAL];
+}
 
-	while (pDataMap && pDataMap->dataNumFields)
+// from sourcemod/core/HalfLife2.cpp
+bool UTIL_FindDataMapInfo(datamap_t *pMap, const char *name, sm_datatable_info_t *pDataTable)
+{
+	while (pMap)
 	{
-		for (int i = 0; i < pDataMap->dataNumFields; i++)
+		for (int i = 0; i < pMap->dataNumFields; ++i)
 		{
-			typedescription_t &typeDesc = pDataMap->dataDesc[i];
-			if (typeDesc.fieldName && !V_strcmp( propName, typeDesc.fieldName ))
+			if (pMap->dataDesc[i].fieldName == NULL)
 			{
-				if (fieldType)
-					*fieldType = typeDesc.fieldType;
-
-				if (elements)
-					*elements = typeDesc.fieldSize;
-
-				if (element >= typeDesc.fieldSize)
-					return -1;
-				
-				int elementSize = g_DataMapDescFieldSizes[typeDesc.fieldType];
-				return typeDesc.fieldOffset[0] + (element * elementSize);
+				continue;
 			}
+			if (strcmp(name, pMap->dataDesc[i].fieldName) == 0)
+			{
+				pDataTable->prop = &(pMap->dataDesc[i]);
+				pDataTable->actual_offset = GetTypeDescOffs(pDataTable->prop);
+				return true;
+			}
+			if (pMap->dataDesc[i].td == NULL || !UTIL_FindDataMapInfo(pMap->dataDesc[i].td, name, pDataTable))
+			{
+				continue;
+			}
+			
+			pDataTable->actual_offset += GetTypeDescOffs(&(pMap->dataDesc[i]));
+			return true;
 		}
-
-		pDataMap = pDataMap->baseMap;
+		
+		pMap = pMap->baseMap;
 	}
 
-	return -1;
+	return false; 
+}
+
+bool IDataMapContainer::FindDataMapInfo(const char* name, sm_datatable_info_t *pDataTable, char* error, size_t maxlen)
+{
+	datamap_t* pDataMap = GetDataDescMap();
+	if (!pDataMap)
+	{
+		if (error) snprintf( error, maxlen, "Could not retrieve datamap" );
+
+		return false;
+	}
+
+	// Search in cache first.
+	unsigned short index = m_DataMapCache.Find( name );
+	if (m_DataMapCache.IsValidIndex(index))
+	{
+		*pDataTable = m_DataMapCache[index];
+		return true;
+	}
+
+	if (UTIL_FindDataMapInfo( pDataMap, name, pDataTable ))
+	{
+		m_DataMapCache.Insert(name, *pDataTable);
+		return true;
+	}
+
+	if (error) snprintf( error, maxlen, "Property \"%s\" not found", name );
+
+	return false;
+}
+
+bool IDataMapContainer::GetDataOffset( const sm_datatable_info_t &info, int &offset, int element, char* error, size_t maxlen) const
+{
+	typedescription_t* td = info.prop;
+
+	if (element < 0 || element >= td->fieldSize)
+	{
+		if (error) snprintf( error, maxlen, "Element %d is out of bounds (Prop %s has %d elements).",
+			element, td->fieldName, td->fieldSize );
+
+		return false;
+	}
+	
+	offset = info.actual_offset + (element * (td->fieldSizeInBytes / td->fieldSize));
+	return true;
+}
+
+bool IDataMapContainer::GetObjectData( void* obj, const char* prop, int &data, int element, char* error, size_t maxlen )
+{
+	sm_datatable_info_t info;
+	if (!FindDataMapInfo(prop, &info, error, maxlen))
+		return false;
+	
+	int offset;
+	if (!GetDataOffset(info, offset, element, error, maxlen))
+		return false;
+	
+	switch ( info.prop->fieldType )
+	{
+		case FIELD_TICK:
+		case FIELD_MODELINDEX:
+		case FIELD_MATERIALINDEX:
+		case FIELD_INTEGER:
+		case FIELD_COLOR32:
+			data = *(int32_t*)((int8_t*)obj + offset);
+			return true;
+		case FIELD_CHARACTER:
+			data = *((int8_t*)obj + offset);
+		case FIELD_BOOLEAN:
+			data = *(bool*)((int8_t*)obj + offset);
+			return true;
+		case FIELD_SHORT:
+			data = *(int16_t*)((int8_t*)obj + offset);
+			return true;
+	}
+
+	if (error) snprintf( error, maxlen, "Data field %s is not an integer (%d)", prop, info.prop->fieldType );
+	return false;
+}
+
+bool IDataMapContainer::SetObjectData( void* obj, const char* prop, int data, int element, char* error, size_t maxlen )
+{
+	sm_datatable_info_t info;
+	if (!FindDataMapInfo(prop, &info, error, maxlen))
+		return false;
+	
+	int offset;
+	if (!GetDataOffset(info, offset, element, error, maxlen))
+		return false;
+	
+	switch ( info.prop->fieldType )
+	{
+		case FIELD_TICK:
+		case FIELD_MODELINDEX:
+		case FIELD_MATERIALINDEX:
+		case FIELD_INTEGER:
+		case FIELD_COLOR32:
+			*(int32_t*)((int8_t*)obj + offset) = data;
+			return true;
+		case FIELD_CHARACTER:
+			*((int8_t*)obj + offset) = (int8_t)data;
+			return true;
+		case FIELD_BOOLEAN:
+			*(bool*)((int8_t*)obj + offset) = !!data;
+			return true;
+		case FIELD_SHORT:
+			*(int16_t*)((int8_t*)obj + offset) = (int16_t)data;
+			return true;
+	}
+
+	if (error) snprintf( error, maxlen, "Data field %s is not an integer (%d)", prop, info.prop->fieldType );
+	return false;
+}
+
+bool IDataMapContainer::GetObjectDataFloat( void* obj, const char* prop, float &data, int element, char* error, size_t maxlen )
+{
+	sm_datatable_info_t info;
+	if (!FindDataMapInfo(prop, &info, error, maxlen))
+		return false;
+	
+	int offset;
+	if (!GetDataOffset(info, offset, element, error, maxlen))
+		return false;
+
+	switch ( info.prop->fieldType )
+	{
+		case FIELD_FLOAT:
+		case FIELD_TIME:
+			data = *(float*)((int8_t*)obj + offset);
+			return true;
+	}
+
+	if (error) snprintf( error, maxlen, "Data field %s is not a float (%d != [%d,%d])", prop, info.prop->fieldType, FIELD_FLOAT, FIELD_TIME );
+	return false;
+}
+
+bool IDataMapContainer::SetObjectDataFloat( void* obj, const char* prop, float data, int element, char* error, size_t maxlen )
+{
+	sm_datatable_info_t info;
+	if (!FindDataMapInfo(prop, &info, error, maxlen))
+		return false;
+	
+	int offset;
+	if (!GetDataOffset(info, offset, element, error, maxlen))
+		return false;
+	
+	switch ( info.prop->fieldType )
+	{
+		case FIELD_FLOAT:
+		case FIELD_TIME:
+			*(float*)((int8_t*)obj + offset) = data;
+			return true;
+	}
+
+	if (error) snprintf( error, maxlen, "Data field %s is not a float (%d != [%d,%d])", prop, info.prop->fieldType, FIELD_FLOAT, FIELD_TIME );
+	return false;
+}
+
+bool IDataMapContainer::GetObjectDataVector( void* obj, const char* prop, float data[3], int element, char* error, size_t maxlen )
+{
+	sm_datatable_info_t info;
+	if (!FindDataMapInfo(prop, &info, error, maxlen))
+		return false;
+	
+	int offset;
+	if (!GetDataOffset(info, offset, element, error, maxlen))
+		return false;
+
+	switch ( info.prop->fieldType )
+	{
+		case FIELD_VECTOR:
+		case FIELD_POSITION_VECTOR:
+			float* src = (float*)((int8_t*)obj + offset);
+			data[0] = src[0]; data[1] = src[1]; data[2] = src[2]; 
+			return true;
+	}
+
+	if (error) snprintf( error, maxlen, "Data field %s is not a vector (%d != [%d,%d])", prop, info.prop->fieldType, FIELD_VECTOR, FIELD_POSITION_VECTOR );
+	return false;
+}
+
+bool IDataMapContainer::SetObjectDataVector( void* obj, const char* prop, const float data[3], int element, char* error, size_t maxlen )
+{
+	sm_datatable_info_t info;
+	if (!FindDataMapInfo(prop, &info, error, maxlen))
+		return false;
+	
+	int offset;
+	if (!GetDataOffset(info, offset, element, error, maxlen))
+		return false;
+
+	switch ( info.prop->fieldType )
+	{
+		case FIELD_VECTOR:
+		case FIELD_POSITION_VECTOR:
+			float* dest = (float*)((int8_t*)obj + offset);
+			dest[0] = data[0]; dest[1] = data[1]; dest[2] = data[2]; 
+			return true;
+	}
+
+	if (error) snprintf( error, maxlen, "Data field %s is not a vector (%d != [%d,%d])", prop, info.prop->fieldType, FIELD_VECTOR, FIELD_POSITION_VECTOR );
+	return false;
+}
+
+bool IDataMapContainer::GetObjectDataString( void* obj, const char* prop, char* data, size_t datamaxlen, int element, char* error, size_t maxlen )
+{
+	sm_datatable_info_t info;
+	if (!FindDataMapInfo(prop, &info, error, maxlen))
+		return false;
+	
+	int offset;
+	if (!GetDataOffset(info, offset, element, error, maxlen))
+		return false;
+	
+	bool bIsStringIndex = (info.prop->fieldType != FIELD_CHARACTER);
+
+	switch ( info.prop->fieldType )
+	{
+		case FIELD_CHARACTER:
+		{
+			if (element != 0)
+			{
+				if (error) snprintf(error, maxlen, "Prop %s is not an array. Element %d is invalid.", prop, element);
+				return false;
+			}
+
+			char* src = (char *)((uint8_t *)obj + offset);
+			ke::SafeStrcpyN(data, datamaxlen, src, info.prop->fieldSize );
+
+			return true;
+		}
+		case FIELD_STRING:
+		case FIELD_MODELNAME:
+		case FIELD_SOUNDNAME:
+		{
+			string_t idx = *(string_t *)((uint8_t *)obj + offset);
+			char* src = (idx == NULL_STRING) ? "" : STRING(idx);
+			ke::SafeStrcpy(data, datamaxlen, src);
+
+			return true;
+		}
+	}
+
+	if (error) snprintf(error, maxlen, "Data field %s is not a string (%d != %d)", prop, info.prop->fieldType, FIELD_CHARACTER);
+	return false;
+}
+
+bool IDataMapContainer::SetObjectDataString( void* obj, const char* prop, const char* data, int element, char* error, size_t maxlen )
+{
+	sm_datatable_info_t info;
+	if (!FindDataMapInfo(prop, &info, error, maxlen))
+		return false;
+	
+	int offset;
+	if (!GetDataOffset(info, offset, element, error, maxlen))
+		return false;
+	
+	bool bIsStringIndex = (info.prop->fieldType != FIELD_CHARACTER);
+
+	switch ( info.prop->fieldType )
+	{
+		case FIELD_CHARACTER:
+		{
+			if (element != 0)
+			{
+				if (error) snprintf(error, maxlen, "Prop %s is not an array. Element %d is invalid.", prop, element);
+				return false;
+			}
+
+			char* dest = (char *)((uint8_t *)obj + offset);
+			ke::SafeStrcpy(dest, info.prop->fieldSize, data);
+
+			return true;
+		}
+		case FIELD_STRING:
+		case FIELD_MODELNAME:
+		case FIELD_SOUNDNAME:
+		{
+			*(string_t *)((uint8_t *)obj + offset) = AllocPooledString( data );
+			return true;
+		}
+	}
+
+	if (error) snprintf(error, maxlen, "Data field %s is not a string (%d != %d)", prop, info.prop->fieldType, FIELD_CHARACTER);
+	return false;
 }
 
 SourceHook::CPageAlloc g_InputFuncAlloc;
@@ -290,6 +596,52 @@ void IEntityDataMapContainer::DestroyDataDesc()
 	m_pEntityInputFuncDelegates.PurgeAndDeleteElements();
 }
 
+// from sourcemod/core/HalfLife2.h
+struct DataMapCachePolicy
+{
+	static inline bool matches(const char *name, const sm_datatable_info_t &info)
+	{
+		return strcmp(name, info.prop->fieldName) == 0;
+	}
+	static inline uint32_t hash(const detail::CharsAndLength &key)
+	{
+		return key.hash();
+	}
+};
+
+typedef NameHashSet<sm_datatable_info_t, DataMapCachePolicy> DataMapCache;
+typedef ke::HashMap<datamap_t *, DataMapCache *, ke::PointerPolicy<datamap_t> > DataTableMap;
+
+class CHalfLife2Hack : public IGameHelpers
+{
+public:
+	NameHashSet<void *> m_Classes;
+	DataTableMap m_Maps;
+	int m_MsgTextMsg;
+	int m_HinTextMsg;
+	int m_SayTextMsg;
+	int m_VGUIMenu;
+};
+
+void IEntityDataMapContainer::DestroyDataDescMap()
+{
+	if (!m_pDataMap)
+		return;
+
+	// HACK: Force gamehelpers (CHalfLife2 *) to delete the cache of our datamap if it exists.
+	CHalfLife2Hack* pHL2 = reinterpret_cast<CHalfLife2Hack*>(gamehelpers);
+	auto result = pHL2->m_Maps.find( m_pDataMap );
+	if (result.found())
+	{
+		DataMapCache* cache = result->value;
+		if (cache) delete cache;
+
+		pHL2->m_Maps.remove( result );
+	}
+
+	IDataMapContainer::DestroyDataDescMap();
+}
+
 void IEntityDataMapContainer::DefineField(const char* name, fieldtype_t fieldType, unsigned short count)
 {
 	DefineField(name, fieldType, count, FTYPEDESC_SAVE, NULL, 0);
@@ -384,195 +736,4 @@ void IEntityDataMapContainer::DestroyFields(CBaseEntity* pEntity)
 			pOutput->Destroy();
 		}
 	}
-}
-
-#define GET_DATA_OFFSET() \
-	if (!datamap) return pContext->ThrowNativeError("Object has no datamap"); \
-	typedescription_t* pTypeDesc = gamehelpers->FindInDataMap(datamap, prop); \
-	if (!pTypeDesc) \
-	{ \
-		return pContext->ThrowNativeError("Property %s not found", prop); \
-	} \
-	if (element < 0 || element >= pTypeDesc->fieldSize) \
-	{ \
-		return pContext->ThrowNativeError("Element %d is out of bounds (Prop %s has %d elements).", \
-			element, \
-			prop, \
-			pTypeDesc->fieldSize); \
-	} \
-	int offset = pTypeDesc->fieldOffset[0] + (element * (pTypeDesc->fieldSizeInBytes / pTypeDesc->fieldSize)); \
-	fieldtype_t fieldType = pTypeDesc->fieldType; \
-	uint8_t* addr = (uint8_t*)obj + offset; \
-	do { } while(0)
-
-cell_t GetObjectProp( IPluginContext *pContext, void* obj, datamap_t* datamap, const char* prop, int element )
-{
-	GET_DATA_OFFSET();
-
-	switch (fieldType)
-	{
-		case FIELD_INTEGER:
-		case FIELD_COLOR32:
-			return *((int32_t*)addr);
-		case FIELD_SHORT:
-			return *((int16_t*)addr);
-		case FIELD_CHARACTER:
-		case FIELD_BOOLEAN:
-			return *addr;
-	}
-
-	return pContext->ThrowNativeError("Property %s is not an integer", prop);
-}
-
-cell_t SetObjectProp( IPluginContext *pContext, void* obj, datamap_t* datamap, const char* prop, cell_t value, int element )
-{
-	GET_DATA_OFFSET();
-
-	switch (fieldType)
-	{
-		case FIELD_INTEGER:
-		case FIELD_COLOR32:
-			*((int32_t*)addr) = (int32_t)value;
-			break;
-		case FIELD_SHORT:
-			*((int16_t*)addr) = (int16_t)value;
-			break;
-		case FIELD_CHARACTER:
-		case FIELD_BOOLEAN:
-			*((int8_t*)addr) = (int8_t)value;
-			break;
-		default:
-			return pContext->ThrowNativeError("Property %s is not an integer", prop);
-	}
-
-	return 0;
-}
-
-cell_t GetObjectPropFloat( IPluginContext *pContext, void* obj, datamap_t* datamap, const char* prop, int element )
-{
-	GET_DATA_OFFSET();
-
-	switch (fieldType)
-	{
-		case FIELD_FLOAT:
-			return sp_ftoc(*((float*)addr));
-		default:
-			return pContext->ThrowNativeError("Property %s is not a float", prop);
-	}
-
-	return 0;
-}
-
-cell_t SetObjectPropFloat( IPluginContext *pContext, void* obj, datamap_t* datamap, const char* prop, cell_t value, int element )
-{
-	GET_DATA_OFFSET();
-
-	switch (fieldType)
-	{
-		case FIELD_FLOAT:
-			*((float*)addr) = sp_ctof(value);
-			break;
-		default:
-			return pContext->ThrowNativeError("Property %s is not a float", prop);
-	}
-
-	return 0;
-}
-
-cell_t GetObjectPropVector( IPluginContext *pContext, void* obj, datamap_t* datamap, const char* prop, cell_t buffer, int element )
-{
-	GET_DATA_OFFSET();
-
-	float* vecAddr = (float*)addr;
-	cell_t* vec;
-	pContext->LocalToPhysAddr(buffer, &vec);
-
-	switch (fieldType)
-	{
-		case FIELD_VECTOR:
-		case FIELD_POSITION_VECTOR:
-			vec[0] = sp_ftoc(vecAddr[0]); 
-			vec[1] = sp_ftoc(vecAddr[1]); 
-			vec[2] = sp_ftoc(vecAddr[2]);
-			return 1;
-		default:
-			return pContext->ThrowNativeError("Property %s is not a Vector", prop);
-	}
-
-	return 0;
-}
-
-cell_t SetObjectPropVector( IPluginContext *pContext, void* obj, datamap_t* datamap, const char* prop, cell_t src, int element )
-{
-	GET_DATA_OFFSET();
-
-	float* vecAddr = (float*)addr;
-	cell_t* vec;
-	pContext->LocalToPhysAddr(src, &vec);
-
-	switch (fieldType)
-	{
-		case FIELD_VECTOR:
-		case FIELD_POSITION_VECTOR:
-			vecAddr[0] = sp_ctof(vec[0]);
-			vecAddr[1] = sp_ctof(vec[1]);
-			vecAddr[2] = sp_ctof(vec[2]);
-			return 0;
-		default:
-			return pContext->ThrowNativeError("Property %s is not a Vector", prop);
-	}
-
-	return 0;
-}
-
-cell_t GetObjectPropString( IPluginContext *pContext, void* obj, datamap_t* datamap, const char* prop, cell_t buffer, size_t bufferSize, int element )
-{
-	GET_DATA_OFFSET();
-
-	const char* src;
-
-	switch (fieldType)
-	{
-		case FIELD_CHARACTER:
-			src = (char*)addr;
-			break;
-		case FIELD_STRING:
-			string_t idx = *((string_t*)addr);
-			src = (idx == NULL_STRING) ? "" : STRING(idx);
-			break;
-		default:
-			return pContext->ThrowNativeError("Property %s is not a string", prop);
-	}
-
-	if (src)
-	{
-		size_t len;
-		pContext->StringToLocalUTF8(buffer, bufferSize, src, &len);
-		return len;
-	}
-
-	pContext->StringToLocal(buffer, bufferSize, "");
-	return 0;
-}
-
-cell_t SetObjectPropString( IPluginContext *pContext, void* obj, datamap_t* datamap, const char* prop, cell_t src, int element )
-{
-	GET_DATA_OFFSET();
-
-	char* srcstr;
-	pContext->LocalToStringNULL(src, &srcstr);
-
-	switch (fieldType)
-	{
-		case FIELD_CHARACTER:
-			ke::SafeStrcpy((char *)addr, pTypeDesc->fieldSize, srcstr);
-			break;
-		case FIELD_STRING:
-			*((string_t *)addr) = AllocPooledString(srcstr);
-			break;
-		default:
-			return pContext->ThrowNativeError("Property %s is not a string", prop);
-	}
-
-	return 0;
 }

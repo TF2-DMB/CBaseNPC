@@ -24,8 +24,11 @@ cell_t NextBotAction_##name(IPluginContext *pContext, const cell_t *params) \
 #define ACTIONDATANATIVE(name) \
 	ACTIONNATIVE(name) \
 	void* pData = pAction->GetData(); \
-	if (!pData) return pContext->ThrowNativeError("Action has no user data");
-
+	if (!pData) return pContext->ThrowNativeError("Action has no user data"); \
+	datamap_t* pDataMap = pAction->GetDataDescMap(); \
+	if (!pDataMap) return pContext->ThrowNativeError("Action has no datamap"); \
+	char* prop; pContext->LocalToString(params[2], &prop); \
+	char error[256];
 
 cell_t NextBotActionFactory_NextBotActionFactory(IPluginContext *pContext, const cell_t *params)
 {
@@ -142,88 +145,110 @@ ACTIONNATIVE(IsSuspended)
 
 ACTIONDATANATIVE(GetData)
 	
-	char* prop;
-	pContext->LocalToString(params[2], &prop);
-
+	cell_t value;
 	int element = params[3];
+	if (!pFactory->GetObjectData( pData, prop, value, element, error, sizeof(error)))
+		return pContext->ThrowNativeError( error );
 
-	return GetObjectProp(pContext, pData, pAction->GetDataDescMap(), prop, element);
+	return value;
 }
 
 ACTIONDATANATIVE(SetData)
 	
-	char* prop;
-	pContext->LocalToString(params[2], &prop);
-
 	cell_t value = params[3];
 	int element = params[4];
 
-	return SetObjectProp(pContext, pData, pAction->GetDataDescMap(), prop, value, element);
+	if (!pFactory->SetObjectData( pData, prop, value, element, error, sizeof(error)))
+		return pContext->ThrowNativeError( error );
+
+	return 0;
 }
 
 ACTIONDATANATIVE(GetDataFloat)
 	
-	char* prop;
-	pContext->LocalToString(params[2], &prop);
-
+	float value;
 	int element = params[3];
+	if (!pFactory->GetObjectDataFloat( pData, prop, value, element, error, sizeof(error)))
+		return pContext->ThrowNativeError( error );
 
-	return GetObjectPropFloat(pContext, pData, pAction->GetDataDescMap(), prop, element);
+	return sp_ftoc(value);
 }
 
 ACTIONDATANATIVE(SetDataFloat)
 	
-	char* prop;
-	pContext->LocalToString(params[2], &prop);
-
-	cell_t value = params[3];
+	float value = sp_ctof( params[3] );
 	int element = params[4];
+	if (!pFactory->SetObjectDataFloat( pData, prop, value, element, error, sizeof(error)))
+		return pContext->ThrowNativeError( error );
 
-	return SetObjectPropFloat(pContext, pData, pAction->GetDataDescMap(), prop, value, element);
+	return 0;
 }
 
 ACTIONDATANATIVE(GetDataVector)
 	
-	char* prop;
-	pContext->LocalToString(params[2], &prop);
-
+	cell_t* vec;
+	pContext->LocalToPhysAddr(params[3], &vec);
 	int element = params[4];
 
-	return GetObjectPropVector(pContext, pData, pAction->GetDataDescMap(), prop, params[3], element);
+	float value[3];
+	if (!pFactory->GetObjectDataVector( pData, prop, value, element, error, sizeof(error)))
+		return pContext->ThrowNativeError( error );
+
+	vec[0] = sp_ftoc(value[0]); vec[1] = sp_ftoc(value[1]); vec[2] = sp_ftoc(value[2]); 
+	return 0;
 }
 
 ACTIONDATANATIVE(SetDataVector)
 	
-	char* prop;
-	pContext->LocalToString(params[2], &prop);
-
+	cell_t* vec;
+	pContext->LocalToPhysAddr(params[3], &vec);
 	int element = params[4];
 
-	return SetObjectPropVector(pContext, pData, pAction->GetDataDescMap(), prop, params[3], element);
+	float value[3];
+	value[0] = sp_ctof(vec[0]); value[1] = sp_ctof(vec[1]); value[2] = sp_ctof(vec[2]); 
+
+	if (!pFactory->SetObjectDataVector( pData, prop, value, element, error, sizeof(error)))
+		return pContext->ThrowNativeError( error );
+
+	return 0;
 }
 
 ACTIONDATANATIVE(GetDataString)
 
-	char* prop;
-	pContext->LocalToString(params[2], &prop);
-
-	cell_t buffer = params[3];
+	cell_t dest = params[3];
 	size_t bufferSize = params[4];
-
 	int element = params[5];
 
-	return GetObjectPropString(pContext, pData, pAction->GetDataDescMap(), prop, buffer, bufferSize, element);
+	char * value = new char[ bufferSize ];
+	bool result = pFactory->GetObjectDataString( pData, prop, value, bufferSize, element, error, sizeof(error) );
+	if (result)
+	{
+		size_t len;
+		pContext->StringToLocalUTF8(dest, bufferSize, value, &len);
+	}
+	else
+	{
+		pContext->StringToLocal(dest, bufferSize, "");
+	}
+
+	delete[] value;
+
+	return result ? pContext->ThrowNativeError( error ) : 0;
 }
 
 ACTIONDATANATIVE(SetDataString)
 
-	char* prop;
-	pContext->LocalToString(params[2], &prop);
-
-	cell_t buffer = params[3];
+	cell_t src = params[3];
 	int element = params[4];
 
-	return SetObjectPropString(pContext, pData, pAction->GetDataDescMap(), prop, buffer, element);
+	char* value;
+	pContext->LocalToStringNULL(src, &value);
+	if (!value) value = "";
+
+	if (!pFactory->SetObjectDataString( pData, prop, value, element, error, sizeof(error)))
+		return pContext->ThrowNativeError( error );
+
+	return 0;
 }
 
 ACTIONNATIVE(Continue)
