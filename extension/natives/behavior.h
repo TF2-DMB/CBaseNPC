@@ -233,7 +233,7 @@ ACTIONDATANATIVE(GetDataString)
 
 	delete[] value;
 
-	return result ? pContext->ThrowNativeError( error ) : 0;
+	return result ? 0 : pContext->ThrowNativeError( error );
 }
 
 ACTIONDATANATIVE(SetDataString)
