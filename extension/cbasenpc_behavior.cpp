@@ -1,5 +1,6 @@
 
 #include "cbasenpc_behavior.h"
+#include <sh_stack.h>
 
 #define CBPUSHCELL(cell) pCallback->PushCell((cell_t)(cell));
 #define CBPUSHFLOAT(fl) pCallback->PushCell(sp_ftoc(fl));
@@ -47,7 +48,7 @@ EventDesiredResult< CBaseNPC_Entity > CBaseNPCPluginAction::##funcName##(CBaseNP
 	IPluginFunction* pCallback = m_pFactory->GetEventCallback( CBaseNPCPluginActionFactory::EventResponderCallbackType::typeName ); \
 	if (pCallback && pCallback->IsRunnable()) { \
 		pCallback->PushCell((cell_t)this); \
-		pCallback->PushCell(gamehelpers->EntityToBCompatRef(me)); \
+		pCallback->PushCell(gamehelpers->EntityToBCompatRef(me));
 
 #define BEGINEVENTCALLBACK(funcName, ...) BEGINEVENTCALLBACKEX(funcName, funcName, __VA_ARGS__)
 
@@ -64,6 +65,24 @@ EventDesiredResult< CBaseNPC_Entity > CBaseNPCPluginAction::##funcName##(CBaseNP
 	m_eventResultStack.Pop( m_pluginEventResult ); \
 	return result; \
 }
+
+#define ENDEVENTCALLBACK_NOEXECUTE() \
+	}	\
+	EventDesiredResult< CBaseNPC_Entity > result = m_pluginEventResult; \
+	m_eventResultStack.Pop( m_pluginEventResult ); \
+	return result; \
+}
+
+// https://github.com/alliedmodders/sourcemod/blob/6928d21bcf746920b0f2f54e2c28b34097a66be2/core/smn_keyvalues.h#L42
+struct KeyValueStack
+{
+	KeyValues *pBase;
+	SourceHook::CStack<KeyValues *> pCurRoot;
+	bool m_bDeleteOnDestroy = true;
+};
+
+extern IdentityToken_t * g_pCoreIdent;
+extern HandleType_t g_KeyValueType;
 
 CBaseNPCPluginAction::CBaseNPCPluginAction(CBaseNPCPluginActionFactory* pFactory) : 
 	Action< CBaseNPC_Entity >(),
@@ -201,6 +220,22 @@ Action< CBaseNPC_Entity >* CBaseNPCPluginAction::InitialContainedAction( CBaseNP
 	}
 
 	return (Action< CBaseNPC_Entity >*)result;
+}
+
+bool CBaseNPCPluginAction::IsAbleToBlockMovementOf( const INextBot *botInMotion ) const
+{
+	cell_t result = Action< CBaseNPC_Entity >::IsAbleToBlockMovementOf( botInMotion );
+
+	IPluginFunction* pCallback = m_pFactory->GetCallback( CBaseNPCPluginActionFactory::CallbackType::IsAbleToBlockMovementOf );
+	if (pCallback && pCallback->IsRunnable()) 
+	{
+		CBPUSHCELL(this)
+		CBPUSHCELL(botInMotion)
+
+		pCallback->Execute(&result);
+	}
+
+	return !!result;
 }
 
 // Queries
@@ -371,8 +406,23 @@ ENDEVENTCALLBACK()
 BEGINEVENTCALLBACK(OnSound, CBaseEntity *source, const Vector &pos, KeyValues *keys)
 	EVENTPUSHENTITY(source)
 	EVENTPUSHVECTOR(pos)
-	EVENTPUSHCELL(keys) // TODO: Transform into KeyValues handle
-ENDEVENTCALLBACK()
+
+	KeyValueStack *pStk = new KeyValueStack;
+	pStk->pBase = keys;
+	pStk->pCurRoot.push(pStk->pBase);
+	pStk->m_bDeleteOnDestroy = false;
+
+	Handle_t hndl = handlesys->CreateHandle(g_KeyValueType, pStk, g_pCoreIdent, g_pCoreIdent, nullptr);
+	EVENTPUSHCELL(hndl)
+
+	pCallback->Execute(nullptr);
+
+	HandleSecurity sec(g_pCoreIdent, g_pCoreIdent);
+
+	// Deletes pStk
+	handlesys->FreeHandle(hndl, &sec);
+
+ENDEVENTCALLBACK_NOEXECUTE()
 
 BEGINEVENTCALLBACK(OnSpokeConcept, CBaseCombatCharacterHack* who, AIConcept_t concept, AI_Response *response)
 	EVENTPUSHENTITY(who)

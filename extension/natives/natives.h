@@ -583,6 +583,8 @@ const sp_nativeinfo_t g_NativesInfo[] =
 
 	// NextBotAction
 	{ "NextBotAction.Actor.get", &NextBotAction_GetActor },
+	{ "NextBotAction.Parent.get", &NextBotAction_GetParent },
+	{ "NextBotAction.ActiveChild.get", &NextBotAction_GetActiveChild },
 	NATIVENAME(NextBotAction, GetName)
 	NATIVENAME(NextBotAction, GetFullName)
 

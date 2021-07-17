@@ -139,6 +139,14 @@ ACTIONNATIVE(GetActor)
 	return gamehelpers->EntityToBCompatRef( pAction->GetActor() );
 }
 
+ACTIONNATIVE(GetParent)
+	return (cell_t)pAction->GetParentAction();
+}
+
+ACTIONNATIVE(GetActiveChild)
+	return (cell_t)pAction->GetActiveChildAction();
+}
+
 ACTIONNATIVE(IsSuspended)
 	return pAction->IsSuspended();
 }

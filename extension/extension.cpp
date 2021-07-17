@@ -17,7 +17,7 @@ ISDKTools* g_pSDKTools = nullptr;
 ISDKHooks* g_pSDKHooks = nullptr;
 IServerGameEnts* gameents = nullptr;
 IEngineTrace* enginetrace = nullptr;
-IdentityType_t g_CoreIdent;
+IdentityToken_t * g_pCoreIdent = nullptr;
 CBaseEntityList* g_pEntityList = nullptr;
 IServerTools* servertools = nullptr;
 IMDLCache* mdlcache = nullptr;
@@ -33,7 +33,6 @@ extern ConVar* NextBotDebugHistory;
 extern ConVar* NextBotPathDrawIncrement;
 extern ConVar* NextBotPathSegmentInfluenceRadius;
 
-HandleType_t g_CellArrayHandle;
 HandleType_t g_KeyValueType;
 
 CBaseNPCExt g_CBaseNPCExt;
@@ -177,21 +176,44 @@ void CBaseNPCExt::OnEntityDestroyed(CBaseEntity* pEntity)
 	}
 }
 
+// https://github.com/alliedmodders/sourcemod/blob/6928d21bcf746920b0f2f54e2c28b34097a66be2/core/logic/HandleSys.h#L103
+struct QHandleType
+{
+	IHandleTypeDispatch *dispatch;
+	unsigned int freeID;
+	unsigned int children;
+	TypeAccess typeSec;
+	HandleAccess hndlSec;
+	unsigned int opened;
+	std::unique_ptr<std::string> name;
+};
+
+// https://github.com/alliedmodders/sourcemod/blob/6928d21bcf746920b0f2f54e2c28b34097a66be2/core/logic/HandleSys.h#L125
+struct HandleSystemHack
+{
+	void** vptr;
+	void *m_Handles;
+	QHandleType *m_Types;
+};
+
 void CBaseNPCExt::SDK_OnAllLoaded()
 {
 	SM_GET_LATE_IFACE(BINTOOLS, g_pBinTools);
 	SM_GET_LATE_IFACE(SDKTOOLS, g_pSDKTools);
 	SM_GET_LATE_IFACE(SDKHOOKS, g_pSDKHooks);
 
+	handlesys->FindHandleType("KeyValues", &g_KeyValueType);
+
+	// HACK: Get g_pCoreIdent from KeyValues QHandleType
+	// g_KeyValueType is an index of QHandleType array m_Types
+	// https://github.com/alliedmodders/sourcemod/blob/6928d21bcf746920b0f2f54e2c28b34097a66be2/core/logic/HandleSys.cpp#L254
+	g_pCoreIdent = reinterpret_cast< HandleSystemHack * >(handlesys)->m_Types[g_KeyValueType].typeSec.ident;
+
 	if (g_pSDKHooks)
 	{
 		g_pSDKHooks->AddEntityListener(this);
 	} 
 
-	handlesys->FindHandleType("CellArray", &g_CellArrayHandle);
-	handlesys->FindHandleType("KeyValues", &g_KeyValueType);
-	g_CoreIdent = sharesys->FindIdentType("CORE");
-	
 	g_pEntityList = (CBaseEntityList *)gamehelpers->GetGlobalEntityList();
 	CTNavMesh::RefreshHooks();
 

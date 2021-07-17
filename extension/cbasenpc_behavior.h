@@ -46,6 +46,7 @@ public:
 	virtual ActionResult< CBaseNPC_Entity > OnSuspend( CBaseNPC_Entity *me, Action< CBaseNPC_Entity > *interruptingAction ) override final;
 	virtual ActionResult< CBaseNPC_Entity > OnResume( CBaseNPC_Entity *me, Action< CBaseNPC_Entity > *interruptingAction ) override final;
 	virtual Action< CBaseNPC_Entity > * InitialContainedAction( CBaseNPC_Entity *me ) override final;
+	virtual bool IsAbleToBlockMovementOf( const INextBot *botInMotion ) const override final;
 
 	virtual QueryResultType			ShouldPickUp( const INextBot *me, CBaseEntity *item ) const override final;
 	virtual QueryResultType			ShouldHurry( const INextBot *me ) const override final;
@@ -139,7 +140,8 @@ public:
 		OnResume,
 		OnEnd,
 		InitialContainedAction,
-		CreateInitialAction
+		CreateInitialAction,
+		IsAbleToBlockMovementOf
 	};
 
 	enum QueryCallbackType

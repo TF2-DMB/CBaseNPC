@@ -596,25 +596,25 @@ void IEntityDataMapContainer::DestroyDataDesc()
 	m_pEntityInputFuncDelegates.PurgeAndDeleteElements();
 }
 
-// from sourcemod/core/HalfLife2.h
-struct DataMapCachePolicy
+// https://github.com/alliedmodders/sourcemod/blob/38eecd5ece26b2469560db1822511a7e2685286e/core/HalfLife2.h#L263
+struct CHalfLife2Hack
 {
-	static inline bool matches(const char *name, const sm_datatable_info_t &info)
+	struct DataMapCachePolicy
 	{
-		return strcmp(name, info.prop->fieldName) == 0;
-	}
-	static inline uint32_t hash(const detail::CharsAndLength &key)
-	{
-		return key.hash();
-	}
-};
+		static inline bool matches(const char *name, const sm_datatable_info_t &info)
+		{
+			return strcmp(name, info.prop->fieldName) == 0;
+		}
+		static inline uint32_t hash(const detail::CharsAndLength &key)
+		{
+			return key.hash();
+		}
+	};
 
-typedef NameHashSet<sm_datatable_info_t, DataMapCachePolicy> DataMapCache;
-typedef ke::HashMap<datamap_t *, DataMapCache *, ke::PointerPolicy<datamap_t> > DataTableMap;
+	typedef NameHashSet<sm_datatable_info_t, DataMapCachePolicy> DataMapCache;
+	typedef ke::HashMap<datamap_t *, DataMapCache *, ke::PointerPolicy<datamap_t> > DataTableMap;
 
-class CHalfLife2Hack : public IGameHelpers
-{
-public:
+	void** vptr;
 	NameHashSet<void *> m_Classes;
 	DataTableMap m_Maps;
 	int m_MsgTextMsg;
@@ -633,7 +633,7 @@ void IEntityDataMapContainer::DestroyDataDescMap()
 	auto result = pHL2->m_Maps.find( m_pDataMap );
 	if (result.found())
 	{
-		DataMapCache* cache = result->value;
+		CHalfLife2Hack::DataMapCache* cache = result->value;
 		if (cache) delete cache;
 
 		pHL2->m_Maps.remove( result );

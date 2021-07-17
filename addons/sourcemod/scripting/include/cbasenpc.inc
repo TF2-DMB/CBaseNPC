@@ -3227,6 +3227,292 @@ methodmap CBaseCombatCharacter < CBaseAnimatingOverlay
 	public native CNavArea GetLastKnownArea();
 };
 
+enum EventResultPriorityType
+{
+	RESULT_NONE = 0,
+	RESULT_TRY,
+	RESULT_IMPORTANT,
+	RESULT_CRITICAL
+}
+
+/**
+ * A single unit of logic of the NextBot behavior system. An Action can do work
+ * and change to/suspend for other Actions. Actions can also contain a single
+ * child Action, which runs concurrently with the parent Action.
+ *
+ * Actions are instantiated using a NextBotActionFactory.
+ *
+ * See: "The AI Systems of Left 4 Dead" by Mike Booth, "Behaviors and decision making"
+ * https://steamcdn-a.akamaihd.net/apps/valve/2009/ai_systems_of_l4d_mike_booth.pdf
+ *
+ */
+methodmap NextBotAction < INextBotEventResponder
+{
+	/**
+	 * The entity index of the CBaseNPC utilizing this Action.
+	 *
+	 * @return     Entity index
+	 */
+	property int Actor
+	{
+		public native get();
+	}
+
+	/**
+	 * The parent of this Action.
+	 *
+	 * @return     The parent Action
+	 */
+	property NextBotAction Parent
+	{
+		public native get();
+	}
+
+	/**
+	 * The active child of this Action.
+	 *
+	 * @return     The active child Action
+	 */
+	property NextBotAction ActiveChild
+	{
+		public native get();
+	}
+
+	/**
+	 * The identifying name of the Action.
+	 *
+	 * @param sBuffer        Buffer
+	 * @param iBufferLen     Buffer size
+	 */
+	public native void GetName(char[] sBuffer, int iBufferLen);
+
+	/**
+	 * The full name of the Action. This displays the hierarchy of Actions
+	 * from the root parent Action to this Action.
+	 *
+	 * @param sBuffer        Buffer
+	 * @param iBufferLen     Buffer size
+	 */
+	public native void GetFullName(char[] sBuffer, int iBufferLen);
+
+	/**
+	 * Retrieves an integer from the Action's custom data. Size of the given
+	 * value is auto-detected.
+	 * 
+	 * This is synonymous with GetEntProp().
+	 *
+	 * @param sPropName     Property name
+	 * @param element       Element # (starting from 0) if property is an array.
+	 * @return              Value at the given property offset.
+	 * @error               Invalid property or offset out of reasonable bounds.
+	 */
+	public native any GetData(const char[] sPropName, int element=0);
+
+	/**
+	 * Sets an integer in the Action's custom data. Size of the given value is
+	 * auto-detected.
+	 * 
+	 * This is synonymous with SetEntProp().
+	 *
+	 * @param sPropName     Property name
+	 * @param value         Value to set
+	 * @param element       Element # (starting from 0) if property is an array.
+	 * @error               Invalid property or offset out of reasonable bounds.
+	 */
+	public native void SetData(const char[] sPropName, any value, int element=0);
+
+	/**
+	 * Retrieves a float value from the Action's custom data.
+	 * 
+	 * This is synonymous with GetEntPropFloat().
+	 *
+	 * @param sPropName     Property name
+	 * @param element       Element # (starting from 0) if property is an array.
+	 * @return              Value at the given property offset.
+	 * @error               Invalid property or offset out of reasonable bounds.
+	 */
+	public native float GetDataFloat(const char[] sPropName, int element=0);
+
+	/**
+	 * Sets a float value in the Action's custom data.
+	 * 
+	 * This is synonymous with SetEntPropFloat().
+	 *
+	 * @param sPropName     Property name
+	 * @param value         Value to set
+	 * @param element       Element # (starting from 0) if property is an array.
+	 * @error               Invalid property or offset out of reasonable bounds.
+	 */
+	public native void SetDataFloat(const char[] sPropName, float value, int element=0);
+
+	/**
+	 * Retrieves a Vector value from the Action's custom data.
+	 * 
+	 * This is synonymous with GetEntPropVector().
+	 *
+	 * @param sPropName     Property name
+	 * @param buffer        Vector buffer to store data in.
+	 * @param element       Element # (starting from 0) if property is an array.
+	 * @error               Invalid property or offset out of reasonable bounds.
+	 */
+	public native void GetDataVector(const char[] sPropName, float buffer[3], int element=0);
+
+	/**
+	 * Sets a Vector in the Action's custom data.
+	 * 
+	 * This is synonymous with SetEntPropVector().
+	 *
+	 * @param sPropName     Property name
+	 * @param value         Value to set
+	 * @param element       Element # (starting from 0) if property is an array.
+	 * @error               Invalid property or offset out of reasonable bounds.
+	 */
+	public native void SetDataVector(const char[] sPropName, const float value[3], int element=0);
+
+	/**
+	 * Retrieves a string from the Action's custom data.
+	 * 
+	 * This is synonymous with GetEntPropString().
+	 *
+	 * @param sPropName     Property name
+	 * @param sBuffer       Buffer to store value
+	 * @param iBufferLen    Size of buffer
+	 * @param element       Element # (starting from 0) if property is an array.
+	 * @error               Invalid property or offset out of reasonable bounds.
+	 */
+	public native int GetDataString(const char[] sPropName, char[] sBuffer, int iBufferLen, int element=0);
+
+	/**
+	 * Sets a string in the Action's custom data.
+	 * 
+	 * This is synonymous with SetEntPropString().
+	 *
+	 * @param sPropName     Property name
+	 * @param sValue        Value to set
+	 * @param element       Element # (starting from 0) if property is an array.
+	 * @error               Invalid property or offset out of reasonable bounds.
+	 */
+	public native int SetDataString(const char[] sPropName, const char[] sValue, int element=0);
+
+	/**
+	 * Whether or not the Action is suspended.
+	 *
+	 * Suspending an Action will "bury" the Action underneath the interrupting
+	 * action, forming a stack. The buried Action will no longer update, but
+	 * can still react to events.
+	 * 
+	 * If a buried Action returns TrySuspendFor() as a response to an event,
+	 * the new interrupting Action will be placed on the very top of the stack.
+	 * 
+	 * If a buried Action returns TryChangeTo() or TryDone() as a response 
+	 * to an event, every Action above the buried Action will be considered
+	 * "out of scope" and will exit on the next update.
+	 *
+	 * Note: This is not to be confused with child Actions. Child Actions
+	 * continue to update along with its parent, while buried Actions do not
+	 * update until all Actions on top of the buried Action exit.
+	 *
+	 */
+	property bool IsSuspended
+	{
+		public native get();
+	}
+
+	/**
+	 * Action should keep running.
+	 * 
+	 * Note: Do not use this in event callbacks. Use TryContinue() instead.
+	 */
+	public native int Continue();
+
+	/**
+	 * Action should change to another Action.
+	 *
+	 * Notes: 
+	 * 1. This is not allowed within an OnSuspend callback.
+	 * 2. Do not use this in event callbacks. Use TryChangeTo() instead.
+	 *
+	 * @param action        Action to change to
+	 * @param reason        Reason for changing to the new action.
+	 * @error Action is NULL_ACTION
+	 */
+	public native int ChangeTo( NextBotAction action, const char[] reason=NULL_STRING );
+
+	/**
+	 * Action should suspend itself for an interrupting Action.
+	 *
+	 * Notes:
+	 * 1. This is not allowed within an OnSuspend callback.
+	 * 2. Do not use this in event callbacks. Use TrySuspendFor() instead.
+	 *
+	 * @param action        Interrupting Action to suspend for
+	 * @param reason        Reason for suspending for the interrupting Action.
+	 * @error Action is NULL_ACTION
+	 */
+	public native int SuspendFor( NextBotAction action, const char[] reason=NULL_STRING );
+
+	/**
+	 * Action should exit.
+	 * 
+	 * Note: Do not use this in event callbacks. Use TryDone() instead.
+	 *
+	 * @param reason        Reason for exiting
+	 */
+	public native int Done( const char[] reason=NULL_STRING );
+
+	/**
+	 * Request that the Action should keep running.
+	 * 
+	 * Note: This is used within event callbacks only.
+	 * 
+	 * @param priority      How important this response is
+	 */
+	public native int TryContinue( EventResultPriorityType priority = RESULT_TRY );
+
+	/**
+	 * Request that the Action should change to another Action.
+	 *
+	 * Note: This is used within event callbacks only.
+	 *
+	 * @param action        The new Action to change to.
+	 * @param priority      How important this response is
+	 * @param reason        The reason for changing to the new Action.
+	 */
+	public native int TryChangeTo( NextBotAction action, EventResultPriorityType priority = RESULT_TRY, const char[] reason=NULL_STRING );
+
+	/**
+	 * Request that the Action should suspend itself for another Action.
+	 *
+	 * Note: This is used within event callbacks only.
+	 *
+	 * @param action        The interrupting Action to suspend for.
+	 * @param priority      How important this response is
+	 * @param reason        The reason for suspending for the interrupting Action.
+	 */
+	public native int TrySuspendFor( NextBotAction action, EventResultPriorityType priority = RESULT_TRY, const char[] reason=NULL_STRING );
+
+	/**
+	 * Request that the Action should exit.
+	 *
+	 * Note: This is used within event callbacks only.
+	 *
+	 * @param priority      How important this response is
+	 * @param reason        The reason for exiting
+	 */
+	public native int TryDone( EventResultPriorityType priority = RESULT_TRY, const char[] reason=NULL_STRING );
+
+	/**
+	 * Request that the Action should keep running. This is the same as
+	 * TryContinue() except with an added reason parameter.
+	 *
+	 * Note: This is used within event callbacks only.
+	 *
+	 * @param priority      How important this response is
+	 * @param reason        The reason for continuing
+	 */
+	public native int TryToSustain( EventResultPriorityType priority = RESULT_TRY, const char[] reason=NULL_STRING );
+}
+
 enum EventResponderType
 {
 	EventResponderType_OnLeaveGround = 0,
@@ -3246,7 +3532,7 @@ enum EventResponderType
 	EventResponderType_OnOtherKilled,
 	EventResponderType_OnSight,
 	EventResponderType_OnLostSight,
-	EventResponderType_OnSound,
+	EventResponderType_OnSound,	// Not the same as EmitSound(); in fact, it doesn't seem to be used at all!
 	EventResponderType_OnSpokeConcept,
 	EventResponderType_OnWeaponFired,
 	EventResponderType_OnNavAreaChanged,
@@ -3272,70 +3558,6 @@ enum EventResponderType
 	EventResponderType_OnLose,
 
 	EventResponderType_Max
-}
-
-enum EventResultPriorityType
-{
-	RESULT_NONE = 0,
-	RESULT_TRY,
-	RESULT_IMPORTANT,
-	RESULT_CRITICAL
-}
-
-enum ContextualQueryType
-{
-	ContextualQueryType_ShouldPickup = 0,
-	ContextualQueryType_ShouldHurry,
-	ContextualQueryType_ShouldRetreat,
-	ContextualQueryType_ShouldAttack,
-	ContextualQueryType_IsHindrance,
-	ContextualQueryType_SelectTargetPoint,
-	ContextualQueryType_IsPositionAllowed,
-	ContextualQueryType_SelectMoreDangerousThreat,
-	ContextualQueryType_Max
-}
-
-enum QueryResultType
-{
-	ANSWER_NO,
-	ANSWER_YES,
-	ANSWER_UNDEFINED
-}
-
-methodmap NextBotAction < INextBotEventResponder
-{
-	property int Actor
-	{
-		public native get();
-	}
-
-	public native void GetName(char[] sBuffer, int iBufferLen);
-	public native void GetFullName(char[] sBuffer, int iBufferLen);
-
-	public native any GetData(const char[] sPropName, int element=0);
-	public native void SetData(const char[] sPropName, any value, int element=0);
-	public native float GetDataFloat(const char[] sPropName, int element=0);
-	public native void SetDataFloat(const char[] sPropName, float value, int element=0);
-	public native void GetDataVector(const char[] sPropName, float buffer[3], int element=0);
-	public native void SetDataVector(const char[] sPropName, const float buffer[3], int element=0);
-	public native int GetDataString(const char[] sPropName, char[] sBuffer, int iBufferLen, int element=0);
-	public native int SetDataString(const char[] sPropName, const char[] sBuffer, int element=0);
-
-	property bool IsSuspended
-	{
-		public native get();
-	}
-
-	public native int Continue();
-	public native int ChangeTo( NextBotAction action, const char[] reason=NULL_STRING );
-	public native int SuspendFor( NextBotAction action, const char[] reason=NULL_STRING );
-	public native int Done( const char[] reason=NULL_STRING );
-
-	public native int TryContinue( EventResultPriorityType priority = RESULT_TRY );
-	public native int TryChangeTo( NextBotAction action, EventResultPriorityType priority = RESULT_TRY, const char[] reason=NULL_STRING );
-	public native int TrySuspendFor( NextBotAction action, EventResultPriorityType priority = RESULT_TRY, const char[] reason=NULL_STRING );
-	public native int TryDone( EventResultPriorityType priority = RESULT_TRY, const char[] reason=NULL_STRING );
-	public native int TryToSustain( EventResultPriorityType priority = RESULT_TRY, const char[] reason=NULL_STRING );
 }
 
 typeset ActionEventResponderCallback
@@ -3424,6 +3646,26 @@ typeset ActionEventResponderCallback
 	function int ( NextBotAction action, int actor, const char[] command );
 }
 
+enum QueryResultType
+{
+	ANSWER_NO,
+	ANSWER_YES,
+	ANSWER_UNDEFINED
+}
+
+enum ContextualQueryType
+{
+	ContextualQueryType_ShouldPickup = 0,
+	ContextualQueryType_ShouldHurry,
+	ContextualQueryType_ShouldRetreat,
+	ContextualQueryType_ShouldAttack,
+	ContextualQueryType_IsHindrance,
+	ContextualQueryType_SelectTargetPoint,
+	ContextualQueryType_IsPositionAllowed,
+	ContextualQueryType_SelectMoreDangerousThreat,
+	ContextualQueryType_Max
+}
+
 typeset ActionContextualQueryCallback
 {
 	// ShouldPickup
@@ -3451,13 +3693,14 @@ typeset ActionContextualQueryCallback
 
 enum NextBotActionCallbackType
 {
-	NextBotActionCallbackType_OnStart = 0,
-	NextBotActionCallbackType_Update,
-	NextBotActionCallbackType_OnSuspend,
-	NextBotActionCallbackType_OnResume,
-	NextBotActionCallbackType_OnEnd,
-	NextBotActionCallbackType_InitialContainedAction,
-	NextBotActionCallbackType_CreateInitialAction,
+	NextBotActionCallbackType_OnStart = 0,                  // Action started
+	NextBotActionCallbackType_Update,                       // Action does work
+	NextBotActionCallbackType_OnSuspend,                    // Action is suspended for another Action. Only Continue() and Done() are allowed.
+	NextBotActionCallbackType_OnResume,                     // Action resumes after suspension
+	NextBotActionCallbackType_OnEnd,                        // Action exits
+	NextBotActionCallbackType_InitialContainedAction,       // Creation of a child Action
+	NextBotActionCallbackType_CreateInitialAction,          // Action was created as the initial Action of the Behavior
+	NextBotActionCallbackType_IsAbleToBlockMovementOf,      // Returning false will skip collision resolution with the other bot; default is true.
 	NextBotActionCallbackType_Max
 }
 
@@ -3479,25 +3722,124 @@ typeset NextBotActionCallback
 
 	// CreateInitialAction
 	function void ( NextBotAction action );
+
+	// IsAbleToBlockMovementOf
+	function bool ( NextBotAction action, INextBot bot );
 }
 
 methodmap NextBotActionFactory < Handle
 {
+	/**
+	 * A class that declares the data structure and callbacks of a particular
+	 * Action and instantiates Actions.
+	 *
+	 * @param sName     Name of the Action, which can be retrieved using GetName().
+	 * @return          Handle to NextBotActionFactory object.
+	 */
 	public native NextBotActionFactory(const char[] sName);
+
+	/**
+	 * Defines a callback for the Action.
+	 *
+	 * @param callbackType     Type of callback
+	 * @param callback
+	 */
 	public native void SetCallback(NextBotActionCallbackType callbackType, NextBotActionCallback callback);
-	public native void SetQueryCallback(ContextualQueryType queryType, ActionContextualQueryCallback queryCallback);
-	public native void SetEventCallback(EventResponderType eventType, ActionEventResponderCallback eventCallback);
 
-	public native NextBotAction Create();
+	/**
+	 * Defines a contextual query callback for the Action.
+	 *
+	 * @param callbackType     Type of callback
+	 * @param callback
+	 */
+	public native void SetQueryCallback(ContextualQueryType callbackType, ActionContextualQueryCallback callback);
 
+	/**
+	 * Defines an event callback for the Action.
+	 *
+	 * @param callbackType     Type of callback
+	 * @param callback
+	 */
+	public native void SetEventCallback(EventResponderType callbackType, ActionEventResponderCallback callback);
+
+	/**
+	 * Begins defining properties stored on the Action.
+	 *
+	 * @return     The NextBotActionFactory to chain calls
+	*/
 	public native NextBotActionFactory BeginDataMapDesc();
+
+	/**
+	 * Defines an integer property on the Action.
+	 *
+	 * @param sFieldName     Property name
+	 * @param iNumElements   Number of elements. If > 1, will declare the field
+	 *                       as an array.
+	 * @return               The NextBotActionFactory to chain calls
+	 */
 	public native NextBotActionFactory DefineIntField(const char[] sFieldName, int iNumElements=1);
+
+	/**
+	 * Defines a float property on the Action.
+	 *
+	 * @param sFieldName     Property name
+	 * @param iNumElements   Number of elements. If > 1, will declare the field
+	 *                       as an array.
+	 * @return               The NextBotActionFactory to chain calls
+	 */
 	public native NextBotActionFactory DefineFloatField(const char[] sFieldName, int iNumElements=1);
+
+	/**
+	 * Defines a character property on the Action.
+	 *
+	 * @param sFieldName     Property name
+	 * @param iNumElements   Number of elements. If > 1, will declare the field
+	 *                       as an array.
+	 * @return               The NextBotActionFactory to chain calls
+	 */
 	public native NextBotActionFactory DefineCharField(const char[] sFieldName, int iNumElements=1);
+
+	/**
+	 * Defines a boolean property on the Action.
+	 *
+	 * @param sFieldName     Property name
+	 * @param iNumElements   Number of elements. If > 1, will declare the field
+	 *                       as an array.
+	 * @return               The NextBotActionFactory to chain calls
+	 */
 	public native NextBotActionFactory DefineBoolField(const char[] sFieldName, int iNumElements=1);
+
+	/**
+	 * Defines a Vector property on the Action.
+	 *
+	 * @param sFieldName     Property name
+	 * @param iNumElements   Number of elements. If > 1, will declare the field
+	 *                       as an array.
+	 * @return               The NextBotActionFactory to chain calls
+	 */
 	public native NextBotActionFactory DefineVectorField(const char[] sFieldName, int iNumElements=1);
+
+	/**
+	 * Defines a string property on the Action.
+	 *
+	 * @param sFieldName     Property name
+	 * @param iNumElements   Number of elements. If > 1, will declare the field
+	 *                       as an array.
+	 * @return               The NextBotActionFactory to chain calls
+	 */
 	public native NextBotActionFactory DefineStringField(const char[] sFieldName, int iNumElements=1);
+
+	/**
+	 * Finishes the datamap definition.
+	 */
 	public native void EndDataMapDesc();
+
+	/**
+	 * Creates an Action.
+	 *
+	 * @return     The new Action
+	*/
+	public native NextBotAction Create();
 }
 
 typeset CEntityFactoryPostConstructor
