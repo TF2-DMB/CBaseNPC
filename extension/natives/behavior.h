@@ -316,7 +316,7 @@ ACTIONNATIVE(TryToSustain)
 	char* reason;
 	pContext->LocalToStringNULL( params[3], &reason );
 
-	pAction->PluginTryDone( (EventResultPriorityType)params[2], reason );
+	pAction->PluginTryToSustain( (EventResultPriorityType)params[2], reason );
 	return 0;
 }
 
