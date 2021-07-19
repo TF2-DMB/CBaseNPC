@@ -3251,6 +3251,8 @@ methodmap NextBotAction < INextBotEventResponder
 	/**
 	 * The entity index of the CBaseNPC utilizing this Action.
 	 *
+	 * Note: This is not set until before the OnStart() callback is invoked.
+	 * 
 	 * @return     Entity index
 	 */
 	property int Actor
@@ -3396,22 +3398,6 @@ methodmap NextBotAction < INextBotEventResponder
 
 	/**
 	 * Whether or not the Action is suspended.
-	 *
-	 * Suspending an Action will "bury" the Action underneath the interrupting
-	 * action, forming a stack. The buried Action will no longer update, but
-	 * can still react to events.
-	 * 
-	 * If a buried Action returns TrySuspendFor() as a response to an event,
-	 * the new interrupting Action will be placed on the very top of the stack.
-	 * 
-	 * If a buried Action returns TryChangeTo() or TryDone() as a response 
-	 * to an event, every Action above the buried Action will be considered
-	 * "out of scope" and will exit on the next update.
-	 *
-	 * Note: This is not to be confused with child Actions. Child Actions
-	 * continue to update along with its parent, while buried Actions do not
-	 * update until all Actions on top of the buried Action exit.
-	 *
 	 */
 	property bool IsSuspended
 	{
@@ -3441,15 +3427,29 @@ methodmap NextBotAction < INextBotEventResponder
 	/**
 	 * Action should suspend itself for an interrupting Action.
 	 *
-	 * Notes:
-	 * 1. This is not allowed within an OnSuspend callback.
-	 * 2. Do not use this in event callbacks. Use TrySuspendFor() instead.
+	 * About suspending: Suspending an Action will "bury" the Action underneath
+	 * the interrupting Action, forming a stack. The buried Action will no
+	 * longer update, but can still react to events.
 	 *
-	 * @param action        Interrupting Action to suspend for
-	 * @param reason        Reason for suspending for the interrupting Action.
+	 * If a buried Action returns TrySuspendFor() as a response to an event,
+	 * the new interrupting Action will be placed on the very top of the stack.
+	 *
+	 * If a buried Action returns TryChangeTo() or TryDone() as a response 
+	 * to an event, every Action above the buried Action will be considered
+	 * "out of scope" and will exit on the next update.
+	 *
+	 * Notes:
+	 * 1. This is not allowed within an OnSuspend() callback.
+	 * 2. Do not use this in event callbacks. Use TrySuspendFor() instead.
+	 * 3. This is not to be confused with child Actions. Child Actions continue
+	 * to update along with its parent, while buried Actions do not update
+	 * until all Actions on top of the buried Action exit.
+	 *
+	 * @param interruptingAction        Interrupting Action to suspend for
+	 * @param reason                    Reason for suspending for the interrupting Action.
 	 * @error Action is NULL_ACTION
 	 */
-	public native int SuspendFor( NextBotAction action, const char[] reason=NULL_STRING );
+	public native int SuspendFor( NextBotAction interruptingAction, const char[] reason=NULL_STRING );
 
 	/**
 	 * Action should exit.
@@ -3485,11 +3485,11 @@ methodmap NextBotAction < INextBotEventResponder
 	 *
 	 * Note: This is used within event callbacks only.
 	 *
-	 * @param action        The interrupting Action to suspend for.
-	 * @param priority      How important this response is
-	 * @param reason        The reason for suspending for the interrupting Action.
+	 * @param interruptingAction        The interrupting Action to suspend for.
+	 * @param priority                  How important this response is
+	 * @param reason                    The reason for suspending for the interrupting Action.
 	 */
-	public native int TrySuspendFor( NextBotAction action, EventResultPriorityType priority = RESULT_TRY, const char[] reason=NULL_STRING );
+	public native int TrySuspendFor( NextBotAction interruptingAction, EventResultPriorityType priority = RESULT_TRY, const char[] reason=NULL_STRING );
 
 	/**
 	 * Request that the Action should exit.

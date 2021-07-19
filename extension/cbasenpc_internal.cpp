@@ -118,8 +118,6 @@ CBaseNPC_Entity::CBaseNPC::~CBaseNPC()
 	{
 		SH_REMOVE_HOOK_ID((*it));
 	}
-
-	GetEntity()->MyNextBotPointer()->Destroy();
 }
 
 IIntention* CBaseNPC_Entity::CBaseNPC::Hook_GetIntentionInterface(void) const

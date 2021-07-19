@@ -34,8 +34,6 @@ public:
 class INextBot : public INextBotEventResponder
 {
 public:
-	void Destroy();
-
 	INextBot() {}
 	virtual ~INextBot() = 0;
 
@@ -89,7 +87,7 @@ public:
 	virtual const char *GetDebugIdentifier() const;
 	virtual bool IsDebugFilterMatch(const char *filter) const = 0;
 	virtual void DisplayDebugText(const char *text) const = 0;
-	void DebugConColorMsg( NextBotDebugType debugType, const Color &color, const char *fmt, ... );
+	void DebugConColorMsg( NextBotDebugType debugType, const Color &color, const char *fmt, va_list arglist );
 	void ResetDebugHistory( );
 
 	enum

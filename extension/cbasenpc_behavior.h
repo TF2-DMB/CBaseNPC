@@ -6,7 +6,7 @@
 #include "cbasenpc_internal.h"
 #include "idatamapcontainer.h"
 
-#include <utlstack.h>
+#include <sh_stack.h>
 
 class CBaseNPCPluginActionFactory;
 
@@ -17,7 +17,23 @@ public:
 private:
 	ActionResult< CBaseNPC_Entity > m_pluginActionResult;
 
-	CUtlStack<EventDesiredResult< CBaseNPC_Entity >> m_eventResultStack;
+	/**
+	 * Stores event result states.
+	 *
+	 * A stack is used to maintain event result states for each event callback.
+	 * This is because events are not atomic; an event can trigger another event
+	 * during execution of a callback. Since the plugin natives write results
+	 * to the shared m_pluginEventResult member, an inner event can overwrite
+	 * the result of the outer event causing unexpected behavior, especially if
+	 * the outer event does not actually use a Try*() native. Thus, the stack
+	 * is used to restore the event result state when exiting an event
+	 * callback.
+	 * 
+	 * A stack is not used for m_pluginActionResult because OnStart(), Update(),
+	 * OnSuspend(), OnResume(), and OnEnd() are all atomic; these callbacks
+	 * will never execute within each other.
+	 */ 
+	SourceHook::CStack<EventDesiredResult< CBaseNPC_Entity >> m_eventResultStack;
 	EventDesiredResult< CBaseNPC_Entity > m_pluginEventResult;
 
 	void * m_pData;

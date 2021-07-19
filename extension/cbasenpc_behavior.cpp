@@ -1,6 +1,5 @@
 
 #include "cbasenpc_behavior.h"
-#include <sh_stack.h>
 
 #define CBPUSHCELL(cell) pCallback->PushCell((cell_t)(cell));
 #define CBPUSHFLOAT(fl) pCallback->PushCell(sp_ftoc(fl));
@@ -43,7 +42,7 @@ QueryResultType CBaseNPCPluginAction::##funcName##( const INextBot *me, __VA_ARG
 
 #define BEGINEVENTCALLBACKEX(funcName, typeName, ...) \
 EventDesiredResult< CBaseNPC_Entity > CBaseNPCPluginAction::##funcName##(CBaseNPC_Entity* me, __VA_ARGS__) {	\
-	m_eventResultStack.Push( m_pluginEventResult ); \
+	m_eventResultStack.push( m_pluginEventResult ); \
 	ResetPluginEventResult(); \
 	IPluginFunction* pCallback = m_pFactory->GetEventCallback( CBaseNPCPluginActionFactory::EventResponderCallbackType::typeName ); \
 	if (pCallback && pCallback->IsRunnable()) { \
@@ -62,14 +61,16 @@ EventDesiredResult< CBaseNPC_Entity > CBaseNPCPluginAction::##funcName##(CBaseNP
 		pCallback->Execute(nullptr); \
 	}	\
 	EventDesiredResult< CBaseNPC_Entity > result = m_pluginEventResult; \
-	m_eventResultStack.Pop( m_pluginEventResult ); \
+	m_pluginEventResult = m_eventResultStack.front(); \
+	m_eventResultStack.pop(); \
 	return result; \
 }
 
 #define ENDEVENTCALLBACK_NOEXECUTE() \
 	}	\
 	EventDesiredResult< CBaseNPC_Entity > result = m_pluginEventResult; \
-	m_eventResultStack.Pop( m_pluginEventResult ); \
+	m_pluginEventResult = m_eventResultStack.front(); \
+	m_eventResultStack.pop(); \
 	return result; \
 }
 
@@ -210,7 +211,7 @@ Action< CBaseNPC_Entity >* CBaseNPCPluginAction::InitialContainedAction( CBaseNP
 {
 	cell_t result = 0;
 
-	IPluginFunction* pCallback = m_pFactory->GetCallback( CBaseNPCPluginActionFactory::CallbackType::OnEnd );
+	IPluginFunction* pCallback = m_pFactory->GetCallback( CBaseNPCPluginActionFactory::CallbackType::InitialContainedAction );
 	if (pCallback && pCallback->IsRunnable()) 
 	{
 		CBPUSHCELL(this)

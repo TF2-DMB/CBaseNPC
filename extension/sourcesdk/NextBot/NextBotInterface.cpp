@@ -11,10 +11,6 @@ bool IgnoreActorsTraceFilterFunction(IHandleEntity *pServerEntity, int contentsM
 	return (entity->MyCombatCharacterPointer() == NULL);
 }
 
-void INextBot::Destroy()
-{
-	// ResetDebugHistory();
-}
 
 void INextBot::RegisterComponent(INextBotComponent *comp)
 {
@@ -27,7 +23,9 @@ const char *INextBot::GetDebugIdentifier( void ) const
 	const int nameSize = 256;
 	static char name[ nameSize ];
 	
-	Q_snprintf( name, nameSize, "%s(#%d)", const_cast< INextBot * >( this )->GetEntity()->GetClassname(), GetEntity()->entindex() );
+	CBaseCombatCharacterHack* pEnt = GetEntity(); 
+
+	Q_snprintf( name, nameSize, "%s(#%d)", pEnt->GetClassname(), pEnt->entindex() );
 
 	return name;
 }
@@ -36,6 +34,14 @@ void INextBot::ResetDebugHistory( void )
 {
 }
 
-void INextBot::DebugConColorMsg( NextBotDebugType debugType, const Color &color, const char *fmt, ... )
+void INextBot::DebugConColorMsg( NextBotDebugType debugType, const Color &color, const char *fmt, va_list arglist )
 {
+	if ( IsDebugging( debugType ) )
+	{
+		char data[ 512 ];
+
+		Q_vsnprintf(data, sizeof( data ), fmt, arglist);
+
+		ConColorMsg( color, "%s", data );
+	}
 }
