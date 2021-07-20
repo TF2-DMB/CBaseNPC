@@ -104,7 +104,7 @@ public:
 	bool IsDebugging(unsigned int type) { return MyNextBotPointer()->IsDebugging(type); }
 	const char* GetDebugIdentifier() { return MyNextBotPointer()->GetDebugIdentifier(); }
 	void DebugConColorMsg( NextBotDebugType debugType, const Color &color, const char *fmt, ... );
-	void DisplayDebugText( const char *text ) const { };
+	void DisplayDebugText( const char *text ) { MyNextBotPointer()->DisplayDebugText( text ); };
 
 	static void** vtable;
 	static MCall<void> mOriginalSpawn;
