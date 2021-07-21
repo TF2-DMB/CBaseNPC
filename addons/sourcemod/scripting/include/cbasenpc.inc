@@ -2397,7 +2397,7 @@ methodmap INextBot < INextBotEventResponder
 
 	public native ILocomotion GetLocomotionInterface();
 	public native IBody GetBodyInterface();
-	//public native IIntention GetIntentionInterface();
+	public native IIntention GetIntentionInterface();
 	public native IVision GetVisionInterface();
 
 	public native bool SetPosition(const float pos[3]);
@@ -2505,6 +2505,20 @@ methodmap IVision < INextBotComponent
 	public native bool IsLookingAt(float vecPos[3], float cosTolerance = 0.95);
 	public native bool IsLookingAtTarget(int iActor, float cosTolerance = 0.95);
 };
+
+methodmap IIntention < INextBotComponent
+{
+	public native void Reset();
+	public native void Update();
+	public native bool ShouldPickUp( int item );
+	public native bool ShouldHurry();
+	public native bool ShouldRetreat();
+	public native bool ShouldAttack( int them );
+	public native bool IsHindrance( int blocker );
+	public native void SelectTargetPoint( int subject, float buffer[3] );
+	public native bool IsPositionAllowed( const float pos[3] );
+	public native CKnownEntity SelectMoreDangerousThreat( int subject, CKnownEntity threat1, CKnownEntity threat2 );
+}
 
 enum TraverseWhenType 
 { 

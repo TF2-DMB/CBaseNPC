@@ -6,6 +6,7 @@
 #include "baseanimoverlay.h"
 #include "eventresponder.h"
 #include "body.h"
+#include "intention.h"
 #include "locomotion.h"
 #include "nextbot.h"
 #include "path.h"
@@ -355,6 +356,17 @@ const sp_nativeinfo_t g_NativesInfo[] =
 	NATIVENAME(IBody, GetHullMaxs)
 	NATIVENAME(IBody, GetSolidMask)
 	NATIVENAME(IBody, GetCollisionGroup)
+
+	NATIVENAME(IIntention, Reset)
+	NATIVENAME(IIntention, Update)
+	NATIVENAME(IIntention, ShouldPickUp)
+	NATIVENAME(IIntention, ShouldHurry)
+	NATIVENAME(IIntention, ShouldRetreat)
+	NATIVENAME(IIntention, ShouldAttack)
+	NATIVENAME(IIntention, IsHindrance)
+	NATIVENAME(IIntention, SelectTargetPoint)
+	NATIVENAME(IIntention, IsPositionAllowed)
+	NATIVENAME(IIntention, SelectMoreDangerousThreat)
 
 	NATIVENAME(ILocomotion, Approach)
 	NATIVENAME(ILocomotion, DriveTo)
