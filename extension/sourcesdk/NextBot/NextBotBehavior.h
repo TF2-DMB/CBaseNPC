@@ -5,6 +5,7 @@
 #include "NextBotEventResponderInterface.h"
 #include "NextBotContextualQueryInterface.h"
 #include "NextBotDebug.h"
+#include <util.h>
 #include <tier0/vprof.h>
 
 //#define DEBUG_BEHAVIOR_MEMORY

@@ -13,13 +13,13 @@
 	}
 
 #define BEGINACTIONCALLBACKEX(funcName, typeName, ...) \
-ActionResult< CBaseNPC_Entity > CBaseNPCPluginAction::##funcName##(CBaseNPC_Entity* me, __VA_ARGS__) { \
+ActionResult< CBaseNPC_Entity > CBaseNPCPluginAction:: funcName (CBaseNPC_Entity* me, ##__VA_ARGS__) { \
 	ResetPluginActionResult(); \
 	IPluginFunction* pCallback = m_pFactory->GetCallback( CBaseNPCPluginActionFactory::CallbackType::typeName ); \
 	if (pCallback && pCallback->IsRunnable()) { \
 		pCallback->PushCell((cell_t)this); pCallback->PushCell(gamehelpers->EntityToBCompatRef(me));
 
-#define BEGINACTIONCALLBACK(funcName, ...) BEGINACTIONCALLBACKEX(funcName, funcName, __VA_ARGS__)
+#define BEGINACTIONCALLBACK(funcName, ...) BEGINACTIONCALLBACKEX(funcName, funcName, ##__VA_ARGS__)
 
 #define ENDACTIONCALLBACK() \
 		pCallback->Execute(nullptr); \
@@ -28,7 +28,7 @@ ActionResult< CBaseNPC_Entity > CBaseNPCPluginAction::##funcName##(CBaseNPC_Enti
 }
 
 #define BEGINQUERYCALLBACK(funcName, ...) \
-QueryResultType CBaseNPCPluginAction::##funcName##( const INextBot *me, __VA_ARGS__) const {	\
+QueryResultType CBaseNPCPluginAction:: funcName ( const INextBot *me, ##__VA_ARGS__) const {	\
 	cell_t result = ANSWER_UNDEFINED; \
 	IPluginFunction* pCallback = m_pFactory->GetQueryCallback( CBaseNPCPluginActionFactory::QueryCallbackType::funcName ); \
 	if (pCallback && pCallback->IsRunnable()) { \
@@ -41,7 +41,7 @@ QueryResultType CBaseNPCPluginAction::##funcName##( const INextBot *me, __VA_ARG
 }
 
 #define BEGINEVENTCALLBACKEX(funcName, typeName, ...) \
-EventDesiredResult< CBaseNPC_Entity > CBaseNPCPluginAction::##funcName##(CBaseNPC_Entity* me, __VA_ARGS__) {	\
+EventDesiredResult< CBaseNPC_Entity > CBaseNPCPluginAction:: funcName (CBaseNPC_Entity* me, ##__VA_ARGS__) {	\
 	m_eventResultStack.push( m_pluginEventResult ); \
 	ResetPluginEventResult(); \
 	IPluginFunction* pCallback = m_pFactory->GetEventCallback( CBaseNPCPluginActionFactory::EventResponderCallbackType::typeName ); \
@@ -49,7 +49,7 @@ EventDesiredResult< CBaseNPC_Entity > CBaseNPCPluginAction::##funcName##(CBaseNP
 		pCallback->PushCell((cell_t)this); \
 		pCallback->PushCell(gamehelpers->EntityToBCompatRef(me));
 
-#define BEGINEVENTCALLBACK(funcName, ...) BEGINEVENTCALLBACKEX(funcName, funcName, __VA_ARGS__)
+#define BEGINEVENTCALLBACK(funcName, ...) BEGINEVENTCALLBACKEX(funcName, funcName, ##__VA_ARGS__)
 
 #define EVENTPUSHCELL(cell) CBPUSHCELL(cell)
 #define EVENTPUSHFLOAT(fl) CBPUSHFLOAT(fl)

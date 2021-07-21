@@ -7,9 +7,9 @@
 #include <tier0/platform.h>
 #include <mathlib/vector.h>
 #include <mathlib/mathlib.h>
+#include <const.h>
 #include <ICollideable.h>
 #include "ispatialpartition.h"
-#include <const.h>
 
 class CBaseEntity;
 class IHandleEntity;
