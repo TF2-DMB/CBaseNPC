@@ -5,6 +5,7 @@
 #include "NextBotInterface.h"
 
 class INextBotEntityFilter;
+class CBaseCombatCharacterHack;
 
 class IVision : public INextBotComponent
 {
@@ -47,7 +48,7 @@ public:
 	virtual bool IsLineOfSightClear( const Vector &pos ) = 0;
 	virtual bool IsLineOfSightClearToEntity( const CBaseEntity *subject, Vector *visibleSpot = NULL ) = 0;
 	virtual bool IsLookingAt( const Vector &pos, float cosTolerance = 0.95f ) = 0;
-	virtual bool IsLookingAt( const CBaseCombatCharacter *actor, float cosTolerance = 0.95f ) = 0;
+	virtual bool IsLookingAt( const CBaseCombatCharacterHack *actor, float cosTolerance = 0.95f ) = 0;
 
 private:
 	CountdownTimer m_scanTimer;

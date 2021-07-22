@@ -8,6 +8,7 @@
 #include "npc_tools_internal.h"
 #include "baseentityoutput.h"
 #include "pluginentityfactory.h"
+#include "cbasenpc_behavior.h"
 
 CGlobalVars* gpGlobals = nullptr;
 IGameConfig* g_pGameConf = nullptr;
@@ -16,7 +17,7 @@ ISDKTools* g_pSDKTools = nullptr;
 ISDKHooks* g_pSDKHooks = nullptr;
 IServerGameEnts* gameents = nullptr;
 IEngineTrace* enginetrace = nullptr;
-IdentityType_t g_CoreIdent;
+IdentityToken_t * g_pCoreIdent = nullptr;
 CBaseEntityList* g_pEntityList = nullptr;
 IServerTools* servertools = nullptr;
 IMDLCache* mdlcache = nullptr;
@@ -27,10 +28,11 @@ IBaseNPC_Tools* g_pBaseNPCTools = new BaseNPC_Tools_API;
 DEFINEHANDLEOBJ(SurroundingAreasCollector, CUtlVector< CNavArea* >);
 DEFINEHANDLEOBJ(TSurroundingAreasCollector, CUtlVector< CTNavArea >);
 
-ConVar* NextBotPathDrawIncrement = nullptr;
-ConVar* NextBotPathSegmentInfluenceRadius = nullptr;
+ConVar* g_cvDeveloper = nullptr;
+extern ConVar* NextBotDebugHistory;
+extern ConVar* NextBotPathDrawIncrement;
+extern ConVar* NextBotPathSegmentInfluenceRadius;
 
-HandleType_t g_CellArrayHandle;
 HandleType_t g_KeyValueType;
 
 CBaseNPCExt g_CBaseNPCExt;
@@ -92,6 +94,7 @@ bool CBaseNPCExt::SDK_OnLoad(char *error, size_t maxlength, bool late)
 	CREATEHANDLETYPE(SurroundingAreasCollector);
 	CREATEHANDLETYPE(TSurroundingAreasCollector);
 	CREATEHANDLETYPE(PluginEntityFactory);
+	CREATEHANDLETYPE(BaseNPCPluginActionFactory);
 
 	sharesys->AddDependency(myself, "bintools.ext", true, true);
 	sharesys->AddDependency(myself, "sdktools.ext", true, true);
@@ -117,6 +120,8 @@ bool CBaseNPCExt::SDK_OnMetamodLoad(ISmmAPI *ismm, char *error, size_t maxlen, b
 
 	ConVar_Register(0, this);
 
+	g_cvDeveloper = g_pCVar->FindVar("developer");
+
 	NextBotSpeedLookAheadRange = g_pCVar->FindVar("nb_speed_look_ahead_range");
 	NextBotGoalLookAheadRange = g_pCVar->FindVar("nb_goal_look_ahead_range");
 	NextBotLadderAlignRange = g_pCVar->FindVar("nb_ladder_align_range");
@@ -124,6 +129,7 @@ bool CBaseNPCExt::SDK_OnMetamodLoad(ISmmAPI *ismm, char *error, size_t maxlen, b
 	NextBotAllowClimbing = g_pCVar->FindVar("nb_allow_climbing");
 	NextBotAllowGapJumping = g_pCVar->FindVar("nb_allow_gap_jumping");
 	NextBotDebugClimbing = g_pCVar->FindVar("nb_debug_climbing");
+	NextBotDebugHistory = g_pCVar->FindVar("nb_debug_history");
 	NextBotPathDrawIncrement = g_pCVar->FindVar("nb_path_draw_inc");
 	NextBotPathSegmentInfluenceRadius = g_pCVar->FindVar("nb_path_segment_influence_radius");
 
@@ -170,21 +176,44 @@ void CBaseNPCExt::OnEntityDestroyed(CBaseEntity* pEntity)
 	}
 }
 
+// https://github.com/alliedmodders/sourcemod/blob/6928d21bcf746920b0f2f54e2c28b34097a66be2/core/logic/HandleSys.h#L103
+struct QHandleType
+{
+	IHandleTypeDispatch *dispatch;
+	unsigned int freeID;
+	unsigned int children;
+	TypeAccess typeSec;
+	HandleAccess hndlSec;
+	unsigned int opened;
+	std::unique_ptr<std::string> name;
+};
+
+// https://github.com/alliedmodders/sourcemod/blob/6928d21bcf746920b0f2f54e2c28b34097a66be2/core/logic/HandleSys.h#L125
+struct HandleSystemHack
+{
+	void** vptr;
+	void *m_Handles;
+	QHandleType *m_Types;
+};
+
 void CBaseNPCExt::SDK_OnAllLoaded()
 {
 	SM_GET_LATE_IFACE(BINTOOLS, g_pBinTools);
 	SM_GET_LATE_IFACE(SDKTOOLS, g_pSDKTools);
 	SM_GET_LATE_IFACE(SDKHOOKS, g_pSDKHooks);
 
+	handlesys->FindHandleType("KeyValues", &g_KeyValueType);
+
+	// HACK: Get g_pCoreIdent from KeyValues QHandleType
+	// g_KeyValueType is an index of QHandleType array m_Types
+	// https://github.com/alliedmodders/sourcemod/blob/6928d21bcf746920b0f2f54e2c28b34097a66be2/core/logic/HandleSys.cpp#L254
+	g_pCoreIdent = reinterpret_cast< HandleSystemHack * >(handlesys)->m_Types[g_KeyValueType].typeSec.ident;
+
 	if (g_pSDKHooks)
 	{
 		g_pSDKHooks->AddEntityListener(this);
 	} 
 
-	handlesys->FindHandleType("CellArray", &g_CellArrayHandle);
-	handlesys->FindHandleType("KeyValues", &g_KeyValueType);
-	g_CoreIdent = sharesys->FindIdentType("CORE");
-	
 	g_pEntityList = (CBaseEntityList *)gamehelpers->GetGlobalEntityList();
 	CTNavMesh::RefreshHooks();
 

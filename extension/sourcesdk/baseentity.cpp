@@ -61,6 +61,7 @@ DEFINEVAR(CBaseEntityHack, m_MoveType);
 DEFINEVAR(CBaseEntityHack, m_hMoveParent);
 DEFINEVAR(CBaseEntityHack, m_hMoveChild);
 DEFINEVAR(CBaseEntityHack, m_hMovePeer);
+DEFINEVAR(CBaseEntityHack, m_Collision);
 DEFINEVAR(CBaseEntityHack, m_vecAbsOrigin);
 DEFINEVAR(CBaseEntityHack, m_angAbsRotation);
 DEFINEVAR(CBaseEntityHack, m_vecAbsVelocity);
@@ -152,6 +153,7 @@ bool CBaseEntityHack::Init(SourceMod::IGameConfig* config, char* error, size_t m
 	OFFSETVAR_DATA(CBaseEntity, m_hMoveParent);
 	OFFSETVAR_DATA(CBaseEntity, m_hMoveChild);
 	OFFSETVAR_DATA(CBaseEntity, m_hMovePeer);
+	VAR_OFFSET_SET(m_Collision, VAR_OFFSET(m_hMovePeer) + sizeof(EHANDLE));
 	OFFSETVAR_DATA(CBaseEntity, m_vecAbsOrigin);
 	OFFSETVAR_DATA(CBaseEntity, m_angAbsRotation);
 	OFFSETVAR_DATA(CBaseEntity, m_vecAbsVelocity);

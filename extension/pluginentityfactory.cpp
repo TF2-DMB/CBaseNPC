@@ -2,6 +2,7 @@
 #include "pluginentityfactory.h"
 #include "entityfactorydictionary.h"
 #include "cbasenpc_internal.h"
+#include "cbasenpc_behavior.h"
 #include "baseentityoutput.h"
 #include "sh_pagealloc.h"
 
@@ -253,21 +254,18 @@ CPluginEntityFactory* CPluginEntityFactory::ToPluginEntityFactory( IEntityFactor
 }
 
 CPluginEntityFactory::CPluginEntityFactory(const char* classname, IPluginFunction *postConstructor, IPluginFunction *onRemove) :
+	IEntityDataMapContainer(),
 	m_iClassname(classname),
 	m_pPostConstructor(postConstructor),
 	m_pOnRemove(onRemove)
 {
 	m_Derive.m_DeriveFrom = DERIVETYPE_NONE;
+	m_pBaseNPCInitialActionFactory = nullptr;
 	m_bInstalled = false;
 
 	m_Handle = BAD_HANDLE;
 
 	m_pCreatingFactory = nullptr;
-
-	m_pEntityDataMap = nullptr;
-	m_bHasDataMapDesc = false;
-	m_DataMapDescSizeInBytes = 0;
-	m_iDataMapStartOffset = 0;
 
 	m_bIsAbstract = false;
 	m_pBaseFactory = nullptr;
@@ -279,10 +277,6 @@ CPluginEntityFactory::~CPluginEntityFactory()
 {
 	Uninstall();
 
-	DestroyDataMap();
-
-	m_pEntityInputFuncDelegates.PurgeAndDeleteElements();
-	
 	g_PluginEntityFactories.FindAndRemove(this);
 }
 
@@ -542,11 +536,6 @@ size_t CPluginEntityFactory::GetBaseEntitySize() const
 	return 0; // should never reach here
 }
 
-size_t CPluginEntityFactory::GetEntitySize()
-{
-	return GetBaseEntitySize() + GetUserEntityDataSize();
-}
-
 IServerNetworkable* CPluginEntityFactory::Create(const char* classname)
 {
 	IServerNetworkable * pNet = nullptr;
@@ -575,9 +564,33 @@ IServerNetworkable* CPluginEntityFactory::Create(const char* classname)
 			// At the end of a creation chain. This factory is responsible for allocating the entity so that
 			// it fits the datamap size.
 
+			bool bIsBaseNPCFactory = pBaseFactory == g_pBaseNPCFactory;
+			if (bIsBaseNPCFactory)
+			{
+				CBaseNPCPluginActionFactory* pInitialActionFactory = nullptr;
+
+				CPluginEntityFactory* pFactory = m_pCreatingFactory;
+				while (pFactory)
+				{
+					if ( pFactory->GetBaseNPCInitialActionFactory() )
+					{
+						pInitialActionFactory = pFactory->GetBaseNPCInitialActionFactory();
+						break;
+					}
+					pFactory = ToPluginEntityFactory( pFactory->GetBaseFactory() );
+				}
+
+				g_pBaseNPCFactory->SetInitialActionFactory( pInitialActionFactory );
+			}
+
 			g_EntityMemAllocHook.StartWatching(pBaseFactory->GetEntitySize(), entitySize);
 			pNet = pBaseFactory->Create(classname);
 			g_EntityMemAllocHook.StopWatching();
+
+			if (bIsBaseNPCFactory)
+			{
+				g_pBaseNPCFactory->SetInitialActionFactory( nullptr );
+			}
 
 			if (!g_EntityMemAllocHook.DidHandleAlloc())
 			{
@@ -597,19 +610,20 @@ IServerNetworkable* CPluginEntityFactory::Create(const char* classname)
 	{
 		CBaseEntityHack* pEnt = reinterpret_cast<CBaseEntityHack*>(pNet->GetBaseEntity());
 
-		if (m_bHasDataMapDesc)
+		if (HasDataDesc())
 		{
-			if (!m_pEntityDataMap)
-				CreateDataMap( gamehelpers->GetDataMap(pEnt) );
+			CreateDataDescMap( gamehelpers->GetDataMap(pEnt) );
 		}
 
 		PluginFactoryEntityRecord_t * pEntityRecord = GetPluginFactoryEntityRecord(pEnt, true);
 		if (!pEntityRecord->pFactory)
 			pEntityRecord->pFactory = m_pCreatingFactory;
 
-		if (m_pEntityDataMap)
+		datamap_t * pDataMap = GetDataDescMap();
+
+		if (pDataMap)
 		{
-			pEntityRecord->m_pDataMap = m_pEntityDataMap;
+			pEntityRecord->m_pDataMap = pDataMap;
 
 			if (!pEntityRecord->m_bDataMapHooked)
 			{
@@ -641,80 +655,7 @@ IServerNetworkable* CPluginEntityFactory::Create(const char* classname)
 	return pNet;
 }
 
-bool CPluginEntityFactory::CanUseDataMap() const
-{
-	return true;
-}
-
-datamap_t* CPluginEntityFactory::GetDataMap() const
-{
-	if (m_pEntityDataMap)
-		return m_pEntityDataMap;
-	
-	CPluginEntityFactory* pBasePluginFactory = ToPluginEntityFactory(GetBaseFactory());
-	if (pBasePluginFactory)
-		return pBasePluginFactory->GetDataMap();
-
-	return nullptr;
-}
-
-datamap_t* CPluginEntityFactory::CreateDataMap(datamap_t* pBaseMap)
-{
-	if (!m_pEntityDataMap)
-	{
-		m_pEntityDataMap = new datamap_t;
-		m_pEntityDataMap->baseMap = pBaseMap;
-		m_pEntityDataMap->dataClassName = m_iDataClassname.c_str();
-		m_pEntityDataMap->packed_offsets_computed = false;
-		m_pEntityDataMap->packed_size = 0;
-
-		int numDataDesc = m_vecEntityDataTypeDescriptors.Count();
-		typedescription_t * dataDesc = new typedescription_t[numDataDesc];
-		m_pEntityDataMap->dataDesc = dataDesc;
-		m_pEntityDataMap->dataNumFields = numDataDesc;
-
-		for (int i = 0; i < numDataDesc; i++)
-		{
-			dataDesc[i] = m_vecEntityDataTypeDescriptors[i];
-		}
-	}
-
-	return m_pEntityDataMap;
-}
-
-void CPluginEntityFactory::DestroyDataMap()
-{
-	if (!m_pEntityDataMap)
-		return;
-	
-	for (int i = 0; i < m_pEntityDataMap->dataNumFields; i++)
-	{
-		auto dataDesc = &m_pEntityDataMap->dataDesc[i];
-		DestroyDataMapTypeDescriptor(dataDesc);
-	}
-
-	delete[] m_pEntityDataMap->dataDesc;
-	delete m_pEntityDataMap;
-
-	m_pEntityDataMap = nullptr;
-}
-
-void CPluginEntityFactory::DestroyDataMapTypeDescriptor(typedescription_t *desc) const
-{
-	if (desc->fieldName)
-	{
-		free((void*)desc->fieldName);
-		desc->fieldName = nullptr;
-	}
-
-	if (desc->externalName)
-	{
-		free((void*)desc->externalName);
-		desc->externalName = nullptr;
-	}
-}
-
-bool CPluginEntityFactory::BeginDataMapDesc(const char* dataClassName)
+bool CPluginEntityFactory::BeginDataDesc(const char* dataClassName)
 {
 	IEntityFactory *pBaseFactory = FindBaseFactory();
 	if (!pBaseFactory && IsBaseFactoryRequired())
@@ -724,210 +665,21 @@ bool CPluginEntityFactory::BeginDataMapDesc(const char* dataClassName)
 	// the base factory hasn't been set yet. The base factory is only set when
 	// the factory is installed.
 	m_iDataMapStartOffset = pBaseFactory ? pBaseFactory->GetEntitySize() : GetBaseEntitySize();
-
-	DestroyDataMap();
-
-	m_bHasDataMapDesc = false;
-
-	m_pEntityInputFuncDelegates.PurgeAndDeleteElements();
-
-	for (int i = 0; i < m_vecEntityDataTypeDescriptors.Count(); i++)
-	{
-		DestroyDataMapTypeDescriptor( &m_vecEntityDataTypeDescriptors[i] );
-	}
-
-	m_vecEntityDataTypeDescriptors.Purge();
-
 	m_iDataClassname = dataClassName;
-	m_DataMapDescSizeInBytes = 0;
+
+	BeginDataDesc();
 
 	return true;
 }
 
-void CPluginEntityFactory::EndDataMapDesc()
-{
-	m_bHasDataMapDesc = true;
-
-	if (m_vecEntityDataTypeDescriptors.Count() == 0)
-	{
-		// For "empty" tables
-		m_vecEntityDataTypeDescriptors.AddToTail( { FIELD_VOID, 0, {0,0}, 0, 0, 0, 0, 0, 0 } );
-	}
-}
-
-int g_DataMapDescFieldSizes[] = {
-	0,						// FIELD_VOID
-	sizeof(float), 			// FIELD_FLOAT
-	sizeof(int),			// FIELD_STRING
-	3 * sizeof(float),		// FIELD_VECTOR
-	4 * sizeof(float),		// FIELD_QUATERNION
-	sizeof(int),			// FIELD_INTEGER
-	sizeof(char),			// FIELD_BOOLEAN
-	sizeof(short),			// FIELD_SHORT
-	sizeof(char),			// FIELD_CHARACTER
-	sizeof(int),			// FIELD_COLOR32
-	0,						// FIELD_EMBEDDED
-	0,						// FIELD_CUSTOM
-	sizeof(int),			// FIELD_CLASSPTR
-	sizeof(int),			// FIELD_EHANDLE
-	sizeof(int),			// FIELD_EDICT
-	3 * sizeof(float),		// FIELD_POSITION_VECTOR
-	sizeof(float),			// FIELD_TIME
-	sizeof(int),			// FIELD_TICK
-	sizeof(int),			// FIELD_MODELNAME
-	sizeof(int),			// FIELD_SOUNDNAME
-	sizeof(int),			// FIELD_INPUT
-	
-	// FIELD_FUNCTION
-#ifdef POSIX
-	sizeof(uint64),
-#else
-	sizeof(int *),
-#endif
-
-	16 * sizeof(float),		// FIELD_VMATRIX
-	16 * sizeof(float),		// FIELD_VMATRIX_WORLDSPACE
-	12 * sizeof(float),		// FIELD_MATRIX3X4_WORLDSPACE
-	2 * sizeof(float),		// FIELD_INTERVAL
-	sizeof(int),			// FIELD_MODELINDEX
-	sizeof(int),			// FIELD_MATERIALINDEX
-	2 * sizeof(float),		// FIELD_VECTOR2D
-
-};
-
-void CPluginEntityFactory::DefineField(const char* name, fieldtype_t fieldType, unsigned short count, short flags, const char* externalName, float fieldTolerance)
-{
-	int fieldOffset = GetUserEntityDataOffset() + m_DataMapDescSizeInBytes;
-	int fieldSizeInBytes = g_DataMapDescFieldSizes[fieldType] * count;
-
-	name = name ? strdup(name) : NULL;
-	externalName = externalName ? strdup(externalName) : NULL;
-
-	m_vecEntityDataTypeDescriptors.AddToTail({ 
-		fieldType, 
-		name, 
-		{ fieldOffset, 0 }, 
-		count,
-		flags,
-		externalName,
-		NULL, NULL, NULL,
-		fieldSizeInBytes,
-		NULL,
-		0,
-		fieldTolerance
-	});
-
-	m_DataMapDescSizeInBytes += fieldSizeInBytes;
-}
-
-void CPluginEntityFactory::DefineField(const char* name, fieldtype_t fieldType, int numElements)
-{
-	DefineField(name, fieldType, numElements, FTYPEDESC_SAVE, NULL, 0);
-}
-
-void CPluginEntityFactory::DefineKeyField(const char* name, fieldtype_t fieldType, const char* mapname)
-{
-	DefineField(name, fieldType, 1, FTYPEDESC_KEY | FTYPEDESC_SAVE, strdup(mapname), 0);
-}
-
-void CPluginEntityFactory::DefineInputFunc(const char* name, fieldtype_t fieldType, const char* mapname, IPluginFunction *inputFunc)
-{
-	name = name ? strdup(name) : NULL;
-	mapname = mapname ? strdup(mapname) : NULL;
-
-	typedescription_t typeDesc = { 
-		fieldType, 
-		name, 
-		{ 0, 0 }, 
-		1,
-		FTYPEDESC_INPUT,
-		mapname,
-		NULL, 
-		NULL, NULL,
-		0,
-		NULL,
-		0,
-		0
-	};
-
-	InputFuncDelegate* pDelegate = new InputFuncDelegate(inputFunc);
-	m_pEntityInputFuncDelegates.AddToTail(pDelegate);
-	
-	// this shuts up the compiler
-	*(uint32_t*)(&(typeDesc.inputFunc)) = (uint32_t)pDelegate->m_pInputFuncPtr;
-
-	m_vecEntityDataTypeDescriptors.AddToTail(typeDesc);
-}
-
-void CPluginEntityFactory::DefineOutput(const char* name, const char* mapname)
-{
-	int fieldOffset = GetUserEntityDataOffset() + m_DataMapDescSizeInBytes;
-	int fieldSizeInBytes = sizeof(CBaseEntityOutputHack);
-
-	name = name ? strdup(name) : NULL;
-	mapname = mapname ? strdup(mapname) : NULL;
-
-	m_vecEntityDataTypeDescriptors.AddToTail({ 
-		FIELD_CUSTOM, 
-		name, 
-		{ fieldOffset, 0 }, 
-		1,
-		FTYPEDESC_OUTPUT | FTYPEDESC_SAVE | FTYPEDESC_KEY,
-		mapname,
-		eventFuncs, 
-		NULL, NULL,
-		0,
-		NULL,
-		0,
-		0
-	});
-
-	m_DataMapDescSizeInBytes += fieldSizeInBytes;
-}
-
-int CPluginEntityFactory::GetUserEntityDataOffset() const
-{
-	return m_iDataMapStartOffset;
-}
-
-size_t CPluginEntityFactory::GetUserEntityDataSize() const
-{
-	if (!m_bHasDataMapDesc)
-		return 0;
-	
-	return m_DataMapDescSizeInBytes;
-}
-
 void CPluginEntityFactory::CreateUserEntityData(CBaseEntity* pEntity)
 {
-	if (!m_pEntityDataMap)
-		return;
-	
-	for (int i = 0; i < m_pEntityDataMap->dataNumFields; i++)
-	{
-		typedescription_t * pTypeDesc = &m_pEntityDataMap->dataDesc[i];
-		if ( ( pTypeDesc->fieldType == FIELD_CUSTOM ) && ( pTypeDesc->flags & FTYPEDESC_OUTPUT ) )
-		{
-			CBaseEntityOutputHack *pOutput = (CBaseEntityOutputHack *)((uint8_t*)pEntity + pTypeDesc->fieldOffset[0]);
-			pOutput->Init();
-		}
-	}
+	CreateFields(pEntity);
 }
 
 void CPluginEntityFactory::DestroyUserEntityData(CBaseEntity* pEntity)
 {
-	if (!m_pEntityDataMap)
-		return;
-
-	for (int i = 0; i < m_pEntityDataMap->dataNumFields; i++)
-	{
-		typedescription_t * pTypeDesc = &m_pEntityDataMap->dataDesc[i];
-		if ( ( pTypeDesc->fieldType == FIELD_CUSTOM ) && ( pTypeDesc->flags & FTYPEDESC_OUTPUT ) )
-		{
-			CBaseEntityOutputHack *pOutput = (CBaseEntityOutputHack *)((uint8_t*)pEntity + pTypeDesc->fieldOffset[0]);
-			pOutput->Destroy();
-		}
-	}
+	DestroyFields(pEntity);
 }
 
 void CPluginEntityFactory::Destroy(IServerNetworkable* pNetworkable)
@@ -938,14 +690,23 @@ void CPluginEntityFactory::Destroy(IServerNetworkable* pNetworkable)
 	}
 }
 
-SourceHook::CPageAlloc g_InputFuncAlloc;
-
-void CPluginEntityFactory::InputFuncDelegate::OnInput(InputFuncDelegate* pDelegate, CBaseEntity* pEntity, inputdata_t &data)
+class PluginInputFuncDelegate : public IEntityDataMapInputFuncDelegate
 {
-	IPluginFunction* m_pCallback = pDelegate->m_pCallback;
+private:
+	IPluginFunction* m_pCallback;
 
-	if (m_pCallback && m_pCallback->IsRunnable())
+public:
+	PluginInputFuncDelegate(IPluginFunction* pCallback) : 
+		IEntityDataMapInputFuncDelegate(),
+		m_pCallback(pCallback)
 	{
+	}
+
+	virtual void OnInput(CBaseEntity* pEntity, inputdata_t &data) override final
+	{
+		if (!m_pCallback || !m_pCallback->IsRunnable())
+			return;
+		
 		m_pCallback->PushCell(gamehelpers->EntityToBCompatRef(pEntity));
 		m_pCallback->PushCell(gamehelpers->EntityToBCompatRef(data.pActivator));
 		m_pCallback->PushCell(gamehelpers->EntityToBCompatRef(data.pCaller));
@@ -997,83 +758,11 @@ void CPluginEntityFactory::InputFuncDelegate::OnInput(InputFuncDelegate* pDelega
 
 		m_pCallback->Execute(nullptr);
 	}
-}
+};
 
-CPluginEntityFactory::InputFuncDelegate::InputFuncDelegate(IPluginFunction* pCallback)
-	: m_pCallback(pCallback)
+IEntityDataMapInputFuncDelegate* CPluginEntityFactory::CreateInputFuncDelegate(IPluginFunction* pCallback)
 {
-	uint32_t thisAddr = (uint32_t)this;
-	uint32_t callFuncAddr = (uint32_t)(&InputFuncDelegate::OnInput);
-
-	uint8_t funcBytes[] = { 
-#ifdef WIN32
-		// MSVC __thiscall
-		0x55,									// push ebp
-		0x89, 0xe5,								// mov ebp, esp
-		0x57,									// push edi
-		0x51,									// push ecx
-		0x8B, 0x7D, 0x08,						// mov edi, [ebp+8] (inputdata_t*)
-		0x57,									// push edi
-		0x51,									// push ecx (CBaseEntity*)
-		0x68, 0, 0, 0, 0,						// push thisAddr
-		0xBA, 0, 0, 0, 0, 						// mov edx, callFuncAddr
-		0xFF, 0xD2,								// call edx
-		0x83, 0xC4, 0x0C,						// add esp,12
-		0x59,									// pop ecx
-		0x5f,									// pop edi
-		0x89, 0xec,								// mov esp, ebp
-		0x5d,									// pop ebp
-		0xc2, 0x04, 0x00						// ret 4
-#else
-		// GCC __thiscall
-		0x55,									// push ebp
-		0x89, 0xE5,								// mov ebp, esp
-		0x52,									// push edx
-		0x57,									// push edi
-		0x8B, 0x7D, 0x0C,						// mov edi, [ebp+12] (inputdata_t*)
-		0x57,									// push edi
-		0x8B, 0x7D, 0x08,						// mov edi, [ebp+8] (CBaseEntity*)
-		0x57,									// push edi
-		0x68, 0, 0, 0, 0,						// push thisAddr
-		0xBA, 0, 0, 0, 0,						// mov edx, callFuncAddr
-		0xFF, 0xD2,								// call edx
-		0x83, 0xC4, 0x0C,						// add esp,12
-		0x5A,									// pop edi
-		0x5F,									// pop edx
-		0x89, 0xEC,								// mov esp, ebp
-		0x5D,									// pop ebp
-		0xC3									// ret
-#endif
-	};
-
-	m_iInputFuncSize = sizeof(funcBytes);
-	m_pInputFuncPtr = g_InputFuncAlloc.Alloc(m_iInputFuncSize);
-
-	if (m_pInputFuncPtr)
-	{
-		g_InputFuncAlloc.SetRW(m_pInputFuncPtr);
-
-#ifdef WIN32
-		*((uint32_t*)(&funcBytes[11])) = thisAddr;
-		*((uint32_t*)(&funcBytes[16])) = callFuncAddr;
-#else
-		*((uint32_t*)(&funcBytes[14])) = thisAddr;
-		*((uint32_t*)(&funcBytes[19])) = callFuncAddr;
-#endif
-
-		memcpy(m_pInputFuncPtr, funcBytes, m_iInputFuncSize);
-
-		g_InputFuncAlloc.SetRE(m_pInputFuncPtr);
-	}
-}
-
-CPluginEntityFactory::InputFuncDelegate::~InputFuncDelegate()
-{
-	if (m_pInputFuncPtr)
-	{
-		g_InputFuncAlloc.Free(m_pInputFuncPtr);
-		m_pInputFuncPtr = nullptr;
-	}
+	return new PluginInputFuncDelegate(pCallback);
 }
 
 HandleType_t g_PluginEntityFactoryHandle;
@@ -1082,6 +771,6 @@ CPluginEntityFactoryHandler g_PluginEntityFactoryHandler;
 void CPluginEntityFactoryHandler::OnHandleDestroy(HandleType_t type, void * object)
 {
 	CPluginEntityFactory* factory = (CPluginEntityFactory*)object;
-
+	factory->DestroyDataDesc();
 	delete factory;
 }

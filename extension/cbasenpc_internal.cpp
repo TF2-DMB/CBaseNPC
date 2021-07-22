@@ -1,5 +1,6 @@
 #include "extension.h"
 #include "cbasenpc_internal.h"
+#include "cbasenpc_behavior.h"
 #include "sourcesdk/baseentity.h"
 #include "sourcesdk/tf_gamerules.h"
 #include "NextBot/Path/NextBotPathFollow.h"
@@ -11,6 +12,7 @@
 SH_DECL_HOOK0_void(INextBotComponent, Update, SH_NOATTRIB, 0);
 
 // INextBot
+SH_DECL_HOOK0(INextBot, GetIntentionInterface, const, 0, IIntention*);
 SH_DECL_HOOK0(INextBot, GetLocomotionInterface, const, 0, ILocomotion*);
 SH_DECL_HOOK0(INextBot, GetBodyInterface, const, 0, IBody*);
 
@@ -59,6 +61,7 @@ MCall<int, const CTakeDamageInfo&> CBaseNPC_Entity::mOriginalOnTakeDamage_Alive;
 CBaseNPCFactory::CBaseNPCFactory()
 : CustomFactory("base_npc", &NextBotCombatCharacter::NextBotCombatCharacter_Ctor)
 {
+	m_pInitialActionFactory = nullptr;
 }
 
 void CBaseNPCFactory::Create_Extra(CBaseEntityHack* ent)
@@ -78,7 +81,7 @@ void CBaseNPCFactory::Create_Extra(CBaseEntityHack* ent)
 		CBaseNPC_Entity::mOriginalOnTakeDamage_Alive.Init(original);
 	}
 	vtable_replace(ent, CBaseNPC_Entity::vtable);
-	new (((CBaseNPC_Entity*)ent)->GetNPC()) CBaseNPC_Entity::CBaseNPC((NextBotCombatCharacter*)ent);
+	new (((CBaseNPC_Entity*)ent)->GetNPC()) CBaseNPC_Entity::CBaseNPC((NextBotCombatCharacter*)ent, m_pInitialActionFactory);
 }
 
 void CBaseNPCFactory::Create_PostConstructor(CBaseEntityHack* ent)
@@ -91,22 +94,25 @@ size_t CBaseNPCFactory::GetEntitySize()
 	return sizeof(CBaseNPC_Entity::CBaseNPC) + NextBotCombatCharacter::size_of;
 }
 
-CBaseNPC_Entity::CBaseNPC::CBaseNPC(NextBotCombatCharacter* ent) : CExtNPC()
+CBaseNPC_Entity::CBaseNPC::CBaseNPC(NextBotCombatCharacter* ent, CBaseNPCPluginActionFactory* initialActionFactory) : CExtNPC()
 {
 	INextBot* bot = ent->MyNextBotPointer();
-	this->m_pMover = CBaseNPC_Locomotion::New(bot);
-	this->m_pBody = new CBaseNPC_Body(bot);
-	this->m_type[0] = '\0';
-	this->m_hookids.push_back(SH_ADD_HOOK(INextBot, GetLocomotionInterface, bot, SH_MEMBER(this, &CBaseNPC_Entity::CBaseNPC::Hook_GetLocomotionInterface), false));
-	this->m_hookids.push_back(SH_ADD_HOOK(INextBot, GetBodyInterface, bot, SH_MEMBER(this, &CBaseNPC_Entity::CBaseNPC::Hook_GetBodyInterface), false));
+	m_pIntention = new CBaseNPCIntention(bot, initialActionFactory);
+	m_pMover = CBaseNPC_Locomotion::New(bot);
+	m_pBody = new CBaseNPC_Body(bot);
+	m_type[0] = '\0';
+	m_hookids.push_back(SH_ADD_HOOK(INextBot, GetIntentionInterface, bot, SH_MEMBER(this, &CBaseNPC_Entity::CBaseNPC::Hook_GetIntentionInterface), false));
+	m_hookids.push_back(SH_ADD_HOOK(INextBot, GetLocomotionInterface, bot, SH_MEMBER(this, &CBaseNPC_Entity::CBaseNPC::Hook_GetLocomotionInterface), false));
+	m_hookids.push_back(SH_ADD_HOOK(INextBot, GetBodyInterface, bot, SH_MEMBER(this, &CBaseNPC_Entity::CBaseNPC::Hook_GetBodyInterface), false));
 }
 
 CBaseNPC_Entity::CBaseNPC::~CBaseNPC()
 {
-	this->m_pMover->Destroy();
+	m_pMover->Destroy();
 
-	delete this->m_pMover;
-	delete this->m_pBody;
+	delete m_pIntention;
+	delete m_pMover;
+	delete m_pBody;
 
 	for (auto it = m_hookids.begin(); it != m_hookids.end(); it++)
 	{
@@ -114,14 +120,19 @@ CBaseNPC_Entity::CBaseNPC::~CBaseNPC()
 	}
 }
 
+IIntention* CBaseNPC_Entity::CBaseNPC::Hook_GetIntentionInterface(void) const
+{
+	RETURN_META_VALUE(MRES_SUPERCEDE, m_pIntention);
+}
+
 ILocomotion* CBaseNPC_Entity::CBaseNPC::Hook_GetLocomotionInterface(void) const
 {
-	RETURN_META_VALUE(MRES_SUPERCEDE, this->m_pMover);
+	RETURN_META_VALUE(MRES_SUPERCEDE, m_pMover);
 }
 
 IBody* CBaseNPC_Entity::CBaseNPC::Hook_GetBodyInterface(void) const
 {
-	RETURN_META_VALUE(MRES_SUPERCEDE, this->m_pBody);
+	RETURN_META_VALUE(MRES_SUPERCEDE, m_pBody);
 }
 
 void CBaseNPC_Entity::BotUpdateOnRemove(void)
@@ -175,6 +186,14 @@ int CBaseNPC_Entity::OnTakeDamage_Alive(const CTakeDamageInfo& info)
 CBaseNPC_Entity::CBaseNPC* CBaseNPC_Entity::GetNPC(void)
 {
 	return (CBaseNPC_Entity::CBaseNPC*)(((uint8_t*)this) + g_pBaseNPCFactory->GetEntitySize() - sizeof(CBaseNPC_Entity::CBaseNPC));
+}
+
+void CBaseNPC_Entity::DebugConColorMsg( NextBotDebugType debugType, const Color &color, const char *fmt, ... )
+{ 
+	va_list argptr;
+	va_start(argptr, fmt);
+	MyNextBotPointer()->DebugConColorMsg( debugType, color, fmt, argptr); 
+	va_end(argptr);
 }
 
 // ============================================
