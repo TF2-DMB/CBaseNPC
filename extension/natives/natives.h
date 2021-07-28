@@ -18,6 +18,7 @@
 #include "cbasenpc.h"
 #include "entityfactory.h"
 #include "behavior.h"
+#include "utilnatives.h"
 #include <takedamageinfo.h>
 
 #pragma once
@@ -164,6 +165,7 @@ const sp_nativeinfo_t g_NativesInfo[] =
 	NATIVENAME(CBaseAnimating, iHandleAnimEvent)
 	NATIVENAME(CBaseAnimating, LookupAttachment)
 	NATIVENAME(CBaseAnimating, GetAttachment)
+	NATIVENAME(CBaseAnimating, GetAttachmentMatrix)
 	NATIVENAME(CBaseAnimating, StudioFrameAdvance)
 	NATIVENAME(CBaseAnimating, DispatchAnimEvents)
 	NATIVENAME(CBaseAnimating, LookupSequence)
@@ -635,6 +637,8 @@ const sp_nativeinfo_t g_NativesInfo[] =
 	NATIVENAME(NextBotActionFactory, DefineVectorField)
 	NATIVENAME(NextBotActionFactory, DefineStringField)
 	NATIVENAME(NextBotActionFactory, EndDataMapDesc)
+
+	{ "ConcatTransforms", &Util_ConcatTransforms },
 
 	{ nullptr, nullptr },
 };

@@ -37,6 +37,23 @@ CBASEANIMNATIVE(GetAttachment)
 	return result;
 }
 
+CBASEANIMNATIVE(GetAttachmentMatrix)
+	matrix3x4_t matrix;
+
+	int iAttachment = params[2];
+
+	cell_t * pawnMat;
+	pContext->LocalToPhysAddr( params[3], &pawnMat );
+
+	cell_t result = anim->GetAttachment( iAttachment, matrix );
+	if ( result )
+	{
+		MatrixToPawnMatrix( pawnMat, matrix );
+	}
+
+	return result;
+}
+
 CBASEANIMNATIVE(StudioFrameAdvance)
 	anim->StudioFrameAdvance();
 	return 0;

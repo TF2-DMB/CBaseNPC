@@ -13,15 +13,12 @@ int CBaseAnimatingHack::offset_HandleAnimEvent = 0;
 
 VCall<void> CBaseAnimatingHack::vStudioFrameAdvance;
 VCall<void, CBaseAnimatingHack*> CBaseAnimatingHack::vDispatchAnimEvents;
-VCall<bool, int, matrix3x4_t> CBaseAnimatingHack::vGetAttachment;
+VCall< bool, int, matrix3x4_t& > CBaseAnimatingHack::vGetAttachment;
 MCall<float, CStudioHdr*, int> CBaseAnimatingHack::mSequenceDuration;
 MCall<void, int> CBaseAnimatingHack::mResetSequence;
 MCall<int, CStudioHdr*, const char*> CBaseAnimatingHack::mLookupPoseParameter;
 MCall<float, int> CBaseAnimatingHack::mGetPoseParameter;
 MCall<float, CStudioHdr*, int, float> CBaseAnimatingHack::mSetPoseParameter;
-
-// TO-DO: Delete
-MCall<bool, int, Vector&, QAngle&> mGetAttachment;
 
 // Members
 DEFINEVAR(CBaseAnimatingHack, m_pStudioHdr);
@@ -42,7 +39,6 @@ bool CBaseAnimatingHack::Init(SourceMod::IGameConfig* config, char* error, size_
 		mLookupPoseParameter.Init(config, "CBaseAnimating::LookupPoseParameter");
 		mSetPoseParameter.Init(config, "CBaseAnimating::SetPoseParameter");
 		mGetPoseParameter.Init(config, "CBaseAnimating::GetPoseParameter");
-		mGetAttachment.Init(config, "CBaseAnimating::GetAttachment");
 
 		vGetAttachment.Init(config, "CBaseAnimating::GetAttachment");
 		vStudioFrameAdvance.Init(config, "CBaseAnimating::StudioFrameAdvance");
@@ -148,12 +144,11 @@ bool CBaseAnimatingHack::GetAttachment(const char *szName, Vector &absOrigin, QA
 
 bool CBaseAnimatingHack::GetAttachment(int iAttachment, Vector &absOrigin, QAngle &absAngles)
 {
-	return mGetAttachment(this, iAttachment, absOrigin, absAngles);
-	/*matrix3x4_t attachmentToWorld;
+	matrix3x4_t attachmentToWorld;
 
 	bool bRet = GetAttachment(iAttachment, attachmentToWorld);
 	MatrixAngles(attachmentToWorld, absAngles, absOrigin);
-	return bRet;*/
+	return bRet;
 }
 
 bool CBaseAnimatingHack::GetAttachment(int iAttachment, matrix3x4_t& attachmentToWorld)

@@ -3145,8 +3145,8 @@ methodmap CBaseAnimating < CBaseEntity
 	public native int SelectWeightedSequence(Activity activity);
 	public native void ResetSequence(int sequence);
 	public native int LookupAttachment(const char[] sAttachmentName);
-    #pragma deprecated BEWARE THE USE OF THIS FUNCTION WILL CRASH YOUR SERVER!
 	public native bool GetAttachment(int iAttachmentIndex, float vecOrigin[3], float vecAngles[3]);
+	public native bool GetAttachmentMatrix( int iAttachmentIndex, float matrix[3][4] );
 	
 	public native Address GetModelPtr();
 	public native int LookupPoseParameter(const char[] sParamName);
