@@ -71,6 +71,10 @@ CBASENPCNATIVE(GetVision)
 	return (cell_t)npc->GetEntity()->MyNextBotPointer()->GetVisionInterface();
 }
 
+CBASENPCNATIVE(GetIntention)
+	return (cell_t)npc->m_pIntention;
+}
+
 CBASENPCNATIVE(SetType)
 	char* type = nullptr;
 	pContext->LocalToString(params[2], &type);
@@ -198,6 +202,15 @@ CBASENPCNATIVE(flFrictionSidewaysGet)
 
 CBASENPCNATIVE(flFrictionSidewaysSet)
 	npc->m_pMover->m_flFrictionSideways = sp_ctof(params[2]);
+	return 0;
+}
+
+CBASENPCNATIVE(flMaxYawRateGet)
+	return sp_ftoc(npc->m_pMover->m_flMaxYawRate);
+}
+
+CBASENPCNATIVE(flMaxYawRateSet)
+	npc->m_pMover->m_flMaxYawRate = sp_ctof(params[2]);
 	return 0;
 }
 

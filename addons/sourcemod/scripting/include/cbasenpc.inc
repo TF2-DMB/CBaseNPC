@@ -2832,6 +2832,7 @@ methodmap CBaseNPC < CExtNPC
 	public native NextBotGroundLocomotion GetLocomotion();
 	public native IBody GetBody();
 	public native IVision GetVision();
+	public native IIntention GetIntention();
 	
 	public native void SetType(char[] sBuffer);
 	public native void GetType(char[] sBuffer, int length);
@@ -2887,7 +2888,12 @@ methodmap CBaseNPC < CExtNPC
 		public native get();
 		public native set(float Friction);
 	}
-	
+	property float flMaxYawRate
+	{
+		public native get();
+		public native set(float YawRate);
+	}
+
 	// =============================
 	// DEPRECATED PLEASE DO NOT USE!
 	// =============================
