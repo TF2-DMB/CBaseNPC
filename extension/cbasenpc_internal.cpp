@@ -212,6 +212,7 @@ void CBaseNPC_Locomotion::Init()
 	this->m_flRunSpeed = 400.0;
 	this->m_flFrictionForward = 0.0;
 	this->m_flFrictionSideways = 3.0;
+	this->m_flMaxYawRate = 1250.0;
 }
 
 void CBaseNPC_Locomotion::Destroy()
@@ -410,7 +411,7 @@ float CBaseNPC_Locomotion::Hook_GetFrictionSideways() const
 
 float CBaseNPC_Locomotion::Hook_GetMaxYawRate() const
 {
-	RETURN_META_VALUE(MRES_SUPERCEDE, 1250.0f);
+	RETURN_META_VALUE(MRES_SUPERCEDE, m_flMaxYawRate);
 }
 
 // ============================================

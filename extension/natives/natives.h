@@ -219,6 +219,7 @@ const sp_nativeinfo_t g_NativesInfo[] =
 	NATIVENAME(CBaseNPC, GetLocomotion)
 	NATIVENAME(CBaseNPC, GetBody)
 	NATIVENAME(CBaseNPC, GetVision)
+	NATIVENAME(CBaseNPC, GetIntention)
 
 	NATIVENAME(CBaseNPC, SetType)
 	NATIVENAME(CBaseNPC, GetType)
@@ -238,6 +239,7 @@ const sp_nativeinfo_t g_NativesInfo[] =
 	NATIVENAMEGETSET(CBaseNPC, flRunSpeed)
 	NATIVENAMEGETSET(CBaseNPC, flFrictionForward)
 	NATIVENAMEGETSET(CBaseNPC, flFrictionSideways)
+	NATIVENAMEGETSET(CBaseNPC, flMaxYawRate)
 
 	// Implemented but deprecated so plugins that used this can still continue to work
 	// TO-DO: Remove in the next two updates
