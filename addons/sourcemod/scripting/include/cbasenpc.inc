@@ -3119,6 +3119,7 @@ methodmap CBaseEntity
 	public native void Teleport(const float vecOrigin[3]=NULL_VECTOR, const float vecAngles[3]=NULL_VECTOR, const float vecVelocity[3]=NULL_VECTOR);
 	public native void WorldSpaceCenter(float vecCenter[3]);
 	public native void GetVectors(float vecForward[3], float vecRight[3], float vecUp[3]);
+	public native void EntityToWorldTransform( float matrix[3][4] );
 }
 
 methodmap CBaseAnimating < CBaseEntity

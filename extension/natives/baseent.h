@@ -78,4 +78,12 @@ CBASEENTNATIVE(SetModel)
 	return 0;
 }
 
+CBASEENTNATIVE(EntityToWorldTransform)
+	cell_t * pawnMat = nullptr;
+	pContext->LocalToPhysAddr( params[2], &pawnMat );
+
+	MatrixToPawnMatrix( pawnMat, ent->EntityToWorldTransform() );
+	return 0;
+}
+
 #endif // NATIVE_CBASEENT_H_

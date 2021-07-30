@@ -175,6 +175,44 @@ stock void MatrixCopy( const float inMat[3][4], float outMat[3][4] )
 }
 
 /**
+ * Scales each component of the first three columns of the matrix by an
+ * arbitrary amount.
+ *
+ * @param flScale     Scale amount
+ * @param outMat      Output matrix
+ */
+stock void MatrixScaleBy( float flScale, float outMat[3][4] )
+{
+	outMat[0][0] *= flScale;
+	outMat[1][0] *= flScale;
+	outMat[2][0] *= flScale;
+	outMat[0][1] *= flScale;
+	outMat[1][1] *= flScale;
+	outMat[2][1] *= flScale;
+	outMat[0][2] *= flScale;
+	outMat[1][2] *= flScale;
+	outMat[2][2] *= flScale;
+}
+
+/**
+ * Sets each component of the first three columns of the matrix to zero.
+ *
+ * @param outMat      Output matrix
+ */
+stock void MatrixScaleByZero( float outMat[3][4] )
+{
+	outMat[0][0] = 0.0;
+	outMat[1][0] = 0.0;
+	outMat[2][0] = 0.0;
+	outMat[0][1] = 0.0;
+	outMat[1][1] = 0.0;
+	outMat[2][1] = 0.0;
+	outMat[0][2] = 0.0;
+	outMat[1][2] = 0.0;
+	outMat[2][2] = 0.0;
+}
+
+/**
  * Initializes a matrix using the given vector.
  *
  * Reference: https://github.com/ValveSoftware/source-sdk-2013/blob/0d8dceea4310fde5706b3ce1c70609d72a38efdf/sp/src/mathlib/mathlib_base.cpp#L523
@@ -203,12 +241,55 @@ stock void VectorMatrix( const float fwd[3], float matrix[3][4] )
  * @param right    Output right vector
  * @param up       Output up vector
  */
-stock void MatrixVectors( const float matrix[3][4], float fwd[3], float right[3], float up[3] )
+stock void MatrixVectors( const float matrix[3][4], float fwd[3] = NULL_VECTOR, float right[3] = NULL_VECTOR, float up[3] = NULL_VECTOR )
 {
-	MatrixGetColumn( matrix, 0, fwd );
-	MatrixGetColumn( matrix, 1, right );
-	MatrixGetColumn( matrix, 2, up );
-	NegateVector( right );
+	if ( !IsNullVector( fwd ) ) MatrixGetColumn( matrix, 0, fwd );
+	if ( !IsNullVector( right ) )
+	{
+		MatrixGetColumn( matrix, 1, right );
+		NegateVector( right );
+	}
+	if ( !IsNullVector( up ) ) MatrixGetColumn( matrix, 2, up );
+}
+
+/**
+ * Transform a set of angles in the space of parentMatrix to local space.
+ * The input angles can also be the output.
+ *
+ * Reference: https://github.com/ValveSoftware/source-sdk-2013/blob/0d8dceea4310fde5706b3ce1c70609d72a38efdf/sp/src/mathlib/mathlib_base.cpp#L324
+ *
+ * @param angles            Input angles
+ * @param parentMatrix      World transform matrix. This is usually filled in
+ *                          with CBaseEntity::EntityToWorldTransform().
+ * @param outAng            Output angles
+ */
+stock void TransformAnglesToLocalSpace( const float angles[3], const float parentMatrix[3][4], float outAng[3] )
+{
+	float angToWorld[3][4], worldToParent[3][4], localMatrix[3][4];
+	MatrixInvert( parentMatrix, worldToParent );
+	AngleMatrix( angles, angToWorld );
+	ConcatTransforms( worldToParent, angToWorld, localMatrix );
+	
+	MatrixAngles( localMatrix, outAng );
+}
+
+/**
+ * Transform a set of angles in the space of parentMatrix to world space.
+ * The input angles can also be the output.
+ *
+ * Reference: https://github.com/ValveSoftware/source-sdk-2013/blob/0d8dceea4310fde5706b3ce1c70609d72a38efdf/sp/src/mathlib/mathlib_base.cpp#L337
+ *
+ * @param angles            Input angles
+ * @param parentMatrix      World transform matrix. This is usually filled in
+ *                          with CBaseEntity::EntityToWorldTransform().
+ * @param outAng            Output angles
+ */
+stock void TransformAnglesToWorldSpace( const float angles[3], const float parentMatrix[3][4], float outAng[3] )
+{
+	float angToParent[3][4], angToWorld[3][4];
+	AngleMatrix( angles, angToParent );
+	ConcatTransforms( parentMatrix, angToParent, angToWorld );
+	MatrixAngles( angToWorld, outAng );
 }
 
 /**
@@ -288,7 +369,8 @@ stock void AngleMatrix( const float angles[3], float matrix[3][4] )
 }
 
 /**
- * Rotates a vector using the given rotation matrix.
+ * Rotates a vector using the given rotation matrix. The input vector can also
+ * be the output vector.
  *
  * Reference: https://github.com/ValveSoftware/source-sdk-2013/blob/0d8dceea4310fde5706b3ce1c70609d72a38efdf/sp/src/mathlib/mathlib_base.cpp#L286
  *
@@ -350,7 +432,8 @@ stock void MatrixBuildRotationAboutAxis( const float vAxisOfRot[3], float angleD
 }
 
 /**
- * Returns the transpose of the given matrix.
+ * Returns the transpose of the given matrix. The input matrix can be the
+ * output matrix.
  *
  * NOTE: This is not a general inverse function.
  *
@@ -405,7 +488,8 @@ stock void MatrixInvertEx( const float matIn[3][4], float matOut[3][4] )
 }
 
 /**
- * Multiplies the first matrix with the second.
+ * Multiplies the first matrix with the second. Both of the input matrices
+ * can also be the output matrix.
  *
  * @param in1      First input matrix
  * @param in2      Second input matrix

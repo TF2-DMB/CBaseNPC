@@ -160,6 +160,7 @@ const sp_nativeinfo_t g_NativesInfo[] =
 	NATIVENAME(CBaseEntity, SetModel)
 	NATIVENAME(CBaseEntity, GetVectors)
 	NATIVENAME(CBaseEntity, WorldSpaceCenter)
+	NATIVENAME(CBaseEntity, EntityToWorldTransform)
 
 	// Base Animating
 	NATIVENAME(CBaseAnimating, iHandleAnimEvent)
