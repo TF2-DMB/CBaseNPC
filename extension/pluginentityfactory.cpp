@@ -8,6 +8,7 @@
 
 SH_DECL_MANUALHOOK0(MHook_GetDataDescMap, 0, 0, 0, datamap_t* );
 SH_DECL_MANUALHOOK0_void(MHook_UpdateOnRemove, 0, 0, 0 );
+SH_DECL_MANUALHOOK0_void(MHook_UpdateOnRemovePost, 0, 0, 0 );
 
 SH_DECL_HOOK1(IVEngineServer, PvAllocEntPrivateData, SH_NOATTRIB, false, void *, long);
 
@@ -99,6 +100,7 @@ struct PluginFactoryEntityRecord_t
 	bool m_bDataMapHooked;
 	datamap_t* m_pDataMap;
 	bool m_bUpdateOnRemoveHooked;
+	bool m_bUpdateOnRemoveHookedPost;
 };
 
 PluginFactoryEntityRecord_t* GetPluginFactoryEntityRecord(CBaseEntity* pEntity, bool create=false)
@@ -112,7 +114,7 @@ PluginFactoryEntityRecord_t* GetPluginFactoryEntityRecord(CBaseEntity* pEntity, 
 	{
 		if (create)
 		{
-			index = g_EntityRecords.Insert(key, { pEntity, nullptr, false, nullptr, false });
+			index = g_EntityRecords.Insert(key, { pEntity, nullptr, false, nullptr, false, false });
 		}
 		else
 		{
@@ -185,6 +187,19 @@ void Hook_UpdateOnRemove()
 	RETURN_META(MRES_IGNORED);
 }
 
+void Hook_UpdateOnRemovePost()
+{
+	CBaseEntity *pEntity = META_IFACEPTR(CBaseEntity);
+	if (!pEntity) RETURN_META(MRES_IGNORED);
+
+	CPluginEntityFactory* pFactory = GetPluginEntityFactory(pEntity);
+	if (!pFactory) RETURN_META(MRES_IGNORED);
+
+	pFactory->OnRemovePost(pEntity);
+
+	RETURN_META(MRES_IGNORED);
+}
+
 bool CPluginEntityFactory::Init(SourceMod::IGameConfig* config, char* error, size_t maxlength)
 {
 	g_fwdInstalledFactory = forwards->CreateForward("CEntityFactory_OnInstalled", ET_Ignore, 2, NULL, Param_String, Param_Cell);
@@ -220,6 +235,7 @@ void CPluginEntityFactory::SDK_OnAllLoaded()
 {
 	SH_MANUALHOOK_RECONFIGURE(MHook_GetDataDescMap, CBaseEntityHack::offset_GetDataDescMap, 0, 0);
 	SH_MANUALHOOK_RECONFIGURE(MHook_UpdateOnRemove, CBaseEntityHack::offset_UpdateOnRemove, 0, 0);
+	SH_MANUALHOOK_RECONFIGURE(MHook_UpdateOnRemovePost, CBaseEntityHack::offset_UpdateOnRemove, 0, 0);
 }
 
 void CPluginEntityFactory::SDK_OnUnload()
@@ -306,24 +322,31 @@ void CPluginEntityFactory::DeriveFromHandle(Handle_t handle)
 
 void CPluginEntityFactory::OnRemove(CBaseEntity* pEntity)
 {
-	PluginFactoryEntityRecord_t * pEntityRecord = GetPluginFactoryEntityRecord(pEntity);
-	bool bBelongsToFactory = pEntityRecord->pFactory == this;
-
 	if (m_pOnRemove && m_pOnRemove->IsRunnable())
 	{
 		m_pOnRemove->PushCell(gamehelpers->EntityToBCompatRef(pEntity));
 		m_pOnRemove->Execute(nullptr);
 	}
 
-	DestroyUserEntityData(pEntity);
-
-	CPluginEntityFactory* pBasePluginFactory = ToPluginEntityFactory(GetBaseFactory());
+	CPluginEntityFactory* pBasePluginFactory = ToPluginEntityFactory( GetBaseFactory() );
 	if (pBasePluginFactory)
 	{
 		pBasePluginFactory->OnRemove(pEntity);
 	}
+}
 
-	if (bBelongsToFactory)
+void CPluginEntityFactory::OnRemovePost( CBaseEntity* pEntity )
+{
+	DestroyUserEntityData(pEntity);
+
+	CPluginEntityFactory* pBasePluginFactory = ToPluginEntityFactory( GetBaseFactory() );
+	if (pBasePluginFactory)
+	{
+		pBasePluginFactory->OnRemovePost( pEntity );
+	}
+
+	PluginFactoryEntityRecord_t * pEntityRecord = GetPluginFactoryEntityRecord( pEntity );
+	if ( pEntityRecord->pFactory == this )
 	{
 		// Unhook here after all OnRemove calls have been made.
 		if (pEntityRecord->m_bDataMapHooked)
@@ -338,8 +361,14 @@ void CPluginEntityFactory::OnRemove(CBaseEntity* pEntity)
 			pEntityRecord->m_bUpdateOnRemoveHooked = false;
 		}
 
-		RemovePluginFactoryEntityRecord(pEntity);
+		if (pEntityRecord->m_bUpdateOnRemoveHookedPost)
+		{
+			SH_REMOVE_MANUALHOOK(MHook_UpdateOnRemovePost, pEntity, SH_STATIC(Hook_UpdateOnRemovePost), true);
+			pEntityRecord->m_bUpdateOnRemoveHookedPost = false;
+		}
 	}
+
+	RemovePluginFactoryEntityRecord( pEntity );
 }
 
 void CPluginEntityFactory::GetEntities(CUtlVector< CBaseEntity* > *pVec) const
@@ -638,6 +667,12 @@ IServerNetworkable* CPluginEntityFactory::Create(const char* classname)
 		{
 			SH_ADD_MANUALHOOK(MHook_UpdateOnRemove, pEnt, SH_STATIC(Hook_UpdateOnRemove), false);
 			pEntityRecord->m_bUpdateOnRemoveHooked = true;
+		}
+
+		if (!pEntityRecord->m_bUpdateOnRemoveHookedPost)
+		{
+			SH_ADD_MANUALHOOK(MHook_UpdateOnRemovePost, pEnt, SH_STATIC(Hook_UpdateOnRemovePost), true);
+			pEntityRecord->m_bUpdateOnRemoveHookedPost = true;
 		}
 
 		if (m_pPostConstructor && m_pPostConstructor->IsRunnable())

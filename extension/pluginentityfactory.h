@@ -39,6 +39,7 @@ public:
 	virtual void Destroy(IServerNetworkable*) override final;
 
 	void OnRemove(CBaseEntity* pEntity);
+	void OnRemovePost(CBaseEntity* pEntity);
 
 protected:
 	enum PluginEntityFactoryDeriveType_t
