@@ -11,7 +11,12 @@
 // IServerNetworkable (npc destruction)
 //SH_DECL_HOOK0_void(IServerNetworkable, Release, SH_NOATTRIB, 0);
 // CBaseEntity/any class with a vtable (npc destruction)
+#ifdef __linux__
 SH_DECL_MANUALHOOK0_void(Class_Dtor, 1, 0, 0);
+#else
+SH_DECL_MANUALHOOK0_void(Class_Dtor, 0, 0, 0);
+#endif
+
 
 // INextBotEventResponder
 SH_DECL_HOOK0_void(INextBotComponent, Update, SH_NOATTRIB, 0);
