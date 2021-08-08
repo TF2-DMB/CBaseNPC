@@ -70,6 +70,34 @@ void VectorToPawnVector(cell_t *angAddr, const QAngle *angle) {
 	angAddr[2] = sp_ftoc(angle->z);
 }
 
+// About double arrays:
+// https://github.com/alliedmodders/sourcemod/blob/b3672916dee4bc6ad4368e31bc6f9b2779b36d79/core/logic/smn_sorting.cpp#L43
+void MatrixToPawnMatrix( cell_t *matAddr, const matrix3x4_t &mat )
+{
+	for ( int r = 0; r < 3; r++ )
+	{
+		cell_t* row = (cell_t *)( (uint8_t *)( &matAddr[r] ) + matAddr[r] );
+
+		for ( int c = 0; c < 4; c++ )
+		{
+			row[c] = sp_ftoc( mat[r][c] );
+		}
+	}
+}
+
+void PawnMatrixToMatrix( cell_t *matAddr, matrix3x4_t &mat )
+{
+	for ( int r = 0; r < 3; r++ )
+	{
+		cell_t* row = (cell_t *)( (uint8_t *)( &matAddr[r] ) + matAddr[r] );
+
+		for ( int c = 0; c < 4; c++ )
+		{
+			mat[r][c] = sp_ctof( row[c] );
+		}
+	}
+}
+
 const char *HandleErrorToString(HandleError err)
 {
 	switch(err)

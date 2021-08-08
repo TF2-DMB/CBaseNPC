@@ -445,7 +445,7 @@ bool IDataMapContainer::GetObjectDataString( void* obj, const char* prop, char* 
 		case FIELD_SOUNDNAME:
 		{
 			string_t idx = *(string_t *)((uint8_t *)obj + offset);
-			char* src = (idx == NULL_STRING) ? "" : STRING(idx);
+			const char* src = (idx == NULL_STRING) ? "" : STRING(idx);
 			ke::SafeStrcpy(data, datamaxlen, src);
 
 			return true;

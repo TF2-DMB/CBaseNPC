@@ -90,6 +90,9 @@ void PawnVectorToVector(cell_t *vecAddr, Vector &vector);
 void PawnVectorToVector(cell_t *angAddr, QAngle *angle);
 void PawnVectorToVector(cell_t *angAddr, QAngle &angle);
 
+void MatrixToPawnMatrix( cell_t *matAddr, const matrix3x4_t &mat );
+void PawnMatrixToMatrix( cell_t *matAddr, matrix3x4_t &mat );
+
 const char *HandleErrorToString(HandleError err);
 
 IPluginFunction *GetFunctionByNameEx(IPluginContext *pContext, const char *name);

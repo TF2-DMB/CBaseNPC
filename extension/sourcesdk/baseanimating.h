@@ -48,7 +48,7 @@ public:
 	static MCall<void, int> mResetSequence;
 	void ResetSequence(int);
 
-	static VCall<bool, int, matrix3x4_t> vGetAttachment;
+	static VCall< bool, int, matrix3x4_t & > vGetAttachment;
 	bool GetAttachment(int, matrix3x4_t&);
 	bool GetAttachment(const char*, Vector &, QAngle &);
 	bool GetAttachment(int, Vector&, QAngle&);

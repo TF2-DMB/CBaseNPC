@@ -18,6 +18,7 @@
 #include "cbasenpc.h"
 #include "entityfactory.h"
 #include "behavior.h"
+#include "utilnatives.h"
 #include <takedamageinfo.h>
 
 #pragma once
@@ -192,11 +193,13 @@ const sp_nativeinfo_t g_NativesInfo[] =
 	NATIVENAME(CBaseEntity, SetModel)
 	NATIVENAME(CBaseEntity, GetVectors)
 	NATIVENAME(CBaseEntity, WorldSpaceCenter)
+	NATIVENAME(CBaseEntity, EntityToWorldTransform)
 
 	// Base Animating
 	NATIVENAME(CBaseAnimating, iHandleAnimEvent)
 	NATIVENAME(CBaseAnimating, LookupAttachment)
 	NATIVENAME(CBaseAnimating, GetAttachment)
+	NATIVENAME(CBaseAnimating, GetAttachmentMatrix)
 	NATIVENAME(CBaseAnimating, StudioFrameAdvance)
 	NATIVENAME(CBaseAnimating, DispatchAnimEvents)
 	NATIVENAME(CBaseAnimating, LookupSequence)
@@ -252,6 +255,7 @@ const sp_nativeinfo_t g_NativesInfo[] =
 	NATIVENAME(CBaseNPC, GetLocomotion)
 	NATIVENAME(CBaseNPC, GetBody)
 	NATIVENAME(CBaseNPC, GetVision)
+	NATIVENAME(CBaseNPC, GetIntention)
 
 	NATIVENAME(CBaseNPC, SetType)
 	NATIVENAME(CBaseNPC, GetType)
@@ -271,6 +275,7 @@ const sp_nativeinfo_t g_NativesInfo[] =
 	NATIVENAMEGETSET(CBaseNPC, flRunSpeed)
 	NATIVENAMEGETSET(CBaseNPC, flFrictionForward)
 	NATIVENAMEGETSET(CBaseNPC, flFrictionSideways)
+	NATIVENAMEGETSET(CBaseNPC, flMaxYawRate)
 
 	// Implemented but deprecated so plugins that used this can still continue to work
 	// TO-DO: Remove in the next two updates
@@ -669,6 +674,7 @@ const sp_nativeinfo_t g_NativesInfo[] =
 	NATIVENAME(NextBotActionFactory, DefineStringField)
 	NATIVENAME(NextBotActionFactory, EndDataMapDesc)
 
+	{ "ConcatTransforms", &Util_ConcatTransforms },
 	{ nullptr, nullptr },
 };
 

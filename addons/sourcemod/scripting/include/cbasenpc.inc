@@ -2832,6 +2832,7 @@ methodmap CBaseNPC < CExtNPC
 	public native NextBotGroundLocomotion GetLocomotion();
 	public native IBody GetBody();
 	public native IVision GetVision();
+	public native IIntention GetIntention();
 	
 	public native void SetType(char[] sBuffer);
 	public native void GetType(char[] sBuffer, int length);
@@ -2887,7 +2888,12 @@ methodmap CBaseNPC < CExtNPC
 		public native get();
 		public native set(float Friction);
 	}
-	
+	property float flMaxYawRate
+	{
+		public native get();
+		public native set(float YawRate);
+	}
+
 	// =============================
 	// DEPRECATED PLEASE DO NOT USE!
 	// =============================
@@ -3144,6 +3150,7 @@ methodmap CBaseEntity
 	public native void Teleport(const float vecOrigin[3]=NULL_VECTOR, const float vecAngles[3]=NULL_VECTOR, const float vecVelocity[3]=NULL_VECTOR);
 	public native void WorldSpaceCenter(float vecCenter[3]);
 	public native void GetVectors(float vecForward[3], float vecRight[3], float vecUp[3]);
+	public native void EntityToWorldTransform( float matrix[3][4] );
 }
 
 methodmap CBaseAnimating < CBaseEntity
@@ -3176,8 +3183,8 @@ methodmap CBaseAnimating < CBaseEntity
 	public native int SelectWeightedSequence(Activity activity);
 	public native void ResetSequence(int sequence);
 	public native int LookupAttachment(const char[] sAttachmentName);
-    #pragma deprecated BEWARE THE USE OF THIS FUNCTION WILL CRASH YOUR SERVER!
 	public native bool GetAttachment(int iAttachmentIndex, float vecOrigin[3], float vecAngles[3]);
+	public native bool GetAttachmentMatrix( int iAttachmentIndex, float matrix[3][4] );
 	
 	public native Address GetModelPtr();
 	public native int LookupPoseParameter(const char[] sParamName);

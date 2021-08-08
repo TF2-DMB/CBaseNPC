@@ -68,6 +68,7 @@ public:
 	float m_flRunSpeed;
 	float m_flFrictionForward;
 	float m_flFrictionSideways;
+	float m_flMaxYawRate;
 };
 
 class NextBotCombatCharacter;
