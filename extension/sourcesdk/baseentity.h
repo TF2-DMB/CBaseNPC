@@ -177,7 +177,9 @@ public:
 	void			AddEFlags(int nEFlagMask);
 	void			RemoveEFlags(int nEFlagMask);
 
-	
+	string_t GetModelName(void) const;
+	void	SetModelName(string_t name);
+
 	int		 RegisterThinkContext(const char* szContext);
 	HBASEPTR ThinkSet(HBASEPTR func, float flNextThinkTime = 0, const char* szContext = nullptr);
 	void	 SetNextThink(float nextThinkTime, const char* szContext = nullptr);
@@ -268,6 +270,8 @@ private:
 	DECLAREVAR(int, m_iTeamNum);
 	
 	DECLAREVAR(EHANDLE, m_hGroundEntity);
+	
+	DECLAREVAR(string_t, m_ModelName);
 };
 
 class CBasePropDoorHack : public CBaseEntityHack
@@ -364,6 +368,17 @@ inline void CBaseEntityHack::RemoveEFlags(int nEFlagMask)
 inline bool CBaseEntityHack::IsEFlagSet(int nEFlagMask) const
 {
 	return (*m_iEFlags() & nEFlagMask) != 0;
+}
+
+inline void CBaseEntityHack::SetModelName(string_t name)
+{
+	*m_ModelName() = name;
+	DispatchUpdateTransmitState();
+}
+
+inline string_t CBaseEntityHack::GetModelName(void) const
+{
+	return *m_ModelName();
 }
 
 inline CBaseEntity* CBaseEntityHack::GetGroundEntity(void)

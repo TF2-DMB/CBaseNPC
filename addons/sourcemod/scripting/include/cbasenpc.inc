@@ -3096,6 +3096,37 @@ methodmap CBaseEntity
 
 	public static native int iUpdateOnRemove();
 	
+	public native Address NetworkProp();
+	public native Address CollisionProp();
+	public native void DispatchUpdateTransmitState();
+	public native int GetFlags();
+	public native int GetEFlags();
+	public native bool IsEFlagSet(int flag);
+	public native void AddEFlags(int flags);
+	public native void RemoveEFlags(int flags);
+	public native void SetModelName(const char[] model);
+	public native void GetModelName(char[]  model, int len);
+	public native int RegisterThinkContext(const char[] context = NULL_STRING);
+	public native void SetNextThink(float time, const char[] context = NULL_STRING);
+	public native float GetNextThink(const char[] context = NULL_STRING);
+	public native float GetLastThink(const char[] context = NULL_STRING);
+	public native int GetNextThinkTick(const char[] context = NULL_STRING);
+	public native int GetLastThinkTick(const char[] context = NULL_STRING);
+	public native bool WillThink();
+	public native void GetAbsOrigin(float pos[3]);
+	public native void GetAbsAngles(float ang[3]);
+	public native void GetAbsVelocity(float vel[3]);
+	public native void SetAbsOrigin(float pos[3]);
+	public native void SetAbsAngles(float ang[3]);
+	public native void SetAbsVelocity(float vel[3]);
+	public native void NetworkStateChanged();
+	public native void NetworkStateChangedVar(Address var);
+	public native float GetSimulationTime();
+	public native float SetSimulationTime(float time);
+	public native void GetLocalOrigin(float pos[3]);
+	public native void GetLocalAngles(float ang[3]);
+	public native void SetLocalOrigin(float pos[3]);
+	public native void SetLocalAngles(float ang[3]);
 #if defined _dhooks_included
 	public void Hook_UpdateOnRemove(DHookCallback callback)
 	{

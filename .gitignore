@@ -17,4 +17,6 @@ addons/sourcemod/gamedata/*.txt
 !addons/sourcemod/gamedata/cbasenpc.txt
 !addons/sourcemod/gamedata/nextbot_pathing.txt
 extension/build/
-
+extension/linux_build/
+extension/win_build/
+extension/windows_build/
