@@ -39,7 +39,18 @@ public:
 	virtual void Destroy(IServerNetworkable*) override final;
 
 	void OnRemove(CBaseEntity* pEntity);
-	void OnRemovePost(CBaseEntity* pEntity);
+
+	// Not the entity listener; when the entity's destructor is called.
+	void OnDestroy(CBaseEntity* pEntity);
+
+	static datamap_t* Hook_GetDataDescMap();
+	static void Hook_UpdateOnRemove();
+
+#ifdef WIN32
+	static void Hook_EntityDestructor( unsigned int flags );
+#else
+	static void Hook_EntityDestructor( void );
+#endif
 
 protected:
 	enum PluginEntityFactoryDeriveType_t

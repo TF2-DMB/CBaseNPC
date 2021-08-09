@@ -10,11 +10,12 @@
 
 // CBaseEntity/any class with a vtable (npc destruction)
 #ifdef __linux__
-SH_DECL_MANUALHOOK0_void(Class_Dtor, 1, 0, 0);
+SH_DECL_MANUALHOOK0_void(CBaseNPC_Dtor, 1, 0, 0);
 #else
-SH_DECL_MANUALHOOK1_void(Class_Dtor, 0, 0, 0, unsigned int);
+SH_DECL_MANUALHOOK1_void(CBaseNPC_Dtor, 0, 0, 0, unsigned int);
 #endif
 
+SH_DECL_MANUALHOOK0_void(CBaseNPC_UpdateOnRemove, 0, 0, 0 );
 
 // INextBotEventResponder
 SH_DECL_HOOK0_void(INextBotComponent, Update, SH_NOATTRIB, 0);
@@ -99,19 +100,9 @@ size_t CBaseNPCFactory::GetEntitySize()
 	return sizeof(CBaseNPC_Entity::CBaseNPC) + NextBotCombatCharacter::size_of;
 }
 
-#ifdef WIN32
-// MSVC uses helper function in vtable instead of the destructor
-void Hook_EntityDestructor( unsigned int flags )
-#else
-void Hook_EntityDestructor( void )
-#endif
+void CBaseNPC_Entity::SDK_OnAllLoaded()
 {
-	CBaseNPC_Entity *pEntity = META_IFACEPTR(CBaseNPC_Entity);
-	if (!pEntity) RETURN_META(MRES_IGNORED);
-
-	pEntity->BotDestroy();
-
-	RETURN_META(MRES_IGNORED);
+	SH_MANUALHOOK_RECONFIGURE(CBaseNPC_UpdateOnRemove, CBaseEntityHack::offset_UpdateOnRemove, 0, 0);
 }
 
 CBaseNPC_Entity::CBaseNPC::CBaseNPC(NextBotCombatCharacter* ent, CBaseNPCPluginActionFactory* initialActionFactory) : CExtNPC()
@@ -124,7 +115,8 @@ CBaseNPC_Entity::CBaseNPC::CBaseNPC(NextBotCombatCharacter* ent, CBaseNPCPluginA
 	m_hookids.push_back(SH_ADD_HOOK(INextBot, GetIntentionInterface, bot, SH_MEMBER(this, &CBaseNPC_Entity::CBaseNPC::Hook_GetIntentionInterface), false));
 	m_hookids.push_back(SH_ADD_HOOK(INextBot, GetLocomotionInterface, bot, SH_MEMBER(this, &CBaseNPC_Entity::CBaseNPC::Hook_GetLocomotionInterface), false));
 	m_hookids.push_back(SH_ADD_HOOK(INextBot, GetBodyInterface, bot, SH_MEMBER(this, &CBaseNPC_Entity::CBaseNPC::Hook_GetBodyInterface), false));
-	m_hookids.push_back(SH_ADD_MANUALHOOK(Class_Dtor, ent, SH_STATIC(Hook_EntityDestructor), false));
+	m_hookids.push_back(SH_ADD_MANUALHOOK(CBaseNPC_UpdateOnRemove, ent, SH_MEMBER((CBaseNPC_Entity*)ent, &CBaseNPC_Entity::Hook_UpdateOnRemove), false));
+	m_hookids.push_back(SH_ADD_MANUALHOOK(CBaseNPC_Dtor, ent, SH_MEMBER((CBaseNPC_Entity*)ent, &CBaseNPC_Entity::Hook_Destructor), false));
 }
 
 CBaseNPC_Entity::CBaseNPC::~CBaseNPC()
@@ -154,6 +146,31 @@ ILocomotion* CBaseNPC_Entity::CBaseNPC::Hook_GetLocomotionInterface(void) const
 IBody* CBaseNPC_Entity::CBaseNPC::Hook_GetBodyInterface(void) const
 {
 	RETURN_META_VALUE(MRES_SUPERCEDE, m_pBody);
+}
+
+void CBaseNPC_Entity::Hook_UpdateOnRemove()
+{
+	BotUpdateOnRemove();
+	RETURN_META( MRES_IGNORED );
+}
+
+void CBaseNPC_Entity::BotUpdateOnRemove()
+{
+	// Destroy Behavior system early so Action OnEnd() callbacks can
+	// still access entity properties and virtual functions to perform cleanup
+	// on the entity.
+	GetNPC()->m_pIntention->DestroyBehavior();
+}
+
+#ifdef WIN32
+// MSVC uses helper function in vtable instead of the destructor
+void CBaseNPC_Entity::Hook_Destructor( unsigned int flags )
+#else
+void CBaseNPC_Entity::Hook_Destructor( void )
+#endif
+{
+	BotDestroy();
+	RETURN_META( MRES_IGNORED );
 }
 
 void CBaseNPC_Entity::BotDestroy(void)

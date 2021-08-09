@@ -73,6 +73,7 @@ public:
 
 class NextBotCombatCharacter;
 class CBaseNPCPluginActionFactory;
+class CBaseNPCIntention;
 
 class CBaseNPC_Entity : public NextBotCombatCharacter
 {
@@ -84,7 +85,7 @@ public:
 		~CBaseNPC();
 
 		std::vector<int> m_hookids;
-		IIntention* m_pIntention;
+		CBaseNPCIntention* m_pIntention;
 		CBaseNPC_Locomotion* m_pMover;
 		CBaseNPC_Body* m_pBody;
 		char m_type[64];
@@ -94,10 +95,19 @@ public:
 		ILocomotion* Hook_GetLocomotionInterface(void) const;
 		IBody* Hook_GetBodyInterface(void) const;
 	};
+
+	static void SDK_OnAllLoaded();
+
 	CBaseNPC_Entity::CBaseNPC* GetNPC(void);
+	void Hook_UpdateOnRemove(void);
 	void BotUpdateOnRemove(void);
 	void BotThink(void);
 	void BotSpawn(void);
+#ifdef WIN32
+	void Hook_Destructor( unsigned int flags );
+#else
+	void Hook_Destructor( void );
+#endif
 	void BotDestroy(void);
 	int OnTakeDamage(const CTakeDamageInfo& info);
 	int OnTakeDamage_Alive(const CTakeDamageInfo& info);

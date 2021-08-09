@@ -525,19 +525,12 @@ CBaseNPCIntention::CBaseNPCIntention( INextBot * bot, CBaseNPCPluginActionFactor
 
 CBaseNPCIntention::~CBaseNPCIntention()
 {
-	if (m_pBehavior)
-	{
-		delete m_pBehavior;
-	}
+	DestroyBehavior();
 }
 
 void CBaseNPCIntention::Reset()
 { 
-	if (m_pBehavior)
-	{
-		delete m_pBehavior;
-	}
-
+	DestroyBehavior();
 	InitBehavior();
 }
 
@@ -553,6 +546,15 @@ void CBaseNPCIntention::InitBehavior()
 	{
 		m_pBehavior = nullptr;
 	}
+}
+
+void CBaseNPCIntention::DestroyBehavior()
+{
+	if ( !m_pBehavior )
+		return;
+
+	delete m_pBehavior;
+	m_pBehavior = nullptr;
 }
 
 void CBaseNPCIntention::Update()

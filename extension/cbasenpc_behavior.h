@@ -140,6 +140,7 @@ public:
 	virtual INextBotEventResponder *FirstContainedResponder() const override { return m_pBehavior; };
 
 	void InitBehavior();
+	void DestroyBehavior();
 
 private:
 	Behavior< CBaseNPC_Entity > * m_pBehavior;

@@ -6,16 +6,21 @@
 #include "baseentityoutput.h"
 #include "sh_pagealloc.h"
 
-SH_DECL_MANUALHOOK0(MHook_GetDataDescMap, 0, 0, 0, datamap_t* );
-SH_DECL_MANUALHOOK0_void(MHook_UpdateOnRemove, 0, 0, 0 );
-SH_DECL_MANUALHOOK0_void(MHook_UpdateOnRemovePost, 0, 0, 0 );
+SH_DECL_MANUALHOOK0(FactoryEntity_GetDataDescMap, 0, 0, 0, datamap_t* );
+SH_DECL_MANUALHOOK0_void(FactoryEntity_UpdateOnRemove, 0, 0, 0 );
+
+#ifdef __linux__
+SH_DECL_MANUALHOOK0_void(FactoryEntity_Dtor, 1, 0, 0);
+#else
+SH_DECL_MANUALHOOK1_void(FactoryEntity_Dtor, 0, 0, 0, unsigned int);
+#endif
 
 SH_DECL_HOOK1(IVEngineServer, PvAllocEntPrivateData, SH_NOATTRIB, false, void *, long);
 
 SourceMod::IForward * g_fwdInstalledFactory;
 SourceMod::IForward * g_fwdUninstalledFactory;
 
-struct PluginFactoryEntityRecord_t;
+class PluginFactoryEntityRecord_t;
 
 CUtlVector<CPluginEntityFactory*> g_PluginEntityFactories;
 CUtlMap<cell_t, PluginFactoryEntityRecord_t> g_EntityRecords;
@@ -93,14 +98,22 @@ public:
 
 } g_EntityMemAllocHook;
 
-struct PluginFactoryEntityRecord_t
+class PluginFactoryEntityRecord_t
 {
-	CBaseEntity* pEntity;
-	CPluginEntityFactory* pFactory;
-	bool m_bDataMapHooked;
-	datamap_t* m_pDataMap;
-	bool m_bUpdateOnRemoveHooked;
-	bool m_bUpdateOnRemoveHookedPost;
+public:
+	CBaseEntity* pEntity = nullptr;
+	CPluginEntityFactory* pFactory = nullptr;
+	datamap_t* m_pDataMap = nullptr;
+
+	void Hook();
+	void Unhook();
+
+	PluginFactoryEntityRecord_t() : pEntity( nullptr ) { }
+	PluginFactoryEntityRecord_t( CBaseEntity* pEnt ) : pEntity(pEnt) { }
+
+private:
+	bool m_bHooked = false;
+	std::vector<int> * m_pHookIds = nullptr;
 };
 
 PluginFactoryEntityRecord_t* GetPluginFactoryEntityRecord(CBaseEntity* pEntity, bool create=false)
@@ -114,7 +127,7 @@ PluginFactoryEntityRecord_t* GetPluginFactoryEntityRecord(CBaseEntity* pEntity, 
 	{
 		if (create)
 		{
-			index = g_EntityRecords.Insert(key, { pEntity, nullptr, false, nullptr, false, false });
+			index = g_EntityRecords.Insert(key, PluginFactoryEntityRecord_t( pEntity ));
 		}
 		else
 		{
@@ -134,29 +147,7 @@ void RemovePluginFactoryEntityRecord(CBaseEntity* pEntity)
 	g_EntityRecords.Remove(key);
 }
 
-// Sets pEntity to belong to CPluginEntityFactory pFactory.
-void SetPluginEntityFactory(CBaseEntity* pEntity, CPluginEntityFactory* pFactory)
-{
-	if (!pEntity)
-		return;
-	
-	PluginFactoryEntityRecord_t* pEntityRecord = GetPluginFactoryEntityRecord(pEntity);
-	if (!pEntityRecord)
-		return;
-
-	pEntityRecord->pFactory = pFactory;
-}
-
-CPluginEntityFactory* GetPluginEntityFactory(CBaseEntity* pEntity)
-{
-	PluginFactoryEntityRecord_t* pEntityRecord = GetPluginFactoryEntityRecord(pEntity);
-	if (!pEntityRecord)
-		return nullptr;
-
-	return pEntityRecord->pFactory;
-}
-
-datamap_t* Hook_GetDataDescMap()
+datamap_t* CPluginEntityFactory::Hook_GetDataDescMap()
 {
 	CBaseEntity *pEntity = META_IFACEPTR(CBaseEntity);
 	if (!pEntity) RETURN_META_VALUE(MRES_IGNORED, nullptr);
@@ -174,7 +165,7 @@ datamap_t* Hook_GetDataDescMap()
 	RETURN_META_VALUE(MRES_IGNORED, nullptr);
 }
 
-void Hook_UpdateOnRemove()
+void CPluginEntityFactory::Hook_UpdateOnRemove()
 {
 	CBaseEntity *pEntity = META_IFACEPTR(CBaseEntity);
 	if (!pEntity) RETURN_META(MRES_IGNORED);
@@ -187,7 +178,11 @@ void Hook_UpdateOnRemove()
 	RETURN_META(MRES_IGNORED);
 }
 
-void Hook_UpdateOnRemovePost()
+#ifdef WIN32
+void CPluginEntityFactory::Hook_EntityDestructor( unsigned int flags )
+#else
+void CPluginEntityFactory::Hook_EntityDestructor( void )
+#endif
 {
 	CBaseEntity *pEntity = META_IFACEPTR(CBaseEntity);
 	if (!pEntity) RETURN_META(MRES_IGNORED);
@@ -195,9 +190,61 @@ void Hook_UpdateOnRemovePost()
 	CPluginEntityFactory* pFactory = GetPluginEntityFactory(pEntity);
 	if (!pFactory) RETURN_META(MRES_IGNORED);
 
-	pFactory->OnRemovePost(pEntity);
+	pFactory->OnDestroy(pEntity);
 
 	RETURN_META(MRES_IGNORED);
+}
+
+void PluginFactoryEntityRecord_t::Hook()
+{
+	if ( m_bHooked ) return;
+	m_bHooked = true;
+
+	if ( !m_pHookIds )
+		m_pHookIds = new std::vector<int>;
+
+	m_pHookIds->push_back( SH_ADD_MANUALHOOK(FactoryEntity_GetDataDescMap, pEntity, SH_STATIC(CPluginEntityFactory::Hook_GetDataDescMap), false) );
+	m_pHookIds->push_back( SH_ADD_MANUALHOOK(FactoryEntity_UpdateOnRemove, pEntity, SH_STATIC(CPluginEntityFactory::Hook_UpdateOnRemove), false) );
+	m_pHookIds->push_back( SH_ADD_MANUALHOOK(FactoryEntity_Dtor, pEntity, SH_STATIC(CPluginEntityFactory::Hook_EntityDestructor), false) );
+}
+
+void PluginFactoryEntityRecord_t::Unhook()
+{
+	if ( !m_bHooked ) return;
+	m_bHooked = false;
+	
+	if ( m_pHookIds )
+	{
+		for (auto it = m_pHookIds->begin(); it != m_pHookIds->end(); it++)
+		{
+			SH_REMOVE_HOOK_ID((*it));
+		}
+
+		delete m_pHookIds;
+		m_pHookIds = nullptr;
+	}
+}
+
+CPluginEntityFactory* GetPluginEntityFactory(CBaseEntity* pEntity)
+{
+	PluginFactoryEntityRecord_t* pEntityRecord = GetPluginFactoryEntityRecord(pEntity);
+	if (!pEntityRecord)
+		return nullptr;
+
+	return pEntityRecord->pFactory;
+}
+
+// Sets pEntity to belong to CPluginEntityFactory pFactory.
+void SetPluginEntityFactory(CBaseEntity* pEntity, CPluginEntityFactory* pFactory)
+{
+	if (!pEntity)
+		return;
+	
+	PluginFactoryEntityRecord_t* pEntityRecord = GetPluginFactoryEntityRecord(pEntity);
+	if (!pEntityRecord)
+		return;
+
+	pEntityRecord->pFactory = pFactory;
 }
 
 bool CPluginEntityFactory::Init(SourceMod::IGameConfig* config, char* error, size_t maxlength)
@@ -233,9 +280,8 @@ bool CPluginEntityFactory::Init(SourceMod::IGameConfig* config, char* error, siz
 
 void CPluginEntityFactory::SDK_OnAllLoaded()
 {
-	SH_MANUALHOOK_RECONFIGURE(MHook_GetDataDescMap, CBaseEntityHack::offset_GetDataDescMap, 0, 0);
-	SH_MANUALHOOK_RECONFIGURE(MHook_UpdateOnRemove, CBaseEntityHack::offset_UpdateOnRemove, 0, 0);
-	SH_MANUALHOOK_RECONFIGURE(MHook_UpdateOnRemovePost, CBaseEntityHack::offset_UpdateOnRemove, 0, 0);
+	SH_MANUALHOOK_RECONFIGURE(FactoryEntity_GetDataDescMap, CBaseEntityHack::offset_GetDataDescMap, 0, 0);
+	SH_MANUALHOOK_RECONFIGURE(FactoryEntity_UpdateOnRemove, CBaseEntityHack::offset_UpdateOnRemove, 0, 0);
 }
 
 void CPluginEntityFactory::SDK_OnUnload()
@@ -291,8 +337,6 @@ CPluginEntityFactory::CPluginEntityFactory(const char* classname, IPluginFunctio
 
 CPluginEntityFactory::~CPluginEntityFactory()
 {
-	Uninstall();
-
 	g_PluginEntityFactories.FindAndRemove(this);
 }
 
@@ -335,37 +379,20 @@ void CPluginEntityFactory::OnRemove(CBaseEntity* pEntity)
 	}
 }
 
-void CPluginEntityFactory::OnRemovePost( CBaseEntity* pEntity )
+void CPluginEntityFactory::OnDestroy( CBaseEntity* pEntity )
 {
 	DestroyUserEntityData(pEntity);
 
 	CPluginEntityFactory* pBasePluginFactory = ToPluginEntityFactory( GetBaseFactory() );
 	if (pBasePluginFactory)
 	{
-		pBasePluginFactory->OnRemovePost( pEntity );
+		pBasePluginFactory->OnDestroy( pEntity );
 	}
 
 	PluginFactoryEntityRecord_t * pEntityRecord = GetPluginFactoryEntityRecord( pEntity );
 	if ( pEntityRecord->pFactory == this )
 	{
-		// Unhook here after all OnRemove calls have been made.
-		if (pEntityRecord->m_bDataMapHooked)
-		{
-			SH_REMOVE_MANUALHOOK(MHook_GetDataDescMap, pEntity, SH_STATIC(Hook_GetDataDescMap), false);
-			pEntityRecord->m_bDataMapHooked = false;
-		}
-
-		if (pEntityRecord->m_bUpdateOnRemoveHooked)
-		{
-			SH_REMOVE_MANUALHOOK(MHook_UpdateOnRemove, pEntity, SH_STATIC(Hook_UpdateOnRemove), false);
-			pEntityRecord->m_bUpdateOnRemoveHooked = false;
-		}
-
-		if (pEntityRecord->m_bUpdateOnRemoveHookedPost)
-		{
-			SH_REMOVE_MANUALHOOK(MHook_UpdateOnRemovePost, pEntity, SH_STATIC(Hook_UpdateOnRemovePost), true);
-			pEntityRecord->m_bUpdateOnRemoveHookedPost = false;
-		}
+		pEntityRecord->Unhook();
 	}
 
 	RemovePluginFactoryEntityRecord( pEntity );
@@ -475,7 +502,7 @@ void CPluginEntityFactory::Uninstall()
 
 	for (int i = 0; i < entities.Count(); i++)
 	{
-		servertools->RemoveEntity(entities[i]);
+		servertools->RemoveEntityImmediate(entities[i]);
 	}
 
 	SetBaseFactory(nullptr);
@@ -653,27 +680,10 @@ IServerNetworkable* CPluginEntityFactory::Create(const char* classname)
 		if (pDataMap)
 		{
 			pEntityRecord->m_pDataMap = pDataMap;
-
-			if (!pEntityRecord->m_bDataMapHooked)
-			{
-				SH_ADD_MANUALHOOK(MHook_GetDataDescMap, pEnt, SH_STATIC(Hook_GetDataDescMap), false);
-				pEntityRecord->m_bDataMapHooked = true;
-			}
-
 			CreateUserEntityData(pEnt);
 		}
 
-		if (!pEntityRecord->m_bUpdateOnRemoveHooked)
-		{
-			SH_ADD_MANUALHOOK(MHook_UpdateOnRemove, pEnt, SH_STATIC(Hook_UpdateOnRemove), false);
-			pEntityRecord->m_bUpdateOnRemoveHooked = true;
-		}
-
-		if (!pEntityRecord->m_bUpdateOnRemoveHookedPost)
-		{
-			SH_ADD_MANUALHOOK(MHook_UpdateOnRemovePost, pEnt, SH_STATIC(Hook_UpdateOnRemovePost), true);
-			pEntityRecord->m_bUpdateOnRemoveHookedPost = true;
-		}
+		pEntityRecord->Hook();
 
 		if (m_pPostConstructor && m_pPostConstructor->IsRunnable())
 		{
@@ -807,5 +817,6 @@ void CPluginEntityFactoryHandler::OnHandleDestroy(HandleType_t type, void * obje
 {
 	CPluginEntityFactory* factory = (CPluginEntityFactory*)object;
 	factory->DestroyDataDesc();
+	factory->Uninstall();
 	delete factory;
 }
