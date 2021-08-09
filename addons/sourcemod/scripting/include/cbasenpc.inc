@@ -3126,7 +3126,7 @@ methodmap CBaseEntity
 	public native void SetAbsAngles(float ang[3]);
 	public native void SetAbsVelocity(float vel[3]);
 	public native void NetworkStateChanged();
-	public native void NetworkStateChangedVar(Address var);
+	public native void NetworkStateChangedVar(Address varAddr);
 	public native float GetSimulationTime();
 	public native float SetSimulationTime(float time);
 	public native void GetLocalOrigin(float pos[3]);
