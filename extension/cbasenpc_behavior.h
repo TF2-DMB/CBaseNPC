@@ -9,6 +9,12 @@
 #include <sh_stack.h>
 
 class CBaseNPCPluginActionFactory;
+class CBaseNPCPluginActionFactories;
+
+// To be used with READHANDLE macro
+extern HandleType_t g_BaseNPCPluginActionFactoryHandle;
+
+extern CBaseNPCPluginActionFactories* g_pBaseNPCPluginActionFactories;
 
 class CBaseNPCPluginAction : public Action <CBaseNPC_Entity>
 {
@@ -146,6 +152,29 @@ private:
 	Behavior< CBaseNPC_Entity > * m_pBehavior;
 };
 
+class CBaseNPCPluginActionFactories : public IHandleTypeDispatch
+{
+public:
+	CBaseNPCPluginActionFactories();
+
+	// IHandleTypeDispatch
+	virtual void OnHandleDestroy( HandleType_t type, void * object ) override final;
+
+	bool Init( IGameConfig* config, char* error, size_t maxlength );
+	void OnCoreMapEnd();
+	void SDK_OnUnload();
+
+	HandleType_t GetFactoryType() const { return m_FactoryType; }
+	CBaseNPCPluginActionFactory* GetFactoryFromHandle( Handle_t handle, HandleError *err = nullptr );
+	void OnFactoryCreated( CBaseNPCPluginActionFactory* pFactory );
+	void OnFactoryDestroyed( CBaseNPCPluginActionFactory* pFactory );
+
+private:
+	HandleType_t m_FactoryType;
+
+	CUtlVector< CBaseNPCPluginActionFactory* > m_Factories;
+};
+
 class CBaseNPCPluginActionFactory : public IDataMapContainer
 {
 public:
@@ -230,7 +259,7 @@ private:
 public:
 	Handle_t m_Handle;
 
-	CBaseNPCPluginActionFactory(const char* actionName);
+	CBaseNPCPluginActionFactory( IPlugin* plugin, const char* actionName );
 	virtual ~CBaseNPCPluginActionFactory();
 
 	virtual int GetDataDescOffset() const override final { return 0; }
@@ -252,15 +281,9 @@ public:
 	void OnActionCreated( Action <CBaseNPC_Entity>* pAction );
 	void OnActionRemoved( Action <CBaseNPC_Entity>* pAction );
 	void OnCreateInitialAction( Action <CBaseNPC_Entity>* pAction );
-};
 
-class CBaseNPCActionFactoryHandler : public IHandleTypeDispatch
-{
-public:
-	virtual void OnHandleDestroy(HandleType_t type, void * object) override;
+	// Removes all entities that use Actions created from this factory.
+	void RemoveAllEntities();
 };
-
-extern HandleType_t g_BaseNPCPluginActionFactoryHandle;
-extern CBaseNPCActionFactoryHandler g_BaseNPCPluginActionFactoryHandler;
 
 #endif

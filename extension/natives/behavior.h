@@ -38,12 +38,9 @@ cell_t NextBotActionFactory_NextBotActionFactory(IPluginContext *pContext, const
 	if (!name || !strlen(name))
 		return pContext->ThrowNativeError("Action must have a name");
 	
-	CBaseNPCPluginActionFactory* pFactory = new CBaseNPCPluginActionFactory(name);
-
-	Handle_t handle = CREATEHANDLE(BaseNPCPluginActionFactory, pFactory);
-	pFactory->m_Handle = handle;
-
-	return handle;
+	IPlugin* plugin = plsys->FindPluginByContext( pContext->GetContext() );
+	CBaseNPCPluginActionFactory* pFactory = new CBaseNPCPluginActionFactory( plugin, name );
+	return pFactory->m_Handle;
 }
 
 ACTIONFACTORYNATIVE(SetCallback)

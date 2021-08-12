@@ -73,8 +73,17 @@ bool CBaseNPCExt::SDK_OnLoad(char *error, size_t maxlength, bool late)
 		|| !NextBotGroundLocomotion::Init(g_pGameConf, error, maxlength)
 		|| !CTFGameRules::Init(g_pGameConf, error, maxlength)
 		|| !CBaseEntityOutputHack::Init(g_pGameConf, error, maxlength)
-		|| !CPluginEntityFactory::Init(g_pGameConf, error, maxlength)
 		)
+	{
+		return false;
+	}
+
+	if ( !g_pPluginEntityFactories->Init( g_pGameConf, error, maxlength ) )
+	{
+		return false;
+	}
+
+	if ( !g_pBaseNPCPluginActionFactories->Init( g_pGameConf, error, maxlength ) )
 	{
 		return false;
 	}
@@ -93,8 +102,6 @@ bool CBaseNPCExt::SDK_OnLoad(char *error, size_t maxlength, bool late)
 	
 	CREATEHANDLETYPE(SurroundingAreasCollector);
 	CREATEHANDLETYPE(TSurroundingAreasCollector);
-	CREATEHANDLETYPE(PluginEntityFactory);
-	CREATEHANDLETYPE(BaseNPCPluginActionFactory);
 
 	sharesys->AddDependency(myself, "bintools.ext", true, true);
 	sharesys->AddDependency(myself, "sdktools.ext", true, true);
@@ -152,6 +159,9 @@ void CBaseNPCExt::OnCoreMapStart(edict_t *pEdictList, int edictCount, int client
 
 void CBaseNPCExt::OnCoreMapEnd()
 {
+	g_pBaseNPCPluginActionFactories->OnCoreMapEnd();
+	g_pPluginEntityFactories->OnCoreMapEnd();
+
 	CTNavMesh::CleanUp();
 }
 
@@ -218,7 +228,7 @@ void CBaseNPCExt::SDK_OnAllLoaded()
 	CTNavMesh::RefreshHooks();
 
 	CBaseNPC_Entity::SDK_OnAllLoaded();
-	CPluginEntityFactory::SDK_OnAllLoaded();
+	g_pPluginEntityFactories->SDK_OnAllLoaded();
 
 	CBaseNPC_Entity *npc = (CBaseNPC_Entity*)servertools->CreateEntityByName("base_npc");
 	if (npc)
@@ -271,7 +281,8 @@ void CBaseNPCExt::SDK_OnUnload()
 		g_pNavMeshAddArea->Destroy();
 	}
 
-	CPluginEntityFactory::SDK_OnUnload();
+	g_pBaseNPCPluginActionFactories->SDK_OnUnload();
+	g_pPluginEntityFactories->SDK_OnUnload();
 
 	delete g_pBaseNPCFactory;
 	g_pBaseNPCFactory = nullptr;

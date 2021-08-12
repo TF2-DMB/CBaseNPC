@@ -85,6 +85,10 @@ struct KeyValueStack
 extern IdentityToken_t * g_pCoreIdent;
 extern HandleType_t g_KeyValueType;
 
+HandleType_t g_BaseNPCPluginActionFactoryHandle;
+
+CBaseNPCPluginActionFactories* g_pBaseNPCPluginActionFactories = new CBaseNPCPluginActionFactories();
+
 CBaseNPCPluginAction::CBaseNPCPluginAction(CBaseNPCPluginActionFactory* pFactory) : 
 	Action< CBaseNPC_Entity >(),
 	m_pFactory(pFactory)
@@ -567,39 +571,110 @@ void CBaseNPCIntention::Update()
 	}
 }
 
-CBaseNPCPluginActionFactory::CBaseNPCPluginActionFactory(const char* actionName) : 
+CBaseNPCPluginActionFactories::CBaseNPCPluginActionFactories()
+{
+}
+
+bool CBaseNPCPluginActionFactories::Init( IGameConfig* config, char* error, size_t maxlength )
+{
+	m_FactoryType = g_BaseNPCPluginActionFactoryHandle = handlesys->CreateType( "BaseNPCPluginActionFactory", this, 0, nullptr, nullptr, myself->GetIdentity(), nullptr );
+	if ( !m_FactoryType )
+	{
+		snprintf( error, maxlength, "Failed to register BaseNPCPluginActionFactory handle type" );
+		return false;
+	}
+
+	return true;
+}
+
+void CBaseNPCPluginActionFactories::OnCoreMapEnd()
+{
+	// Remove entities early. This is to make sure that some ending callbacks
+	// are called before some Handles are freed (like timer mapchange handles).
+	for (int i = 0; i < m_Factories.Count(); i++)
+	{
+		m_Factories[i]->RemoveAllEntities();
+	}
+}
+
+void CBaseNPCPluginActionFactories::SDK_OnUnload()
+{
+	handlesys->RemoveType( m_FactoryType, myself->GetIdentity() );
+}
+
+void CBaseNPCPluginActionFactories::OnHandleDestroy( HandleType_t type, void * object )
+{
+	CBaseNPCPluginActionFactory* factory = (CBaseNPCPluginActionFactory*)object;
+	factory->RemoveAllEntities();
+	factory->DestroyDataDesc();
+	delete factory;
+}
+
+CBaseNPCPluginActionFactory* CBaseNPCPluginActionFactories::GetFactoryFromHandle( Handle_t handle, HandleError *err )
+{
+	CBaseNPCPluginActionFactory* pFactory;
+	HandleError _err;
+	HandleSecurity security( nullptr, myself->GetIdentity() );
+	if ( ( _err = handlesys->ReadHandle(handle, m_FactoryType, &security, (void **)&pFactory) ) != HandleError_None )
+	{
+		pFactory = nullptr;
+	}
+
+	if (err)
+		*err = _err;
+
+	return pFactory;
+}
+
+void CBaseNPCPluginActionFactories::OnFactoryCreated( CBaseNPCPluginActionFactory* pFactory )
+{
+	m_Factories.AddToTail( pFactory );
+}
+
+void CBaseNPCPluginActionFactories::OnFactoryDestroyed( CBaseNPCPluginActionFactory* pFactory )
+{
+	m_Factories.FindAndRemove( pFactory );
+}
+
+CBaseNPCPluginActionFactory::CBaseNPCPluginActionFactory( IPlugin* plugin, const char* actionName ) : 
 	IDataMapContainer(),
 	m_iActionName(actionName)
 {
 	SetDefLessFunc(m_Callbacks);
 	SetDefLessFunc(m_QueryCallbacks);
 	SetDefLessFunc(m_EventCallbacks);
+
+	m_Handle = handlesys->CreateHandle( g_pBaseNPCPluginActionFactories->GetFactoryType(), this, plugin->GetIdentity(), myself->GetIdentity(), nullptr );
+
+	g_pBaseNPCPluginActionFactories->OnFactoryCreated( this );
 }
 
 CBaseNPCPluginActionFactory::~CBaseNPCPluginActionFactory()
 {
-	if (m_Actions.Count())
+	g_pBaseNPCPluginActionFactories->OnFactoryDestroyed( this );
+}
+
+void CBaseNPCPluginActionFactory::RemoveAllEntities()
+{
+	if (!m_Actions.Count())
+		return;
+	
+	CUtlVector< CBaseEntity* > entities;
+	for ( int i = 0; i < m_Actions.Count(); i++ )
 	{
-		// Remove entities that use Actions created from this factory to prevent
-		// undefined behavior.
+		Action< CBaseNPC_Entity > *pAction = m_Actions[i];
+		if (!pAction) continue;
 
-		CUtlVector< CBaseEntity* > entities;
-		for (int i = 0; i < m_Actions.Count(); i++)
+		CBaseNPC_Entity* pActor = pAction->GetActor();
+		if (pActor && !entities.IsValidIndex( entities.Find(pActor) ) )
 		{
-			Action< CBaseNPC_Entity > *pAction = m_Actions[i];
-			if (!pAction) continue;
-
-			CBaseNPC_Entity* pActor = pAction->GetActor();
-			if (pActor && !entities.IsValidIndex(entities.Find(pActor)))
-			{
-				entities.AddToTail(pActor);
-			}
+			entities.AddToTail( pActor );
 		}
+	}
 
-		for (int i = 0; i < entities.Count(); i++)
-		{
-			servertools->RemoveEntityImmediate(entities[i]);
-		}
+	for ( int i = 0; i < entities.Count(); i++ )
+	{
+		servertools->RemoveEntityImmediate( entities[i] );
 	}
 }
 
@@ -673,13 +748,3 @@ void CBaseNPCPluginActionFactory::OnCreateInitialAction(Action <CBaseNPC_Entity>
 		pCallback->Execute(nullptr);
 	}
 }
-
-void CBaseNPCActionFactoryHandler::OnHandleDestroy(HandleType_t type, void * object)
-{
-	CBaseNPCPluginActionFactory* factory = (CBaseNPCPluginActionFactory*)object;
-	factory->DestroyDataDesc();
-	delete factory;
-}
-
-HandleType_t g_BaseNPCPluginActionFactoryHandle;
-CBaseNPCActionFactoryHandler g_BaseNPCPluginActionFactoryHandler;
