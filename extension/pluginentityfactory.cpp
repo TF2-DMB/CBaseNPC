@@ -560,15 +560,30 @@ void CPluginEntityFactory::Uninstall()
 
 	if (!IsAbstract())
 	{
+		bool removed = false;
+
 		CEntityFactoryDictionaryHack* pFactoryDict = EntityFactoryDictionaryHack();
 
 		for (size_t i = 0; i < pFactoryDict->m_Factories.Count(); i++)
 		{
 			if (pFactoryDict->m_Factories[i] == this)
 			{
+				removed = true;
 				pFactoryDict->m_Factories.RemoveAt(i);
 				break;
 			}
+		}
+
+		if ( !removed )
+		{
+			// BUGFIX: For some reason, sometimes the first loop doesn't detect it.
+			pFactoryDict->m_Factories.Remove( classname );
+			removed = pFactoryDict->FindFactory( classname ) == nullptr;
+		}
+
+		if ( !removed )
+		{
+			g_pSM->LogError( myself, "WARNING! Uninstalling non-abstract factory %s, but was not found in the dictionary!", classname );
 		}
 	}
 
