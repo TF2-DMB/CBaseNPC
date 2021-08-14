@@ -956,7 +956,7 @@ methodmap CBaseEntity
 
 	public native void NetworkStateChanged();
 
-	public native void NetworkStateChangedVar(Address var);
+	public native void NetworkStateChangedVar(Address varAddr);
 
 	public native float GetSimulationTime();
 

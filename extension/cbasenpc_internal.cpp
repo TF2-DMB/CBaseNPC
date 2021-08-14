@@ -8,13 +8,11 @@
 #include <ai_activity.h>
 #include <util.h>
 
-// IServerNetworkable (npc destruction)
-//SH_DECL_HOOK0_void(IServerNetworkable, Release, SH_NOATTRIB, 0);
 // CBaseEntity/any class with a vtable (npc destruction)
 #ifdef __linux__
 SH_DECL_MANUALHOOK0_void(Class_Dtor, 1, 0, 0);
 #else
-SH_DECL_MANUALHOOK0_void(Class_Dtor, 0, 0, 0);
+SH_DECL_MANUALHOOK1_void(Class_Dtor, 0, 0, 0, unsigned int);
 #endif
 
 
@@ -101,6 +99,21 @@ size_t CBaseNPCFactory::GetEntitySize()
 	return sizeof(CBaseNPC_Entity::CBaseNPC) + NextBotCombatCharacter::size_of;
 }
 
+#ifdef WIN32
+// MSVC uses helper function in vtable instead of the destructor
+void Hook_EntityDestructor( unsigned int flags )
+#else
+void Hook_EntityDestructor( void )
+#endif
+{
+	CBaseNPC_Entity *pEntity = META_IFACEPTR(CBaseNPC_Entity);
+	if (!pEntity) RETURN_META(MRES_IGNORED);
+
+	pEntity->BotDestroy();
+
+	RETURN_META(MRES_IGNORED);
+}
+
 CBaseNPC_Entity::CBaseNPC::CBaseNPC(NextBotCombatCharacter* ent, CBaseNPCPluginActionFactory* initialActionFactory) : CExtNPC()
 {
 	INextBot* bot = ent->MyNextBotPointer();
@@ -111,8 +124,7 @@ CBaseNPC_Entity::CBaseNPC::CBaseNPC(NextBotCombatCharacter* ent, CBaseNPCPluginA
 	m_hookids.push_back(SH_ADD_HOOK(INextBot, GetIntentionInterface, bot, SH_MEMBER(this, &CBaseNPC_Entity::CBaseNPC::Hook_GetIntentionInterface), false));
 	m_hookids.push_back(SH_ADD_HOOK(INextBot, GetLocomotionInterface, bot, SH_MEMBER(this, &CBaseNPC_Entity::CBaseNPC::Hook_GetLocomotionInterface), false));
 	m_hookids.push_back(SH_ADD_HOOK(INextBot, GetBodyInterface, bot, SH_MEMBER(this, &CBaseNPC_Entity::CBaseNPC::Hook_GetBodyInterface), false));
-	//m_hookids.push_back(SH_ADD_HOOK(IServerNetworkable, Release, ent->NetworkProp(), SH_MEMBER(ent, &CBaseNPC_Entity::BotDestroy), false));
-	m_hookids.push_back(SH_ADD_MANUALHOOK(Class_Dtor, ent, SH_MEMBER((CBaseNPC_Entity*)ent, &CBaseNPC_Entity::BotDestroy), false));
+	m_hookids.push_back(SH_ADD_MANUALHOOK(Class_Dtor, ent, SH_STATIC(Hook_EntityDestructor), false));
 }
 
 CBaseNPC_Entity::CBaseNPC::~CBaseNPC()
@@ -148,8 +160,6 @@ void CBaseNPC_Entity::BotDestroy(void)
 {
 	CBaseNPC* npc = this->GetNPC();
 	npc->~CBaseNPC();
-	g_pSM->LogMessage(myself, "NPC destroyed!");
-	RETURN_META(MRES_IGNORED);
 }
 
 void CBaseNPC_Entity::BotSpawn(void)
