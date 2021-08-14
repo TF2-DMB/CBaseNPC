@@ -674,7 +674,7 @@ void CBaseNPCPluginActionFactory::RemoveAllEntities()
 
 	for ( int i = 0; i < entities.Count(); i++ )
 	{
-		servertools->RemoveEntityImmediate( entities[i] );
+		servertools->RemoveEntity( entities[i] );
 	}
 }
 

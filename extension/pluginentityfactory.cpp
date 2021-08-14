@@ -102,7 +102,7 @@ PluginFactoryEntityRecord_t* CPluginEntityFactories::FindRecord( CBaseEntity* pE
 	if (!pEntity)
 		return nullptr;
 	
-	cell_t key = gamehelpers->EntityToReference(pEntity);
+	cell_t key = (cell_t)pEntity;
 	unsigned short index = m_Records.Find( key );
 	if ( !m_Records.IsValidIndex(index) )
 	{
@@ -124,7 +124,7 @@ void CPluginEntityFactories::RemoveRecord( CBaseEntity* pEntity )
 	if (!pEntity)
 		return;
 	
-	cell_t key = gamehelpers->EntityToReference(pEntity);
+	cell_t key = (cell_t)pEntity;
 	m_Records.Remove( key );
 }
 
@@ -494,17 +494,13 @@ void CPluginEntityFactory::OnDestroy( CBaseEntity* pEntity )
 	if ( pEntityRecord->pFactory == this )
 	{
 		pEntityRecord->Unhook();
+		g_pPluginEntityFactories->RemoveRecord( pEntity );
 	}
-
-	g_pPluginEntityFactories->RemoveRecord( pEntity );
 }
 
 void CPluginEntityFactories::GetEntitiesOfFactory( CPluginEntityFactory* pFactory, CUtlVector< CBaseEntity* > &vector )
 {
-	if (!m_Records.Count())
-		return;
-
-	for ( unsigned short i = 0; i < m_Records.Count(); i++ )
+	FOR_EACH_MAP( m_Records, i )
 	{
 		PluginFactoryEntityRecord_t *entityRecord = &m_Records[i];
 		if ( entityRecord->pFactory == pFactory )
@@ -564,7 +560,7 @@ void CPluginEntityFactory::Uninstall()
 
 		CEntityFactoryDictionaryHack* pFactoryDict = EntityFactoryDictionaryHack();
 
-		for (size_t i = 0; i < pFactoryDict->m_Factories.Count(); i++)
+		FOR_EACH_DICT( pFactoryDict->m_Factories, i )
 		{
 			if (pFactoryDict->m_Factories[i] == this)
 			{
@@ -572,13 +568,6 @@ void CPluginEntityFactory::Uninstall()
 				pFactoryDict->m_Factories.RemoveAt(i);
 				break;
 			}
-		}
-
-		if ( !removed )
-		{
-			// BUGFIX: For some reason, sometimes the first loop doesn't detect it.
-			pFactoryDict->m_Factories.Remove( classname );
-			removed = pFactoryDict->FindFactory( classname ) == nullptr;
 		}
 
 		if ( !removed )
@@ -618,7 +607,16 @@ void CPluginEntityFactory::RemoveAllEntities()
 
 	for (int i = 0; i < entities.Count(); i++)
 	{
-		servertools->RemoveEntityImmediate(entities[i]);
+		CBaseEntityHack* pEntity = reinterpret_cast< CBaseEntityHack* >( entities[i] );
+
+		servertools->RemoveEntity( pEntity );
+
+		if ( g_pPluginEntityFactories->FindRecord( pEntity ) )
+		{
+			// Unhook early so the destructor hook won't call bad memory,
+			// especially if we're unloading.
+			OnDestroy( pEntity );
+		}
 	}
 }
 
