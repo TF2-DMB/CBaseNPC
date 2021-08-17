@@ -227,7 +227,6 @@ void CBaseNPCExt::SDK_OnAllLoaded()
 	g_pEntityList = (CBaseEntityList *)gamehelpers->GetGlobalEntityList();
 	CTNavMesh::RefreshHooks();
 
-	CBaseNPC_Entity::SDK_OnAllLoaded();
 	g_pPluginEntityFactories->SDK_OnAllLoaded();
 
 	CBaseNPC_Entity *npc = (CBaseNPC_Entity*)servertools->CreateEntityByName("base_npc");

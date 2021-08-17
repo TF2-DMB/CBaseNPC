@@ -363,10 +363,10 @@ void CPluginEntityFactories::Hook_UpdateOnRemove()
 	RETURN_META(MRES_IGNORED);
 }
 
-#ifdef WIN32
-void CPluginEntityFactories::Hook_EntityDestructor( unsigned int flags )
-#else
+#ifdef __linux__
 void CPluginEntityFactories::Hook_EntityDestructor( void )
+#else
+void CPluginEntityFactories::Hook_EntityDestructor( unsigned int flags )
 #endif
 {
 	CBaseEntity *pEntity = META_IFACEPTR(CBaseEntity);

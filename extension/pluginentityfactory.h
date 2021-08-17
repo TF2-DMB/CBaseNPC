@@ -78,10 +78,10 @@ public:
 
 	datamap_t* Hook_GetDataDescMap();
 	void Hook_UpdateOnRemove();
-#ifdef WIN32
-	void Hook_EntityDestructor( unsigned int flags );
-#else
+#ifdef __linux__
 	void Hook_EntityDestructor( void );
+#else
+	void Hook_EntityDestructor( unsigned int flags );
 #endif
 
 private:

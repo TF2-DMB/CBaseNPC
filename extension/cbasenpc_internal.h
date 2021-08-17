@@ -96,17 +96,14 @@ public:
 		IBody* Hook_GetBodyInterface(void) const;
 	};
 
-	static void SDK_OnAllLoaded();
-
 	CBaseNPC_Entity::CBaseNPC* GetNPC(void);
-	void Hook_UpdateOnRemove(void);
 	void BotUpdateOnRemove(void);
 	void BotThink(void);
 	void BotSpawn(void);
-#ifdef WIN32
-	void Hook_Destructor( unsigned int flags );
-#else
+#ifdef __linux__
 	void Hook_Destructor( void );
+#else
+	void Hook_Destructor( unsigned int flags );
 #endif
 	void BotDestroy(void);
 	int OnTakeDamage(const CTakeDamageInfo& info);
