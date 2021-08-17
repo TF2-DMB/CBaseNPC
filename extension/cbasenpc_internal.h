@@ -98,6 +98,7 @@ public:
 	void BotUpdateOnRemove(void);
 	void BotThink(void);
 	void BotSpawn(void);
+	void BotDestroy(void);
 	int OnTakeDamage(const CTakeDamageInfo& info);
 	int OnTakeDamage_Alive(const CTakeDamageInfo& info);
 

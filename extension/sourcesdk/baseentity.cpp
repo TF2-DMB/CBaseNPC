@@ -71,6 +71,7 @@ DEFINEVAR(CBaseEntityHack, m_vecVelocity);
 DEFINEVAR(CBaseEntityHack, m_rgflCoordinateFrame);
 DEFINEVAR(CBaseEntityHack, m_iTeamNum);
 DEFINEVAR(CBaseEntityHack, m_hGroundEntity);
+DEFINEVAR(CBaseEntityHack, m_ModelName);
 
 bool CBaseEntityHack::Init(SourceMod::IGameConfig* config, char* error, size_t maxlength)
 {
@@ -163,6 +164,7 @@ bool CBaseEntityHack::Init(SourceMod::IGameConfig* config, char* error, size_t m
 	OFFSETVAR_DATA(CBaseEntity, m_rgflCoordinateFrame);
 	OFFSETVAR_SEND(CBaseEntity, m_iTeamNum);
 	OFFSETVAR_DATA(CBaseEntity, m_hGroundEntity);
+	OFFSETVAR_DATA(CBaseEntity, m_ModelName);
 	END_VAR;
 
 	gameconfs->CloseGameConfigFile(configSDKTools);
