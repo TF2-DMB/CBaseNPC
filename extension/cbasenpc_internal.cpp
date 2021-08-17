@@ -9,7 +9,6 @@
 #include <util.h>
 
 // CBaseEntity/any class with a vtable (npc destruction)
-#ifdef __linux__
 SH_DECL_MANUALHOOK0_void(CBaseNPC_Dtor, 1, 0, 0);
 #else
 SH_DECL_MANUALHOOK1_void(CBaseNPC_Dtor, 0, 0, 0, unsigned int);

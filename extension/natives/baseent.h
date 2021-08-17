@@ -74,68 +74,38 @@ CBASEENTNATIVE(GetModelName)
 
 CBASEENTNATIVE(RegisterThinkContext)
 	char* context = nullptr;
-	pContext->LocalToString(params[2], &context);
-	cell_t* nullAdd = pContext->GetNullRef(SP_NULL_STRING);
-	if (nullAdd)
-	{
-		context = nullptr;
-	}
+	pContext->LocalToStringNULL(params[2], &context);
 	return ent->RegisterThinkContext(context);
 }
 
 CBASEENTNATIVE(SetNextThink)
 	char* context = nullptr;
-	pContext->LocalToString(params[3], &context);
-	cell_t* nullAdd = pContext->GetNullRef(SP_NULL_STRING);
-	if (nullAdd)
-	{
-		context = nullptr;
-	}
+	pContext->LocalToStringNULL(params[3], &context);
 	ent->SetNextThink(sp_ctof(params[2]), context);
 	return 0;
 }
 
 CBASEENTNATIVE(GetNextThink)
 	char* context = nullptr;
-	pContext->LocalToString(params[2], &context);
-	cell_t* nullAdd = pContext->GetNullRef(SP_NULL_STRING);
-	if (nullAdd)
-	{
-		context = nullptr;
-	}
+	pContext->LocalToStringNULL(params[2], &context);
 	return sp_ftoc(ent->GetNextThink(context));
 }
 
 CBASEENTNATIVE(GetLastThink)
 	char* context = nullptr;
-	pContext->LocalToString(params[2], &context);
-	cell_t* nullAdd = pContext->GetNullRef(SP_NULL_STRING);
-	if (nullAdd)
-	{
-		context = nullptr;
-	}
+	pContext->LocalToStringNULL(params[2], &context);
 	return sp_ftoc(ent->GetLastThink(context));
 }
 
 CBASEENTNATIVE(GetNextThinkTick)
 	char* context = nullptr;
-	pContext->LocalToString(params[2], &context);
-	cell_t* nullAdd = pContext->GetNullRef(SP_NULL_STRING);
-	if (nullAdd)
-	{
-		context = nullptr;
-	}
+	pContext->LocalToStringNULL(params[2], &context);
 	return ent->GetNextThinkTick(context);
 }
 
 CBASEENTNATIVE(GetLastThinkTick)
 	char* context = nullptr;
-	pContext->LocalToString(params[2], &context);
-	cell_t* nullAdd = pContext->GetNullRef(SP_NULL_STRING);
-	if (nullAdd)
-	{
-		context = nullptr;
-	}
+	pContext->LocalToStringNULL(params[2], &context);
 	return ent->GetLastThinkTick(context);
 }
 
