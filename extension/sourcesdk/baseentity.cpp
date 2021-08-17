@@ -6,7 +6,7 @@
 #include <worldsize.h>
 #include <enginecallback.h>
 
-int(CBaseEntityHack::CBaseEntityHack::offset_UpdateOnRemove) = 0;
+int CBaseEntityHack::offset_UpdateOnRemove = 0;
 int CBaseEntityHack::offset_GetDataDescMap = 0;
 
 MCall<void, bool> CBaseEntityHack::CBaseEntity_Ctor;

@@ -332,13 +332,13 @@ methodmap IIntention < INextBotComponent
 {
 	public native void Reset();
 	public native void Update();
-	public native bool ShouldPickUp( int item );
-	public native bool ShouldHurry();
-	public native bool ShouldRetreat();
-	public native bool ShouldAttack( int them );
-	public native bool IsHindrance( int blocker );
+	public native QueryResultType ShouldPickUp( int item );
+	public native QueryResultType ShouldHurry();
+	public native QueryResultType ShouldRetreat();
+	public native QueryResultType ShouldAttack( int them );
+	public native QueryResultType IsHindrance( int blocker );
 	public native void SelectTargetPoint( int subject, float buffer[3] );
-	public native bool IsPositionAllowed( const float pos[3] );
+	public native QueryResultType IsPositionAllowed( const float pos[3] );
 	public native CKnownEntity SelectMoreDangerousThreat( int subject, CKnownEntity threat1, CKnownEntity threat2 );
 }
 

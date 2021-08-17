@@ -14,20 +14,100 @@ class CBaseEntity;
 class CPluginEntityFactory;
 class CBaseNPCPluginActionFactory;
 
-// Returns the CPluginEntityFactory the entity belongs to.
-CPluginEntityFactory* GetPluginEntityFactory(CBaseEntity* pEntity);
+// To be used with READHANDLE macro
+extern HandleType_t g_PluginEntityFactoryHandle;
+
+enum PluginEntityFactoryBaseClass_t
+{
+	FACTORYBASECLASS_BASEENTITY,
+	FACTORYBASECLASS_MAX
+};
+
+class PluginFactoryEntityRecord_t
+{
+public:
+	CBaseEntity* pEntity = nullptr;
+	CPluginEntityFactory* pFactory = nullptr;
+	datamap_t* m_pDataMap = nullptr;
+
+	void Hook();
+	void Unhook();
+
+	PluginFactoryEntityRecord_t() : pEntity( nullptr ) { }
+	PluginFactoryEntityRecord_t( CBaseEntity* pEnt ) : pEntity(pEnt) { }
+
+private:
+	bool m_bHooked = false;
+	std::vector<int> * m_pHookIds = nullptr;
+};
+
+class CPluginEntityFactories : public IPluginsListener,
+	public IHandleTypeDispatch
+{
+public:
+	CPluginEntityFactories();
+
+	// IPluginsListener
+	virtual void OnPluginUnloaded( IPlugin* plugin ) override final;
+
+	// IHandleTypeDispatch
+	virtual void OnHandleDestroy(HandleType_t type, void * object) override final;
+
+	bool Init( IGameConfig* config, char* error, size_t maxlength );
+	void OnCoreMapEnd();
+	void SDK_OnAllLoaded();
+	void SDK_OnUnload();
+
+	HandleType_t GetFactoryType() const { return m_FactoryType; }
+	CPluginEntityFactory* GetFactory( CBaseEntity* pEntity );
+	CPluginEntityFactory* GetFactoryFromHandle( Handle_t handle, HandleError *err = nullptr );
+	int GetInstalledFactoryHandles( Handle_t* pHandleArray, size_t arraySize );
+	void OnFactoryCreated( CPluginEntityFactory* pFactory );
+	void OnFactoryDestroyed( CPluginEntityFactory* pFactory );
+	void OnFactoryInstall( CPluginEntityFactory* pFactory );
+	void OnFactoryUninstall( CPluginEntityFactory* pFactory );
+
+	PluginFactoryEntityRecord_t* FindRecord( CBaseEntity* pEntity, bool create=false );
+	void RemoveRecord( CBaseEntity* pEntity );
+	void GetEntitiesOfFactory( CPluginEntityFactory* pFactory, CUtlVector< CBaseEntity* > &vector );
+	CPluginEntityFactory* ToPluginEntityFactory( IEntityFactory* pFactory );
+
+	size_t GetBaseClassSize( PluginEntityFactoryBaseClass_t classType ) const { 
+		return m_BaseClassSizes[ classType ];
+	};
+
+	datamap_t* Hook_GetDataDescMap();
+	void Hook_UpdateOnRemove();
+#ifdef __linux__
+	void Hook_EntityDestructor( void );
+#else
+	void Hook_EntityDestructor( unsigned int flags );
+#endif
+
+private:
+	HandleType_t m_FactoryType;
+	IForward * m_fwdInstalledFactory;
+	IForward * m_fwdUninstalledFactory;
+
+	size_t m_BaseClassSizes[ FACTORYBASECLASS_MAX ];
+	CUtlVector< CPluginEntityFactory* > m_Factories;
+	CUtlMap< cell_t, PluginFactoryEntityRecord_t > m_Records;
+};
+
+extern CPluginEntityFactories* g_pPluginEntityFactories;
 
 class CPluginEntityFactory : public IEntityFactory, public IEntityDataMapContainer
 {    
 public:
 	std::string m_iClassname;
+	IPlugin* m_pPlugin;
 	IPluginFunction *m_pPostConstructor;
 	IPluginFunction *m_pOnRemove;
 	bool m_bInstalled;
 
 	Handle_t m_Handle;
 
-	CPluginEntityFactory(const char* classname, IPluginFunction *postConstructor=nullptr, IPluginFunction *onRemove=nullptr);
+	CPluginEntityFactory( IPlugin* plugin, const char* classname, IPluginFunction *postConstructor=nullptr, IPluginFunction *onRemove=nullptr );
 	virtual ~CPluginEntityFactory();
 
 	bool Install();
@@ -40,6 +120,9 @@ public:
 
 	void OnRemove(CBaseEntity* pEntity);
 
+	// Not the entity listener; when the entity's destructor is called.
+	void OnDestroy(CBaseEntity* pEntity);
+
 protected:
 	enum PluginEntityFactoryDeriveType_t
 	{
@@ -51,19 +134,13 @@ protected:
 		DERIVETYPE_MAX
 	};
 
-	enum PluginEntityFactoryDeriveFromBaseType_t
-	{
-		DERIVEBASECLASSTYPE_ENTITY,
-		DERIVEBASECLASSTYPE_MAX
-	};
-
 	struct PluginEntityFactoryDeriveInfo_t
 	{
 		PluginEntityFactoryDeriveType_t m_DeriveFrom;
 
 		union
 		{
-			PluginEntityFactoryDeriveFromBaseType_t m_BaseType;
+			PluginEntityFactoryBaseClass_t m_BaseType;
 			Handle_t m_BaseFactoryHandle;
 		};
 		
@@ -71,8 +148,6 @@ protected:
 		bool m_bBaseEntityServerOnly;
 
 	} m_Derive;
-
-	static size_t m_DeriveBaseClassSizes[DERIVEBASECLASSTYPE_MAX];
 
 	CBaseNPCPluginActionFactory* m_pBaseNPCInitialActionFactory;
 
@@ -124,7 +199,9 @@ public:
 
 	// Collects all entities that were created by this factory.
 	// This does not include entities that are created by factories that derive from this one.
-	void GetEntities(CUtlVector< CBaseEntity* > *pVec) const;
+	void GetEntities( CUtlVector< CBaseEntity* > &vector );
+
+	void RemoveAllEntities();
 
 private:
 	// Datamap
@@ -149,29 +226,9 @@ protected:
 	void DestroyUserEntityData(CBaseEntity* pEntity);
 
 public:
-
-	static bool Init(SourceMod::IGameConfig* config, char* error, size_t maxlength);
-
-	static void SDK_OnAllLoaded();
-
-	static void SDK_OnUnload();
-
 	static CPluginEntityFactory* ToPluginEntityFactory( IEntityFactory* pFactory );
 
-	static int GetInstalledFactoryHandles( Handle_t* pHandleArray, int arraySize );
-
-private:
-	static void OnFactoryInstall( CPluginEntityFactory* pFactory );
-	static void OnFactoryUninstall( CPluginEntityFactory* pFactory );
+	friend class CPluginEntityFactories;
 };
-
-class CPluginEntityFactoryHandler : public IHandleTypeDispatch
-{
-public:
-	virtual void OnHandleDestroy(HandleType_t type, void * object) override;
-};
-
-extern HandleType_t g_PluginEntityFactoryHandle;
-extern CPluginEntityFactoryHandler g_PluginEntityFactoryHandler;
 
 #endif

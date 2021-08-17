@@ -54,25 +54,20 @@ cell_t CPluginEntityFactory_CPluginEntityFactory(IPluginContext * pContext, cons
 	if (!classname || !strlen(classname))
 		return pContext->ThrowNativeError("Entity factory must have a classname");
 
+	IPlugin* plugin = plsys->FindPluginByContext( pContext->GetContext() );
 	IPluginFunction *postConstructor = pContext->GetFunctionById(params[2]);
 	IPluginFunction *onRemove = pContext->GetFunctionById(params[3]);
 
-	CPluginEntityFactory* pFactory = new CPluginEntityFactory(classname, postConstructor, onRemove);
-
-	Handle_t handle = CREATEHANDLE(PluginEntityFactory, pFactory);
-	pFactory->m_Handle = handle;
-
-	return handle;
+	CPluginEntityFactory* pFactory = new CPluginEntityFactory(plugin, classname, postConstructor, onRemove);
+	return pFactory->m_Handle;
 }
 
 cell_t CPluginEntityFactory_GetFactoryOfEntity(IPluginContext * pContext, const cell_t * params)
 {
 	CBaseEntity* pEnt;
 	ENTINDEX_TO_CBASEENTITY(params[1], pEnt);
-	if (!pEnt)
-		return BAD_HANDLE;
 	
-	CPluginEntityFactory* pFactory = GetPluginEntityFactory(pEnt);
+	CPluginEntityFactory* pFactory = g_pPluginEntityFactories->GetFactory(pEnt);
 	if (!pFactory)
 		return BAD_HANDLE;
 	
@@ -81,7 +76,7 @@ cell_t CPluginEntityFactory_GetFactoryOfEntity(IPluginContext * pContext, const 
 
 cell_t CPluginEntityFactory_GetNumInstalledFactories(IPluginContext * pContext, const cell_t * params)
 {
-	return CPluginEntityFactory::GetInstalledFactoryHandles(nullptr, 0);
+	return g_pPluginEntityFactories->GetInstalledFactoryHandles(nullptr, 0);
 }
 
 cell_t CPluginEntityFactory_GetInstalledFactories(IPluginContext * pContext, const cell_t * params)
@@ -92,7 +87,7 @@ cell_t CPluginEntityFactory_GetInstalledFactories(IPluginContext * pContext, con
 
 	int arraySize = params[2];
 
-	return CPluginEntityFactory::GetInstalledFactoryHandles(pArray, arraySize);
+	return g_pPluginEntityFactories->GetInstalledFactoryHandles(pArray, arraySize);
 }
 
 PLUGINENTITYFACTORYNATIVE(DeriveFromBaseEntity)
@@ -124,7 +119,7 @@ PLUGINENTITYFACTORYNATIVE(SetInitialActionFactory)
 	CBaseNPCPluginActionFactory *pActionFactory = nullptr;
 	if (hndlObject != BAD_HANDLE)
 	{
-		READHANDLE(hndlObject, BaseNPCPluginActionFactory, pActionFactory)
+		pActionFactory = g_pBaseNPCPluginActionFactories->GetFactoryFromHandle( hndlObject );
 	}
 
 	pFactory->SetBaseNPCInitialActionFactory( pActionFactory );
