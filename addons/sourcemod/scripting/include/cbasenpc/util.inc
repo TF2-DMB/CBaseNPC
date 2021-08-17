@@ -342,9 +342,9 @@ stock void AngleMatrix( const float angles[3], float matrix[3][4] )
 {
 	float sr, sp, sy, cr, cp, cy;
 
-	SinCos( DegToRad( angles[1] ), &sy, &cy );
-	SinCos( DegToRad( angles[0] ), &sp, &cp );
-	SinCos( DegToRad( angles[2] ), &sr, &cr );
+	SinCos( DegToRad( angles[1] ), sy, cy );
+	SinCos( DegToRad( angles[0] ), sp, cp );
+	SinCos( DegToRad( angles[2] ), sr, cr );
 
 	// matrix = (YAW * PITCH) * ROLL
 	matrix[0][0] = cp*cy;
