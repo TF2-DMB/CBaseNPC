@@ -824,8 +824,17 @@ methodmap CBaseEntity
 		return view_as<CBaseEntity>(iEnt);
 	}
 
+	property int index
+	{
+		public get()
+		{
+			return view_as<int>(this);
+		}
+	}
+
 	property int iEnt
 	{
+		#pragma deprecated Use CBaseEntity.index insted
 		public get() 
 		{
 			return view_as<int>(this);
@@ -858,20 +867,93 @@ methodmap CBaseEntity
 	public native Address CollisionProp();
 
 	/**
+	 * Informs the server that the network properties of this entity changed.
+	 * 
+	 * Note: You should avoid using the function recklessly.
+	 *
+	 * @error 		Invalid entity.
+	 */
+	public native void NetworkStateChanged();
+
+	/**
+	 * Informs the server that this specific networked var changed value.
+	 *
+	 * @param varAddr	Entity networked property address.
+	 * @error 		Invalid entity.
+	 */
+	public native void NetworkStateChangedVar(Address varAddr);
+
+	/**
+	 * Gets the entity simulation time.
+	 *
+	 * @return		Simulation time.
+	 * @error 		Invalid entity.
+	 */
+	public native float GetSimulationTime();
+
+	/**
+	 * Sets the entity simulation time.
+	 *
+	 * @param time		Simulation time.
+	 * @error 		Invalid entity.
+	 */
+	public native float SetSimulationTime(float time);
+
+	/**
 	 * Updates the global transmit state if a transmission rule changed.
 	 *
 	 * @error 		Invalid entity.
 	 */
 	public native void DispatchUpdateTransmitState();
 
+	/**
+	 * Gets an entity's flags.
+	 *
+	 * Note: This is equivalent to GetEntityFlags
+	 *
+	 * @return		The entity flags.
+	 * @error		Invalid entity.
+	 */
 	public native int GetFlags();
 
+	/**
+	 * Gets an edict's flags.
+	 *
+	 * @return		The edict flags.
+	 * @error		Invalid entity.
+	 */
 	public native int GetEFlags();
 
+	/**
+	 * Is the given edict flag set.
+	 *
+	 * @return		true if it's set, false otherwise.
+	 * @error		Invalid entity.
+	 */
 	public native bool IsEFlagSet(int flag);
 
+	/**
+	 * Sets the edict flags.
+	 *
+	 * @param flags		The edict flags to set.
+	 * @error		Invalid entity.
+	 */
+	public native void SetEFlags(int flags);
+
+	/**
+	 * Adds the given edict flags.
+	 *
+	 * @param flags		The edict flags to add.
+	 * @error		Invalid entity.
+	 */
 	public native void AddEFlags(int flags);
 
+	/**
+	 * Removes the given edict flags.
+	 *
+	 * @param flags		The edict flags to remove.
+	 * @error		Invalid entity.
+	 */
 	public native void RemoveEFlags(int flags);
 
 	/**
@@ -930,8 +1012,22 @@ methodmap CBaseEntity
 	 */
 	public native float GetLastThink(const char[] context = NULL_STRING);
 
+	/**
+	 * When is the entity going to think next.
+	 *
+	 * @param context	Name of the think context.
+	 * @return		Game tick of the next think.
+	 * @error 		Invalid entity.
+	 */
 	public native int GetNextThinkTick(const char[] context = NULL_STRING);
 
+	/**
+	 * When has the entity last thought.
+	 *
+	 * @param context	Name of the think context.
+	 * @return		Game tick of the last think.
+	 * @error 		Invalid entity.
+	 */
 	public native int GetLastThinkTick(const char[] context = NULL_STRING);
 
 	/**
@@ -942,32 +1038,92 @@ methodmap CBaseEntity
 	 */
 	public native bool WillThink();
 
+	/**
+	 * Updates the entity flags, based on whether or not the entity thinks
+	 *
+	 * @param isThinking	Hint parameter to help the function search less.
+	 * @error 		Invalid entity.
+	 */
+	public native bool CheckHasThinkFunction(bool isThinking);
+
+	/**
+	 * Gets the entity absolute position.
+	 *
+	 * @param pos		Destination vector to store the position in.
+	 * @error 		Invalid entity.
+	 */
 	public native void GetAbsOrigin(float pos[3]);
 
+	/**
+	 * Gets the entity absolute angles.
+	 *
+	 * @param ang		Destination vector to store the angles in.
+	 * @error 		Invalid entity.
+	 */
 	public native void GetAbsAngles(float ang[3]);
 
+	/**
+	 * Gets the entity absolute velocity.
+	 *
+	 * @param vel		Destination vector to store the velocity in.
+	 * @error 		Invalid entity.
+	 */
 	public native void GetAbsVelocity(float vel[3]);
 
+	/**
+	 * Sets the entity absolute position.
+	 *
+	 * @param pos		Position vector.
+	 * @error 		Invalid entity.
+	 */
 	public native void SetAbsOrigin(float pos[3]);
 
+	/**
+	 * Sets the entity absolute angles.
+	 *
+	 * @param ang		Angles vector.
+	 * @error 		Invalid entity.
+	 */
 	public native void SetAbsAngles(float ang[3]);
 
+	/**
+	 * Sets the entity absolute velocity.
+	 *
+	 * @param ang		Velocity vector.
+	 * @error 		Invalid entity.
+	 */
 	public native void SetAbsVelocity(float vel[3]);
 
-	public native void NetworkStateChanged();
-
-	public native void NetworkStateChangedVar(Address varAddr);
-
-	public native float GetSimulationTime();
-
-	public native float SetSimulationTime(float time);
-
+	/**
+	 * Gets the entity local origin.
+	 *
+	 * @param ang		Destination vector to store the position in.
+	 * @error 		Invalid entity.
+	 */
 	public native void GetLocalOrigin(float pos[3]);
 
+	/**
+	 * Gets the entity local angles.
+	 *
+	 * @param ang		Destination vector to store the angles in.
+	 * @error 		Invalid entity.
+	 */
 	public native void GetLocalAngles(float ang[3]);
 
+	/**
+	 * Sets the entity local position.
+	 *
+	 * @param pos		Position vector.
+	 * @error 		Invalid entity.
+	 */
 	public native void SetLocalOrigin(float pos[3]);
 
+	/**
+	 * Sets the entity local angles.
+	 *
+	 * @param ang		Angles vector.
+	 * @error 		Invalid entity.
+	 */
 	public native void SetLocalAngles(float ang[3]);
 
 #if defined _dhooks_included
@@ -1030,15 +1186,23 @@ methodmap CBaseEntity
 	/**
 	 * Caculates an entity's vectors.
 	 *
-	 * @param forward	Destination vector to store the entity's forward vector.
+	 * @param front		Destination vector to store the entity's forward vector.
 	 * @param right		Destination vector to store the entity's right vector.
 	 * @param up		Destination vector to store the entity's up vector.
 	 * @error 		Invalid entity.
 	 */
-	public native void GetVectors(float forward[3], float right[3], float up[3]);
+	public native void GetVectors(float front[3], float right[3], float up[3]);
 
+	/**
+	 * Obtains the entity-to-world transform.
+	 *
+	 * @return		Destination matrix to store the return value in.
+	 * @error 		Invalid entity.
+	 */
 	public native void EntityToWorldTransform(float matrix[3][4]);
 }
+
+#include <cbasenpc/activity>
 
 methodmap CBaseAnimating < CBaseEntity
 {
@@ -1077,19 +1241,6 @@ methodmap CBaseAnimating < CBaseEntity
 	public native int LookupPoseParameter(const char[] sParamName);
 	public native float SetPoseParameter(int iPoseParam, float flNewValue);
 	public native float GetPoseParameter(int iPoseParam);
-	
-	#pragma deprecated Please implement this function inside your plugin
-	public void PlayAnimation(const char[] sName)
-	{
-		int iSequence = this.LookupSequence(sName);
-		if (iSequence != -1)
-		{
-			this.ResetSequence(iSequence);
-			SetEntPropFloat(this.iEnt, Prop_Data, "m_flCycle", 0.0);
-		}
-	}
-	#pragma deprecated Please use CBaseAnimating.LookupAttachment instead and don't add 1 to return value
-	public native int FindAttachment(const char[] sAttachmentName);
 };
 
 methodmap CBaseAnimatingOverlay < CBaseAnimating
