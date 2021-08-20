@@ -250,12 +250,29 @@ class CNavArea : protected CNavAreaCriticalData
 		bool IsClosed( void ) const;
 		void AddToClosedList( void );
 		void RemoveFromClosedList( void );
+
+		struct AreaBindInfo							// for pointer loading and binding
+		{
+			union
+			{
+				CNavArea *area;
+				unsigned int id;
+			};
+
+			unsigned char attributes;				// VisibilityType
+
+			bool operator==( const AreaBindInfo &other ) const
+			{
+				return ( area == other.area );
+			}
+		};
+
 	private:
 		friend class CNavMesh;
 		friend class CNavLadder;
 		friend class CCSNavArea;	
 	
-		static bool m_isReset;										// if true, don't bother cleaning up in destructor since everything is going away
+		//static bool m_isReset;										// if true, don't bother cleaning up in destructor since everything is going away
 
 		/*
 		m_nwCorner
@@ -271,7 +288,7 @@ class CNavArea : protected CNavAreaCriticalData
 						m_seCorner
 		*/
 
-		static unsigned int m_nextID;								// used to allocate unique IDs
+		//static unsigned int m_nextID;								// used to allocate unique IDs
 		unsigned int m_id;											// unique area ID
 		unsigned int m_debugid;
 
@@ -305,18 +322,44 @@ class CNavArea : protected CNavAreaCriticalData
 
 		float m_earliestOccupyTime[ MAX_NAV_TEAMS ];				// min time to reach this spot from spawn
 
-	#ifdef DEBUG_AREA_PLAYERCOUNTS
+#ifdef DEBUG_AREA_PLAYERCOUNTS
 		CUtlVector< int > m_playerEntIndices[ MAX_NAV_TEAMS ];
-	#endif
+#endif
 
 		//- lighting ----------------------------------------------------------------------------------------
 		float m_lightIntensity[ NUM_CORNERS ];						// 0..1 light intensity at corners
 
 		//- A* pathfinding algorithm ------------------------------------------------------------------------
-		static unsigned int m_masterMarker;
 
+		// A case can arise where both this and the game's CNavArea::m_masterMarker may conflict and introduce confusion to pathfinding algorithms, especially if both
+		// CBaseNPC and the game's NextBots are used simultaneously. It's not a common case, but the possibility is there.
+		// Consider modifying the engine's variables instead to prevent this from happening?
+		static unsigned int m_masterMarker;
 		static CNavArea *m_openList;
 		static CNavArea *m_openListTail;
+
+		//- connections to adjacent areas -------------------------------------------------------------------
+		NavConnectVector m_incomingConnect[ NUM_DIRECTIONS ];		// a list of adjacent areas for each direction that connect TO us, but we have no connection back to them
+
+		//---------------------------------------------------------------------------------------------------
+		CNavNode *m_node[ NUM_CORNERS ];							// nav nodes at each corner of the area
+
+#if 1 // NEXT_BOT
+		CUtlVector< CBaseHandle > m_prerequisiteVector;		// list of prerequisites that must be met before this area can be traversed
+#endif
+
+		CNavArea *m_prevHash, *m_nextHash;							// for hash table in CNavMesh
+		int m_damagingTickCount;									// this area is damaging through this tick count
+
+		typedef CUtlVectorConservative<AreaBindInfo> CAreaBindInfoArray;
+
+		AreaBindInfo m_inheritVisibilityFrom;						// if non-NULL, m_potentiallyVisibleAreas becomes a list of additions and deletions (NOT_VISIBLE) to the list of this area
+		CAreaBindInfoArray m_potentiallyVisibleAreas;				// list of areas potentially visible from inside this area (after PostLoad(), use area portion of union)
+		bool m_isInheritedFrom;										// latch used during visibility inheritance computation
+
+		uint32 m_nVisTestCounter;
+
+		CUtlVector< CBaseHandle > m_funcNavCostVector;	// active, overlapping cost entities
 };
 
 inline float CNavArea::GetZ( const Vector * RESTRICT pos ) const

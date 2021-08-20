@@ -3,6 +3,10 @@
 
 #include "sourcesdk/nav_area.h"
 
+#if SOURCE_ENGINE == SE_TF2
+#include "sourcesdk/tf_nav_area.h"
+#endif
+
 #define ENTINDEX_TO_CBASEENTITY(ref, buffer) \
 	buffer = gamehelpers->ReferenceToEntity(ref); \
 	if (!buffer) \
@@ -116,8 +120,36 @@ NAVAREA_NATIVE(ComputeNormal)
 	return 1;
 }
 
-NAVLADDER_NATIVE(length)
+NAVLADDER_NATIVE(lengthGet)
 	return sp_ftoc(pArea->m_length);
 }
+
+#if SOURCE_ENGINE == SE_TF2
+#define TFNAVAREA_NATIVE(name) \
+	cell_t CTFNavArea_##name(IPluginContext *pContext, const cell_t *params) \
+	{ \
+		CTFNavArea *pArea = (CTFNavArea *)(params[1]); \
+		if(!pArea) { \
+			return pContext->ThrowNativeError("Invalid nav area %x", params[1]); \
+		}
+
+TFNAVAREA_NATIVE(GetAttributesTF)
+	return pArea->GetAttributesTF();
+}
+
+TFNAVAREA_NATIVE(SetAttributeTF)
+	pArea->SetAttributeTF(params[2]);
+	return 0;
+}
+
+TFNAVAREA_NATIVE(ClearAttributeTF)
+	pArea->ClearAttributeTF(params[2]);
+	return 0;
+}
+
+TFNAVAREA_NATIVE(HasAttributeTF)
+	return pArea->HasAttributeTF(params[2]);
+}
+#endif
 
 #endif

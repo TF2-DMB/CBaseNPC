@@ -25,13 +25,20 @@
 
 extern IForward *g_pForwardEventKilled;
 extern CUtlMap<int32_t, int32_t> g_EntitiesHooks;
-	
-#define NATIVENAME(type, name) \
-	{ #type "." #name, type##_##name }, \
 
-#define NATIVENAMEGETSET(type, name) \
-	{ #type "." #name ".get", type##_##name##Get }, \
-	{ #type "." #name ".set", type##_##name##Set }, \
+#define NATIVENAMEEX(type, type2, name) \
+	{ #type "." #name, type2##_##name }, \
+
+#define NATIVENAMEGETEX(type, type2, name) \
+	{ #type "." #name ".get", type2##_##name##Get },
+
+#define NATIVENAMEGETSETEX(type, type2, name) \
+	{ #type "." #name ".get", type2##_##name##Get }, \
+	{ #type "." #name ".set", type2##_##name##Set }, \
+
+#define NATIVENAME(type, name) NATIVENAMEEX(type, type, name)
+#define NATIVENAMEGET(type, name) NATIVENAMEGETEX(type, type, name)
+#define NATIVENAMEGETSET(type, name) NATIVENAMEGETSETEX(type, type, name)
 
 #define ENTINDEX_TO_CBASEENTITY(ref, buffer) \
 	buffer = gamehelpers->ReferenceToEntity(ref); \
@@ -301,13 +308,6 @@ const sp_nativeinfo_t g_NativesInfo[] =
 	NATIVENAME(CNPCs, FindNPCByEntIndex)
 
 	NATIVENAME(INextBotEventResponder, FirstContainedResponder)
-	NATIVENAME(INextBotEventResponder, FirstContainedResponder)
-	NATIVENAME(INextBotEventResponder, FirstContainedResponder)
-	NATIVENAME(INextBotEventResponder, FirstContainedResponder)
-	NATIVENAME(INextBotEventResponder, FirstContainedResponder)
-	NATIVENAME(INextBotEventResponder, FirstContainedResponder)
-
-	NATIVENAME(INextBotEventResponder, FirstContainedResponder)
 	NATIVENAME(INextBotEventResponder, NextContainedResponder)
 	
 	NATIVENAME(INextBotComponent, Reset)
@@ -395,8 +395,6 @@ const sp_nativeinfo_t g_NativesInfo[] =
 	NATIVENAME(IBody, GetSolidMask)
 	NATIVENAME(IBody, GetCollisionGroup)
 
-	NATIVENAME(IIntention, Reset)
-	NATIVENAME(IIntention, Update)
 	NATIVENAME(IIntention, ShouldPickUp)
 	NATIVENAME(IIntention, ShouldHurry)
 	NATIVENAME(IIntention, ShouldRetreat)
@@ -585,7 +583,14 @@ const sp_nativeinfo_t g_NativesInfo[] =
 	NATIVENAME(CNavArea, GetZ)
 	NATIVENAME(CNavArea, GetZVector)
 	NATIVENAME(CNavArea, ComputeNormal)
-	{ "CNavLadder.length.get", &CNavLadder_length },
+	NATIVENAMEGET(CNavLadder, length)
+
+#if SOURCE_ENGINE == SE_TF2
+	NATIVENAME(CTFNavArea, GetAttributesTF)
+	NATIVENAME(CTFNavArea, SetAttributeTF)
+	NATIVENAME(CTFNavArea, ClearAttributeTF)
+	NATIVENAME(CTFNavArea, HasAttributeTF)
+#endif
 	
 	NATIVENAME(CNavMesh, CollectSurroundingAreas)
 	NATIVENAME(CNavMesh, TCollectSurroundingAreas)
@@ -601,43 +606,45 @@ const sp_nativeinfo_t g_NativesInfo[] =
 	NATIVENAME(CTNavArea, GetRealNavArea)
 	
 	{ "CEntityFactory.CEntityFactory", &CPluginEntityFactory_CPluginEntityFactory },
-	{ "CEntityFactory.DeriveFromBaseEntity", &CPluginEntityFactory_DeriveFromBaseEntity },
-	{ "CEntityFactory.DeriveFromClass", &CPluginEntityFactory_DeriveFromClass },
-	{ "CEntityFactory.DeriveFromNPC", &CPluginEntityFactory_DeriveFromNPC },
-	{ "CEntityFactory.DeriveFromFactory", &CPluginEntityFactory_DeriveFromFactory },
-	{ "CEntityFactory.SetInitialActionFactory", &CPluginEntityFactory_SetInitialActionFactory },
-	{ "CEntityFactory.Install", &CPluginEntityFactory_Install },
-	{ "CEntityFactory.Uninstall", &CPluginEntityFactory_Uninstall },
-	{ "CEntityFactory.IsInstalled.get", &CPluginEntityFactory_Installed },
-	{ "CEntityFactory.IsAbstract.get", &CPluginEntityFactory_AbstractGet },
-	{ "CEntityFactory.IsAbstract.set", &CPluginEntityFactory_AbstractSet },
+	NATIVENAMEEX(CEntityFactory, CPluginEntityFactory, DeriveFromBaseEntity)
+	NATIVENAMEEX(CEntityFactory, CPluginEntityFactory, DeriveFromClass)
+	NATIVENAMEEX(CEntityFactory, CPluginEntityFactory, DeriveFromNPC)
+	NATIVENAMEEX(CEntityFactory, CPluginEntityFactory, DeriveFromFactory)
+	NATIVENAMEEX(CEntityFactory, CPluginEntityFactory, SetInitialActionFactory)
+	NATIVENAMEEX(CEntityFactory, CPluginEntityFactory, Install)
+	NATIVENAMEEX(CEntityFactory, CPluginEntityFactory, Uninstall)
+	NATIVENAMEGETEX(CEntityFactory, CPluginEntityFactory, IsInstalled)
+	NATIVENAMEGETSETEX(CEntityFactory, CPluginEntityFactory, IsAbstract)
 
-	{ "CEntityFactory.GetClassname", &CPluginEntityFactory_GetClassname },
+	NATIVENAMEEX(CEntityFactory, CPluginEntityFactory, GetClassname)
+	NATIVENAMEEX(CEntityFactory, CPluginEntityFactory, GetFactoryOfEntity)
+	NATIVENAMEEX(CEntityFactory, CPluginEntityFactory, GetNumInstalledFactories)
+	NATIVENAMEEX(CEntityFactory, CPluginEntityFactory, GetInstalledFactories)
 
-	{ "CEntityFactory.GetFactoryOfEntity", &CPluginEntityFactory_GetFactoryOfEntity },
-
-	{ "CEntityFactory.GetNumInstalledFactories", &CPluginEntityFactory_GetNumInstalledFactories },
-	{ "CEntityFactory.GetInstalledFactories", &CPluginEntityFactory_GetInstalledFactories },
-
-	{ "CEntityFactory.BeginDataMapDesc", &CPluginEntityFactory_BeginDataMapDesc },
-	{ "CEntityFactory.DefineIntField", &CPluginEntityFactory_DefineIntField },
-	{ "CEntityFactory.DefineFloatField", &CPluginEntityFactory_DefineFloatField },
-	{ "CEntityFactory.DefineCharField", &CPluginEntityFactory_DefineCharField },
-	{ "CEntityFactory.DefineBoolField", &CPluginEntityFactory_DefineBoolField },
-	{ "CEntityFactory.DefineVectorField", &CPluginEntityFactory_DefineVectorField },
-	{ "CEntityFactory.DefineStringField", &CPluginEntityFactory_DefineStringField },
-	{ "CEntityFactory.DefineEntityField", &CPluginEntityFactory_DefineEntityField },
-	{ "CEntityFactory.DefineInputFunc", &CPluginEntityFactory_DefineInputFunc },
-	{ "CEntityFactory.DefineOutput", &CPluginEntityFactory_DefineOutput },
-	{ "CEntityFactory.EndDataMapDesc", &CPluginEntityFactory_EndDataMapDesc },
+	NATIVENAMEEX(CEntityFactory, CPluginEntityFactory, BeginDataMapDesc)
+	NATIVENAMEEX(CEntityFactory, CPluginEntityFactory, DefineIntField)
+	NATIVENAMEEX(CEntityFactory, CPluginEntityFactory, DefineFloatField)
+	NATIVENAMEEX(CEntityFactory, CPluginEntityFactory, DefineCharField)
+	NATIVENAMEEX(CEntityFactory, CPluginEntityFactory, DefineBoolField)
+	NATIVENAMEEX(CEntityFactory, CPluginEntityFactory, DefineVectorField)
+	NATIVENAMEEX(CEntityFactory, CPluginEntityFactory, DefineStringField)
+	NATIVENAMEEX(CEntityFactory, CPluginEntityFactory, DefineEntityField)
+	NATIVENAMEEX(CEntityFactory, CPluginEntityFactory, DefineInputFunc)
+	NATIVENAMEEX(CEntityFactory, CPluginEntityFactory, DefineOutput)
+	NATIVENAMEEX(CEntityFactory, CPluginEntityFactory, EndDataMapDesc)
 
 	// NextBotAction
-	{ "NextBotAction.Actor.get", &NextBotAction_GetActor },
-	{ "NextBotAction.Parent.get", &NextBotAction_GetParent },
-	{ "NextBotAction.ActiveChild.get", &NextBotAction_GetActiveChild },
+	NATIVENAMEGET(NextBotAction, Actor)
+	NATIVENAMEGET(NextBotAction, Parent)
+	NATIVENAMEGET(NextBotAction, ActiveChild)
+	NATIVENAMEGET(NextBotAction, ActionBuriedUnderMe)
+	NATIVENAMEGET(NextBotAction, ActionCoveringMe)
 	NATIVENAME(NextBotAction, GetName)
 	NATIVENAME(NextBotAction, GetFullName)
+	NATIVENAME(NextBotAction, IsNamed)
+	NATIVENAME(NextBotAction, Destroy)
 
+	NATIVENAME(NextBotAction, HasData)
 	NATIVENAME(NextBotAction, GetData)
 	NATIVENAME(NextBotAction, SetData)
 	NATIVENAME(NextBotAction, GetDataFloat)
@@ -647,7 +654,7 @@ const sp_nativeinfo_t g_NativesInfo[] =
 	NATIVENAME(NextBotAction, GetDataString)
 	NATIVENAME(NextBotAction, SetDataString)
 
-	{ "NextBotAction.IsSuspended.get", &NextBotAction_IsSuspended },
+	NATIVENAMEGET(NextBotAction, IsSuspended)
 
 	NATIVENAME(NextBotAction, Continue)
 	NATIVENAME(NextBotAction, ChangeTo)

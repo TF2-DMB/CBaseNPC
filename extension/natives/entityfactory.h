@@ -184,17 +184,17 @@ PLUGINENTITYFACTORYNATIVE(Uninstall)
 	return 0;
 }
 
-PLUGINENTITYFACTORYNATIVE(Installed)
+PLUGINENTITYFACTORYNATIVE(IsInstalledGet)
 
 	return pFactory->m_bInstalled;
 }
 
-PLUGINENTITYFACTORYNATIVE(AbstractGet)
+PLUGINENTITYFACTORYNATIVE(IsAbstractGet)
 
 	return pFactory->IsAbstract();
 }
 
-PLUGINENTITYFACTORYNATIVE(AbstractSet)
+PLUGINENTITYFACTORYNATIVE(IsAbstractSet)
 
 	if (pFactory->m_bInstalled)
 		return pContext->ThrowNativeError("Cannot change IsAbstract while factory is installed");

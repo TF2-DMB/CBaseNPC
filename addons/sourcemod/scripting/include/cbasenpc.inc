@@ -156,7 +156,10 @@ methodmap CNavMesh
 	public native CNavArea GetNearestNavArea(const float pos[3], bool anyZ = false, float maxDist = 10000.0, bool checkLOS = false, bool checkGround = true, int team = -2);
 };
 
-CNavMesh TheNavMesh;
+enum CNavMesh 
+{
+	TheNavMesh
+};
 
 methodmap CTNavArea
 {
@@ -190,6 +193,14 @@ methodmap CNavArea
 	public native float GetZ(float x, float y);
 	public native float GetZVector(float vecPos[3]);
 	public native void ComputeNormal(float vecNormal[3], bool alternate = false);
+};
+
+methodmap CTFNavArea < CNavArea
+{
+	public native TFNavAttributeType GetAttributesTF();
+	public native void SetAttributeTF(TFNavAttributeType bits);
+	public native void ClearAttributeTF(TFNavAttributeType bits);
+	public native bool HasAttributeTF(TFNavAttributeType bits);
 };
 
 methodmap CNavLadder
@@ -323,15 +334,13 @@ methodmap IVision < INextBotComponent
 	public native float GetFieldOfView();
 	public native void SetFieldOfView(float horizAngle);
 	public native bool IsLineOfSightClear(float vecPos[3]);
-	public native bool IsLineOfSightClearToEntity(int iActor, float vecPos[3]=NULL_VECTOR);
+	public native bool IsLineOfSightClearToEntity(int iActor, float vecPos[3] = NULL_VECTOR);
 	public native bool IsLookingAt(float vecPos[3], float cosTolerance = 0.95);
 	public native bool IsLookingAtTarget(int iActor, float cosTolerance = 0.95);
 };
 
 methodmap IIntention < INextBotComponent
 {
-	public native void Reset();
-	public native void Update();
 	public native QueryResultType ShouldPickUp( int item );
 	public native QueryResultType ShouldHurry();
 	public native QueryResultType ShouldRetreat();
@@ -539,7 +548,7 @@ enum SubjectChaseType
 methodmap ChasePath < PathFollower
 {
 	public native ChasePath(SubjectChaseType how = DONT_LEAD_SUBJECT, NavPathCostFunctor costfunction = INVALID_FUNCTION, TraceFilterActors ignoreActorsFilter, TraceFilterActors onlyActorsFilter);
-	public native void Update(INextBot bot, int iTarget, float vecPredictedPos[3]=NULL_VECTOR);
+	public native void Update(INextBot bot, int iTarget, float vecPredictedPos[3] = NULL_VECTOR);
 	public native float GetLeadRadius();
 	public native float GetMaxPathLength();
 	public native void PredictSubjectPosition(INextBot nextbot, int entity, float pos[3]);
@@ -1135,13 +1144,13 @@ methodmap CBaseEntity
 	 */
 	public void Hook_UpdateOnRemove(DHookCallback callback)
 	{
-		static Handle hHook = null;
+		static DynamicHook hHook = null;
 		if (hHook == null)
 		{
-			hHook = DHookCreate(CBaseEntity.iUpdateOnRemove(), HookType_Entity, ReturnType_Void, ThisPointer_CBaseEntity);
+			hHook = new DynamicHook(CBaseEntity.iUpdateOnRemove(), HookType_Entity, ReturnType_Void, ThisPointer_CBaseEntity);
 			if (hHook == null) return;
 		}
-		DHookEntity(hHook, false, this.iEnt, _, callback);
+		hHook.HookEntity(Hook_Pre, this.index, callback);
 	}
 #endif
 	/**
@@ -1200,6 +1209,215 @@ methodmap CBaseEntity
 	 * @error 		Invalid entity.
 	 */
 	public native void EntityToWorldTransform(float matrix[3][4]);
+
+	/**
+	 * Alias of IsValidEntity().
+	 *
+	 * @return              True if valid, false otherwise.
+	 */
+	public bool IsValid()
+	{
+		return IsValidEntity(this.index);
+	}
+
+	/**
+	 * Alias of IsEntNetworkable().
+	 *
+	 * @return              True if networkable, false if invalid or not networkable
+	 */
+	public bool IsNetworkable()
+	{
+		return IsEntNetworkable(this.index);
+	}
+
+	/**
+	 * Alias of GetEntityClassname().
+	 *
+	 * @param clsname       Buffer to store the classname.
+	 * @param maxlength     Maximum length of the buffer.
+	 * @return              True on success, false if there is no classname set.
+	 */
+	public bool GetClassname(char[] clsname, int maxlength)
+	{
+		return GetEntityClassname(this.index, clsname, maxlength);
+	}
+
+	/**
+	* Alias of HasEntProp().
+	*
+	* @param type          Property type.
+	* @param prop          Property name.
+	* @return              Whether the property exists on the entity.
+	* @error               Invalid entity.
+	*/
+	public bool HasProp(PropType type, const char[] prop)
+	{
+		return HasEntProp(this.index, type, prop);
+	}
+
+	/**
+	 * Alias of GetEntProp().
+	 *
+	 * @param type          Property type.
+	 * @param prop          Property name.
+	 * @param size          Number of bytes to write (valid values are 1, 2, or 4).
+	 *                      This value is auto-detected, and the size parameter is
+	 *                      only used as a fallback in case detection fails.
+	 * @param element       Element # (starting from 0) if property is an array.
+	 * @return              Value at the given property offset.
+	 * @error               Invalid entity or property not found.
+	 */
+	public int GetProp(PropType type, const char[] prop, int size=4, int element=0)
+	{
+		return GetEntProp(this.index, type, prop, size, element);
+	}
+
+	/**
+	 * Alias of SetEntProp().
+	 *
+	 * @param type          Property type.
+	 * @param prop          Property name.
+	 * @param value         Value to set.
+	 * @param size          Number of bytes to write (valid values are 1, 2, or 4).
+	 *                      This value is auto-detected, and the size parameter is
+	 *                      only used as a fallback in case detection fails.
+	 * @param element       Element # (starting from 0) if property is an array.
+	 * @error               Invalid entity or offset out of reasonable bounds.
+	*/
+	public void SetProp(PropType type, const char[] prop, any value, int size=4, int element=0)
+	{
+		SetEntProp(this.index, type, prop, value, size, element);
+	}
+
+	/**
+	 * Alias of GetEntPropFloat().
+	 *
+	 * @param type          Property type.
+	 * @param prop          Property name.
+	 * @param element       Element # (starting from 0) if property is an array.
+	 * @return              Value at the given property offset.
+	 * @error               Invalid entity or offset out of reasonable bounds.
+	 */
+	public float GetPropFloat(PropType type, const char[] prop, int element=0)
+	{
+		return GetEntPropFloat(this.index, type, prop, element);
+	}
+
+	/**
+	 * Alias of SetEntPropFloat().
+	 *
+	 * @param type          Property type.
+	 * @param prop          Property name.
+	 * @param value         Value to set.
+	 * @param element       Element # (starting from 0) if property is an array.
+	 * @error               Invalid entity or offset out of reasonable bounds.
+	*/
+	public void SetPropFloat(PropType type, const char[] prop, float value, int element=0)
+	{
+		SetEntPropFloat(this.index, type, prop, value, element);
+	}
+
+	/**
+	 * Alias of GetEntPropEnt().
+	 *
+	 * @param type          Property type.
+	 * @param prop          Property name.
+	 * @param element       Element # (starting from 0) if property is an array.
+	 * @return              Value at the given property offset.
+	 * @error               Invalid entity or offset out of reasonable bounds.
+	 */
+	public int GetPropEnt(PropType type, const char[] prop, int element=0)
+	{
+		return GetEntPropEnt(this.index, type, prop, element);
+	}
+
+	/**
+	 * Alias of SetEntPropEnt().
+	 *
+	 * @param type          Property type.
+	 * @param prop          Property name.
+	 * @param other         Entity index to set, or -1 to unset.
+	 * @param element       Element # (starting from 0) if property is an array.
+	 * @error               Invalid entity or offset out of reasonable bounds.
+	*/
+	public void SetPropEnt(PropType type, const char[] prop, int other, int element=0)
+	{
+		SetEntPropEnt(this.index, type, prop, other, element);
+	}
+
+	/**
+	 * Alias of GetEntPropVector().
+	 *
+	 * @param type          Property type.
+	 * @param prop          Property name.
+	 * @param vec           Vector buffer to store data in.
+	 * @param element       Element # (starting from 0) if property is an array.
+	 * @error               Invalid entity, property not found, or property not
+	 *                      actually a vector data type.
+	 */
+	public void GetPropVector(PropType type, const char[] prop, float vec[3], int element=0)
+	{
+		GetEntPropVector(this.index, type, prop, vec, element);
+	}
+
+	/**
+	 * Alias of SetEntPropVector().
+	 *
+	 * @param type          Property type.
+	 * @param prop          Property name.
+	 * @param vec           Vector to set.
+	 * @param element       Element # (starting from 0) if property is an array.
+	 * @error               Invalid entity, property not found, or property not
+	 *                      actually a vector data type.
+	 */
+	public void SetPropVector(PropType type, const char[] prop, const float vec[3], int element=0)
+	{
+		SetEntPropVector(this.index, type, prop, vec, element);
+	}
+
+	/**
+	 * Alias of GetEntPropString().
+	 *
+	 * @param type          Property type.
+	 * @param prop          Property to use.
+	 * @param buffer        Destination string buffer.
+	 * @param maxlen        Maximum length of output string buffer.
+	 * @param element       Element # (starting from 0) if property is an array.
+	 * @return              Number of non-null bytes written.
+	 * @error               Invalid entity, offset out of reasonable bounds, or property is not a valid string.
+	 */
+	public int GetPropString(PropType type, const char[] prop, char[] buffer, int maxlen, int element=0)
+	{
+		return GetEntPropString(this.index, type, prop, buffer, maxlen, element);
+	}
+
+	/**
+	 * Alias of SetEntPropString().
+	 *
+	 * @param type          Property type.
+	 * @param prop          Property to use.
+	 * @param buffer        String to set.
+	 * @param element       Element # (starting from 0) if property is an array.
+	 * @return              Number of non-null bytes written.
+	 * @error               Invalid entity, offset out of reasonable bounds, or property is not a valid string.
+	 */
+	public int SetPropString(PropType type, const char[] prop, const char[] buffer, int element=0)
+	{
+		return SetEntPropString(this.index, type, prop, buffer, element);
+	}
+
+	/**
+	 * Alias of GetEntPropArraySize().
+	 *
+	 * @param type          Property type.
+	 * @param prop          Property name.
+	 * @return              Size of array (in elements) or 1 if property is not an array.
+	 * @error               Invalid entity or property not found.
+	 */
+	public int GetPropArraySize(PropType type, const char[] prop)
+	{
+		return GetEntPropArraySize(this.index, type, prop);
+	}
 }
 
 #include <cbasenpc/activity>
@@ -1214,16 +1432,22 @@ methodmap CBaseAnimating < CBaseEntity
 	public static native int iHandleAnimEvent();
 	
 #if defined _dhooks_included
+	/**
+	 * Hooks CBaseAnimating::HandleAnimEvent.
+	 *
+	 * @param callback 	DHookcallback that will be used.
+	 * @error		Invalid entity.
+	 */
 	public void Hook_HandleAnimEvent(DHookCallback callback)
 	{
-		static Handle hHook = null;
+		static DynamicHook hHook = null;
 		if (hHook == null)
 		{
-			hHook = DHookCreate(CBaseAnimating.iHandleAnimEvent(), HookType_Entity, ReturnType_Void, ThisPointer_CBaseEntity);
+			hHook = new DynamicHook(CBaseAnimating.iHandleAnimEvent(), HookType_Entity, ReturnType_Void, ThisPointer_CBaseEntity);
 			if (hHook == null) return;
-			DHookAddParam(hHook, HookParamType_ObjectPtr, -1);
+			hHook.AddParam(HookParamType_ObjectPtr);
 		}
-		DHookEntity(hHook, false, this.iEnt, _, callback);
+		hHook.HookEntity(Hook_Pre, this.index, callback);
 	}
 #endif
 	
@@ -1235,7 +1459,7 @@ methodmap CBaseAnimating < CBaseEntity
 	public native void ResetSequence(int sequence);
 	public native int LookupAttachment(const char[] sAttachmentName);
 	public native bool GetAttachment(int iAttachmentIndex, float vecOrigin[3], float vecAngles[3]);
-	public native bool GetAttachmentMatrix( int iAttachmentIndex, float matrix[3][4] );
+	public native bool GetAttachmentMatrix(int iAttachmentIndex, float matrix[3][4]);
 	
 	public native Address GetModelPtr();
 	public native int LookupPoseParameter(const char[] sParamName);
@@ -1371,6 +1595,26 @@ methodmap NextBotAction < INextBotEventResponder
 	}
 
 	/**
+	 * The Action buried by this Action.
+	 *
+	 * @return     Buried action
+	 */
+	property NextBotAction ActionBuriedUnderMe
+	{
+		public native get();
+	}
+
+	/**
+	 * The Action that buried this Action
+	 *
+	 * @return     Action above this Action
+	 */
+	property NextBotAction ActionCoveringMe
+	{
+		public native get();
+	}
+
+	/**
 	 * The identifying name of the Action.
 	 *
 	 * @param sBuffer        Buffer
@@ -1386,6 +1630,31 @@ methodmap NextBotAction < INextBotEventResponder
 	 * @param iBufferLen     Buffer size
 	 */
 	public native void GetFullName(char[] sBuffer, int iBufferLen);
+
+	/**
+	 * Whether or not the given name matches this Action's name.
+	 *
+	 * @param sName          Name
+	 * @return               True if name matches, false otherwise.
+	 */
+	public native bool IsNamed(const char[] sName);
+
+	/**
+	 * Deletes the action.
+	 *
+	 * Normally you don't have to use this as finished Actions are
+	 * automatically disposed; only use if the Action never ends up being used
+	 * in a (Try)ChangeTo/(Try)SuspendFor call.
+	 */
+	public native void Destroy();
+
+	/**
+	 * Checks if the datamap property exists on the action.
+	 *
+	 * @param sPropName     Property name
+	 * @return              True if exists, false otherwise.
+	 */
+	public native bool HasData(const char[] sPropName);
 
 	/**
 	 * Retrieves an integer from the Action's custom data. Size of the given
@@ -1495,7 +1764,8 @@ methodmap NextBotAction < INextBotEventResponder
 	}
 
 	/**
-	 * Action should keep running.
+	 * Action should keep running. This is the default result if no other
+	 * result is specified.
 	 * 
 	 * Note: Do not use this in event callbacks. Use TryContinue() instead.
 	 */
@@ -1512,7 +1782,7 @@ methodmap NextBotAction < INextBotEventResponder
 	 * @param reason        Reason for changing to the new action.
 	 * @error Action is NULL_ACTION
 	 */
-	public native int ChangeTo( NextBotAction action, const char[] reason=NULL_STRING );
+	public native int ChangeTo(NextBotAction action, const char[] reason = NULL_STRING);
 
 	/**
 	 * Action should suspend itself for an interrupting Action.
@@ -1539,7 +1809,7 @@ methodmap NextBotAction < INextBotEventResponder
 	 * @param reason                    Reason for suspending for the interrupting Action.
 	 * @error Action is NULL_ACTION
 	 */
-	public native int SuspendFor( NextBotAction interruptingAction, const char[] reason=NULL_STRING );
+	public native int SuspendFor(NextBotAction interruptingAction, const char[] reason = NULL_STRING);
 
 	/**
 	 * Action should exit.
@@ -1548,16 +1818,17 @@ methodmap NextBotAction < INextBotEventResponder
 	 *
 	 * @param reason        Reason for exiting
 	 */
-	public native int Done( const char[] reason=NULL_STRING );
+	public native int Done(const char[] reason = NULL_STRING);
 
 	/**
-	 * Request that the Action should keep running.
+	 * Request that the Action should keep running. This is the default event
+	 * result returned if no other event result is given.
 	 * 
 	 * Note: This is used within event callbacks only.
 	 * 
 	 * @param priority      How important this response is
 	 */
-	public native int TryContinue( EventResultPriorityType priority = RESULT_TRY );
+	public native int TryContinue(EventResultPriorityType priority = RESULT_TRY);
 
 	/**
 	 * Request that the Action should change to another Action.
@@ -1568,7 +1839,7 @@ methodmap NextBotAction < INextBotEventResponder
 	 * @param priority      How important this response is
 	 * @param reason        The reason for changing to the new Action.
 	 */
-	public native int TryChangeTo( NextBotAction action, EventResultPriorityType priority = RESULT_TRY, const char[] reason=NULL_STRING );
+	public native int TryChangeTo(NextBotAction action, EventResultPriorityType priority = RESULT_TRY, const char[] reason = NULL_STRING);
 
 	/**
 	 * Request that the Action should suspend itself for another Action.
@@ -1579,7 +1850,7 @@ methodmap NextBotAction < INextBotEventResponder
 	 * @param priority                  How important this response is
 	 * @param reason                    The reason for suspending for the interrupting Action.
 	 */
-	public native int TrySuspendFor( NextBotAction interruptingAction, EventResultPriorityType priority = RESULT_TRY, const char[] reason=NULL_STRING );
+	public native int TrySuspendFor(NextBotAction interruptingAction, EventResultPriorityType priority = RESULT_TRY, const char[] reason = NULL_STRING);
 
 	/**
 	 * Request that the Action should exit.
@@ -1589,7 +1860,7 @@ methodmap NextBotAction < INextBotEventResponder
 	 * @param priority      How important this response is
 	 * @param reason        The reason for exiting
 	 */
-	public native int TryDone( EventResultPriorityType priority = RESULT_TRY, const char[] reason=NULL_STRING );
+	public native int TryDone(EventResultPriorityType priority = RESULT_TRY, const char[] reason = NULL_STRING);
 
 	/**
 	 * Request that the Action should keep running. This is the same as
@@ -1600,9 +1871,12 @@ methodmap NextBotAction < INextBotEventResponder
 	 * @param priority      How important this response is
 	 * @param reason        The reason for continuing
 	 */
-	public native int TryToSustain( EventResultPriorityType priority = RESULT_TRY, const char[] reason=NULL_STRING );
+	public native int TryToSustain(EventResultPriorityType priority = RESULT_TRY, const char[] reason = NULL_STRING);
 }
 
+/**
+ * The type of a NextBotActionFactory event callback.
+ */
 enum EventResponderType
 {
 	EventResponderType_OnLeaveGround = 0,
@@ -1658,17 +1932,21 @@ typeset ActionEventResponderCallback
 	// OnLostSight
 	// OnDrop (item = ground)
 	// OnCommandApproachEntity (goal = ground)
-	function int ( NextBotAction action, int actor, int ground );
+	function int (NextBotAction action, int actor, int ground);
+	function void (NextBotAction action, int actor, int ground);
 	
 	// OnContact
 	// result is a CGameTrace structure
-	function int ( NextBotAction action, int actor, int other, Address result );
+	function int (NextBotAction action, int actor, int other, Address result);
+	function void (NextBotAction action, int actor, int other, Address result);
 
 	// OnMoveToSuccess
-	function int ( NextBotAction action, int actor, Path path );
+	function int (NextBotAction action, int actor, Path path);
+	function void (NextBotAction action, int actor, Path path);
 
 	// OnMoveToFailure
-	function int ( NextBotAction action, int actor, Path path, MoveToFailureType reason );
+	function int (NextBotAction action, int actor, Path path, MoveToFailureType reason);
+	function void (NextBotAction action, int actor, Path path, MoveToFailureType reason);
 
 	// OnStuck
 	// OnUnStuck
@@ -1678,62 +1956,86 @@ typeset ActionEventResponderCallback
 	// OnCommandResume
 	// OnWin
 	// OnLose
-	function int ( NextBotAction action, int actor );
+	function int (NextBotAction action, int actor);
+	function void (NextBotAction action, int actor);
 
 	// OnAnimationActivityComplete
 	// OnAnimationActivityInterrupted
-	// OnCommandAttack (victim = activity)
-	// OnShoved (pusher = activity)
-	// OnBlinded (blinder = activity)
-	// OnTerritoryContested (territoryID = activity)
-	// OnTerritoryCaptured (territoryID = activity)
-	// OnTerritoryLost (territoryID = activity)
-	function int ( NextBotAction action, int actor, int activity );
+	function int (NextBotAction action, int actor, Activity activity);
+	function void (NextBotAction action, int actor, Activity activity);
+
+	// OnCommandAttack
+	// OnShoved (pusher = victim)
+	// OnBlinded (blinder = victim)
+	// OnTerritoryContested (territoryID = victim)
+	// OnTerritoryCaptured (territoryID = victim)
+	// OnTerritoryLost (territoryID = victim)
+	function int (NextBotAction action, int actor, int victim);
+	function void (NextBotAction action, int actor, int victim);
 
 	// OnAnimationEvent
-	function int ( NextBotAction action, int actor, int event );
-	function int ( NextBotAction action, int actor, int event, const char[] options );
-	function int ( NextBotAction action, int actor, int event, const char[] options, float cycle, float eventtime );
-	function int ( NextBotAction action, int actor, int event, const char[] options, float cycle, float eventtime, int eventtype );
-	function int ( NextBotAction action, int actor, int event, const char[] options, float cycle, float eventtime, int eventSourceEntity );
+	function int (NextBotAction action, int actor, int event);
+	function void (NextBotAction action, int actor, int event);
+	function int (NextBotAction action, int actor, int event, const char[] options);
+	function void (NextBotAction action, int actor, int event, const char[] options);
+	function int (NextBotAction action, int actor, int event, const char[] options, float cycle, float eventtime);
+	function void (NextBotAction action, int actor, int event, const char[] options, float cycle, float eventtime);
+	function int (NextBotAction action, int actor, int event, const char[] options, float cycle, float eventtime, int eventtype);
+	function void (NextBotAction action, int actor, int event, const char[] options, float cycle, float eventtime, int eventtype);
+	function int (NextBotAction action, int actor, int event, const char[] options, float cycle, float eventtime, int eventtype, int eventSourceEntity);
+	function void (NextBotAction action, int actor, int event, const char[] options, float cycle, float eventtime, int eventtype, int eventSourceEntity);
 
 	// OnInjured
 	// OnKilled
-	function int ( NextBotAction action, int actor, int attacker, int inflictor, float damage, int damagetype );
-	function int ( NextBotAction action, int actor, int attacker, int inflictor, float damage, int damagetype, int weapon, const float damageForce[3], const float damagePosition[3] );
-	function int ( NextBotAction action, int actor, int attacker, int inflictor, float damage, int damagetype, int weapon, const float damageForce[3], const float damagePosition[3], int damagecustom );
+	function int (NextBotAction action, int actor, int attacker, int inflictor, float damage, int damagetype);
+	function void (NextBotAction action, int actor, int attacker, int inflictor, float damage, int damagetype);
+	function int (NextBotAction action, int actor, int attacker, int inflictor, float damage, int damagetype, int weapon, const float damageForce[3], const float damagePosition[3]);
+	function void (NextBotAction action, int actor, int attacker, int inflictor, float damage, int damagetype, int weapon, const float damageForce[3], const float damagePosition[3]);
+	function int (NextBotAction action, int actor, int attacker, int inflictor, float damage, int damagetype, int weapon, const float damageForce[3], const float damagePosition[3], int damagecustom);
+	function void (NextBotAction action, int actor, int attacker, int inflictor, float damage, int damagetype, int weapon, const float damageForce[3], const float damagePosition[3], int damagecustom);
 
 	// OnOtherKilled
-	function int ( NextBotAction action, int actor, int victim, int attacker, int inflictor, float damage, int damagetype );
-	function int ( NextBotAction action, int actor, int victim, int attacker, int inflictor, float damage, int damagetype, int weapon, const float damageForce[3], const float damagePosition[3] );
-	function int ( NextBotAction action, int actor, int victim, int attacker, int inflictor, float damage, int damagetype, int weapon, const float damageForce[3], const float damagePosition[3], int damagecustom );
+	function int (NextBotAction action, int actor, int victim, int attacker, int inflictor, float damage, int damagetype);
+	function void (NextBotAction action, int actor, int victim, int attacker, int inflictor, float damage, int damagetype);
+	function int (NextBotAction action, int actor, int victim, int attacker, int inflictor, float damage, int damagetype, int weapon, const float damageForce[3], const float damagePosition[3]);
+	function void (NextBotAction action, int actor, int victim, int attacker, int inflictor, float damage, int damagetype, int weapon, const float damageForce[3], const float damagePosition[3]);
+	function int (NextBotAction action, int actor, int victim, int attacker, int inflictor, float damage, int damagetype, int weapon, const float damageForce[3], const float damagePosition[3], int damagecustom);
+	function void (NextBotAction action, int actor, int victim, int attacker, int inflictor, float damage, int damagetype, int weapon, const float damageForce[3], const float damagePosition[3], int damagecustom);
 
 	// OnSound
-	function int ( NextBotAction action, int actor, int sourceEntity, const float pos[3], KeyValues keys );
+	function int (NextBotAction action, int actor, int sourceEntity, const float pos[3], KeyValues keys);
+	function void (NextBotAction action, int actor, int sourceEntity, const float pos[3], KeyValues keys);
 
 	// OnSpokeConcept
 	// response is AI_Response*
-	function int ( NextBotAction action, int actor, int who, const char[] concept, Address response );
+	function int (NextBotAction action, int actor, int who, const char[] concept, Address response);
+	function void (NextBotAction action, int actor, int who, const char[] concept, Address response);
 
 	// OnWeaponFired
 	// OnPickUp (item = whoFired, giver = weapon)
 	// OnActorEmoted (emoter = whoFired, emote = weapon)
-	function int ( NextBotAction action, int actor, int whoFired, int weapon );
+	function int (NextBotAction action, int actor, int whoFired, int weapon);
+	function void (NextBotAction action, int actor, int whoFired, int weapon);
 
 	// OnNavAreaChanged
-	function int ( NextBotAction action, int actor, CNavArea newArea, CNavArea oldArea );
+	function int (NextBotAction action, int actor, CNavArea newArea, CNavArea oldArea);
+	function void (NextBotAction action, int actor, CNavArea newArea, CNavArea oldArea);
 
 	// OnCommandApproach
-	function int ( NextBotAction action, int actor, const float pos[3], float range );
+	function int (NextBotAction action, int actor, const float pos[3], float range);
+	function void (NextBotAction action, int actor, const float pos[3], float range);
 
 	// OnCommandRetreat
-	function int ( NextBotAction action, int actor, int threat, float range );
+	function int (NextBotAction action, int actor, int threat, float range);
+	function void (NextBotAction action, int actor, int threat, float range);
 
 	// OnCommandPause
-	function int ( NextBotAction action, int actor, float duration );
+	function int (NextBotAction action, int actor, float duration);
+	function void (NextBotAction action, int actor, float duration);
 
 	// OnCommandString
-	function int ( NextBotAction action, int actor, const char[] command );
+	function int (NextBotAction action, int actor, const char[] command);
+	function void (NextBotAction action, int actor, const char[] command);
 }
 
 enum QueryResultType
@@ -1796,25 +2098,29 @@ enum NextBotActionCallbackType
 
 typeset NextBotActionCallback
 {
+	function void (NextBotAction action, int actor)
+
 	// OnStart
 	// OnSuspend (interruptingAction = priorAction)
 	// OnResume (interruptingAction = priorAction)
-	function int ( NextBotAction action, int actor, NextBotAction priorAction );
+	function int (NextBotAction action, int actor, NextBotAction priorAction);
+	function void (NextBotAction action, int actor, NextBotAction priorAction);
 
 	// Update
-	function int ( NextBotAction action, int actor, float interval );
+	function int (NextBotAction action, int actor, float interval);
+	function void (NextBotAction action, int actor, float interval);
 
 	// OnEnd
-	function void ( NextBotAction action, int actor, NextBotAction nextAction );
+	function void (NextBotAction action, int actor, NextBotAction nextAction);
 
 	// InitialContainedAction
-	function NextBotAction ( NextBotAction action, int actor );
+	function NextBotAction (NextBotAction action, int actor);
 
 	// CreateInitialAction
-	function void ( NextBotAction action );
+	function void (NextBotAction action);
 
 	// IsAbleToBlockMovementOf
-	function bool ( NextBotAction action, INextBot bot );
+	function bool (NextBotAction action, INextBot bot);
 }
 
 methodmap NextBotActionFactory < Handle
@@ -1833,6 +2139,7 @@ methodmap NextBotActionFactory < Handle
 	 *
 	 * @param callbackType     Type of callback
 	 * @param callback
+	 * @error                  Invalid handle.
 	 */
 	public native void SetCallback(NextBotActionCallbackType callbackType, NextBotActionCallback callback);
 
@@ -1841,6 +2148,7 @@ methodmap NextBotActionFactory < Handle
 	 *
 	 * @param callbackType     Type of callback
 	 * @param callback
+	 * @error                  Invalid handle.
 	 */
 	public native void SetQueryCallback(ContextualQueryType callbackType, ActionContextualQueryCallback callback);
 
@@ -1849,6 +2157,7 @@ methodmap NextBotActionFactory < Handle
 	 *
 	 * @param callbackType     Type of callback
 	 * @param callback
+	 * @error                  Invalid handle.
 	 */
 	public native void SetEventCallback(EventResponderType callbackType, ActionEventResponderCallback callback);
 
@@ -1856,7 +2165,8 @@ methodmap NextBotActionFactory < Handle
 	 * Begins defining properties stored on the Action.
 	 *
 	 * @return     The NextBotActionFactory to chain calls
-	*/
+	 * @error      Invalid handle.
+	 */
 	public native NextBotActionFactory BeginDataMapDesc();
 
 	/**
@@ -1866,6 +2176,7 @@ methodmap NextBotActionFactory < Handle
 	 * @param iNumElements   Number of elements. If > 1, will declare the field
 	 *                       as an array.
 	 * @return               The NextBotActionFactory to chain calls
+	 * @error                Invalid handle.
 	 */
 	public native NextBotActionFactory DefineIntField(const char[] sFieldName, int iNumElements=1);
 
@@ -1876,6 +2187,7 @@ methodmap NextBotActionFactory < Handle
 	 * @param iNumElements   Number of elements. If > 1, will declare the field
 	 *                       as an array.
 	 * @return               The NextBotActionFactory to chain calls
+	 * @error                Invalid handle.
 	 */
 	public native NextBotActionFactory DefineFloatField(const char[] sFieldName, int iNumElements=1);
 
@@ -1886,6 +2198,7 @@ methodmap NextBotActionFactory < Handle
 	 * @param iNumElements   Number of elements. If > 1, will declare the field
 	 *                       as an array.
 	 * @return               The NextBotActionFactory to chain calls
+	 * @error                Invalid handle.
 	 */
 	public native NextBotActionFactory DefineCharField(const char[] sFieldName, int iNumElements=1);
 
@@ -1896,6 +2209,7 @@ methodmap NextBotActionFactory < Handle
 	 * @param iNumElements   Number of elements. If > 1, will declare the field
 	 *                       as an array.
 	 * @return               The NextBotActionFactory to chain calls
+	 * @error                Invalid handle.
 	 */
 	public native NextBotActionFactory DefineBoolField(const char[] sFieldName, int iNumElements=1);
 
@@ -1906,6 +2220,7 @@ methodmap NextBotActionFactory < Handle
 	 * @param iNumElements   Number of elements. If > 1, will declare the field
 	 *                       as an array.
 	 * @return               The NextBotActionFactory to chain calls
+	 * @error                Invalid handle.
 	 */
 	public native NextBotActionFactory DefineVectorField(const char[] sFieldName, int iNumElements=1);
 
@@ -1916,11 +2231,14 @@ methodmap NextBotActionFactory < Handle
 	 * @param iNumElements   Number of elements. If > 1, will declare the field
 	 *                       as an array.
 	 * @return               The NextBotActionFactory to chain calls
+	 * @error                Invalid handle.
 	 */
 	public native NextBotActionFactory DefineStringField(const char[] sFieldName, int iNumElements=1);
 
 	/**
 	 * Finishes the datamap definition.
+	 * 
+	 * @error                Invalid handle.
 	 */
 	public native void EndDataMapDesc();
 
@@ -1928,18 +2246,9 @@ methodmap NextBotActionFactory < Handle
 	 * Creates an Action.
 	 *
 	 * @return     The new Action
-	*/
+	 * @error                Invalid handle.
+	 */
 	public native NextBotAction Create();
-}
-
-typeset CEntityFactoryPostConstructor
-{
-	function void (int entity);
-}
-
-typeset CEntityFactoryOnRemoveCallback
-{
-	function void (int entity);
 }
 
 typeset InputFuncCallback
@@ -1978,6 +2287,16 @@ enum InputFuncValueType
 	InputFuncValueType_Max
 }
 
+typeset CEntityFactoryPostConstructor
+{
+	function void (int entity);
+}
+
+typeset CEntityFactoryOnRemoveCallback
+{
+	function void (int entity);
+}
+
 methodmap CEntityFactory < Handle
 {
 	/**
@@ -1995,7 +2314,8 @@ methodmap CEntityFactory < Handle
 	 *                          This is the best place to initialize your entity.
 	 * @param onRemove          Called when an entity created by this factory is removed.
 	 *                          Perform any needed cleanup for your entity here.
-	 * @param error             Classname is NULL or empty, or out of memory.
+	 * @param error             Invalid handle, classname is NULL or empty, or out of
+	 *                          memory.
 	 */
 	public native CEntityFactory(const char[] classname, CEntityFactoryPostConstructor postConstructor=INVALID_FUNCTION, CEntityFactoryOnRemoveCallback onRemove=INVALID_FUNCTION);
 	
@@ -2004,6 +2324,15 @@ methodmap CEntityFactory < Handle
 	 */
 	public native void DeriveFromNPC();
 
+	/**
+	 * If this is a CBaseNPC entity factory, then this will set the action
+	 * factory to use to instantiate the NPC's main action.
+	 *
+	 * This will override the action factory set by any base factories.
+	 *
+	 * @param factory      The action factory used to initialize the main action
+	 * @error              Invalid handle.
+	 */
 	public native void SetInitialActionFactory( NextBotActionFactory factory );
 
 	/**
@@ -2011,6 +2340,7 @@ methodmap CEntityFactory < Handle
 	 *
 	 * @param bServerOnly       If true, entity will be server side only and not
 	 *                          networked to clients.
+	 * @error                   Invalid handle.
 	 */
 	public native void DeriveFromBaseEntity(bool bServerOnly=false);
 
@@ -2022,6 +2352,7 @@ methodmap CEntityFactory < Handle
 	 * factory is uninstalled, this factory will be uninstalled first.
 	 *
 	 * @param classname     The classname of the installed factory.
+	 * @error               Invalid handle.
 	 */
 	public native void DeriveFromClass(const char[] classname);
 
@@ -2029,6 +2360,7 @@ methodmap CEntityFactory < Handle
 	 * Instructs the factory to use the specified factory as a base.
 	 *
 	 * @param baseFactory     The base factory
+	 * @error                 Invalid handle.
 	 */
 	public native void DeriveFromFactory(CEntityFactory baseFactory);
 
@@ -2037,8 +2369,8 @@ methodmap CEntityFactory < Handle
 	 * For non-abstract factories, the factory will be added to the global
 	 * entity factory dictionary.
 	 *
-	 * @error	An installed factory already has classname, or base factory/class
-	 *          doesn't exist.
+	 * @error   Invalid handle, An installed factory already has classname, or
+	 *          base factory/class doesn't exist.
 	 */
 	public native void Install();
 
@@ -2048,6 +2380,8 @@ methodmap CEntityFactory < Handle
 	 *
 	 * Upon uninstalling a factory, all entities that were directly created
 	 * by this factory (not including derived factories) will be removed.
+	 *
+	 * @error   Invalid handle.
 	 */
 	public native void Uninstall();
 
@@ -2055,6 +2389,7 @@ methodmap CEntityFactory < Handle
 	 * Tells if the factory is installed or not.
 	 *
 	 * @return     Installed
+	 * @error      Invalid handle.
 	 */
 	property bool IsInstalled
 	{
@@ -2084,6 +2419,7 @@ methodmap CEntityFactory < Handle
 	 *
 	 * @param sBuffer        Buffer
 	 * @param iBufferLen     Size of buffer
+	 * @error                Invalid handle.
 	 */
 	public native void GetClassname(char[] sBuffer, int iBufferLen);
 
@@ -2092,6 +2428,7 @@ methodmap CEntityFactory < Handle
 	 *
 	 * @param entity     Entity index/reference
 	 * @return           CEntityFactory, or null if not created by a CEntityFactory.
+	 * @error            Invalid entity.
 	 */
 	public static native CEntityFactory GetFactoryOfEntity(int entity);
 
@@ -2132,10 +2469,10 @@ methodmap CEntityFactory < Handle
 	 * meaning iNumElements must be set to 1.
 	 *
 	 * @param sDataClass      Name of the datamap. If null or empty, will use
-	 *                        entity's classname.
+	 *                        the entity's classname instead.
 	 * @return                The CEntityFactory to chain calls
-	 * @error                 Beginning datamap definition before base factory 
-	 *                        is installed
+	 * @error                 Invalid handle, or beginning datamap definition
+	 *                        before base factory is installed
 	 */
 	public native CEntityFactory BeginDataMapDesc(const char[] sDataClass=NULL_STRING);
 
@@ -2147,6 +2484,8 @@ methodmap CEntityFactory < Handle
 	 *                        as an array.
 	 * @param sKeyName        Key field name. See BeginDataMapDesc's documentation
 	 * @return                The CEntityFactory to chain calls
+	 * @error                 Invalid handle, or tried to declare key field as
+	 *                        array.
 	 */
 	public native CEntityFactory DefineIntField(const char[] sFieldName, int iNumElements=1, const char[] sKeyName=NULL_STRING);
 
@@ -2158,6 +2497,8 @@ methodmap CEntityFactory < Handle
 	 *                        as an array.
 	 * @param sKeyName        Key field name. See BeginDataMapDesc's documentation
 	 * @return                The CEntityFactory to chain calls
+	 * @error                 Invalid handle, or tried to declare key field as
+	 *                        array.
 	 */
 	public native CEntityFactory DefineFloatField(const char[] sFieldName, int iNumElements=1, const char[] sKeyName=NULL_STRING);
 
@@ -2169,6 +2510,8 @@ methodmap CEntityFactory < Handle
 	 *                        as an array.
 	 * @param sKeyName        Key field name. See BeginDataMapDesc's documentation
 	 * @return                The CEntityFactory to chain calls
+	 * @error                 Invalid handle, or tried to declare key field as
+	 *                        array.
 	 */
 	public native CEntityFactory DefineCharField(const char[] sFieldName, int iNumElements=1, const char[] sKeyName=NULL_STRING);
 
@@ -2180,6 +2523,8 @@ methodmap CEntityFactory < Handle
 	 *                        as an array.
 	 * @param sKeyName        Key field name. See BeginDataMapDesc's documentation
 	 * @return                The CEntityFactory to chain calls
+	 * @error                 Invalid handle, or tried to declare key field as
+	 *                        array.
 	 */
 	public native CEntityFactory DefineBoolField(const char[] sFieldName, int iNumElements=1, const char[] sKeyName=NULL_STRING);
 
@@ -2191,6 +2536,8 @@ methodmap CEntityFactory < Handle
 	 *                        as an array.
 	 * @param sKeyName        Key field name. See BeginDataMapDesc's documentation
 	 * @return                The CEntityFactory to chain calls
+	 * @error                 Invalid handle, or tried to declare key field as
+	 *                        array.
 	 */
 	public native CEntityFactory DefineVectorField(const char[] sFieldName, int iNumElements=1, const char[] sKeyName=NULL_STRING);
 
@@ -2202,6 +2549,8 @@ methodmap CEntityFactory < Handle
 	 *                        as an array.
 	 * @param sKeyName        Key field name. See BeginDataMapDesc's documentation
 	 * @return                The CEntityFactory to chain calls
+	 * @error                 Invalid handle, or tried to declare key field as
+	 *                        array.
 	 */
 	public native CEntityFactory DefineStringField(const char[] sFieldName, int iNumElements=1, const char[] sKeyName=NULL_STRING);
 
@@ -2212,6 +2561,7 @@ methodmap CEntityFactory < Handle
 	 * @param iNumElements    Number of elements. If > 1, will declare the field
 	 *                        as an array.
 	 * @return                The CEntityFactory to chain calls
+	 * @error                 Invalid handle.
 	 */
 	public native CEntityFactory DefineEntityField(const char[] sFieldName, int iNumElements=1);
 
@@ -2221,9 +2571,12 @@ methodmap CEntityFactory < Handle
 	 *
 	 * @param sInputName      Name of the input
 	 * @param valueType       Type of value that the input function callback
-	 *                        should handle.
+	 *                        should handle. The engine will attempt to convert
+	 *                        the given value to this type and will pass it to
+	 *                        the callback.
 	 * @param handler         Callback to handle the input.
 	 * @return                The CEntityFactory to chain calls
+	 * @error                 Invalid handle.
 	 */
 	public native CEntityFactory DefineInputFunc(const char[] sInputName, InputFuncValueType valueType, InputFuncCallback handler);
 
@@ -2232,11 +2585,14 @@ methodmap CEntityFactory < Handle
 	 *
 	 * @param sOutputName     Name of the output
 	 * @return                The CEntityFactory to chain calls
+	 * @error                 Invalid handle.
 	 */
 	public native CEntityFactory DefineOutput(const char[] sOutputName);
 
 	/**
 	 * Finishes the datamap definition.
+	 *
+	 * @error                 Invalid handle.
 	 */
 	public native void EndDataMapDesc();
 }
