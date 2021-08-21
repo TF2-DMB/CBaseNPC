@@ -31,10 +31,6 @@ CBASEENTNATIVE(DispatchUpdateTransmitState)
 	return 0;
 }
 
-CBASEENTNATIVE(GetFlags)
-	return ent->GetFlags();
-}
-
 CBASEENTNATIVE(GetEFlags)
 	return ent->GetEFlags();
 }
@@ -288,6 +284,22 @@ CBASEENTNATIVE(EntityToWorldTransform)
 
 	MatrixToPawnMatrix( pawnMat, ent->EntityToWorldTransform() );
 	return 0;
+}
+
+CBASEENTNATIVE(MyNextBotPointer)
+	return (cell_t)ent->MyNextBotPointer();
+}
+
+CBASEENTNATIVE(GetBaseAnimating)
+	return ent->GetBaseAnimating() ? params[1] : -1;
+}
+
+CBASEENTNATIVE(MyCombatCharacterPointer)
+	return ent->MyCombatCharacterPointer() ? params[1] : -1;
+}
+
+CBASEENTNATIVE(IsCombatCharacter)
+	return ent->MyCombatCharacterPointer() ? true : false;
 }
 
 #endif // NATIVE_CBASEENT_H_

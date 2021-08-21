@@ -165,7 +165,6 @@ const sp_nativeinfo_t g_NativesInfo[] =
 	NATIVENAME(CBaseEntity, NetworkProp)
 	NATIVENAME(CBaseEntity, CollisionProp)
 	NATIVENAME(CBaseEntity, DispatchUpdateTransmitState)
-	NATIVENAME(CBaseEntity, GetFlags)
 	NATIVENAME(CBaseEntity, GetEFlags)
 	NATIVENAME(CBaseEntity, IsEFlagSet)
 	NATIVENAME(CBaseEntity, SetEFlags)
@@ -201,6 +200,10 @@ const sp_nativeinfo_t g_NativesInfo[] =
 	NATIVENAME(CBaseEntity, GetVectors)
 	NATIVENAME(CBaseEntity, WorldSpaceCenter)
 	NATIVENAME(CBaseEntity, EntityToWorldTransform)
+	NATIVENAME(CBaseEntity, MyNextBotPointer)
+	NATIVENAME(CBaseEntity, GetBaseAnimating)
+	NATIVENAME(CBaseEntity, MyCombatCharacterPointer)
+	NATIVENAME(CBaseEntity, IsCombatCharacter)
 
 	// Base Animating
 	NATIVENAME(CBaseAnimating, iHandleAnimEvent)

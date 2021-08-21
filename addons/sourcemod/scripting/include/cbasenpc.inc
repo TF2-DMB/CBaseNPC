@@ -48,6 +48,7 @@ const CNavArea NULL_AREA = view_as<CNavArea>(0);
 const CNavLadder NULL_LADDER_AREA = view_as<CNavLadder>(0);
 const CKnownEntity NULL_KNOWN_ENTITY = view_as<CKnownEntity>(0);
 const NextBotAction NULL_ACTION = view_as<NextBotAction>(0);
+const INextBot NULL_NEXT_BOT = view_as<INextBot>(0);
 
 native INextBot CBaseNPC_GetNextBotOfEntity(int iEntity);
 native void CBaseNPC_HookEventKilled(int iEntity);
@@ -923,7 +924,50 @@ methodmap CBaseEntity
 	 * @return		The entity flags.
 	 * @error		Invalid entity.
 	 */
-	public native int GetFlags();
+	public int GetFlags()
+	{
+		return GetEntityFlags(this.index);
+	}
+
+	/**
+	 * Adds flags to the entity.
+	 *
+	 * @error		Invalid entity.
+	 */
+	public void AddFlag(int flags)
+	{
+		SetEntityFlags(this.index, this.GetFlags() | flags);
+	}
+
+	/**
+	 * Removes flags from the entity.
+	 *
+	 * @error		Invalid entity.
+	 */
+	public void RemoveFlag(int flagsToRemove)
+	{
+		SetEntityFlags(this.index, this.GetFlags() & ~flagsToRemove);
+	}
+
+	/**
+	 * Clears the entity's flags.
+	 *
+	 * @error		Invalid entity.
+	 */
+	public void ClearFlags()
+	{
+		SetEntityFlags(this.index, 0);
+	}
+
+	/**
+	 * Toggles flags on the entity.
+	 *
+	 * @error		Invalid entity.
+	 */
+	public void ToggleFlag(int flagToToggle)
+	{
+		SetEntityFlags(this.index, this.GetFlags() ^ flagToToggle);
+	}
 
 	/**
 	 * Gets an edict's flags.
@@ -1211,6 +1255,51 @@ methodmap CBaseEntity
 	public native void EntityToWorldTransform(float matrix[3][4]);
 
 	/**
+	 * Obtains pointer to the entity's INextBot.
+	 *
+	 * @return     INextBot, or NULL_NEXT_BOT if not a NextBot entity.
+	 * @error      Invalid entity.
+	 */
+	public native INextBot MyNextBotPointer();
+
+	/**
+	 * Attempts to cast this entity as CBaseAnimating.
+	 *
+	 * @return     CBaseAnimating; use IsValid() to check for validity. If the
+	 *             entity is a CBaseAnimating, will be valid; false otherwise.
+	 * @error      Invalid entity.
+	 */
+	public native CBaseAnimating GetBaseAnimating();
+
+	/**
+	 * Attempts to cast this entity as a CBaseCombatCharacter.
+	 *
+	 * @return     CBaseCombatCharacter; use IsValid() to check for validity.
+	 *             If the entity is a CBaseCombatCharacter, will be valid;
+	 *             false otherwise.
+	 * @error      Invalid entity.
+	 */
+	public native CBaseCombatCharacter MyCombatCharacterPointer();
+
+	/**
+	 * Checks if entity is a CBaseCombatCharacter.
+	 *
+	 * @return     True if CBaseCombatCharacter; false otherwise.
+	 * @error      Invalid entity.
+	 */
+	public native bool IsCombatCharacter();
+
+	/**
+	 * Alias of ActivateEntity().
+	 *
+	 * @error               Invalid entity.
+	 */
+	public void Activate()
+	{
+		ActivateEntity(this.index);
+	}
+
+	/**
 	 * Alias of IsValidEntity().
 	 *
 	 * @return              True if valid, false otherwise.
@@ -1417,6 +1506,189 @@ methodmap CBaseEntity
 	public int GetPropArraySize(PropType type, const char[] prop)
 	{
 		return GetEntPropArraySize(this.index, type, prop);
+	}
+
+	/**
+	 * Alias of DispatchKeyValue().
+	 *
+	 * @param keyName       Name of the key.
+	 * @param value         String value.
+	 * @return              True on success, false otherwise.
+	 * @error               Invalid entity, or no mod support.
+	 */
+	public bool KeyValue(const char[] keyName, const char[] value)
+	{
+		return DispatchKeyValue(this.index, keyName, value);
+	}
+
+	/**
+	 * Alias of DispatchKeyValueFloat().
+	 *
+	 * @param keyName       Name of the key.
+	 * @param value         String value.
+	 * @return              True on success, false otherwise.
+	 * @error               Invalid entity, or no mod support.
+	 */
+	public bool KeyValueFloat(const char[] keyName, float value)
+	{
+		return DispatchKeyValueFloat(this.index, keyName, value);
+	}
+
+	/**
+	 * Alias of DispatchKeyValueVector().
+	 *
+	 * @param keyName       Name of the key.
+	 * @param value         String value.
+	 * @return              True on success, false otherwise.
+	 * @error               Invalid entity, or no mod support.
+	 */
+	public bool KeyValueVector(const char[] keyName, const float value[3])
+	{
+		return DispatchKeyValueVector(this.index, keyName, value);
+	}
+
+	/**
+	 * Alias of AcceptEntityInput().
+	 *
+	 * @param input         Input action.
+	 * @param activator     Entity index which initiated the sequence of actions (-1 for a NULL entity).
+	 * @param caller        Entity index from which this event is sent (-1 for a NULL entity).
+	 * @param outputid      Unknown.
+	 * @return              True if successful otherwise false.
+	 * @error               Invalid entity or no mod support.
+	 */
+	public bool AcceptInput(const char[] input, int activator = -1, int caller = -1, int outputid = 0)
+	{
+		return AcceptEntityInput(this.index, input, activator, caller, outputid);
+	}
+
+	/**
+	 * Alias of FireEntityOutput().
+	 *
+	 * @param output        Output name.
+	 * @param activator     Entity index which initiated the sequence of actions (-1 for a NULL entity).
+	 * @param delay         Delay before firing the output.
+	 * @error               Invalid entity or no mod support.
+	 */
+	public void FireOutput(const char[] output, int activator = -1, float delay = 0.0)
+	{
+		FireEntityOutput(this.index, output, activator, delay);
+	}
+
+	/**
+	 * Gets an entity's gravity.
+	 *
+	 * @return              Entity's m_flGravity value.
+	 * @error               Invalid entity, or lack of mod compliance.
+	 */
+	public float GetGravity()
+	{
+		return GetEntityGravity(this.index);
+	}
+
+	/**
+	 * Sets an entity's gravity.
+	 *
+	 * @return              Entity's m_flGravity value.
+	 * @error               Invalid entity, or lack of mod compliance.
+	 */
+	public void SetGravity(float gravity)
+	{
+		SetEntityGravity(this.index, gravity);
+	}
+
+	/**
+	 * Gets an entity's color.
+	 *
+	 * @param r             Amount of red (0-255)
+	 * @param g             Amount of green (0-255)
+	 * @param b             Amount of blue (0-255)
+	 * @param a             Amount of alpha (0-255)
+	 * @error               Invalid entity, or lack of mod compliance.
+	 */
+	public void GetRenderColor(int &r, int &g, int &b, int &a)
+	{
+		GetEntityRenderColor(this.index, r, g, b, a);
+	}
+
+	/**
+	 * Sets an entity's color.
+	 *
+	 * @param r             Amount of red (0-255)
+	 * @param g             Amount of green (0-255)
+	 * @param b             Amount of blue (0-255)
+	 * @param a             Amount of alpha (0-255)
+	 * @error               Invalid entity, or lack of mod compliance.
+	 */
+	public void SetRenderColor(int r = 255, int g = 255, int b = 255, int a = 255)
+	{
+		SetEntityRenderColor(this.index, r, g, b, a);
+	}
+
+	/**
+	 * Gets an entity's render Fx.
+	 *
+	 * @return              RenderFx value.
+	 * @error               Invalid entity, or lack of mod compliance.
+	 */
+	public RenderFx GetRenderFx()
+	{
+		return GetEntityRenderFx(this.index);
+	}
+
+	/**
+	 * Sets an entity's render Fx.
+	 *
+	 * @param fx            RenderFx value.
+	 * @error               Invalid entity, or lack of mod compliance.
+	 */
+	public void SetRenderFx(RenderFx fx)
+	{
+		SetEntityRenderFx(this.index, fx);
+	}
+
+	/**
+ 	 * Gets an entity's render mode.
+	 *
+	 * @return              RenderMode value.
+	 * @error               Invalid entity, or lack of mod compliance.
+	 */
+	public RenderMode GetRenderMode()
+	{
+		return GetEntityRenderMode(this.index);
+	}
+
+	/**
+	 * Sets an entity's render mode.
+	 *
+	 * @param mode          RenderMode value.
+	 * @error               Invalid entity, or lack of mod compliance.
+	 */
+	public void SetRenderMode(RenderMode mode)
+	{
+		SetEntityRenderMode(this.index, mode);
+	}
+
+	/**
+	 * Gets an entity's movetype.
+	 *
+	 * @return              Movetype
+	 * @error               Invalid entity, or lack of mod compliance.
+	 */
+	public MoveType GetMoveType()
+	{
+		return GetEntityMoveType(this.index);
+	}
+
+	/**
+	 * Sets an entity's movetype.
+	 *
+	 * @param mt            Movetype
+	 * @error               Invalid entity, or lack of mod compliance.
+	 */
+	public void SetMoveType(MoveType val)
+	{
+		SetEntityMoveType(this.index, val);
 	}
 }
 
