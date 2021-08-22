@@ -131,8 +131,11 @@ protected:
 		DERIVETYPE_CBASENPC,
 		DERIVETYPE_CLASSNAME,
 		DERIVETYPE_HANDLE,
+		DERIVETYPE_CONFIG,
 		DERIVETYPE_MAX
 	};
+
+	typedef void* (CBaseEntity::*RawEntityConstructor)(void);
 
 	struct PluginEntityFactoryDeriveInfo_t
 	{
@@ -142,11 +145,16 @@ protected:
 		{
 			PluginEntityFactoryBaseClass_t m_BaseType;
 			Handle_t m_BaseFactoryHandle;
+			RawEntityConstructor m_pConstructorFunc;
 		};
 		
 		std::string m_iBaseClassname;
-		bool m_bBaseEntityServerOnly;
 
+		union
+		{
+			bool m_bBaseEntityServerOnly;
+			size_t m_iRawEntitySize;
+		};
 	} m_Derive;
 
 	CBaseNPCPluginActionFactory* m_pBaseNPCInitialActionFactory;
@@ -158,6 +166,7 @@ public:
 	void DeriveFromNPC();
 	void DeriveFromClass(const char* classname);
 	void DeriveFromHandle(Handle_t handle);
+	bool DeriveFromConf(size_t entitySize, IGameConfig* config, int type, const char* name);
 
 	CBaseNPCPluginActionFactory* GetBaseNPCInitialActionFactory() const { return m_pBaseNPCInitialActionFactory; }
 	void SetBaseNPCInitialActionFactory( CBaseNPCPluginActionFactory* pFactory ) { m_pBaseNPCInitialActionFactory = pFactory; }

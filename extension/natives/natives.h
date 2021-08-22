@@ -613,6 +613,7 @@ const sp_nativeinfo_t g_NativesInfo[] =
 	NATIVENAMEEX(CEntityFactory, CPluginEntityFactory, DeriveFromClass)
 	NATIVENAMEEX(CEntityFactory, CPluginEntityFactory, DeriveFromNPC)
 	NATIVENAMEEX(CEntityFactory, CPluginEntityFactory, DeriveFromFactory)
+	NATIVENAMEEX(CEntityFactory, CPluginEntityFactory, DeriveFromConf)
 	NATIVENAMEEX(CEntityFactory, CPluginEntityFactory, SetInitialActionFactory)
 	NATIVENAMEEX(CEntityFactory, CPluginEntityFactory, Install)
 	NATIVENAMEEX(CEntityFactory, CPluginEntityFactory, Uninstall)

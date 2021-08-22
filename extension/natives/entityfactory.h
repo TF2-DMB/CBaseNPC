@@ -138,9 +138,6 @@ PLUGINENTITYFACTORYNATIVE(DeriveFromClass)
 	if (!pDeriveFromFactory)
 		return pContext->ThrowNativeError("Cannot derive from uninstalled entity factory %s", classname);
 	
-	if (pDeriveFromFactory == pFactory)
-		return pContext->ThrowNativeError("Cannot derive from self");
-	
 	pFactory->DeriveFromClass(classname);
 
 	return 0;
@@ -151,7 +148,39 @@ PLUGINENTITYFACTORYNATIVE(DeriveFromFactory)
 	if (pFactory->m_bInstalled) 
 		return pContext->ThrowNativeError("Cannot change base factory while factory is installed");
 	
-	pFactory->DeriveFromHandle(params[2]);
+	Handle_t otherHndl = params[2];
+
+	CPluginEntityFactory* pOtherFactory = g_pPluginEntityFactories->GetFactoryFromHandle( otherHndl, &chnderr );
+	if ( !pOtherFactory )
+		return pContext->ThrowNativeError("Invalid handle");
+
+	if (pOtherFactory == pFactory)
+		return pContext->ThrowNativeError("Cannot derive from self");
+
+	pFactory->DeriveFromHandle( otherHndl );
+
+	return 0;
+}
+
+PLUGINENTITYFACTORYNATIVE(DeriveFromConf)
+	if (pFactory->m_bInstalled) 
+		return pContext->ThrowNativeError("Cannot change base factory while factory is installed");
+	
+	size_t entitySize = params[2];
+
+	IGameConfig* config = gameconfs->ReadHandle( params[3], pContext->GetIdentity(), nullptr );
+	if ( !config )
+		return pContext->ThrowNativeError("Invalid gameconfig handle");
+
+	int type = params[4];
+
+	char* entry;
+	pContext->LocalToString( params[5], &entry );
+
+	if ( !pFactory->DeriveFromConf( entitySize, config, type, entry ) )
+	{
+		return pContext->ThrowNativeError("Failed to obtain constructor function from gamedata entry %s", entry);
+	}
 
 	return 0;
 }

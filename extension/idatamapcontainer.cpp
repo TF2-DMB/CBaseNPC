@@ -96,17 +96,6 @@ void IDataMapContainer::BeginDataDesc()
 	DestroyDataDesc();
 }
 
-void IDataMapContainer::EndDataDesc()
-{
-	m_bHasDataMapDesc = true;
-
-	if (m_vecEntityDataTypeDescriptors.Count() == 0)
-	{
-		// For "empty" tables
-		m_vecEntityDataTypeDescriptors.AddToTail( { FIELD_VOID, 0, {0,0}, 0, 0, 0, 0, 0, 0 } );
-	}
-}
-
 int g_DataMapDescFieldSizes[] = {
 	0,						// FIELD_VOID
 	sizeof(float), 			// FIELD_FLOAT
@@ -147,9 +136,57 @@ int g_DataMapDescFieldSizes[] = {
 
 };
 
+size_t GetAlignedOffset( size_t offset, size_t align, size_t* padding = nullptr )
+{
+	if ( align == 0 ) return offset;
+
+	size_t pad = ~( offset - 1 ) & ( align - 1 );
+	if ( padding ) *padding = pad;
+
+	return offset + pad;
+}
+
+size_t GetAlignedOffset( size_t offset, fieldtype_t fieldType, size_t* padding = nullptr )
+{
+	size_t size;
+
+	switch ( fieldType )
+	{
+		case FIELD_VECTOR:
+		case FIELD_QUATERNION:
+		case FIELD_POSITION_VECTOR:
+		case FIELD_VMATRIX:
+		case FIELD_VMATRIX_WORLDSPACE:
+		case FIELD_MATRIX3X4_WORLDSPACE:
+		case FIELD_INTERVAL:
+		case FIELD_VECTOR2D:
+			size = 4;
+			break;
+		default:
+			size = g_DataMapDescFieldSizes[fieldType];
+			break;
+	}
+
+	return GetAlignedOffset( offset, size, padding );
+}
+
+void IDataMapContainer::EndDataDesc()
+{
+	m_bHasDataMapDesc = true;
+
+	if (m_vecEntityDataTypeDescriptors.Count() == 0)
+	{
+		// For "empty" tables
+		m_vecEntityDataTypeDescriptors.AddToTail( { FIELD_VOID, 0, {0,0}, 0, 0, 0, 0, 0, 0 } );
+	}
+
+	m_DataMapDescSizeInBytes = GetAlignedOffset( m_DataMapDescSizeInBytes, sizeof(void*) );
+}
+
 void IDataMapContainer::DefineField(const char* name, fieldtype_t fieldType, unsigned short count, short flags, const char* externalName, float fieldTolerance)
 {
-	int fieldOffset = GetDataDescOffset() + m_DataMapDescSizeInBytes;
+	size_t padding = 0;
+	int fieldOffset = GetAlignedOffset( GetDataDescOffset() + m_DataMapDescSizeInBytes, fieldType, &padding );
 	int fieldSizeInBytes = g_DataMapDescFieldSizes[fieldType] * count;
 
 	name = name ? strdup(name) : NULL;
@@ -169,7 +206,7 @@ void IDataMapContainer::DefineField(const char* name, fieldtype_t fieldType, uns
 		fieldTolerance
 	});
 
-	m_DataMapDescSizeInBytes += fieldSizeInBytes;
+	m_DataMapDescSizeInBytes += padding + fieldSizeInBytes;
 }
 
 // from sourcemod/public/compat_wrappers.h
@@ -682,7 +719,8 @@ void IEntityDataMapContainer::DefineInputFunc(const char* name, fieldtype_t fiel
 
 void IEntityDataMapContainer::DefineOutput(const char* name, const char* mapname)
 {
-	int fieldOffset = GetDataDescOffset() + m_DataMapDescSizeInBytes;
+	size_t padding = 0;
+	int fieldOffset = GetAlignedOffset( GetDataDescOffset() + m_DataMapDescSizeInBytes, sizeof(int*), &padding );
 	int fieldSizeInBytes = sizeof(CBaseEntityOutputHack);
 
 	name = name ? strdup(name) : NULL;
@@ -703,7 +741,7 @@ void IEntityDataMapContainer::DefineOutput(const char* name, const char* mapname
 		0
 	});
 
-	m_DataMapDescSizeInBytes += fieldSizeInBytes;
+	m_DataMapDescSizeInBytes += padding + fieldSizeInBytes;
 }
 
 void IEntityDataMapContainer::CreateFields(CBaseEntity* pEntity)

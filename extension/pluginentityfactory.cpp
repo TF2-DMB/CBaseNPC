@@ -15,6 +15,14 @@ SH_DECL_MANUALHOOK0_void(FactoryEntity_Dtor, 1, 0, 0);
 SH_DECL_MANUALHOOK1_void(FactoryEntity_Dtor, 0, 0, 0, unsigned int);
 #endif
 
+// must match sdktools.inc
+enum SDKFuncConfSource
+{
+	SDKConf_Virtual,
+	SDKConf_Signature,
+	SDKConf_Address
+};
+
 SH_DECL_HOOK1(IVEngineServer, PvAllocEntPrivateData, SH_NOATTRIB, false, void *, long);
 
 HandleType_t g_PluginEntityFactoryHandle;
@@ -465,6 +473,24 @@ void CPluginEntityFactory::DeriveFromHandle(Handle_t handle)
 	m_Derive.m_BaseFactoryHandle = handle;
 }
 
+bool CPluginEntityFactory::DeriveFromConf(size_t entitySize, IGameConfig* config, int type, const char* name)
+{
+	m_Derive.m_DeriveFrom = DERIVETYPE_CONFIG;
+	m_Derive.m_iRawEntitySize = entitySize;
+
+	switch ( (SDKFuncConfSource)type )
+	{
+		case SDKConf_Address:
+			return config->GetAddress( name, (void**)(&m_Derive.m_pConstructorFunc) ) && m_Derive.m_pConstructorFunc;
+		case SDKConf_Signature:
+			return config->GetMemSig( name, (void**)(&m_Derive.m_pConstructorFunc) ) && m_Derive.m_pConstructorFunc;
+		case SDKConf_Virtual:
+			return config->GetOffset( name, (int*)(&m_Derive.m_pConstructorFunc) ) && m_Derive.m_pConstructorFunc;
+	}
+
+	return false;
+}
+
 void CPluginEntityFactory::OnRemove(CBaseEntity* pEntity)
 {
 	if (m_pOnRemove && m_pOnRemove->IsRunnable())
@@ -624,8 +650,6 @@ IEntityFactory* CPluginEntityFactory::FindBaseFactory() const
 {
 	switch (m_Derive.m_DeriveFrom)
 	{
-		case DERIVETYPE_BASECLASS:
-			return nullptr;
 		case DERIVETYPE_CBASENPC:
 			return g_pBaseNPCFactory;
 		case DERIVETYPE_CLASSNAME:
@@ -685,9 +709,13 @@ size_t CPluginEntityFactory::GetBaseEntitySize() const
 	{
 		return factory->GetEntitySize();
 	}
-	else if (m_Derive.m_DeriveFrom == DERIVETYPE_BASECLASS)
+
+	switch ( m_Derive.m_DeriveFrom )
 	{
-		return g_pPluginEntityFactories->GetBaseClassSize( m_Derive.m_BaseType );
+		case DERIVETYPE_BASECLASS:
+			return g_pPluginEntityFactories->GetBaseClassSize( m_Derive.m_BaseType );
+		case DERIVETYPE_CONFIG:
+			return m_Derive.m_iRawEntitySize;
 	}
 
 	return 0; // should never reach here
@@ -759,6 +787,13 @@ IServerNetworkable* CPluginEntityFactory::Create(const char* classname)
 	{
 		CBaseEntityHack* pEnt = (CBaseEntityHack*)engine->PvAllocEntPrivateData(entitySize);
 		CBaseEntityHack::CBaseEntity_Ctor(pEnt, m_Derive.m_bBaseEntityServerOnly);
+		pEnt->PostConstructor(classname);
+		pNet = pEnt->NetworkProp();
+	}
+	else if (m_Derive.m_DeriveFrom == DERIVETYPE_CONFIG)
+	{
+		CBaseEntityHack* pEnt = (CBaseEntityHack*)engine->PvAllocEntPrivateData(entitySize);
+		(pEnt->*(m_Derive.m_pConstructorFunc))();
 		pEnt->PostConstructor(classname);
 		pNet = pEnt->NetworkProp();
 	}

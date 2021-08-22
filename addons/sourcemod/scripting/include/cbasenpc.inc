@@ -1,6 +1,8 @@
 #if !defined _CBASENPC_EXTENSION_INC_
 #define _CBASENPC_EXTENSION_INC_
 
+#include <sdktools>
+
 #define EFL_DIRTY_SURROUNDING_COLLISION_BOUNDS	(1<<14)
 
 #define EF_BONEMERGE			0x001 	// Performs bone merge on client side
@@ -2605,7 +2607,7 @@ methodmap CEntityFactory < Handle
 	 * @param factory      The action factory used to initialize the main action
 	 * @error              Invalid handle.
 	 */
-	public native void SetInitialActionFactory( NextBotActionFactory factory );
+	public native void SetInitialActionFactory(NextBotActionFactory factory);
 
 	/**
 	 * Instructs the factory to use CBaseEntity as the base class.
@@ -2635,6 +2637,21 @@ methodmap CEntityFactory < Handle
 	 * @error                 Invalid handle.
 	 */
 	public native void DeriveFromFactory(CEntityFactory baseFactory);
+
+	/**
+	 * Instructs the factory to initialize the entity using the given
+	 * entity size and constructor function signature/address. Only use this
+	 * if you are absolutely sure of what you're doing! Most will not!
+	 * 
+	 * The constructor function must be parameterless.
+	 * 
+	 * @param entitySize      The size of the entity, in bytes
+	 * @param config          Gamedata to read signature from
+	 * @param source          Offsets, Signatures, or Addresses
+	 * @param name            Name of entry in gamedata.
+	 * @error                 Invalid handle or function not found.
+	 */
+	public native void DeriveFromConf(int entitySize, GameData config, SDKFuncConfSource source, const char[] name);
 
 	/**
 	 * Installs the factory. This marks the factory available for use.
