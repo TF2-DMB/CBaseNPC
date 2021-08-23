@@ -486,13 +486,150 @@ enum MoveToFailureType
 	FAIL_FELL_OFF     = 2,
 };
 
+const Segment NULL_PATH_SEGMENT = view_as<Segment>(0);
+
+/**
+ * A segment of a Path.
+ */
 methodmap Segment
 {
+	/**
+	 * The CNavArea that this segment traverses.
+	 */
+	property CNavArea area
+	{
+		public native get();
+	}
+
+	/**
+	 * The direction that this segment traverses.
+	 */
+	property NavTraverseType how
+	{
+		public native get();
+	}
+
+	/**
+	 * The end position of the segment. 
+	 *
+	 * Note: This is not to be confused as the start position; use either the
+	 * previous segment's GetPos() method or manually calculate it using this
+	 * segment's negative forward vector and length to get the start position.
+	 *
+	 * @param pos   Position vector
+	 */
 	public native void GetPos(float pos[3]);
+
+	/**
+	 * If how is GO_LADDER_UP or GO_LADDER_DOWN, then this is the CNavLadder
+	 * that bots should use to travel along the segment, otherwise will be NULL.
+	 */
+	property CNavLadder ladder
+	{
+		public native get();
+	}
+
+	/**
+	 * The type of movement required to travel this segment.
+	 */
+	property SegmentType type
+	{
+		public native get();
+	}
+
+	/**
+	 * The direction vector from start to end that bots are expected to travel
+	 * for this segment.
+	 *
+	 * @param vec   Forward vector
+	 */
+	public native void GetForward(float vec[3]);
+
+	/**
+	 * The total length of this segment from start to end.
+	 */
+	property float length
+	{
+		public native get();
+	}
+
+	/**
+	 * The total distance of this segment from the start of the path to the
+	 * end position of this segment.
+	 */
+	property float distanceFromStart
+	{
+		public native get();
+	}
+
+	/**
+	 * How much the path 'curves' from start to end in the XY plane. 0 = none,
+	 * 1 = 180 degree doubleback.
+	 */
+	property float curvature
+	{
+		public native get();
+	}
+
+	/**
+	 * The center position of the portal that connects the previous segment's
+	 * area and this segment's area.
+	 *
+	 * @param vec   Position vector
+	 */
+	public native void GetPortalCenter(float vec[3]);
+
+	/**
+	 * The width of the portal, in half.
+	 */
+	property float m_portalHalfWidth
+	{
+		public native get();
+	}
 };
 
+/**
+ * A structure that stores data about the current progress on the Path.
+ */
 methodmap CursorData
 {
+	/**
+	 * The current position along the path.
+	 *
+	 * @param vec   Position vector
+	 */
+	public native void GetPos(float vec[3]);
+
+	/**
+	 * The current forward direction along the path.
+	 *
+	 * @param vec   Forward vector
+	 */
+	public native void GetForward(float vec[3]);
+	
+	/**
+	 * How much the path 'curves' from start to end in the XY plane. 0 = none,
+	 * 1 = 180 degree doubleback.
+	 */
+	property float curvature
+	{
+		public native get();
+	}
+
+	/**
+	 * The previous segment passed.
+	 */
+	property Segment segmentPrior
+	{
+		public native get();
+	}
+};
+
+enum SeekType
+{
+	SEEK_ENTIRE_PATH,			// search the entire path length
+	SEEK_AHEAD,					// search from current cursor position forward toward end of path
+	SEEK_BEHIND					// search from current cursor position backward toward path start
 };
 
 typeset PathComputeCallback
@@ -505,6 +642,7 @@ methodmap Path
 	public native Path(NavPathCostFunctor costfunction = INVALID_FUNCTION, TraceFilterActors ignoreActorsFilter, TraceFilterActors onlyActorsFilter);
 	public native float GetLength();
 	public native void GetPosition(float dist, Segment seg, float pos[3]);
+	public native void GetClosestPosition(const float pos[3], float vec[3], Segment start = NULL_PATH_SEGMENT, float alongLimit = 0.0);
 	public native void GetStartPosition(float pos[3]);
 	public native void GetEndPosition(float pos[3]);
 	public native int GetSubject();
@@ -513,6 +651,7 @@ methodmap Path
 	public native void MoveCursorToStart();
 	public native void MoveCursorToEnd();
 	public native void MoveCursor(float dist, MoveCursorType mctype);
+	public native void MoveCursorToClosestPosition(const float pos[3], SeekType type = SEEK_ENTIRE_PATH, float alongLimit = 0.0);
 	public native float GetCursorPosition();
 	public native CursorData GetCursorData();
 	public native bool IsValid();

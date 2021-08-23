@@ -80,8 +80,16 @@ private:
 		Path::Segment *seg = (Path::Segment *)(params[1]); \
 		if(!seg) { \
 			return pContext->ThrowNativeError("Invalid segment %x", params[1]); \
-		} \
+		}
 		
+#define CURSORDATANATIVE(name) \
+	cell_t CursorData_##name(IPluginContext *pContext, const cell_t *params) \
+	{ \
+		Path::Data *cursor = (Path::Data *)(params[1]); \
+		if(!cursor) { \
+			return pContext->ThrowNativeError("Invalid cursor data %x", params[1]); \
+		}
+
 #define PATHNATIVE(name) \
 	cell_t Path_##name(IPluginContext *pContext, const cell_t *params) \
 	{ \
@@ -128,12 +136,79 @@ cell_t Path_Path(IPluginContext *pContext, const cell_t *params)
 	return (cell_t)pNewPath;
 }
 
+SEGMENTNATIVE(areaGet)
+	return (cell_t)seg->area;
+}
+
+SEGMENTNATIVE(howGet)
+	return seg->how;
+}
+
 SEGMENTNATIVE(GetPos)
 	cell_t *posAddr;
 	pContext->LocalToPhysAddr(params[2], &posAddr);
-	Vector pos = seg->pos;
-	VectorToPawnVector(posAddr, pos);
+	VectorToPawnVector(posAddr, &seg->pos);
 	return 0;
+}
+
+SEGMENTNATIVE(ladderGet)
+	return (cell_t)seg->ladder;
+}
+
+SEGMENTNATIVE(typeGet)
+	return seg->type;
+}
+
+SEGMENTNATIVE(GetForward)
+	cell_t *vecAddr;
+	pContext->LocalToPhysAddr(params[2], &vecAddr);
+	VectorToPawnVector(vecAddr, &seg->forward);
+	return 0;
+}
+
+SEGMENTNATIVE(lengthGet)
+	return sp_ftoc(seg->length);
+}
+
+SEGMENTNATIVE(distanceFromStartGet)
+	return sp_ftoc(seg->distanceFromStart);
+}
+
+SEGMENTNATIVE(curvatureGet)
+	return sp_ftoc(seg->curvature);
+}
+
+SEGMENTNATIVE(GetPortalCenter)
+	cell_t *vecAddr;
+	pContext->LocalToPhysAddr(params[2], &vecAddr);
+	VectorToPawnVector(vecAddr, &seg->m_portalCenter);
+	return 0;
+}
+
+SEGMENTNATIVE(m_portalHalfWidthGet)
+	return sp_ftoc(seg->m_portalHalfWidth);
+}
+
+CURSORDATANATIVE(GetPos)
+	cell_t *vecAddr;
+	pContext->LocalToPhysAddr(params[2], &vecAddr);
+	VectorToPawnVector(vecAddr, &cursor->pos);
+	return 0;
+}
+
+CURSORDATANATIVE(GetForward)
+	cell_t *vecAddr;
+	pContext->LocalToPhysAddr(params[2], &vecAddr);
+	VectorToPawnVector(vecAddr, &cursor->forward);
+	return 0;
+}
+
+CURSORDATANATIVE(curvatureGet)
+	return sp_ftoc(cursor->curvature);
+}
+
+CURSORDATANATIVE(segmentPriorGet)
+	return (cell_t)cursor->segmentPrior;
 }
 
 PATHNATIVE(GetLength)
@@ -160,23 +235,23 @@ PATHNATIVE(Copy)
 	return 0;
 }
 
-/*
 PATHNATIVE(GetClosestPosition)
 	cell_t *nearAddr;
 	pContext->LocalToPhysAddr(params[2], &nearAddr);
-	Vector near;
-	PawnVectorToVector(nearAddr, near);
+	Vector vecNear;
+	PawnVectorToVector(nearAddr, vecNear);
 	cell_t *posAddr;
-	pContext->LocalToPhysAddr(params[5], &posAddr);
+	pContext->LocalToPhysAddr(params[3], &posAddr);
 	Path::Segment *pSegment = (Path::Segment *)(params[4]);
-	if(!pSegment) {
+	if (!pSegment) {
 		return pContext->ThrowNativeError("Invalid Segment %x", params[4]);
 	}
-	Vector pos = pPath->GetClosestPosition(near, pSegment, sp_ctof(params[3]));
+	float alongLimit = sp_ctof(params[5]);
+
+	Vector pos = pPath->GetClosestPosition(vecNear, pSegment, alongLimit);
 	VectorToPawnVector(posAddr, pos);
 	return 0;
 }
-*/
 
 PATHNATIVE(GetStartPosition)
 	cell_t *posAddr;
@@ -207,16 +282,14 @@ PATHNATIVE(GetAge)
 	return sp_ftoc(pPath->GetAge());
 }
 
-/*
 PATHNATIVE(MoveCursorToClosestPosition)
 	cell_t *nearAddr;
 	pContext->LocalToPhysAddr(params[2], &nearAddr);
-	Vector near;
-	PawnVectorToVector(nearAddr, near);
-	pPath->MoveCursorToClosestPosition(near, (Path::SeekType)params[3], sp_ctof(params[4]));
+	Vector vecNear;
+	PawnVectorToVector(nearAddr, vecNear);
+	pPath->MoveCursorToClosestPosition(vecNear, (Path::SeekType)params[3], sp_ctof(params[4]));
 	return 0;
 }
-*/
 
 PATHNATIVE(MoveCursorToStart)
 	pPath->MoveCursorToStart();
@@ -235,6 +308,10 @@ PATHNATIVE(MoveCursor)
 
 PATHNATIVE(GetCursorPosition)
 	return sp_ftoc(pPath->GetCursorPosition());
+}
+
+PATHNATIVE(GetCursorData)
+	return (cell_t)(&pPath->GetCursorData());
 }
 
 PATHNATIVE(IsValid)
