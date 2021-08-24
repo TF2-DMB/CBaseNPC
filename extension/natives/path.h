@@ -243,9 +243,6 @@ PATHNATIVE(GetClosestPosition)
 	cell_t *posAddr;
 	pContext->LocalToPhysAddr(params[3], &posAddr);
 	Path::Segment *pSegment = (Path::Segment *)(params[4]);
-	if (!pSegment) {
-		return pContext->ThrowNativeError("Invalid Segment %x", params[4]);
-	}
 	float alongLimit = sp_ctof(params[5]);
 
 	Vector pos = pPath->GetClosestPosition(vecNear, pSegment, alongLimit);
@@ -458,11 +455,6 @@ PATHFOLLOWNATIVE(SetGoalTolerance)
 	return 1;
 }
 
-PATHFOLLOWNATIVE(Destroy)
-	delete pPathFollow;
-	return 1;
-}
-
 cell_t ChasePath_ChasePath(IPluginContext *pContext, const cell_t *params)
 {
 	ChasePath::SubjectChaseType how = (ChasePath::SubjectChaseType)params[2];
@@ -548,11 +540,6 @@ CHASEPATHNATIVE(GetLifetime)
 	return sp_ftoc(pChasePath->GetLifetime());
 }
 
-CHASEPATHNATIVE(Destroy)
-	delete pChasePath;
-	return 1;
-}
-
 cell_t DirectChasePath_DirectChasePath(IPluginContext *pContext, const cell_t *params) \
 {
 	ChasePath::SubjectChaseType how = (ChasePath::SubjectChaseType)params[2];
@@ -567,11 +554,6 @@ cell_t DirectChasePath_DirectChasePath(IPluginContext *pContext, const cell_t *p
 	pNewPath->pTraceFilterOnlyActors = pTraceFilter2;
 	
 	return (cell_t)pNewPath;
-}
-
-DIRECTCHASEPATHNATIVE(Destroy)
-	delete pChasePath;
-	return 1;
 }
 
 #endif

@@ -221,8 +221,26 @@ const sp_nativeinfo_t g_NativesInfo[] =
 	NATIVENAME(CBaseAnimating, SetPoseParameter)
 	NATIVENAME(CBaseAnimating, GetPoseParameter)
 
-	// Deprecated
-	NATIVENAME(CBaseAnimating, FindAttachment)
+	NATIVENAMEGETSET(CAnimationLayer, m_fFlags)
+	NATIVENAMEGETSET(CAnimationLayer, m_bSequenceFinished)
+	NATIVENAMEGETSET(CAnimationLayer, m_bLooping)
+	NATIVENAMEGETSET(CAnimationLayer, m_nSequence)
+	NATIVENAMEGETSET(CAnimationLayer, m_flCycle)
+	NATIVENAMEGETSET(CAnimationLayer, m_flPrevCycle)
+	NATIVENAMEGETSET(CAnimationLayer, m_flWeight)
+	NATIVENAMEGETSET(CAnimationLayer, m_flPlaybackRate)
+	NATIVENAMEGETSET(CAnimationLayer, m_flBlendIn)
+	NATIVENAMEGETSET(CAnimationLayer, m_flBlendOut)
+	NATIVENAMEGETSET(CAnimationLayer, m_flKillRate)
+	NATIVENAMEGETSET(CAnimationLayer, m_flKillDelay)
+	NATIVENAMEGETSET(CAnimationLayer, m_flLayerAnimtime)
+	NATIVENAMEGETSET(CAnimationLayer, m_flLayerFadeOuttime)
+	NATIVENAMEGETSET(CAnimationLayer, m_nActivity)
+	NATIVENAMEGETSET(CAnimationLayer, m_nPriority)
+	NATIVENAMEGETSET(CAnimationLayer, m_nOrder)
+	NATIVENAMEGETSET(CAnimationLayer, m_flLastEventCheck)
+	NATIVENAMEGETSET(CAnimationLayer, m_flLastAccess)
+	NATIVENAMEGETSET(CAnimationLayer, m_pOwnerEntity)
 
 	// Base Animating Overlay
 	NATIVENAME(CBaseAnimatingOverlay, AddGestureSequence)
@@ -564,7 +582,6 @@ const sp_nativeinfo_t g_NativesInfo[] =
 	NATIVENAME(PathFollower, GetHindrance)
 	NATIVENAME(PathFollower, IsDiscontinuityAhead)
 	NATIVENAME(PathFollower, SetGoalTolerance)
-	NATIVENAME(PathFollower, Destroy)
 	
 	NATIVENAME(ChasePath, ChasePath)
 	NATIVENAME(ChasePath, Update)
@@ -573,10 +590,8 @@ const sp_nativeinfo_t g_NativesInfo[] =
 	NATIVENAME(ChasePath, PredictSubjectPosition)
 	NATIVENAME(ChasePath, IsRepathNeeded)
 	NATIVENAME(ChasePath, GetLifetime)
-	NATIVENAME(ChasePath, Destroy)
 	
 	NATIVENAME(DirectChasePath, DirectChasePath)
-	NATIVENAME(DirectChasePath, Destroy)
 	
 	NATIVENAME(CBaseCombatCharacter, GetLastKnownArea)
 	NATIVENAME(CBaseCombatCharacter, UpdateLastKnownArea)

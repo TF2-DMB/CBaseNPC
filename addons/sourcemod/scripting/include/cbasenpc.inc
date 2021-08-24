@@ -29,6 +29,8 @@
 #define	DAMAGE_YES				2
 #define	DAMAGE_AIM				3
 
+#define TEAM_ANY -1
+
 enum NextBotDebugType
 {
 	DEBUG_NONE = 0x0000,
@@ -51,6 +53,7 @@ const CNavLadder NULL_LADDER_AREA = view_as<CNavLadder>(0);
 const CKnownEntity NULL_KNOWN_ENTITY = view_as<CKnownEntity>(0);
 const NextBotAction NULL_ACTION = view_as<NextBotAction>(0);
 const INextBot NULL_NEXT_BOT = view_as<INextBot>(0);
+const Segment NULL_PATH_SEGMENT = view_as<Segment>(0);
 
 native INextBot CBaseNPC_GetNextBotOfEntity(int iEntity);
 native void CBaseNPC_HookEventKilled(int iEntity);
@@ -220,6 +223,9 @@ methodmap INextBotEventResponder
 	public native INextBotEventResponder NextContainedResponder(INextBotEventResponder prev);
 };
 
+/**
+ * The main NextBot interface.
+ */
 methodmap INextBot < INextBotEventResponder
 {
 	public native void Reset();
@@ -293,66 +299,433 @@ enum FieldOfViewCheckType
 	DISREGARD_FOV
 };
 
-methodmap CKnownEntity
-{
-	public native void Destroy();
-	public native void UpdatePosition();
-	public native int GetEntity();
-	public native void GetLastKnownPosition(float vecPos[3]);
-	public native bool HasLastKnownPositionBeenSeen();
-	public native void MarkLastKnownPositionAsSeen();
-	public native CNavArea GetLastKnownArea();
-	public native float GetTimeSinceLastKnown();
-	public native float GetTimeSinceBecameKnown();
-	public native void UpdateVisibilityStatus(bool visible);
-	public native bool IsVisibleInFOVNow();
-	public native bool IsVisibleRecently();
-	public native float GetTimeSinceBecameVisible();
-	public native float GetTimeWhenBecameVisible();
-	public native float GetTimeSinceLastSeen();
-	public native bool WasEverVisible();
-	public native bool IsObsolete();
-	public native bool Is(int iEntity);
-}
-
+/**
+ * Component that acts as an interface to the NextBot's sense of vision and
+ * keeps track of known entities.
+ *
+ * About known entities: This component does NOT automatically add entities
+ * to its memory. This must be done manually using AddKnownEntity(). All
+ * known entities must be actors (players or NextBots).
+ *
+ * Although the component will automatically prune obsolete entities in
+ * its memory (see CKnownEntity.IsObsolete()), it's still good practice to
+ * call ForgetEntity() when an entity stops existing or should no longer be in
+ * a knowable state by the bot.
+ *
+ * The component will automatically keep track of the visibility status
+ * of each known entity.
+ */
 methodmap IVision < INextBotComponent
 {
+	/**
+	 * Returns the most threatening known entity.
+	 *
+	 * @param bVisible     Whether or not to take visibility into account.
+	 * @return             Known entity
+	 */
 	public native CKnownEntity GetPrimaryKnownThreat(bool bVisible);
-	public native float GetTimeSinceVisible(int iTeam);
-	public native CKnownEntity GetClosestKnown(int iTeam);
-	public native int GetKnownCount(int team, bool onlyVisible = false, float rangeLimit = -1.0);
+
+	/**
+	 * Returns the amount of time since the bot saw any member of the given
+	 * team.
+	 *
+	 * @param iTeam     Team to search for
+	 * @return          Game time
+	 */
+	public native float GetTimeSinceVisible(int iTeam = TEAM_ANY);
+
+	/**
+	 * Returns the closest known entity of the given team.
+	 *
+	 * @param iTeam     Team to search for
+	 * @return          Known entity
+	 */
+	public native CKnownEntity GetClosestKnown(int iTeam = TEAM_ANY);
+
+	/**
+	 * Returns the amount of known entities that belong to the given team.
+	 *
+	 * @param team             Team to search for
+	 * @param onlyVisible      Whether or not to only include visible entities
+	 * @param rangeLimit       Maximum range
+	 * @return                 Amount of known entities
+	 */
+	public native int GetKnownCount(int team = TEAM_ANY, bool onlyVisible = false, float rangeLimit = -1.0);
+
+	/**
+	 * Returns the known entity entry of the given entity.
+	 *
+	 * @param iEntity     Entity index
+	 * @return            Known entity, or NULL_KNOWN_ENTITY if not known.
+	 */
 	public native CKnownEntity GetKnown(int iEntity);
+
+	/**
+	 * Introduce a known entity to the bot. The entity is assumed to be known
+	 * so position will be updated. If entity is already known then this won't
+	 * do anything.
+	 *
+	 * @param iEntity     Entity index
+	 */
 	public native void AddKnownEntity(int iEntity);
+
+	/**
+	 * Forgets the entity.
+	 *
+	 * @param iEntity     Entity index
+	 */
 	public native void ForgetEntity(int iEntity);
+
+	/**
+	 * Forgets all entities.
+	 */
 	public native void ForgetAllKnownEntities();
+
+	/**
+	 * Returns the maximum range the bot can see.
+	 *
+	 * @return     Range
+	 */
 	public native float GetMaxVisionRange();
+
+	/**
+	 * Returns the vision reaction time of the bot. When an entity first
+	 * becomes visible, this is how long to wait before invoking the
+	 * OnSight() event of the bot.
+	 *
+	 * @return     Reaction time
+	 */
 	public native float GetMinRecognizeTime();
+
+	/**
+	 * Returns whether or not the bot can see the given entity.
+	 *
+	 * @param iEntity         Entity index
+	 * @param checkFOV        Whether or not to take FOV into account.
+	 * @param vecPos          Optional vector that will be filled with in the visible position of the entity
+	 * @return                True if able to see, false otherwise
+	 */
 	public native bool IsAbleToSeeTarget(int iEntity, FieldOfViewCheckType checkFOV, float vecPos[3] = NULL_VECTOR);
-	public native bool IsAbleToSee(float vecPos[3], FieldOfViewCheckType checkFOV);
+
+	/**
+	 * Returns whether or not the bot can see the given position.
+	 *
+	 * @param vecPos       Position to check
+	 * @param checkFOV     Whether or not to take FOV into account.
+	 * @return             True if able to see, false otherwise
+	 */
+	public native bool IsAbleToSee(const float vecPos[3], FieldOfViewCheckType checkFOV);
+
+	/**
+	 * Returns if the entity should be ignored.
+	 *
+	 * @param iEntity     Entity index
+	 * @return            True to ignore, false otherwise
+	 */
 	public native bool IsIgnored(int iEntity);
+
+	/**
+	 * Returns true if the bot noticed the entity, regardless of LOS.
+	 *
+	 * NOTE: By default this returns true.
+	 *
+	 * @param iEntity     Entity index
+	 * @return            Always true
+	 */
 	public native bool IsVisibleEntityNoticed(int iEntity);
-	public native bool IsInFieldOfView(float vecPos[3]);
+
+	/**
+	 * Returns if the position is within the bot's field of view.
+	 *
+	 * @param vecPos     Position vector
+	 * @return           True if within FOV, false otherwise
+	 */
+	public native bool IsInFieldOfView(const float vecPos[3]);
+
+	/**
+	 * Returns if the entity is within the bot's field of view.
+	 *
+	 * @param iEntity     Entity index.
+	 * @return            True if within FOV, false otherwise
+	 */
 	public native bool IsInFieldOfViewTarget(int iEntity);
+
+	/**
+	 * Returns the default field of view of the bot, in degrees. The default
+	 * value is 90 degrees.
+	 *
+	 * @return     Field of view, in degrees
+	 */
 	public native float GetDefaultFieldOfView();
+
+	/**
+	 * Returns the field of view of the bot, in degrees.
+	 *
+	 * @return     Field of view, in degrees
+	 */
 	public native float GetFieldOfView();
+
+	/**
+	 * Sets the field of view of the bot, in degrees.
+	 *
+	 * @param horizAngle     Amount of degrees
+	 */
 	public native void SetFieldOfView(float horizAngle);
-	public native bool IsLineOfSightClear(float vecPos[3]);
+
+	/**
+	 * Returns if there's nothing blocking the vision between the bot and the
+	 * position. This performs a trace from the bot's eye position to the
+	 * given position.
+	 *
+	 * @param vecPos      Position to test
+	 * @return            True if nothing is blocking, false otherwise.
+	 */
+	public native bool IsLineOfSightClear(const float vecPos[3]);
+
+	/**
+	 * Returns if there's nothing blocking the vision between the bot and the
+	 * entity. This performs a trace from the bot's eye position to the
+	 * entity's WorldSpaceCenter().
+	 *
+	 * @param iActor          Entity index
+	 * @param vecPos          Optional vector to fill in position of the entity
+	 * @return                True if nothing is blocing, false otherwise
+	 */
 	public native bool IsLineOfSightClearToEntity(int iActor, float vecPos[3] = NULL_VECTOR);
-	public native bool IsLookingAt(float vecPos[3], float cosTolerance = 0.95);
+
+	/**
+	 * Returns whether the bot is looking at the given position or not.
+	 *
+	 * @param vecPos          Position to test
+	 * @param 0.95            Cosine of theta threshold (1.0 = exact, 0.0 = within 90 degrees)
+	 * @return                True if looking at position, false otherwise
+	 */
+	public native bool IsLookingAt(const float vecPos[3], float cosTolerance = 0.95);
+
+	/**
+	 * Returns whether the bot is looking at the given entity or not.
+	 *
+	 * @param iActor          Entity index
+	 * @param 0.95            Cosine of theta threshold (1.0 = exact, 0.0 = within 90 degrees)
+	 * @return                True if looking at entity, false otherwise
+	 */
 	public native bool IsLookingAtTarget(int iActor, float cosTolerance = 0.95);
 };
 
+/**
+ * An entry of an entity being tracked by a NextBot.
+ *
+ * Note: Do not attempt to save pointers of this class as location of the data
+ * can (and will!) change.
+ */
+methodmap CKnownEntity
+{
+	/**
+	 * Invalidates this entry. This will mark the entry for deletion.
+	 */
+	public native void Destroy();
+
+	/**
+	 * Updates the known position of the entity with the entity's current
+	 * position.
+	 */
+	public native void UpdatePosition();
+
+	/**
+	 * Returns the entity index that this entry is keeping track of.
+	 *
+	 * @return     Entity index
+	 */
+	public native int GetEntity();
+
+	/**
+	 * Returns the last known position.
+	 *
+	 * @param vecPos      Position vector
+	 */
+	public native void GetLastKnownPosition(float vecPos[3]);
+
+	/**
+	 * Whether or not the known position was updated due to the bot seeing the
+	 * entity.
+	 *
+	 * @return
+	 */
+	public native bool HasLastKnownPositionBeenSeen();
+
+	/**
+	 * Determines that the last known position was updated because the bot saw
+	 * the entity.
+	 */
+	public native void MarkLastKnownPositionAsSeen();
+
+	/**
+	 * Returns the last known CNavArea of the entity. If the entity is not a
+	 * CBaseCombatCharacter, this will always return NULL.
+	 *
+	 * @return     CNavArea
+	 */
+	public native CNavArea GetLastKnownArea();
+
+	/**
+	 * Returns the amount of time since the entity's location was updated.
+	 *
+	 * @return     Game time
+	 */
+	public native float GetTimeSinceLastKnown();
+
+	/**
+	 * Returns the amount of time since the bot was first made aware of this
+	 * entity's existence.
+	 *
+	 * @return     Game time
+	 */
+	public native float GetTimeSinceBecameKnown();
+
+	/**
+	 * Toggles whether or not the entity is visible.
+	 *
+	 * Note: Visibility should take the bot's FOV into account.
+	 *
+	 * @param visible     Visibility status
+	 */
+	public native void UpdateVisibilityStatus(bool visible);
+
+	/**
+	 * Returns if the entity is visible or not.
+	 *
+	 * @return     Visibility status
+	 */
+	public native bool IsVisibleInFOVNow();
+
+	/**
+	 * Returns if the entity was seen recently. "Recently" means that the
+	 * entity is either visible, or if not visible, the entity was last seen
+	 * within the last 3 seconds.
+	 *
+	 * @return     Visibility status
+	 */
+	public native bool IsVisibleRecently();
+
+	/**
+	 * Returns the amount of time since the bot gained visibility of the entity.
+	 *
+	 * @return     Game time
+	 */
+	public native float GetTimeSinceBecameVisible();
+
+	/**
+	 * Returns the timestamp since the bot gained visibility of the entity.
+	 *
+	 * @return     Game time
+	 */
+	public native float GetTimeWhenBecameVisible();
+
+	/**
+	 * Returns the amount of time since the bot last had visibility of the
+	 * entity.
+	 *
+	 * @return     Game time
+	 */
+	public native float GetTimeSinceLastSeen();
+
+	/**
+	 * Whether or not the bot has ever seen this entity.
+	 *
+	 * @return     True if was visible at any point, false otherwise.
+	 */
+	public native bool WasEverVisible();
+
+	/**
+	 * Whether or not this entry has become obsolete. Entities that are NULL,
+	 * dead, or have not been updated for 10 seconds are considered obsolete.
+	 *
+	 * @return     True if obsolete, false otherwise
+	 */
+	public native bool IsObsolete();
+
+	/**
+	 * Whether or not this entry is keeping track of the given entity.
+	 *
+	 * @param iEntity     Entity index
+	 * @return            True if the given entity is tracked by this entry,
+	 *                    false otherwise.
+	 */
+	public native bool Is(int iEntity);
+};
+
+/**
+ * Component that manages the behavior logic of the NextBot.
+ */
 methodmap IIntention < INextBotComponent
 {
-	public native QueryResultType ShouldPickUp( int item );
+	/**
+	 * Determines if the bot should pick up the given item.
+	 *
+	 * @param item     Entity index
+	 * @return         Query result
+	 */
+	public native QueryResultType ShouldPickUp(int item);
+
+	/**
+	 * Determines if the bot should hurry.
+	 *
+	 * @return     Query result
+	 */
 	public native QueryResultType ShouldHurry();
+
+	/**
+	 * Determines if the bot should retreat.
+	 *
+	 * @return     Query result
+	 */
 	public native QueryResultType ShouldRetreat();
-	public native QueryResultType ShouldAttack( int them );
-	public native QueryResultType IsHindrance( int blocker );
-	public native void SelectTargetPoint( int subject, float buffer[3] );
-	public native QueryResultType IsPositionAllowed( const float pos[3] );
-	public native CKnownEntity SelectMoreDangerousThreat( int subject, CKnownEntity threat1, CKnownEntity threat2 );
-}
+
+	/**
+	 * Determines if the bot should attack the given entity.
+	 *
+	 * @param them     Entity index
+	 * @return         Query result
+	 */
+	public native QueryResultType ShouldAttack(int them);
+
+	/**
+	 * Determines if the given entity can block navigation.
+	 *
+	 * @param blocker     Entity index
+	 * @return            Query result
+	 */
+	public native QueryResultType IsHindrance(int blocker);
+
+	/**
+	 * Given a subject, returns a position to target.
+	 *
+	 * @param subject     Entity index to target
+	 * @param buffer      Position vector
+	 */
+	public native void SelectTargetPoint(int subject, float buffer[3]);
+
+	/**
+	 * Determines if the given position is allowed or not.
+	 *
+	 * @param  pos        Position vector
+	 * @return            Query result
+	 */
+	public native QueryResultType IsPositionAllowed(const float pos[3]);
+
+	/**
+	 * Given two entities, selects the most dangerous one. This is heavily 
+	 * utilized by IVision::GetPrimaryKnownThreat().
+	 *
+	 * @param subject     Entity index, used to determine how dangerous
+	 *                    threat1 and threat2 are to the subject. This is usually
+	 *                    set to the entity index of the NextBot.
+	 * @param threat1     First threat
+	 * @param threat2     Second threat
+	 * @return            Most threatening entity
+	 */
+	public native CKnownEntity SelectMoreDangerousThreat(int subject, CKnownEntity threat1, CKnownEntity threat2);
+};
 
 enum TraverseWhenType 
 { 
@@ -360,6 +733,9 @@ enum TraverseWhenType
 	EVENTUALLY
 };
 
+/**
+ * Component that manages the movement state of the NextBot.
+ */
 methodmap ILocomotion < INextBotComponent
 {
 	public native void Approach(const float dst[3], float unknown);
@@ -485,8 +861,6 @@ enum MoveToFailureType
 	FAIL_STUCK        = 1,
 	FAIL_FELL_OFF     = 2,
 };
-
-const Segment NULL_PATH_SEGMENT = view_as<Segment>(0);
 
 /**
  * A segment of a Path.
@@ -678,7 +1052,6 @@ methodmap PathFollower < Path
 	public native void SetMinLookAheadDistance(float dist);
 	public native int GetHindrance();
 	public native bool IsDiscontinuityAhead(INextBot nextbot, SegmentType stype, float max_dist);
-	public native void Destroy();
 };
 
 enum SubjectChaseType
@@ -696,13 +1069,11 @@ methodmap ChasePath < PathFollower
 	public native void PredictSubjectPosition(INextBot nextbot, int entity, float pos[3]);
 	public native bool IsRepathNeeded(INextBot nextbot, int entity);
 	public native float GetLifetime();
-	public native void Destroy();
 };
 
 methodmap DirectChasePath < ChasePath
 {
 	public native DirectChasePath(SubjectChaseType how = DONT_LEAD_SUBJECT, NavPathCostFunctor costfunction = INVALID_FUNCTION, TraceFilterActors ignoreActorsFilter, TraceFilterActors onlyActorsFilter);
-	public native void Destroy();
 };
 
 enum LookAtPriorityType
@@ -739,9 +1110,12 @@ enum ArousalType
 	INTENSE
 };
 
+/**
+ * Component that acts as an interface to the class that contains the NextBot.
+ */
 methodmap IBody < INextBotComponent
 {
-	public native bool SetPosition(float pos[3]);
+	public native bool SetPosition(const float pos[3]);
 
 	public native void GetEyePosition(float eyepos[3]);
 	public native void GetViewVector(float view[3]);
@@ -896,6 +1270,7 @@ CNPCs TheNPCs;
 #define ANIM_LAYER_DYING         0x0020
 #define ANIM_LAYER_NOEVENTS         0x0040
 
+#pragma deprecated Use CAnimationLayer instead
 enum //CAnimationLayer 
 { 
     m_fFlags = 0,               //0x0000  
@@ -924,6 +1299,7 @@ enum //CAnimationLayer
 
 methodmap CAnimationOverlay  
 {
+	#pragma deprecated Use CAnimationLayer instead
 	public CAnimationOverlay(Address address)
 	{
 		return view_as<CAnimationOverlay>(address);
@@ -944,7 +1320,7 @@ methodmap CAnimationOverlay
 			return this.Address == Address_Null; 
 		}
 	}
-	
+
 	public any Get(int iOffset) 
 	{ 
 		return LoadFromAddress(this.Address + view_as<Address>(iOffset), NumberType_Int32); 
@@ -955,17 +1331,163 @@ methodmap CAnimationOverlay
 		StoreToAddress(this.Address + view_as<Address>(iOffset), iValue, NumberType_Int32); 
 	}
 	
+	#pragma deprecated Use CAnimationLayer.IsActive() instead
 	public bool IsActive()    { return ((this.Get(m_fFlags) & ANIM_LAYER_ACTIVE)   != 0); } 
+	#pragma deprecated Use CAnimationLayer.IsAutokill() instead
 	public bool IsAutokill()  { return ((this.Get(m_fFlags) & ANIM_LAYER_AUTOKILL) != 0); } 
+	#pragma deprecated Use CAnimationLayer.IsKillMe() instead
 	public bool IsKillMe()    { return ((this.Get(m_fFlags) & ANIM_LAYER_KILLME)   != 0); } 
+	#pragma deprecated Use CAnimationLayer.IsDying() instead
 	public bool IsDying()     { return ((this.Get(m_fFlags) & ANIM_LAYER_DYING)    != 0); } 
+	#pragma deprecated Use CAnimationLayer.NoEvents() instead
 	public bool NoEvents()    { return ((this.Get(m_fFlags) & ANIM_LAYER_NOEVENTS) != 0); }
+	#pragma deprecated Use CAnimationLayer.KillMe() instead
 	public void KillMe()      { int iFlags = this.Get(m_fFlags); this.Set(m_fFlags, (iFlags |= ANIM_LAYER_KILLME)); } 
+	#pragma deprecated Use CAnimationLayer.AutoKill() instead
 	public void AutoKill()    { int iFlags = this.Get(m_fFlags); this.Set(m_fFlags, (iFlags |= ANIM_LAYER_AUTOKILL)); }
+	#pragma deprecated Use CAnimationLayer.Dying() instead
 	public void Dying()       { int iFlags = this.Get(m_fFlags); this.Set(m_fFlags, (iFlags |= ANIM_LAYER_DYING));  } 
+	#pragma deprecated Use CAnimationLayer.Dead() instead
 	public void Dead()        { int iFlags = this.Get(m_fFlags); this.Set(m_fFlags, (iFlags &= ~ANIM_LAYER_DYING)); }
+	#pragma deprecated Use CAnimationLayer.IsAlive() instead
 	public bool IsAlive()         { int iFlags = this.Get(m_fFlags); return (((iFlags & ANIM_LAYER_ACTIVE) != 0) || ((iFlags & ANIM_LAYER_KILLME) == 0)); }
+
+	#pragma deprecated Use CAnimationLayer.m_nSequence instead
 	public int GetLayerSequence() { return (this.Get(m_nSequence)); }
+};
+
+methodmap CAnimationLayer < CAnimationOverlay
+{
+	property int m_fFlags
+	{
+		public native get();
+		public native set(int value);
+	}
+
+	property bool m_bSequenceFinished
+	{
+		public native get();
+		public native set(bool value);
+	}
+
+	property bool m_bLooping
+	{
+		public native get();
+		public native set(bool value);
+	}
+
+	property int m_nSequence
+	{
+		public native get();
+		public native set(int value);
+	}
+
+	property float m_flCycle
+	{
+		public native get();
+		public native set(float value);
+	}
+
+	property float m_flPrevCycle
+	{
+		public native get();
+		public native set(float value);
+	}
+
+	property float m_flWeight
+	{
+		public native get();
+		public native set(float value);
+	}
+
+	property float m_flPlaybackRate
+	{
+		public native get();
+		public native set(float value);
+	}
+
+	property float m_flBlendIn
+	{
+		public native get();
+		public native set(float value);
+	}
+
+	property float m_flBlendOut
+	{
+		public native get();
+		public native set(float value);
+	}
+
+	property float m_flKillRate
+	{
+		public native get();
+		public native set(float value);
+	}
+
+	property float m_flKillDelay
+	{
+		public native get();
+		public native set(float value);
+	}
+
+	property float m_flLayerAnimtime
+	{
+		public native get();
+		public native set(float value);
+	}
+
+	property float m_flLayerFadeOuttime
+	{
+		public native get();
+		public native set(float value);
+	}
+
+	property Activity m_nActivity
+	{
+		public native get();
+		public native set(Activity value);
+	}
+
+	property int m_nPriority
+	{
+		public native get();
+		public native set(int value);
+	}
+
+	property int m_nOrder
+	{
+		public native get();
+		public native set(int value);
+	}
+
+	property float m_flLastEventCheck
+	{
+		public native get();
+		public native set(float value);
+	}
+
+	property float m_flLastAccess
+	{
+		public native get();
+		public native set(float value);
+	}
+
+	property int m_pOwnerEntity
+	{
+		public native get();
+		public native set(int value);
+	}
+
+	public bool IsActive()    { return (this.m_fFlags & ANIM_LAYER_ACTIVE) != 0; } 
+	public bool IsAutokill()  { return (this.m_fFlags & ANIM_LAYER_AUTOKILL) != 0; } 
+	public bool IsKillMe()    { return (this.m_fFlags & ANIM_LAYER_KILLME) != 0; } 
+	public bool IsDying()     { return (this.m_fFlags & ANIM_LAYER_DYING) != 0; } 
+	public bool NoEvents()    { return (this.m_fFlags & ANIM_LAYER_NOEVENTS) != 0; }
+	public void KillMe()      { this.m_fFlags |= ANIM_LAYER_KILLME; } 
+	public void AutoKill()    { this.m_fFlags |= ANIM_LAYER_AUTOKILL; }
+	public void Dying()       { this.m_fFlags |= ANIM_LAYER_DYING; } 
+	public void Dead()        { this.m_fFlags &= ~ANIM_LAYER_DYING; }
+	public bool IsAlive()     { return (((this.m_fFlags & ANIM_LAYER_ACTIVE) != 0) || ((this.m_fFlags & ANIM_LAYER_KILLME) == 0)); }
 };
 
 methodmap CBaseEntity
@@ -985,7 +1507,7 @@ methodmap CBaseEntity
 
 	property int iEnt
 	{
-		#pragma deprecated Use CBaseEntity.index insted
+		#pragma deprecated Use CBaseEntity.index instead
 		public get() 
 		{
 			return view_as<int>(this);
@@ -1912,7 +2434,7 @@ methodmap CBaseAnimatingOverlay < CBaseAnimating
 	public native int FindGestureLayer(Activity activity);
 	public native void RemoveLayer(int iLayer, float flKillRate = 0.2, float flKillDelay = 0.0);
 	public native void FastRemoveLayer(int iLayer);
-	public native CAnimationOverlay GetAnimOverlay(int iLayer);
+	public native CAnimationLayer GetAnimOverlay(int iLayer);
 	public native int GetNumAnimOverlays();
 	public native void SetNumAnimOverlays(int iNum);
 	public native bool HasActiveLayer();
@@ -1923,7 +2445,7 @@ methodmap CBaseAnimatingOverlay < CBaseAnimating
 		int iCount = this.GetNumAnimOverlays();
 		for(int i = 0; i < iCount; i++) 
 		{
-			CAnimationOverlay pOverlay = this.GetAnimOverlay(i); 
+			CAnimationLayer pOverlay = this.GetAnimOverlay(i); 
 			
 			// Validate layer
 			if (!pOverlay.IsAlive()) 
@@ -1932,7 +2454,7 @@ methodmap CBaseAnimatingOverlay < CBaseAnimating
 			}
 
 			// Validate sequence
-			if (pOverlay.GetLayerSequence() == iSequence) 
+			if (pOverlay.m_nSequence == iSequence) 
 			{
 				return i; 
 			}
