@@ -232,64 +232,313 @@ methodmap INextBot < INextBotEventResponder
 	public native void Update();
 	public native void Upkeep();
 
+	/**
+	 * Whether the NextBot is removed upon the NextBot manager reset or not. By
+	 * default this is true.
+	 *
+	 * @return     True if removed on reset, false otherwise
+	 */
 	public native bool IsRemovedOnReset();
 
+	/**
+	 * Returns the entity index the NextBot is associated with.
+	 *
+	 * @return     Entity index
+	 */
 	public native int GetEntity();
+
+	/**
+	 * Returns the entity index the NextBot is associated with.
+	 *
+	 * @return     Entity index, or -1 if entity is not a
+	 *             NextBotCombatCharacter.
+	 */
 	public native int GetNextBotCombatCharacter();
 
+	/**
+	 * Returns a pointer to the NextBot's ILocomotion interface.
+	 *
+	 * @return     ILocomotion pointer
+	 */
 	public native ILocomotion GetLocomotionInterface();
+
+	/**
+	 * Returns a pointer to the NextBot's IBody interface.
+	 *
+	 * @return     IBody pointer
+	 */
 	public native IBody GetBodyInterface();
+
+	/**
+	 * Returns a pointer to the NextBot's IIntention interface.
+	 *
+	 * @return     IIntention pointer
+	 */
 	public native IIntention GetIntentionInterface();
+
+	/**
+	 * Returns a pointer to the NextBot's IVision interface.
+	 *
+	 * @return     IVision pointer
+	 */
 	public native IVision GetVisionInterface();
 
+	/**
+	 * Sets the world position of the NextBot's entity. This is an alias for
+	 * GetBodyInterface().SetPosition().
+	 *
+	 * @param pos        Position vector
+	 * @return           True if successful, false otherwise
+	 */
 	public native bool SetPosition(const float pos[3]);
+
+	/**
+	 * Gets the world position of the NextBot's entity.
+	 *
+	 * @param pos        Position vector
+	 */
 	public native void GetPosition(float pos[3]);
 
+	/**
+	 * Returns if the given entity is an enemy. By default this checks if team
+	 * is different.
+	 *
+	 * @param entity     Entity index
+	 * @return           True if enemy, false otherwise
+	 */
 	public native bool IsEnemy(int entity);
+
+	/**
+	 * Returns if the given entity is a friend. By default this checks if team
+	 * is the same.
+	 *
+	 * @param entity     Entity index
+	 * @return           True if friend, false otherwise
+	 */
 	public native bool IsFriend(int entity);
+
+	/**
+	 * Returns if the given entity is myself.
+	 *
+	 * @param entity     Entity index
+	 * @return           True if self, false otherwise
+	 */
 	public native bool IsSelf(int entity);
 
+	/**
+	 * Returns if allowed to climb onto the given entity.
+	 *
+	 * @param entity     Entity index
+	 * @return           True if allowed to climb on, false otherwise
+	 */
 	public native bool IsAbleToClimbOnto(int entity);
+
+	/**
+	 * Returns if the entity is breakable.
+	 *
+	 * @param entity     Entity index
+	 * @return           True if breakable, false otherwise
+	 */
 	public native bool IsAbleToBreak(int entity);
+
+	/**
+	 * Returns if the NextBot can block the movement of the other NextBot.
+	 *
+	 * @param bot        INextBot
+	 * @return           True if can block, false otherwise
+	 */
 	public native bool IsAbleToBlockMovementOf(INextBot bot);
 
+	/**
+	 * Returns if the NextBot should care about touching the given entity.
+	 * If true, will propogate the OnContact() event to components.
+	 *
+	 * @param entity     Entity touching
+	 * @return           True to care, false otherwise
+	 */
 	public native bool ShouldTouch(int entity);
 
+	/**
+	 * L4D2 only.
+	 */
 	public native void ReactToSurvivorVisibility();
+
+	/**
+	 * L4D2 only.
+	 */
 	public native void ReactToSurvivorNoise();
+
+	/**
+	 * L4D2 only.
+	 */
 	public native void ReactToSurvivorContact();
 
+	/**
+	 * Whether the NextBot has moved recently or not.
+	 *
+	 * @return     True if haven't moved in a while, false otherwise
+	 */
 	public native bool IsImmobile();
+
+	/**
+	 * Amount of time spent being immobile.
+	 *
+	 * @return     Immobile time
+	 */
 	public native float GetImmobileDuration();
+
+	/**
+	 * Stops being considered immobile.
+	 */
 	public native void ClearImmobileStatus();
+
+	/**
+	 * The maximum speed of the NextBot to be considered immobile.
+	 *
+	 * @return     Speed
+	 */
 	public native float GetImmobileSpeedThreshold();
 
+	/**
+	 * Returns a pointer to the current Path object of the NextBot.
+	 *
+	 * Note: This native is not available in L4D1 or L4D2.
+	 *
+	 * @return     Path object
+	 */
 	public native PathFollower GetCurrentPath();
+
+	/**
+	 * Sets the current Path object of the NextBot to the given Path.
+	 *
+	 * Note: This native is not available in L4D1 or L4D2.
+	 */
 	public native void SetCurrentPath(const PathFollower path);
+
+	/**
+	 * Notifies the NextBot that the path was destroyed.
+	 *
+	 * Note: This native is not available in L4D1 or L4D2.
+	 *
+	 * @param path     Path object
+	 */
 	public native void NotifyPathDestruction(const PathFollower path);
 
+	/**
+	 * Checks if the given entity is within the given distance.
+	 *
+	 * @param entity     Entity index
+	 * @param dist       Distance
+	 * @return           True if within, false otherwise
+	 */
 	public native bool IsRangeLessThan(int entity, float dist);
+
+	/**
+	 * Checks if the given position is within the given distance.
+	 *
+	 * @param pos        Position vector
+	 * @param dist       Distance
+	 * @return           True if within, false otherwise
+	 */
 	public native bool IsRangeLessThanEx(const float pos[3], float dist);
+
+	/**
+	 * Checks if the given entity is farther than the given distance.
+	 *
+	 * @param entity     Entity index
+	 * @param dist       Distance
+	 * @return           True if farther, false otherwise
+	 */
 	public native bool IsRangeGreaterThan(int entity, float dist);
+
+	/**
+	 * Checks if the given position is farther than the given distance.
+	 *
+	 * @param pos        Position vector
+	 * @param dist       Distance
+	 * @return           True if farther, false otherwise
+	 */
 	public native bool IsRangeGreaterThanEx(const float pos[3], float dist);
 
+	/**
+	 * Calculates distance from the NextBot to the entity.
+	 *
+	 * @param entity     Entity index
+	 * @return           Distance
+	 */
 	public native float GetRangeTo(int entity);
+
+	/**
+	 * Calculates distance from the NextBot to the position.
+	 *
+	 * @param pos        Position vector
+	 * @return           Distance
+	 */
 	public native float GetRangeToEx(const float pos[3]);
+
+	/**
+	 * Calculates squared distance from the NextBot to the entity.
+	 *
+	 * @param entity     Entity index
+	 * @return           Squared distance
+	 */
 	public native float GetRangeSquaredTo(int entity);
+
+	/**
+	 * Calculates squared distance from the NextBot to the position.
+	 *
+	 * @param pos        Position vector
+	 * @return           Squared distance
+	 */
 	public native float GetRangeSquaredToEx(const float pos[3]);
 
+	/**
+	 * Whether or not the given debug type is enabled. Debug types can be
+	 * toggled via the nb_debug command.
+	 *
+	 * @param type     Type of debugging
+	 * @return         True if debugging, false otherwise
+	 */
 	public native bool IsDebugging(NextBotDebugType type);
+
+	/**
+	 * Retrieves the identifier the NextBot uses while debugging.
+	 *
+	 * @param name        String buffer
+	 * @param maxsize     Size of buffer
+	 */
 	public native void GetDebugIdentifier(char[] name, int maxsize);
+
+	/**
+	 * Whether or not the given name matches the bot's debug identifier.
+	 *
+	 * @param name        Debug name
+	 */
 	public native bool IsDebugFilterMatch(const char[] name);
+
+	/**
+	 * Shows world entity text of the given string. By default this does not
+	 * work.
+	 *
+	 * @param name        Debug string
+	 */
 	public native void DisplayDebugText(const char[] name);
 };
 
+/**
+ * A single component of a NextBot.
+ */
 methodmap INextBotComponent < INextBotEventResponder
 {
 	public native void Reset();
 	public native void Update();
 	public native void Upkeep();
 
+	/**
+	 * Returns the INextBot that this component belongs to.
+	 *
+	 * @return     INextBot pointer
+	 */
 	public native INextBot GetBot();
 };
 
@@ -738,81 +987,388 @@ enum TraverseWhenType
  */
 methodmap ILocomotion < INextBotComponent
 {
-	public native void Approach(const float dst[3], float unknown);
+	/**
+	 * Move the bot towards the given position.
+	 *
+	 * @param dst            Position to move towards
+	 * @param goalWeight     Weight. Multiple Approach() calls within a single
+	 *                       frame will be combined into a single, weighted
+	 *                       average goal.
+	 */
+	public native void Approach(const float dst[3], float goalWeight = 1.0);
+
+	/**
+	 * Move the bot towards the given position precisely.
+	 *
+	 * @param dst      Position to move towards
+	 */
 	public native void DriveTo(const float dst[3]);
 
-	public native bool ClimbUpToLedge(const float dst[3], const float dir[3], int entity);
+	/**
+	 * Traverses to an adjacent ledge.
+	 *
+	 * @param dst            Destination vector
+	 * @param dir            Direction of movement
+	 * @param obstacle       Entity to climb
+	 * @return               True if was able to start climbing, false otherwise
+	 */
+	public native bool ClimbUpToLedge(const float dst[3], const float dir[3], int obstacle);
+
+	/**
+	 * Jumps towards the given destination.
+	 *
+	 * @param dst      Destination vector
+	 * @param dir      Direction of movement
+	 */
 	public native void JumpAcrossGap(const float dst[3], const float dir[3]);
+
+	/**
+	 * Performs a simple jump
+	 */
 	public native void Jump();
+
+	/**
+	 * Whether the bot is currently climbing or jumping, or not.
+	 *
+	 * @return     True if jumping or climbing, false otherwise
+	 */
 	public native bool IsClimbingOrJumping();
+
+	/**
+	 * Whether the bot is currently climbing or not.
+	 *
+	 * @return     True if climbing, false otherwise
+	 */
 	public native bool IsClimbingUpToLedge();
+
+	/**
+	 * Whether the bot is currently jumping or not.
+	 *
+	 * @return     True if jumping, false otherwise
+	 */
 	public native bool IsJumpingAcrossGap();
+
+	/**
+	 * Whether the bot is in the middle of a complex action (climbing a ladder,
+	 * climbing a ledge, jumping, etc) that shouldn't be interrupted.
+	 *
+	 * @return     True if scrambling, false otherwise
+	 */
 	public native bool IsScrambling();
 
+	/**
+	 * Sets movement to running.
+	 */
 	public native void Run();
+
+	/**
+	 * Sets movement to walking.
+	 */
 	public native void Walk();
+
+	/**
+	 * Stops all movement.
+	 */
 	public native void Stop();
 
+	/**
+	 * Whether the bot is in a running movement state or not.
+	 *
+	 * @return     True if running, false otherwise
+	 */
 	public native bool IsRunning();
 
+	/**
+	 * Sets the movement speed of the bot to the given value.
+	 *
+	 * @param speed     Speed to move at
+	 */
 	public native void SetDesiredSpeed(float speed);
+
+	/**
+	 * Returns the current desired movement speed of the bot.
+	 *
+	 * @return     Speed
+	 */
 	public native float GetDesiredSpeed();
 
+	/**
+	 * Sets the maximum speed of the bot.
+	 *
+	 * @param limit     Speed limit
+	 */
 	public native void SetSpeedLimit(float limit);
+
+	/**
+	 * Returns the maximum speed the bot can move at.
+	 *
+	 * @return     Speed limit
+	 */
 	public native float GetSpeedLimit();
 
+	/**
+	 * Returns whether the bot is on the ground or not.
+	 *
+	 * @return     True if on ground, false otherwise
+	 */
 	public native bool IsOnGround();
+
+	/**
+	 * Gets the entity that the bot is standing on.
+	 *
+	 * @return     Entity index of ground entity
+	 */
 	public native int GetGround();
+
+	/**
+	 * Retrieves the normal vector of the plane the bot is standing on.
+	 *
+	 * @param normal      Directional vector
+	 */
 	public native void GetGroundNormal(float normal[3]);
+
+	/**
+	 * The current speed the bot is moving at on the ground.
+	 *
+	 * @return     Ground speed
+	 */
 	public native float GetGroundSpeed();
+
+	/**
+	 * Retrieves the direction of ground movement of the bot.
+	 *
+	 * @param motion      Directional vector
+	 */
 	public native void GetGroundMotionVector(float motion[3]);
 
-	public native void ClimbLadder(CNavLadder ladder, CNavArea area);
-	public native void DescendLadder(CNavLadder ladder, CNavArea area);
+	/**
+	 * Starts climbing up the given ladder to dismount to a given area.
+	 *
+	 * @param ladder             Ladder to climb
+	 * @param dismountGoal       Area to dismount ladder from
+	 */
+	public native void ClimbLadder(CNavLadder ladder, CNavArea dismountGoal);
 
+	/**
+	 * Starts climbing down the ladder to dismount to a given area.
+	 *
+	 * @param ladder             Ladder to descend
+	 * @param dismountGoal       Area to dismount ladder from
+	 */
+	public native void DescendLadder(CNavLadder ladder, CNavArea dismountGoal);
+
+	/**
+	 * Whether the bot is currently using a ladder or not.
+	 *
+	 * @return     True if using a ladder, false otherwise
+	 */
 	public native bool IsUsingLadder();
+
+	/**
+	 * Whether the bot is currently climbing up or down a ladder.
+	 *
+	 * @return     True if climbing a ladder, false otherwise
+	 */
 	public native bool IsAscendingOrDescendingLadder();
+
 	public native bool IsAbleToAutoCenterOnLadder();
 
+	/**
+	 * Sets the look goal of the bot to the given position.
+	 *
+	 * @param pos      Position to look at
+	 */
 	public native void FaceTowards(const float pos[3]);
 
 	public native void SetDesiredLean(const float lean[3]);
 	public native void GetDesiredLean(float lean[3]);
 
+	/**
+	 * Whether the bot is allowed to jump or not.
+	 *
+	 * @return     True if allowed, false otherwise
+	 */
 	public native bool IsAbleToJumpAcrossGaps();
+
+	/**
+	 * Whether the bot is allowed to climb or not.
+	 *
+	 * @return     True if allowed, false otherwise
+	 */
 	public native bool IsAbleToClimb();
 
+	/**
+	 * Retrieves the location of the bot's feet.
+	 *
+	 * @param feet      Position vector
+	 */
 	public native void GetFeet(float feet[3]);
 
+	/**
+	 * Returns the maximum height the bot can traverse without jumping or
+	 * dropping down.
+	 *
+	 * @return     Step height
+	 */
 	public native float GetStepHeight();
+
+	/**
+	 * Returns the maximum height of an obstacle the bot can traverse by
+	 * jumping.
+	 *
+	 * @return     Jump height
+	 */
 	public native float GetMaxJumpHeight();
+
+	/**
+	 * Returns the maximum height the bot can safely drop down from a cliff.
+	 *
+	 * @return     Drop down height
+	 */
 	public native float GetDeathDropHeight();
+
+	/**
+	 * The run speed of the bot.
+	 *
+	 * @return     Speed
+	 */
 	public native float GetRunSpeed();
+
+	/**
+	 * The walk speed of the bot.
+	 *
+	 * @return     Speed
+	 */
 	public native float GetWalkSpeed();
 
+	/**
+	 * The acceleration of the bot.
+	 *
+	 * @return     Acceleration
+	 */
 	public native float GetMaxAcceleration();
+
+	/**
+	 * The deceleration of the bot.
+	 *
+	 * @return     Acceleration
+	 */
 	public native float GetMaxDeceleration();
 
+	/**
+	 * The current world velocity of the bot.
+	 *
+	 * @param vec      Velocity vector
+	 */
 	public native void GetVelocity(float vel[3]);
 
+	/**
+	 * The current speed of the bot.
+	 *
+	 * @return     Speed
+	 */
 	public native float GetSpeed();
 
+	/**
+	 * The current desired world movement direction of the bot.
+	 *
+	 * @param vec      Direction vector
+	 */
 	public native void GetMotionVector(float motion[3]);
 
+	/**
+	 * Whether or not the area can be used for navigation.
+	 *
+	 * @param area     CNavArea to test
+	 * @return         True if traversable, false otherwise
+	 */
 	public native bool IsAreaTraversable(CNavArea area);
+
+	/**
+	 * The Z component of the steepest ground normal vector the bot can traverse.
+	 *
+	 * @return         Slope limit
+	 */
 	public native float GetTraversableSlopeLimit();
 
-	public native bool IsPotentiallyTraversable(const float from[3], const float to[3], TraverseWhenType when);
-	public native bool HasPotentialGap(const float from[3], const float to[3]);
-	public native bool IsGap(const float from[3], const float to[3]);
+	/**
+	 * Checks if the bot can safely move across a line specified by the given
+	 * positions (no gaps, no obstacles). If false, fraction will be filled
+	 * with fraction of walkable ray.
+	 *
+	 * @param from           Start position
+	 * @param to             End position
+	 * @param when           Types of entities to ignore
+	 * @param fraction       Walkable trace fraction
+	 * @return               True if traversable, false otherwise
+	 */
+	public native bool IsPotentiallyTraversable(const float from[3], const float to[3], TraverseWhenType when = EVENTUALLY, float &fraction = 0.0);
+
+	/**
+	 * Checks if there's a gap between the two positions that will need to be
+	 * jumped over. If false, fraction will be filled with fraction of walkable
+	 * ray.
+	 *
+	 * @param from      Start position
+	 * @param to        End position
+	 * @param fraction  Walkable trace fraction
+	 * @return          True if there's a gap, false otherwise.
+	 */
+	public native bool HasPotentialGap(const float from[3], const float to[3], float &fraction = 0.0);
+
+	/**
+	 * Checks if the given position is a gap while moving in the
+	 * specified direction.
+	 *
+	 * @param pos      Position vector
+	 * @param to       Param description
+	 * @return         True if position is a gap, false otherwise
+	 */
+	public native bool IsGap(const float pos[3], const float fwd[3]);
+
+	/**
+	 * Checks if the entity is traversable.
+	 *
+	 * @param entity     Entity index to check
+	 * @param when       Type to check
+	 * @return           True if traversable, false otherwise
+	 */
 	public native bool IsEntityTraversable(int entity, TraverseWhenType when);
 
+	/**
+	 * Checks if the bot is currently stuck.
+	 *
+	 * @return     True if stuck, false otherwise
+	 */
 	public native bool IsStuck();
-	public native float GetStuckDuration();
-	public native void ClearStuckStatus(const char[] reason);
 
+	/**
+	 * Returns how long the bot has been stuck for.
+	 *
+	 * @return     Stuck duration
+	 */
+	public native float GetStuckDuration();
+
+	/**
+	 * Clears the bot of being stuck with a given reason.
+	 *
+	 * @param reason     Reason for clearing the stuck status.
+	 */
+	public native void ClearStuckStatus(const char[] reason = "");
+
+	/**
+	 * Whether the bot is attempting to move or not.
+	 *
+	 * @return     True if trying to move, false otherwise.
+	 */
 	public native bool IsAttemptingToMove();
 
+	/**
+	 * Whether the bot should collide with the given entity or not.
+	 *
+	 * @param entity     Entity to collide
+	 * @return           True to collide, false otherwise
+	 */
 	public native bool ShouldCollideWith(int entity);
 
 	public native void AdjustPosture(const float lean[3]);
@@ -821,12 +1377,53 @@ methodmap ILocomotion < INextBotComponent
 
 methodmap NextBotGroundLocomotion < ILocomotion
 {
+	/**
+	 * Retrieves the acceleration vector.
+	 *
+	 * @param acel      Acceleration vector
+	 */
 	public native void GetAcceleration(float acel[3]);
+
+	/**
+	 * Sets the acceleration vector.
+	 *
+	 * @param acel      Acceleration vector
+	 */
 	public native void SetAcceleration(const float acel[3]);
+
+	/**
+	 * Sets the world velocity.
+	 *
+	 * @param vel       Velocity vector
+	 */
 	public native void SetVelocity(const float vel[3]);
+
+	/**
+	 * Gets the current gravity.
+	 *
+	 * @return     Gravity
+	 */
 	public native float GetGravity();
+
+	/**
+	 * Returns friction for forward movement.
+	 *
+	 * @return     Friction
+	 */
 	public native float GetFrictionForward();
+
+	/**
+	 * Returns friction for sideways movement.
+	 *
+	 * @return     Friction
+	 */
 	public native float GetFrictionSideways();
+
+	/**
+	 * Returns rate of change of yaw while looking towards a position.
+	 *
+	 * @return     Yaw rate
+	 */
 	public native float GetMaxYawRate();
 }
 
@@ -1115,9 +1712,26 @@ enum ArousalType
  */
 methodmap IBody < INextBotComponent
 {
+	/**
+	 * Sets the world position of the bot.
+	 *
+	 * @param pos      Position vector
+	 * @return         True if successful, false otherwise
+	 */
 	public native bool SetPosition(const float pos[3]);
 
-	public native void GetEyePosition(float eyepos[3]);
+	/**
+	 * Gets the eye world position.
+	 *
+	 * @param pos      Position vector
+	 */
+	public native void GetEyePosition(float pos[3]);
+
+	/**
+	 * Gets the world directional vector of where the bot is looking.
+	 *
+	 * @param view      Directional vector
+	 */
 	public native void GetViewVector(float view[3]);
 
 	//public native void AimHeadTowards(float pos[3], LookAtPriorityType priority, float duration, PluginBotReply reply, const char[] reason);
