@@ -216,13 +216,12 @@ PATHNATIVE(GetLength)
 }
 
 PATHNATIVE(GetPosition)
-	Path::Segment *pSegment = (Path::Segment *)(params[3]);
-	if(!pSegment) {
-		return pContext->ThrowNativeError("Invalid Segment %x", params[3]);
-	}
+	float dist = sp_ctof(params[2]);
 	cell_t *posAddr;
-	pContext->LocalToPhysAddr(params[4], &posAddr);
-	Vector pos = pPath->GetPosition(sp_ctof(params[2]), pSegment);
+	pContext->LocalToPhysAddr(params[3], &posAddr);
+	Path::Segment *pSegment = (Path::Segment *)(params[4]);
+
+	Vector pos = pPath->GetPosition(dist, pSegment);
 	VectorToPawnVector(posAddr, pos);
 	return 0;
 }
@@ -322,9 +321,6 @@ PATHNATIVE(Invalidate)
 
 PATHNATIVE(Draw)
 	Path::Segment *pSegment = (Path::Segment *)(params[2]);
-	if(!pSegment) {
-		return pContext->ThrowNativeError("Invalid Segment %x", params[2]);
-	}
 	pPath->Draw(pSegment);
 	return 0;
 }
@@ -364,10 +360,12 @@ PATHNATIVE(ComputeToPos)
 	pContext->LocalToPhysAddr(params[3], &vec);
 	Vector vecGoal;
 	PawnVectorToVector(vec, vecGoal);
+	float maxPathLength = sp_ctof(params[4]);
+	bool includePathIfGoalFails = params[5];
 	
 	SMPathCost pCostFunc(pBot, pPath->pCostFunction);
 	
-	return pPath->Compute(pBot, vecGoal, pCostFunc, sp_ctof(params[4]), (params[5]) ? true : false);
+	return pPath->Compute(pBot, vecGoal, pCostFunc, maxPathLength, includePathIfGoalFails);
 }
 
 PATHNATIVE(ComputeToTarget)
