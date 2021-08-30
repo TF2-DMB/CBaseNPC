@@ -124,7 +124,7 @@ VISIONNATIVE(GetKnown)
 
 VISIONNATIVE(AddKnownEntity)
 	CBaseEntity *pEntity = gamehelpers->ReferenceToEntity(params[2]);
-	if(!pEntity) {
+	if (!pEntity) {
 		return pContext->ThrowNativeError("Invalid Entity Reference/Index %i", params[2]);
 	}
 	pVision->AddKnownEntity(pEntity);

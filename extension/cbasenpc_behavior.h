@@ -46,6 +46,8 @@ private:
 
 	CBaseNPCPluginActionFactory * m_pFactory;
 
+	bool m_bInActionCallback;
+
 public:
     CBaseNPCPluginAction(CBaseNPCPluginActionFactory * pFactory);
 	virtual ~CBaseNPCPluginAction();
@@ -61,6 +63,16 @@ public:
 	void PluginChangeTo( Action< CBaseNPC_Entity > *action, const char *reason );
 	void PluginSuspendFor( Action< CBaseNPC_Entity > *action, const char *reason );
 	void PluginDone( const char *reason );
+
+	bool IsInActionCallback()
+	{
+		return m_bInActionCallback;
+	}
+
+	bool IsInEventCallback()
+	{
+		return m_eventResultStack.size() > 0;
+	}
 
 	virtual ActionResult< CBaseNPC_Entity > OnStart( CBaseNPC_Entity *me, Action< CBaseNPC_Entity > *prevAction ) override final;
 	virtual ActionResult< CBaseNPC_Entity > Update( CBaseNPC_Entity *me, float interval ) override final;

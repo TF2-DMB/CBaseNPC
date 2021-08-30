@@ -401,6 +401,7 @@ class ExtensionConfig(object):
       paths.append(['game', 'shared'])
       paths.append(['common'])
 
+    compiler.defines += ['SE_TF2=SE_SDK2013']
     compiler.defines += ['SOURCE_ENGINE=' + 'SE_TF2']
 
     if sdk.name in ['sdk2013', 'bms'] and compiler.like('gcc'):

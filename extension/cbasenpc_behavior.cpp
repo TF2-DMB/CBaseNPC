@@ -14,6 +14,7 @@
 
 #define BEGINACTIONCALLBACKEX(funcName, typeName, ...) \
 ActionResult< CBaseNPC_Entity > CBaseNPCPluginAction:: funcName (CBaseNPC_Entity* me, ##__VA_ARGS__) { \
+	m_bInActionCallback = true; \
 	ResetPluginActionResult(); \
 	IPluginFunction* pCallback = m_pFactory->GetCallback( CBaseNPCPluginActionFactory::CallbackType::typeName ); \
 	if (pCallback && pCallback->IsRunnable()) { \
@@ -24,6 +25,7 @@ ActionResult< CBaseNPC_Entity > CBaseNPCPluginAction:: funcName (CBaseNPC_Entity
 #define ENDACTIONCALLBACK() \
 		pCallback->Execute(nullptr); \
 	} \
+	m_bInActionCallback = false; \
 	return m_pluginActionResult; \
 }
 
@@ -98,6 +100,8 @@ CBaseNPCPluginAction::CBaseNPCPluginAction(CBaseNPCPluginActionFactory* pFactory
 
 	ResetPluginActionResult();
 	ResetPluginEventResult();
+
+	m_bInActionCallback = false;
 
 	pFactory->OnActionCreated(this);
 }

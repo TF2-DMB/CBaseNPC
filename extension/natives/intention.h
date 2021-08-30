@@ -14,16 +14,6 @@ INTENTIONNATIVE(name) \
 	INextBot *me = pIntention->GetBot(); \
 	if (!me) return pContext->ThrowNativeError( "INextBot is NULL!" );
 
-INTENTIONNATIVE(Reset)
-	pIntention->Reset();
-	return 0;
-}
-
-INTENTIONNATIVE(Update)
-	pIntention->Update();
-	return 0;
-}
-
 INTENTIONQUERYNATIVE(ShouldPickUp)
 	CBaseEntity* item = gamehelpers->ReferenceToEntity( params[2] );
 	if (!item) return pContext->ThrowNativeError( "item is an invalid entity" );

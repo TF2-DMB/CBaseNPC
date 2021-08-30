@@ -86,5 +86,5 @@ static int ScoutLaughAction_OnInjured(NextBotAction action,
 	const float damageForce[3],
 	const float damagePosition[3], int damageCustom )
 {
-	return action.Continue();
+	return action.TryContinue();
 }

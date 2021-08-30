@@ -49,9 +49,10 @@ LOCOMOTIONNATIVE(ClimbUpToLedge)
 	pContext->LocalToPhysAddr(params[3], &dirAddr);
 	Vector dir;
 	PawnVectorToVector(dirAddr, dir);
-	CBaseEntity *pEntity = gamehelpers->ReferenceToEntity(params[2]);
-	if(!pEntity) {
-		return pContext->ThrowNativeError("Invalid Entity Reference/Index %i", params[2]);
+	CBaseEntity *pEntity = gamehelpers->ReferenceToEntity(params[4]);
+	if (!pEntity) 
+	{
+		return pContext->ThrowNativeError("Invalid Entity Reference/Index %i", params[4]);
 	}
 	return (cell_t)(pLocomotion->ClimbUpToLedge(dst, dir, pEntity));
 }
@@ -284,7 +285,14 @@ LOCOMOTIONNATIVE(IsPotentiallyTraversable)
 	pContext->LocalToPhysAddr(params[3], &toAddr);
 	Vector to;
 	PawnVectorToVector(toAddr, to);
-	return (cell_t)(pLocomotion->IsPotentiallyTraversable(from, to, (ILocomotion::TraverseWhenType)(params[4])));
+	ILocomotion::TraverseWhenType when = (ILocomotion::TraverseWhenType)params[4];
+	cell_t *fracAddr;
+	pContext->LocalToPhysAddr(params[5], &fracAddr);
+
+	float fraction;
+	bool result = pLocomotion->IsPotentiallyTraversable(from, to, when, &fraction);
+	*fracAddr = sp_ftoc(fraction);
+	return result;
 }
 
 LOCOMOTIONNATIVE(HasPotentialGap)
@@ -296,7 +304,13 @@ LOCOMOTIONNATIVE(HasPotentialGap)
 	pContext->LocalToPhysAddr(params[3], &toAddr);
 	Vector to;
 	PawnVectorToVector(toAddr, to);
-	return (cell_t)(pLocomotion->HasPotentialGap(from, to));
+	cell_t *fracAddr;
+	pContext->LocalToPhysAddr(params[4], &fracAddr);
+
+	float fraction;
+	bool result = pLocomotion->HasPotentialGap(from, to, &fraction);
+	*fracAddr = sp_ftoc(fraction);
+	return result;
 }
 
 LOCOMOTIONNATIVE(IsGap)

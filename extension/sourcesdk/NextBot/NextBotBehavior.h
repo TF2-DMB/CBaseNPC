@@ -963,7 +963,7 @@ private:
 	mutable EventDesiredResult< Actor > m_eventResult;		// set by event handlers
 	bool m_isStarted;										// Action doesn't start until OnStart() is invoked
 	bool m_isSuspended;										// are we suspended for another Action
-
+public:
 	Action< Actor > *GetActionBuriedUnderMe( void ) const	// return Action just "under" us that we will resume to when we finish
 	{
 		return m_buriedUnderMe;
@@ -973,7 +973,7 @@ private:
 	{
 		return m_coveringMe;
 	}
-
+private:
 	/**
 	 * If any Action buried underneath me has either exited
 	 * or is changing to a different Action, we're "out of scope"

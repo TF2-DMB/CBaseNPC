@@ -65,6 +65,11 @@ ACTIONFACTORYNATIVE(Create)
 	return (cell_t)pFactory->Create();
 }
 
+ACTIONNATIVE(Destroy)
+	delete pAction;
+	return 0;
+}
+
 ACTIONFACTORYNATIVE(BeginDataMapDesc)
 	pFactory->BeginDataDesc();
 	return params[1];
@@ -124,6 +129,12 @@ ACTIONNATIVE(GetName)
 	return pContext->StringToLocal(buffer, bufferSize, pAction->GetName());
 }
 
+ACTIONNATIVE(IsNamed)
+	char* name;
+	pContext->LocalToString( params[2], &name );
+	return pAction->IsNamed( name );
+}
+
 ACTIONNATIVE(GetFullName)
 
 	cell_t buffer = params[2];
@@ -132,24 +143,42 @@ ACTIONNATIVE(GetFullName)
 	return pContext->StringToLocal(buffer, bufferSize, pAction->GetFullName());
 }
 
-ACTIONNATIVE(GetActor)
+ACTIONNATIVE(ActorGet)
 	return gamehelpers->EntityToBCompatRef( pAction->GetActor() );
 }
 
-ACTIONNATIVE(GetParent)
+ACTIONNATIVE(ParentGet)
 	return (cell_t)pAction->GetParentAction();
 }
 
-ACTIONNATIVE(GetActiveChild)
+ACTIONNATIVE(ActiveChildGet)
 	return (cell_t)pAction->GetActiveChildAction();
 }
 
-ACTIONNATIVE(IsSuspended)
+ACTIONNATIVE(ActionBuriedUnderMeGet)
+	return (cell_t)pAction->GetActionBuriedUnderMe();
+}
+
+ACTIONNATIVE(ActionCoveringMeGet)
+	return (cell_t)pAction->GetActionCoveringMe();
+}
+
+ACTIONNATIVE(IsSuspendedGet)
 	return pAction->IsSuspended();
 }
 
+ACTIONNATIVE(HasData)
+	if ( !pAction->GetDataDescMap() ) return 0;
+
+	char* prop;
+	pContext->LocalToString(params[2], &prop); char error[256];
+
+	sm_datatable_info_t dt;
+	return pFactory->FindDataMapInfo( prop, &dt, error, sizeof(error) );
+}
+
 ACTIONDATANATIVE(GetData)
-	
+
 	cell_t value;
 	int element = params[3];
 	if (!pFactory->GetObjectData( pData, prop, value, element, error, sizeof(error)))
@@ -257,11 +286,17 @@ ACTIONDATANATIVE(SetDataString)
 }
 
 ACTIONNATIVE(Continue)
+	if ( !pAction->IsInActionCallback() || pAction->IsInEventCallback() )
+		return pContext->ThrowNativeError( "Cannot use Continue() outside of Action callback" );
+
 	pAction->PluginContinue();
 	return 0;
 }
 
 ACTIONNATIVE(ChangeTo)
+	if ( !pAction->IsInActionCallback() || pAction->IsInEventCallback() )
+		return pContext->ThrowNativeError( "Cannot use ChangeTo() outside of Action callback" );
+
 	char* reason = nullptr;
 	pContext->LocalToStringNULL( params[3], &reason );
 	pAction->PluginChangeTo( (CBaseNPCPluginAction*)params[2], reason );
@@ -269,6 +304,9 @@ ACTIONNATIVE(ChangeTo)
 }
 
 ACTIONNATIVE(SuspendFor)
+	if ( !pAction->IsInActionCallback() || pAction->IsInEventCallback() )
+		return pContext->ThrowNativeError( "Cannot use SuspendFor() outside of Action callback" );
+
 	char* reason = nullptr;
 	pContext->LocalToStringNULL( params[3], &reason );
 	pAction->PluginSuspendFor( (CBaseNPCPluginAction*)params[2], reason );
@@ -276,6 +314,9 @@ ACTIONNATIVE(SuspendFor)
 }
 
 ACTIONNATIVE(Done)
+	if ( !pAction->IsInActionCallback() || pAction->IsInEventCallback() )
+		return pContext->ThrowNativeError( "Cannot use Done() outside of Action callback" );
+
 	char* reason = nullptr;
 	pContext->LocalToStringNULL( params[2], &reason );
 	pAction->PluginDone(reason);
@@ -283,11 +324,17 @@ ACTIONNATIVE(Done)
 }
 
 ACTIONNATIVE(TryContinue)
+	if ( !pAction->IsInEventCallback() )
+		return pContext->ThrowNativeError( "Cannot use TryContinue() outside of event callback" );
+
 	pAction->PluginTryContinue( (EventResultPriorityType)params[2] );
 	return 0;
 }
 
 ACTIONNATIVE(TryChangeTo)
+	if ( !pAction->IsInEventCallback() )
+		return pContext->ThrowNativeError( "Cannot use TryChangeTo() outside of event callback" );
+
 	CBaseNPCPluginAction * pOtherAction = (CBaseNPCPluginAction*)params[2];
 	if (!pOtherAction) return pContext->ThrowNativeError("action is NULL");
 
@@ -299,6 +346,9 @@ ACTIONNATIVE(TryChangeTo)
 }
 
 ACTIONNATIVE(TrySuspendFor)
+	if ( !pAction->IsInEventCallback() )
+		return pContext->ThrowNativeError( "Cannot use TrySuspendFor() outside of event callback" );
+
 	CBaseNPCPluginAction * pOtherAction = (CBaseNPCPluginAction*)params[2];
 	if (!pOtherAction) return pContext->ThrowNativeError("action is NULL");
 
@@ -310,6 +360,9 @@ ACTIONNATIVE(TrySuspendFor)
 }
 
 ACTIONNATIVE(TryDone)
+	if ( !pAction->IsInEventCallback() )
+		return pContext->ThrowNativeError( "Cannot use TryDone() outside of event callback" );
+
 	char* reason;
 	pContext->LocalToStringNULL( params[3], &reason );
 
@@ -318,6 +371,9 @@ ACTIONNATIVE(TryDone)
 }
 
 ACTIONNATIVE(TryToSustain)
+	if ( !pAction->IsInEventCallback() )
+		return pContext->ThrowNativeError( "Cannot use TryToSustain() outside of event callback" );
+
 	char* reason;
 	pContext->LocalToStringNULL( params[3], &reason );
 
