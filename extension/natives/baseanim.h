@@ -127,7 +127,7 @@ CANIMLAYERNATIVE(m_bSequenceFinishedGet)
 }
 
 CANIMLAYERNATIVE(m_bSequenceFinishedSet)
-	pLayer->m_bSequenceFinished = params[2];
+	pLayer->m_bSequenceFinished = (params[2] != 0);
 	return 0;
 }
 
@@ -136,7 +136,7 @@ CANIMLAYERNATIVE(m_bLoopingGet)
 }
 
 CANIMLAYERNATIVE(m_bLoopingSet)
-	pLayer->m_bLooping = params[2];
+	pLayer->m_bLooping = (params[2] != 0);
 	return 0;
 }
 
