@@ -63,7 +63,7 @@ CBASEENTNATIVE(SetModelName)
 
 CBASEENTNATIVE(GetModelName)
 	string_t m = ent->GetModelName();
-	char* model = (m == NULL_STRING) ? "" : STRING(m);
+	const char* model = (m == NULL_STRING) ? "" : STRING(m);
 	pContext->StringToLocal(params[2], params[3], model);
 	return 0;
 }

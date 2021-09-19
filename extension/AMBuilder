@@ -65,6 +65,9 @@ else:
 
 project.sources += sourceFiles
 
+if project.compiler.like('gcc') or project.compiler.like('clang'):
+  project.sources += ['linux/glibc_compat.cpp']
+
 print(project.compiler.cxxflags)
 
 for sdk_name in Extension.sdks:
