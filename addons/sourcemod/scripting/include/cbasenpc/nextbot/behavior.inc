@@ -195,7 +195,7 @@ enum ContextualQueryType
 
 typeset NextBotActionCallback
 {
-	function void (NextBotAction action, int actor)
+	function void (NextBotAction action, int actor);
 
 	// OnStart
 	// OnSuspend (interruptingAction = priorAction)
