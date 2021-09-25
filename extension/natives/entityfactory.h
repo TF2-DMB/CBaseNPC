@@ -326,6 +326,16 @@ PLUGINENTITYFACTORYDATAMAP_DECLKEYFIELDNATIVE(DefineStringField)
 	return params[1];
 }
 
+PLUGINENTITYFACTORYDATAMAP_DECLKEYFIELDNATIVE(DefineColorField)
+
+	if (isKeyField)
+		pFactory->DefineKeyField(fieldName, FIELD_COLOR32, keyName);
+	else
+		pFactory->DefineField(fieldName, FIELD_COLOR32, numElements);
+	
+	return params[1];
+}
+
 PLUGINENTITYFACTORYDATAMAP_DECLFIELDNATIVE(DefineEntityField)
 
 	pFactory->DefineField(fieldName, FIELD_EHANDLE, numElements);

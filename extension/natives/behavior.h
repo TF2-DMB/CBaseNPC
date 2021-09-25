@@ -117,6 +117,13 @@ ACTIONFACTORYNATIVE(DefineStringField)
 	return params[1];
 }
 
+ACTIONFACTORYNATIVE(DefineColorField)
+	char* fieldName;
+	pContext->LocalToString(params[2], &fieldName);
+	pFactory->DefineField(fieldName, FIELD_COLOR32, params[3], 0, nullptr, 0);
+	return params[1];
+}
+
 ACTIONFACTORYNATIVE(EndDataMapDesc)
 	pFactory->EndDataDesc();
 	return 0;
