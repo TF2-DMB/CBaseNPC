@@ -670,6 +670,50 @@ methodmap CBaseEntity
 	}
 
 	/**
+	 * Gets a network property as a color.
+	 *
+	 * @param type          Property type.
+	 * @param prop          Property to use.
+	 * @param r             Red component
+	 * @param g             Green component
+	 * @param b             Blue component
+	 * @param a             Alpha component
+	 * @param element       Element # (starting from 0) if property is an array.
+	 * @error               Invalid entity, offset out of reasonable bounds, or property is not valid.
+	 */
+	public void GetPropColor(PropType type, const char[] prop, int &r = 0, int &g = 0, int &b = 0, int &a = 0, int element=0)
+	{
+		int value = this.GetProp(type, prop, element);
+		r = value & 0xff;
+		g = (value >> 8) & 0xff;
+		b = (value >> 16) & 0xff;
+		a = (value >> 24) & 0xff;
+	}
+
+	/**
+	 * Sets a network property as a color.
+	 *
+	 * @param type          Property type.
+	 * @param prop          Property to use.
+	 * @param r             Red component
+	 * @param g             Green component
+	 * @param b             Blue component
+	 * @param a             Alpha component
+	 * @param element       Element # (starting from 0) if property is an array.
+	 * @return              Number of non-null bytes written.
+	 * @error               Invalid entity, offset out of reasonable bounds, or property is not valid.
+	 */
+	public void SetPropColor(PropType type, const char[] prop, int r = 255, int g = 255, int b = 255, int a = 255, int element=0)
+	{
+		r = r & 0xff;
+		g = (g & 0xff) << 8;
+		b = (b & 0xff) << 16;
+		a = (a & 0xff) << 24;
+
+		this.SetProp(type, prop, r | g | b | a, element);
+	}
+
+	/**
 	 * Alias of GetEntPropArraySize().
 	 *
 	 * @param type          Property type.
