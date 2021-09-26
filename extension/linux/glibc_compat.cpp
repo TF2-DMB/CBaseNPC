@@ -1,6 +1,5 @@
-#if __GNUC__ > 2 || \
-	(__GNUC__ == 2 && (__GNUC_MINOR__ > 3 || \
-		(__GNUC_MINOR__ == 3 && __GNUC_PATCHLEVEL__ > 0)))
+#ifdef __linux__
+#if __GNUC__ >= 9
 
 #include <math.h>
 
@@ -26,4 +25,5 @@ extern "C" {
 	float __powf_finite(float x, float y) { return powf(x, y); }
 }
 
+#endif
 #endif
