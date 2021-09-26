@@ -427,6 +427,47 @@ methodmap NextBotAction < INextBotEventResponder
 	public native int SetDataString(const char[] sPropName, const char[] sValue, int element=0);
 
 	/**
+	 * Retrieves a color from the Action's custom data.
+	 * 
+	 * @param sPropName     Property name
+	 * @param r             Red component
+	 * @param g             Green component
+	 * @param b             Blue component
+	 * @param a             Alpha component
+	 * @param element       Element # (starting from 0) if property is an array.
+	 * @error               Invalid property or offset out of reasonable bounds.
+	 */
+	public void GetDataColor(const char[] sPropName, int &r = 0, int &g = 0, int &b = 0, int &a = 0, int element=0)
+	{
+		int value = this.GetData(sPropName, element);
+		r = value & 0xff;
+		g = (value >> 8) & 0xff;
+		b = (value >> 16) & 0xff;
+		a = (value >> 24) & 0xff;
+	}
+
+	/**
+	 * Sets a color from the Action's custom data.
+	 * 
+	 * @param sPropName     Property name
+	 * @param r             Red component
+	 * @param g             Green component
+	 * @param b             Blue component
+	 * @param a             Alpha component
+	 * @param element       Element # (starting from 0) if property is an array.
+	 * @error               Invalid property or offset out of reasonable bounds.
+	 */
+	public void SetDataColor(const char[] sPropName, int r = 255, int g = 255, int b = 255, int a = 255, int element=0)
+	{
+		r = r & 0xff;
+		g = (g & 0xff) << 8;
+		b = (b & 0xff) << 16;
+		a = (a & 0xff) << 24;
+
+		this.SetData(sPropName, r | g | b | a, element);
+	}
+
+	/**
 	 * Whether or not the Action is suspended.
 	 */
 	property bool IsSuspended
@@ -694,6 +735,17 @@ methodmap NextBotActionFactory < Handle
 	 * @error                Invalid handle.
 	 */
 	public native NextBotActionFactory DefineStringField(const char[] sFieldName, int iNumElements=1);
+
+	/**
+	 * Defines a color property on the Action.
+	 *
+	 * @param sFieldName     Property name
+	 * @param iNumElements   Number of elements. If > 1, will declare the field
+	 *                       as an array.
+	 * @return               The NextBotActionFactory to chain calls
+	 * @error                Invalid handle.
+	 */
+	public native NextBotActionFactory DefineColorField(const char[] sFieldName, int iNumElements=1);
 
 	/**
 	 * Finishes the datamap definition.

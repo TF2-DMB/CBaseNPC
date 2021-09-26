@@ -320,6 +320,19 @@ methodmap CEntityFactory < Handle
 	public native CEntityFactory DefineStringField(const char[] sFieldName, int iNumElements=1, const char[] sKeyName=NULL_STRING);
 
 	/**
+	 * Defines a color field in the datamap.
+	 *
+	 * @param sFieldName      Name of the field
+	 * @param iNumElements    Number of elements. If > 1, will declare the field
+	 *                        as an array.
+	 * @param sKeyName        Key field name. See BeginDataMapDesc's documentation
+	 * @return                The CEntityFactory to chain calls
+	 * @error                 Invalid handle, or tried to declare key field as
+	 *                        array.
+	 */
+	public native CEntityFactory DefineColorField(const char[] sFieldName, int iNumElements=1, const char[] sKeyName=NULL_STRING);
+
+	/**
 	 * Defines an entity field in the datamap.
 	 *
 	 * @param sFieldName      Name of the field

@@ -662,6 +662,7 @@ const sp_nativeinfo_t g_NativesInfo[] =
 	NATIVENAMEEX(CEntityFactory, CPluginEntityFactory, DefineBoolField)
 	NATIVENAMEEX(CEntityFactory, CPluginEntityFactory, DefineVectorField)
 	NATIVENAMEEX(CEntityFactory, CPluginEntityFactory, DefineStringField)
+	NATIVENAMEEX(CEntityFactory, CPluginEntityFactory, DefineColorField)
 	NATIVENAMEEX(CEntityFactory, CPluginEntityFactory, DefineEntityField)
 	NATIVENAMEEX(CEntityFactory, CPluginEntityFactory, DefineInputFunc)
 	NATIVENAMEEX(CEntityFactory, CPluginEntityFactory, DefineOutput)
@@ -713,6 +714,7 @@ const sp_nativeinfo_t g_NativesInfo[] =
 	NATIVENAME(NextBotActionFactory, DefineBoolField)
 	NATIVENAME(NextBotActionFactory, DefineVectorField)
 	NATIVENAME(NextBotActionFactory, DefineStringField)
+	NATIVENAME(NextBotActionFactory, DefineColorField)
 	NATIVENAME(NextBotActionFactory, EndDataMapDesc)
 
 	{ "ConcatTransforms", &Util_ConcatTransforms },
