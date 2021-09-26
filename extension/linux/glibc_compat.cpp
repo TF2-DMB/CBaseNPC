@@ -1,5 +1,8 @@
 #ifdef __linux__
-#if __GNUC__ >= 9
+
+#include <features.h>
+
+#if __GLIBC__ > 2 || ( __GLIBC__ == 2 && ( __GLIBC_MINOR__ > 30 ) )
 
 #include <math.h>
 
@@ -25,5 +28,5 @@ extern "C" {
 	float __powf_finite(float x, float y) { return powf(x, y); }
 }
 
-#endif
-#endif
+#endif // #if __GLIBC__ > 2
+#endif // #ifdef __linux__
