@@ -875,11 +875,13 @@ class PluginInputFuncDelegate : public IEntityDataMapInputFuncDelegate
 {
 private:
 	IPluginFunction* m_pCallback;
+	fieldtype_t m_fieldType;
 
 public:
-	PluginInputFuncDelegate(IPluginFunction* pCallback) : 
+	PluginInputFuncDelegate(IPluginFunction* pCallback, fieldtype_t fieldType) : 
 		IEntityDataMapInputFuncDelegate(),
-		m_pCallback(pCallback)
+		m_pCallback(pCallback),
+		m_fieldType(fieldType)
 	{
 	}
 
@@ -894,7 +896,7 @@ public:
 
 		variant_t &value = data.value;
 
-		switch (value.fieldType)
+		switch (m_fieldType)
 		{
 			case FIELD_STRING:
 				m_pCallback->PushString(value.iszVal.ToCStr());
@@ -941,7 +943,7 @@ public:
 	}
 };
 
-IEntityDataMapInputFuncDelegate* CPluginEntityFactory::CreateInputFuncDelegate(IPluginFunction* pCallback)
+IEntityDataMapInputFuncDelegate* CPluginEntityFactory::CreateInputFuncDelegate(IPluginFunction* pCallback, fieldtype_t fieldType)
 {
-	return new PluginInputFuncDelegate(pCallback);
+	return new PluginInputFuncDelegate(pCallback, fieldType);
 }

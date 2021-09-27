@@ -227,7 +227,7 @@ public:
 	// Initializes the list of type descriptors to be used by the factory's datamap.
 	bool BeginDataDesc(const char* dataClassName);
 
-	IEntityDataMapInputFuncDelegate * CreateInputFuncDelegate(IPluginFunction* pCallback);
+	IEntityDataMapInputFuncDelegate * CreateInputFuncDelegate(IPluginFunction* pCallback, fieldtype_t fieldType);
 
 protected:
 	void CreateUserEntityData(CBaseEntity* pEntity);

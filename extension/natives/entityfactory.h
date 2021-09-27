@@ -369,7 +369,7 @@ PLUGINENTITYFACTORYDATAMAPNATIVE(DefineInputFunc)
 	char* fieldName = new char[fieldNameSize];
 	snprintf(fieldName, fieldNameSize, "Input%s", keyName);
 
-	pFactory->DefineInputFunc(fieldName, fieldType, keyName, pFactory->CreateInputFuncDelegate(handlerFunc) );
+	pFactory->DefineInputFunc(fieldName, fieldType, keyName, pFactory->CreateInputFuncDelegate(handlerFunc, fieldType) );
 
 	delete[] fieldName;
 	return params[1];
