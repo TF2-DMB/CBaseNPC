@@ -57,7 +57,7 @@ public:
 	float Hook_GetMaxYawRate() const;
 
 private:
-	std::vector<int> m_hookids;
+	std::vector<int> *m_pHookIds;
 public:
 	float m_flJumpHeight;
 	float m_flStepSize;

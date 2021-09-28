@@ -116,9 +116,9 @@ bool Path::ComputePathDetails( INextBot *bot, const Vector &start )
 					Ray_t ray;
 					
 					ray.Init(pos, lowerPos, Vector( -halfWidth, -halfWidth, stepHeight ), Vector( halfWidth, halfWidth, hullHeight ));
-					trace_t *tr = new trace_t;
-					enginetrace->TraceRay(ray, body->GetSolidMask(), &filter, tr);
-					if ( tr->fraction >= 1.0f )
+					trace_t tr;
+					enginetrace->TraceRay(ray, body->GetSolidMask(), &filter, &tr);
+					if ( tr.fraction >= 1.0f )
 					{
 						// found clearance to drop
 						break;
@@ -543,9 +543,9 @@ bool Path::ComputePathDetailsT(CTNavMesh::NavPathThreadedData* pData)
 					Ray_t ray;
 
 					ray.Init(pos, lowerPos, Vector(-halfWidth, -halfWidth, stepHeight), Vector(halfWidth, halfWidth, hullHeight));
-					trace_t* tr = new trace_t;
-					enginetrace->TraceRay(ray, pData->m_iSolidMask, &filter, tr);
-					if (tr->fraction >= 1.0f)
+					trace_t tr;
+					enginetrace->TraceRay(ray, pData->m_iSolidMask, &filter, &tr);
+					if (tr.fraction >= 1.0f)
 					{
 						// found clearance to drop
 						break;

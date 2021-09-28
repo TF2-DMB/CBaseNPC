@@ -227,49 +227,51 @@ void CBaseNPC_Entity::DebugConColorMsg( NextBotDebugType debugType, const Color 
 
 void CBaseNPC_Locomotion::Init()
 {
-	this->m_hookids = std::vector<int>();
-	this->m_flJumpHeight = 0.0;
-	this->m_flStepSize = 18.0;
-	this->m_flGravity = 800.0;
-	this->m_flAcceleration = 4000.0,
-	this->m_flDeathDropHeight = 1000.0;
-	this->m_flWalkSpeed = 400.0;
-	this->m_flRunSpeed = 400.0;
-	this->m_flFrictionForward = 0.0;
-	this->m_flFrictionSideways = 3.0;
-	this->m_flMaxYawRate = 1250.0;
+	m_pHookIds = new std::vector<int>();
+	m_flJumpHeight = 0.0;
+	m_flStepSize = 18.0;
+	m_flGravity = 800.0;
+	m_flAcceleration = 4000.0,
+	m_flDeathDropHeight = 1000.0;
+	m_flWalkSpeed = 400.0;
+	m_flRunSpeed = 400.0;
+	m_flFrictionForward = 0.0;
+	m_flFrictionSideways = 3.0;
+	m_flMaxYawRate = 1250.0;
+
+	m_pHookIds->push_back(SH_ADD_HOOK(INextBotComponent, Update, this, SH_MEMBER(this, &CBaseNPC_Locomotion::Hook_Update), false));
+	m_pHookIds->push_back(SH_ADD_HOOK(ILocomotion, IsAbleToJumpAcrossGaps, this, SH_MEMBER(this, &CBaseNPC_Locomotion::Hook_IsAbleToJumpAcrossGaps), false));
+	m_pHookIds->push_back(SH_ADD_HOOK(ILocomotion, IsAbleToClimb, this, SH_MEMBER(this, &CBaseNPC_Locomotion::Hook_IsAbleToClimb), false));
+	m_pHookIds->push_back(SH_ADD_HOOK(ILocomotion, ClimbUpToLedge, this, SH_MEMBER(this, &CBaseNPC_Locomotion::Hook_ClimbUpToLedge), false));
+	m_pHookIds->push_back(SH_ADD_HOOK(ILocomotion, GetStepHeight, this, SH_MEMBER(this, &CBaseNPC_Locomotion::Hook_GetStepHeight), false));
+	m_pHookIds->push_back(SH_ADD_HOOK(ILocomotion, GetMaxJumpHeight, this, SH_MEMBER(this, &CBaseNPC_Locomotion::Hook_GetMaxJumpHeight), false));
+	m_pHookIds->push_back(SH_ADD_HOOK(ILocomotion, GetDeathDropHeight, this, SH_MEMBER(this, &CBaseNPC_Locomotion::Hook_GetDeathDropHeight), false));
+	m_pHookIds->push_back(SH_ADD_HOOK(ILocomotion, GetWalkSpeed, this, SH_MEMBER(this, &CBaseNPC_Locomotion::Hook_GetWalkSpeed), false));
+	m_pHookIds->push_back(SH_ADD_HOOK(ILocomotion, GetRunSpeed, this, SH_MEMBER(this, &CBaseNPC_Locomotion::Hook_GetRunSpeed), false));
+	m_pHookIds->push_back(SH_ADD_HOOK(ILocomotion, GetMaxAcceleration, this, SH_MEMBER(this, &CBaseNPC_Locomotion::Hook_GetMaxAcceleration), false));
+	m_pHookIds->push_back(SH_ADD_HOOK(ILocomotion, ShouldCollideWith, this, SH_MEMBER(this, &CBaseNPC_Locomotion::Hook_ShouldCollideWith), false));
+	m_pHookIds->push_back(SH_ADD_HOOK(ILocomotion, IsEntityTraversable, this, SH_MEMBER(this, &CBaseNPC_Locomotion::Hook_IsEntityTraversable), false));
+	m_pHookIds->push_back(SH_ADD_HOOK(NextBotGroundLocomotion, GetGravity, this, SH_MEMBER(this, &CBaseNPC_Locomotion::Hook_GetGravity), false));
+	m_pHookIds->push_back(SH_ADD_HOOK(NextBotGroundLocomotion, GetFrictionForward, this, SH_MEMBER(this, &CBaseNPC_Locomotion::Hook_GetFrictionForward), false));
+	m_pHookIds->push_back(SH_ADD_HOOK(NextBotGroundLocomotion, GetFrictionSideways, this, SH_MEMBER(this, &CBaseNPC_Locomotion::Hook_GetFrictionSideways), false));
+	m_pHookIds->push_back(SH_ADD_HOOK(NextBotGroundLocomotion, GetMaxYawRate, this, SH_MEMBER(this, &CBaseNPC_Locomotion::Hook_GetMaxYawRate), false));
 }
 
 void CBaseNPC_Locomotion::Destroy()
 {
-	for (auto it = m_hookids.begin(); it != m_hookids.end(); it++)
+	for (auto it = m_pHookIds->begin(); it != m_pHookIds->end(); it++)
 	{
 		SH_REMOVE_HOOK_ID((*it));
 	}
+
+	delete m_pHookIds;
 }
 
 CBaseNPC_Locomotion* CBaseNPC_Locomotion::New(INextBot* bot)
 {
 	CBaseNPC_Locomotion* mover = (CBaseNPC_Locomotion*)calloc(1, sizeof(CBaseNPC_Locomotion));
-	mover->Init();
 	NextBotGroundLocomotion::NextBotGroundLocomotion_Ctor(mover, bot);
-
-	mover->m_hookids.push_back(SH_ADD_HOOK(INextBotComponent, Update, mover, SH_MEMBER(mover, &CBaseNPC_Locomotion::Hook_Update), false));
-	mover->m_hookids.push_back(SH_ADD_HOOK(ILocomotion, IsAbleToJumpAcrossGaps, mover, SH_MEMBER(mover, &CBaseNPC_Locomotion::Hook_IsAbleToJumpAcrossGaps), false));
-	mover->m_hookids.push_back(SH_ADD_HOOK(ILocomotion, IsAbleToClimb, mover, SH_MEMBER(mover, &CBaseNPC_Locomotion::Hook_IsAbleToClimb), false));
-	mover->m_hookids.push_back(SH_ADD_HOOK(ILocomotion, ClimbUpToLedge, mover, SH_MEMBER(mover, &CBaseNPC_Locomotion::Hook_ClimbUpToLedge), false));
-	mover->m_hookids.push_back(SH_ADD_HOOK(ILocomotion, GetStepHeight, mover, SH_MEMBER(mover, &CBaseNPC_Locomotion::Hook_GetStepHeight), false));
-	mover->m_hookids.push_back(SH_ADD_HOOK(ILocomotion, GetMaxJumpHeight, mover, SH_MEMBER(mover, &CBaseNPC_Locomotion::Hook_GetMaxJumpHeight), false));
-	mover->m_hookids.push_back(SH_ADD_HOOK(ILocomotion, GetDeathDropHeight, mover, SH_MEMBER(mover, &CBaseNPC_Locomotion::Hook_GetDeathDropHeight), false));
-	mover->m_hookids.push_back(SH_ADD_HOOK(ILocomotion, GetWalkSpeed, mover, SH_MEMBER(mover, &CBaseNPC_Locomotion::Hook_GetWalkSpeed), false));
-	mover->m_hookids.push_back(SH_ADD_HOOK(ILocomotion, GetRunSpeed, mover, SH_MEMBER(mover, &CBaseNPC_Locomotion::Hook_GetRunSpeed), false));
-	mover->m_hookids.push_back(SH_ADD_HOOK(ILocomotion, GetMaxAcceleration, mover, SH_MEMBER(mover, &CBaseNPC_Locomotion::Hook_GetMaxAcceleration), false));
-	mover->m_hookids.push_back(SH_ADD_HOOK(ILocomotion, ShouldCollideWith, mover, SH_MEMBER(mover, &CBaseNPC_Locomotion::Hook_ShouldCollideWith), false));
-	mover->m_hookids.push_back(SH_ADD_HOOK(ILocomotion, IsEntityTraversable, mover, SH_MEMBER(mover, &CBaseNPC_Locomotion::Hook_IsEntityTraversable), false));
-	mover->m_hookids.push_back(SH_ADD_HOOK(NextBotGroundLocomotion, GetGravity, mover, SH_MEMBER(mover, &CBaseNPC_Locomotion::Hook_GetGravity), false));
-	mover->m_hookids.push_back(SH_ADD_HOOK(NextBotGroundLocomotion, GetFrictionForward, mover, SH_MEMBER(mover, &CBaseNPC_Locomotion::Hook_GetFrictionForward), false));
-	mover->m_hookids.push_back(SH_ADD_HOOK(NextBotGroundLocomotion, GetFrictionSideways, mover, SH_MEMBER(mover, &CBaseNPC_Locomotion::Hook_GetFrictionSideways), false));
-	mover->m_hookids.push_back(SH_ADD_HOOK(NextBotGroundLocomotion, GetMaxYawRate, mover, SH_MEMBER(mover, &CBaseNPC_Locomotion::Hook_GetMaxYawRate), false));
+	mover->Init();
 
 	return mover;
 }
