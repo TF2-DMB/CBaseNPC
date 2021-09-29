@@ -269,7 +269,7 @@ void CBaseNPC_Locomotion::Destroy()
 
 CBaseNPC_Locomotion* CBaseNPC_Locomotion::New(INextBot* bot)
 {
-	CBaseNPC_Locomotion* mover = (CBaseNPC_Locomotion*)calloc(1, sizeof(CBaseNPC_Locomotion));
+	CBaseNPC_Locomotion* mover = (CBaseNPC_Locomotion*)::operator new(sizeof(CBaseNPC_Locomotion));
 	NextBotGroundLocomotion::NextBotGroundLocomotion_Ctor(mover, bot);
 	mover->Init();
 
