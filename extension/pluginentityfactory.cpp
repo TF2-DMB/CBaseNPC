@@ -40,6 +40,8 @@ private:
 	bool m_bWatching;
 	bool m_bHandledAllocation;
 
+	int m_iHookID;
+
 public:
 	void StartWatching(long oldSize, long newSize) 
 	{
@@ -73,8 +75,7 @@ public:
 		if (m_bHooked)
 			return;
 
-		SH_ADD_HOOK(IVEngineServer, PvAllocEntPrivateData, engine, SH_MEMBER(this, &EntityMemAllocHook_t::PvAllocEntPrivateData), false);
-
+		m_iHookID = SH_ADD_HOOK(IVEngineServer, PvAllocEntPrivateData, engine, SH_MEMBER(this, &EntityMemAllocHook_t::PvAllocEntPrivateData), false);
 		m_bHooked = true;
 	}
 
@@ -83,8 +84,7 @@ public:
 		if (!m_bHooked)
 			return;
 
-		SH_REMOVE_HOOK(IVEngineServer, PvAllocEntPrivateData, engine, SH_MEMBER(this, &EntityMemAllocHook_t::PvAllocEntPrivateData), false);
-
+		SH_REMOVE_HOOK_ID(m_iHookID);
 		m_bHooked = false;
 	}
 

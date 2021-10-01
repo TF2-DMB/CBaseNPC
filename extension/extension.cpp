@@ -164,6 +164,7 @@ void CBaseNPCExt::OnEntityDestroyed(CBaseEntity* pEntity)
 	{
 		int iHookID = g_EntitiesHooks.Element(iIndex);
 		SH_REMOVE_HOOK_ID(iHookID);
+		g_EntitiesHooks.RemoveAt(iIndex);
 	}
 }
 

@@ -242,7 +242,7 @@ void CBaseNPC_Locomotion::Init()
 	m_flJumpHeight = 0.0;
 	m_flStepSize = 18.0;
 	m_flGravity = 800.0;
-	m_flAcceleration = 4000.0,
+	m_flAcceleration = 4000.0;
 	m_flDeathDropHeight = 1000.0;
 	m_flWalkSpeed = 400.0;
 	m_flRunSpeed = 400.0;
