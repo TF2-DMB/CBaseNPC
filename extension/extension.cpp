@@ -261,8 +261,6 @@ void CBaseNPCExt::SDK_OnUnload()
 	delete g_pBaseNPCFactory;
 	g_pBaseNPCFactory = nullptr;
 	
-	gameconfs->CloseGameConfigFile(g_pGameConf);
-
 	if (g_pSDKHooks)
 	{
 		g_pSDKHooks->RemoveEntityListener(this);
