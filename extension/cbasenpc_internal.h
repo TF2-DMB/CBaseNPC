@@ -3,6 +3,8 @@
 
 #include <vector>
 #include <utlvector.h>
+#include <map>
+#include <stack>
 
 #include "shared/cbasenpc.h"
 #include "extension.h"
@@ -36,13 +38,44 @@ public:
 class CBaseNPC_Locomotion : public NextBotGroundLocomotion
 {
 public:
+	enum CallbackType
+	{
+		CallbackType_IsAbleToJumpAcrossGaps = 0,
+		CallbackType_IsJumpingAcrossGap,
+		CallbackType_JumpAcrossGap,
+		CallbackType_IsAbleToClimb,
+		CallbackType_IsClimbingUpToLedge,
+		CallbackType_ClimbUpToLedge,
+		CallbackType_ShouldCollideWith,
+		CallbackType_IsEntityTraversable
+	};
+
 	static CBaseNPC_Locomotion* New(INextBot* bot);
 	void Destroy();
 	void Init();
 
+	bool IsInCallback() const { return !m_pCallbackTypeStack->empty(); }
+	CallbackType GetCurrentCallbackType() const { return m_pCallbackTypeStack->top(); };
+	IPluginFunction* GetCallback(CallbackType cbType) const;
+	void SetCallback(CallbackType cbType, IPluginFunction* pCallback);
+
+public:
+	bool BIsAbleToJumpAcrossGaps() const;
+	bool BIsJumpingAcrossGap() const;
+	void BJumpAcrossGap(const Vector &landingGoal, const Vector &landingForward);
+	bool BIsAbleToClimb() const;
+	bool BIsClimbingUpToLedge() const;
+	bool BClimbUpToLedge(const Vector& vecGoal, const Vector& vecForward, const CBaseEntity* pEntity);
+	bool BShouldCollideWith(const CBaseEntity* pCollider) const;
+	bool BIsEntityTraversable(CBaseEntity* pEntity, ILocomotion::TraverseWhenType when) const;
+
+	// Hooks
 	void Hook_Update();
-	bool Hook_IsAbleToJumpAcrossGaps() const;
-	bool Hook_IsAbleToClimb() const;
+	bool Hook_IsAbleToJumpAcrossGaps();
+	bool Hook_IsJumpingAcrossGap();
+	void Hook_JumpAcrossGap(const Vector &landingGoal, const Vector &landingForward);
+	bool Hook_IsAbleToClimb();
+	bool Hook_IsClimbingUpToLedge();
 	bool Hook_ClimbUpToLedge(const Vector& vecGoal, const Vector& vecForward, const CBaseEntity* pEntity);
 	float Hook_GetStepHeight() const;
 	float Hook_GetMaxJumpHeight() const;
@@ -51,8 +84,8 @@ public:
 	float Hook_GetRunSpeed() const;
 	float Hook_GetMaxAcceleration() const;
 	float Hook_GetGravity() const;
-	bool Hook_ShouldCollideWith(const CBaseEntity* pCollider) const;
-	bool Hook_IsEntityTraversable(CBaseEntity* pEntity, ILocomotion::TraverseWhenType when) const;
+	bool Hook_ShouldCollideWith(const CBaseEntity* pCollider);
+	bool Hook_IsEntityTraversable(CBaseEntity* pEntity, ILocomotion::TraverseWhenType when);
 	float Hook_GetFrictionForward() const;
 	float Hook_GetFrictionSideways() const;
 	float Hook_GetMaxYawRate() const;
@@ -70,6 +103,10 @@ public:
 	float m_flFrictionForward;
 	float m_flFrictionSideways;
 	float m_flMaxYawRate;
+
+private:
+	std::map<CallbackType, IPluginFunction*> *m_pCallbacks;
+	std::stack<CallbackType> *m_pCallbackTypeStack;
 };
 
 class NextBotCombatCharacter;

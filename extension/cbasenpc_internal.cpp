@@ -26,7 +26,10 @@ SH_DECL_HOOK0(INextBot, GetBodyInterface, const, 0, IBody*);
 // ILocomotion
 SH_DECL_HOOK1_void(ILocomotion, FaceTowards, SH_NOATTRIB, 0, Vector const&);
 SH_DECL_HOOK0(ILocomotion, IsAbleToJumpAcrossGaps, const, 0, bool);
+SH_DECL_HOOK0(ILocomotion, IsJumpingAcrossGap, const, 0, bool);
+SH_DECL_HOOK2_void(ILocomotion, JumpAcrossGap, SH_NOATTRIB, 0, const Vector&, const Vector&);
 SH_DECL_HOOK0(ILocomotion, IsAbleToClimb, const, 0, bool);
+SH_DECL_HOOK0(ILocomotion, IsClimbingUpToLedge, const, 0, bool);
 SH_DECL_HOOK3(ILocomotion, ClimbUpToLedge, SH_NOATTRIB, 0, bool, const Vector&, const Vector&, const CBaseEntity*);
 SH_DECL_HOOK0(ILocomotion, GetStepHeight, const, 0, float);
 SH_DECL_HOOK0(ILocomotion, GetMaxJumpHeight, const, 0, float);
@@ -234,6 +237,8 @@ void CBaseNPC_Entity::DebugConColorMsg( NextBotDebugType debugType, const Color 
 void CBaseNPC_Locomotion::Init()
 {
 	m_pHookIds = new std::vector<int>();
+	m_pCallbacks = new std::map<CallbackType, IPluginFunction*>();
+	m_pCallbackTypeStack = new std::stack<CallbackType>();
 	m_flJumpHeight = 0.0;
 	m_flStepSize = 18.0;
 	m_flGravity = 800.0;
@@ -247,7 +252,10 @@ void CBaseNPC_Locomotion::Init()
 
 	m_pHookIds->push_back(SH_ADD_HOOK(INextBotComponent, Update, this, SH_MEMBER(this, &CBaseNPC_Locomotion::Hook_Update), false));
 	m_pHookIds->push_back(SH_ADD_HOOK(ILocomotion, IsAbleToJumpAcrossGaps, this, SH_MEMBER(this, &CBaseNPC_Locomotion::Hook_IsAbleToJumpAcrossGaps), false));
+	m_pHookIds->push_back(SH_ADD_HOOK(ILocomotion, IsJumpingAcrossGap, this, SH_MEMBER(this, &CBaseNPC_Locomotion::Hook_IsJumpingAcrossGap), false));
+	m_pHookIds->push_back(SH_ADD_HOOK(ILocomotion, JumpAcrossGap, this, SH_MEMBER(this, &CBaseNPC_Locomotion::Hook_JumpAcrossGap), false));
 	m_pHookIds->push_back(SH_ADD_HOOK(ILocomotion, IsAbleToClimb, this, SH_MEMBER(this, &CBaseNPC_Locomotion::Hook_IsAbleToClimb), false));
+	m_pHookIds->push_back(SH_ADD_HOOK(ILocomotion, IsClimbingUpToLedge, this, SH_MEMBER(this, &CBaseNPC_Locomotion::Hook_IsClimbingUpToLedge), false));
 	m_pHookIds->push_back(SH_ADD_HOOK(ILocomotion, ClimbUpToLedge, this, SH_MEMBER(this, &CBaseNPC_Locomotion::Hook_ClimbUpToLedge), false));
 	m_pHookIds->push_back(SH_ADD_HOOK(ILocomotion, GetStepHeight, this, SH_MEMBER(this, &CBaseNPC_Locomotion::Hook_GetStepHeight), false));
 	m_pHookIds->push_back(SH_ADD_HOOK(ILocomotion, GetMaxJumpHeight, this, SH_MEMBER(this, &CBaseNPC_Locomotion::Hook_GetMaxJumpHeight), false));
@@ -271,6 +279,8 @@ void CBaseNPC_Locomotion::Destroy()
 	}
 
 	delete m_pHookIds;
+	delete m_pCallbacks;
+	delete m_pCallbackTypeStack;
 }
 
 CBaseNPC_Locomotion* CBaseNPC_Locomotion::New(INextBot* bot)
@@ -280,6 +290,105 @@ CBaseNPC_Locomotion* CBaseNPC_Locomotion::New(INextBot* bot)
 	mover->Init();
 
 	return mover;
+}
+
+IPluginFunction* CBaseNPC_Locomotion::GetCallback(CallbackType cbType) const
+{
+	auto iter = m_pCallbacks->find(cbType);
+	if (iter != m_pCallbacks->end())
+	{
+		return m_pCallbacks->operator[](cbType);
+	}
+	
+	return nullptr;
+}
+
+void CBaseNPC_Locomotion::SetCallback(CallbackType cbType, IPluginFunction* pCallback)
+{
+	m_pCallbacks->insert_or_assign(cbType, pCallback);
+}
+
+bool CBaseNPC_Locomotion::BIsAbleToJumpAcrossGaps() const
+{
+	return m_flJumpHeight > 0.0;
+}
+
+bool CBaseNPC_Locomotion::BIsJumpingAcrossGap() const
+{
+	return SH_CALL((ILocomotion*)this, &ILocomotion::IsJumpingAcrossGap)();
+}
+
+void CBaseNPC_Locomotion::BJumpAcrossGap(const Vector &landingGoal, const Vector &landingForward)
+{
+	SH_CALL((ILocomotion*)this, &ILocomotion::JumpAcrossGap)(landingGoal, landingForward);
+}
+
+bool CBaseNPC_Locomotion::BIsAbleToClimb() const
+{
+	return m_flJumpHeight > 0.0;
+}
+
+bool CBaseNPC_Locomotion::BIsClimbingUpToLedge() const
+{
+	return SH_CALL((ILocomotion*)this, &ILocomotion::IsClimbingUpToLedge)();
+}
+
+bool CBaseNPC_Locomotion::BClimbUpToLedge(const Vector& vecGoal, const Vector& vecForward, const CBaseEntity* pEntity)
+{
+	Vector vecMyPos = GetBot()->GetPosition();
+	vecMyPos.z += m_flStepSize;
+
+	float flActualHeight = vecGoal.z - vecMyPos.z;
+	float height = flActualHeight;
+	if (height < 16.0)
+	{
+		height = 16.0;
+	}
+
+	float additionalHeight = 20.0;
+	if (height < 32)
+	{
+		additionalHeight += 8.0;
+	}
+
+	height += additionalHeight;
+
+	float speed = sqrt(2.0 * m_flGravity * height);
+	float time = speed / m_flGravity;
+
+	time += sqrt((2.0 * additionalHeight) / m_flGravity);
+
+	Vector vecJumpVel = vecGoal - vecMyPos;
+	vecJumpVel /= time;
+	vecJumpVel.z = speed;
+
+	float flJumpSpeed = vecJumpVel.Length();
+	float flMaxSpeed = 650.0;
+	if (flJumpSpeed > flMaxSpeed)
+	{
+		vecJumpVel[0] *= flMaxSpeed / flJumpSpeed;
+		vecJumpVel[1] *= flMaxSpeed / flJumpSpeed;
+		vecJumpVel[2] *= flMaxSpeed / flJumpSpeed;
+	}
+
+	GetBot()->SetPosition(vecMyPos);
+	SetVelocity(vecJumpVel);
+	return true;
+}
+
+bool CBaseNPC_Locomotion::BShouldCollideWith(const CBaseEntity* pCollider) const
+{
+	return false;
+}
+
+bool CBaseNPC_Locomotion::BIsEntityTraversable(CBaseEntity* pEntity, ILocomotion::TraverseWhenType when) const
+{
+	if (((CBaseEntityHack *)pEntity)->MyCombatCharacterPointer())
+	{
+		return true;
+	}
+	
+	return false;
 }
 
 void CBaseNPC_Locomotion::Hook_Update()
@@ -328,58 +437,170 @@ void CBaseNPC_Locomotion::Hook_Update()
 	RETURN_META(MRES_IGNORED);
 }
 
-bool CBaseNPC_Locomotion::Hook_IsAbleToJumpAcrossGaps() const
+bool CBaseNPC_Locomotion::Hook_IsAbleToJumpAcrossGaps()
 {
-	RETURN_META_VALUE(MRES_SUPERCEDE, (m_flJumpHeight > 0.0));
+	m_pCallbackTypeStack->push(CallbackType_IsAbleToJumpAcrossGaps);
+
+	bool result = false;
+
+	IPluginFunction* pCallback = GetCallback(CallbackType_IsAbleToJumpAcrossGaps);
+	if (pCallback && pCallback->IsRunnable())
+	{
+		cell_t _result = 0;
+
+		pCallback->PushCell((cell_t)this);
+		pCallback->Execute(&_result);
+
+		result = !!_result;
+	}
+	else 
+	{
+		result = BIsAbleToJumpAcrossGaps();
+	}
+
+	m_pCallbackTypeStack->pop();
+
+	RETURN_META_VALUE(MRES_SUPERCEDE, result);
 }
 
-bool CBaseNPC_Locomotion::Hook_IsAbleToClimb() const
+bool CBaseNPC_Locomotion::Hook_IsJumpingAcrossGap()
 {
-	RETURN_META_VALUE(MRES_SUPERCEDE, (m_flJumpHeight > 0.0));
+	m_pCallbackTypeStack->push(CallbackType_IsJumpingAcrossGap);
+
+	bool result = false;
+
+	IPluginFunction* pCallback = GetCallback(CallbackType_IsJumpingAcrossGap);
+	if (pCallback && pCallback->IsRunnable())
+	{
+		cell_t _result = 0;
+
+		pCallback->PushCell((cell_t)this);
+		pCallback->Execute(&_result);
+
+		result = !!_result;
+	}
+	else 
+	{
+		bool result = BIsJumpingAcrossGap();
+	}
+
+	m_pCallbackTypeStack->pop();
+
+	RETURN_META_VALUE(MRES_SUPERCEDE, result);
+}
+
+void CBaseNPC_Locomotion::Hook_JumpAcrossGap(const Vector& landingGoal, const Vector& landingForward)
+{
+	m_pCallbackTypeStack->push(CallbackType_JumpAcrossGap);
+
+	IPluginFunction* pCallback = GetCallback(CallbackType_JumpAcrossGap);
+	if (pCallback && pCallback->IsRunnable())
+	{
+		cell_t goalArr[3];
+		cell_t forwardArr[3];
+		VectorToPawnVector(goalArr, landingGoal);
+		VectorToPawnVector(forwardArr, landingForward);
+		cell_t result = 0;
+
+		pCallback->PushCell((cell_t)this);
+		pCallback->PushArray(goalArr, 3);
+		pCallback->PushArray(forwardArr, 3);
+		pCallback->Execute(&result);
+	}
+	else 
+	{
+		BJumpAcrossGap(landingGoal, landingForward);
+	}
+
+	m_pCallbackTypeStack->pop();
+	
+	RETURN_META(MRES_SUPERCEDE);
+}
+
+bool CBaseNPC_Locomotion::Hook_IsAbleToClimb()
+{
+	m_pCallbackTypeStack->push(CallbackType_IsAbleToClimb);
+
+	bool result = false;
+
+	IPluginFunction* pCallback = GetCallback(CallbackType_IsAbleToClimb);
+	if (pCallback && pCallback->IsRunnable())
+	{
+		cell_t _result = 0;
+
+		pCallback->PushCell((cell_t)this);
+		pCallback->Execute(&_result);
+
+		result = !!_result;
+	}
+	else 
+	{
+		result = BIsAbleToClimb();
+	}
+
+	m_pCallbackTypeStack->pop();
+
+	RETURN_META_VALUE(MRES_SUPERCEDE, result);
+}
+
+bool CBaseNPC_Locomotion::Hook_IsClimbingUpToLedge()
+{
+	m_pCallbackTypeStack->push(CallbackType_IsClimbingUpToLedge);
+
+	bool result = false;
+
+	IPluginFunction* pCallback = GetCallback(CallbackType_IsClimbingUpToLedge);
+	if (pCallback && pCallback->IsRunnable())
+	{
+		cell_t _result = 0;
+
+		pCallback->PushCell((cell_t)this);
+		pCallback->Execute(&_result);
+
+		result = !!_result;
+	}
+	else 
+	{
+		result = BIsClimbingUpToLedge();
+	}
+
+	m_pCallbackTypeStack->pop();
+
+	RETURN_META_VALUE(MRES_SUPERCEDE, result);
 }
 
 bool CBaseNPC_Locomotion::Hook_ClimbUpToLedge(const Vector& vecGoal, const Vector& vecForward, const CBaseEntity* pEntity)
 {
-	// VPROF_BUDGET("CBaseNPC_Locomotion::ClimbUpToLedge", "CBaseNPC" );
-	Vector vecMyPos = GetBot()->GetPosition();
-	vecMyPos.z += m_flStepSize;
+	m_pCallbackTypeStack->push(CallbackType_ClimbUpToLedge);
 
-	float flActualHeight = vecGoal.z - vecMyPos.z;
-	float height = flActualHeight;
-	if (height < 16.0)
+	bool result = false;
+
+	IPluginFunction* pCallback = GetCallback(CallbackType_ClimbUpToLedge);
+	if (pCallback && pCallback->IsRunnable())
 	{
-		height = 16.0;
+		cell_t goalArr[3];
+		cell_t forwardArr[3];
+		VectorToPawnVector(goalArr, vecGoal);
+		VectorToPawnVector(forwardArr, vecForward);
+		cell_t entRef = gamehelpers->EntityToBCompatRef(const_cast<CBaseEntity*>(pEntity));
+		cell_t _result = 0;
+
+		pCallback->PushCell((cell_t)this);
+		pCallback->PushArray(goalArr, 3);
+		pCallback->PushArray(forwardArr, 3);
+		pCallback->PushCell(entRef);
+		pCallback->Execute(&_result);
+
+		result = !!_result;
+	}
+	else 
+	{
+		result = BClimbUpToLedge(vecGoal, vecForward, pEntity);
 	}
 
-	float additionalHeight = 20.0;
-	if (height < 32)
-	{
-		additionalHeight += 8.0;
-	}
+	m_pCallbackTypeStack->pop();
 
-	height += additionalHeight;
-
-	float speed = sqrt(2.0 * m_flGravity * height);
-	float time = speed / m_flGravity;
-
-	time += sqrt((2.0 * additionalHeight) / m_flGravity);
-
-	Vector vecJumpVel = vecGoal - vecMyPos;
-	vecJumpVel /= time;
-	vecJumpVel.z = speed;
-
-	float flJumpSpeed = vecJumpVel.Length();
-	float flMaxSpeed = 650.0;
-	if (flJumpSpeed > flMaxSpeed)
-	{
-		vecJumpVel[0] *= flMaxSpeed / flJumpSpeed;
-		vecJumpVel[1] *= flMaxSpeed / flJumpSpeed;
-		vecJumpVel[2] *= flMaxSpeed / flJumpSpeed;
-	}
-
-	GetBot()->SetPosition(vecMyPos);
-	SetVelocity(vecJumpVel);
-	RETURN_META_VALUE(MRES_SUPERCEDE, true);
+	RETURN_META_VALUE(MRES_SUPERCEDE, result);
 }
 
 float CBaseNPC_Locomotion::Hook_GetStepHeight() const
@@ -417,19 +638,61 @@ float CBaseNPC_Locomotion::Hook_GetGravity() const
 	RETURN_META_VALUE(MRES_SUPERCEDE, m_flGravity);
 }
 
-bool CBaseNPC_Locomotion::Hook_ShouldCollideWith(const CBaseEntity* pEntity) const
+bool CBaseNPC_Locomotion::Hook_ShouldCollideWith(const CBaseEntity* pEntity)
 {
-	RETURN_META_VALUE(MRES_SUPERCEDE, false);
+	m_pCallbackTypeStack->push(CallbackType_ShouldCollideWith);
+
+	bool result = false;
+
+	IPluginFunction* pCallback = GetCallback(CallbackType_ShouldCollideWith);
+	if (pCallback && pCallback->IsRunnable())
+	{
+		cell_t entRef = gamehelpers->EntityToBCompatRef(const_cast<CBaseEntity*>(pEntity));
+		cell_t _result = 0;
+
+		pCallback->PushCell((cell_t)this);
+		pCallback->PushCell(entRef);
+		pCallback->Execute(&_result);
+
+		result = !!_result;
+	}
+	else
+	{
+		result = BShouldCollideWith(pEntity);
+	}
+
+	m_pCallbackTypeStack->pop();
+
+	RETURN_META_VALUE(MRES_SUPERCEDE, result);
 }
 
-bool CBaseNPC_Locomotion::Hook_IsEntityTraversable(CBaseEntity* pEntity, ILocomotion::TraverseWhenType when) const
+bool CBaseNPC_Locomotion::Hook_IsEntityTraversable(CBaseEntity* pEntity, ILocomotion::TraverseWhenType when)
 {
-	VPROF_BUDGET("CBaseNPC_Locomotion::IsEntityTraversable", "CBaseNPC" );
-	if (((CBaseEntityHack *)pEntity)->MyCombatCharacterPointer())
+	m_pCallbackTypeStack->push(CallbackType_IsEntityTraversable);
+
+	bool result = false;
+
+	IPluginFunction* pCallback = GetCallback(CallbackType_IsEntityTraversable);
+	if (pCallback && pCallback->IsRunnable())
 	{
-		RETURN_META_VALUE(MRES_SUPERCEDE, true);
+		cell_t entRef = gamehelpers->EntityToBCompatRef(const_cast<CBaseEntity*>(pEntity));
+		cell_t _result = 0;
+
+		pCallback->PushCell((cell_t)this);
+		pCallback->PushCell(entRef);
+		pCallback->PushCell((cell_t)when);
+		pCallback->Execute(&_result);
+
+		result = !!_result;
 	}
-	RETURN_META_VALUE(MRES_SUPERCEDE, false);
+	else 
+	{
+		result = BIsEntityTraversable(pEntity, when);
+	}
+
+	m_pCallbackTypeStack->pop();
+
+	RETURN_META_VALUE(MRES_SUPERCEDE, result);
 }
 
 float CBaseNPC_Locomotion::Hook_GetFrictionForward() const

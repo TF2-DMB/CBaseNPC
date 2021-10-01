@@ -25,6 +25,12 @@
 			return pContext->ThrowNativeError("Invalid NPC %i", params[1]); \
 		} 
 
+#define CBASENPCLOCONATIVE(name) \
+	cell_t CBaseNPC_Locomotion_##name(IPluginContext *pContext, const cell_t *params) \
+	{ \
+		CBaseNPC_Locomotion* loco = (CBaseNPC_Locomotion *)params[1]; \
+		if (!loco) { return pContext->ThrowNativeError("Invalid Locomotion %i", params[1]); }
+
 #define CNPCSNATIVE(name) \
 	cell_t CNPCs_##name(IPluginContext *pContext, const cell_t *params) \
 	{ 
@@ -214,6 +220,95 @@ CBASENPCNATIVE(flMaxYawRateSet)
 	return 0;
 }
 
+CBASENPCLOCONATIVE(SetCallback)
+	CBaseNPC_Locomotion::CallbackType cbType = (CBaseNPC_Locomotion::CallbackType)params[2];
+	IPluginFunction* pCallback = pContext->GetFunctionById( params[3] );
+
+	loco->SetCallback(cbType, pCallback);
+}
+
+CBASENPCLOCONATIVE(CallBaseFunction)
+	if (!loco->IsInCallback())
+	{
+		pContext->ThrowNativeError("CallBaseFunction() can only be used within a callback");
+		return 0;
+	}
+
+	CBaseNPC_Locomotion::CallbackType cbType = loco->GetCurrentCallbackType();
+
+	cell_t result = 0;
+
+	switch (cbType)
+	{
+		case CBaseNPC_Locomotion::CallbackType_IsAbleToJumpAcrossGaps:
+			result = loco->BIsAbleToJumpAcrossGaps();
+			break;
+		
+		case CBaseNPC_Locomotion::CallbackType_IsJumpingAcrossGap:
+			result = loco->BIsJumpingAcrossGap();
+			break;
+		
+		case CBaseNPC_Locomotion::CallbackType_JumpAcrossGap:
+		{
+			cell_t* goalAddr;
+			cell_t* forwardAddr;
+			pContext->LocalToPhysAddr(params[2], &goalAddr);
+			pContext->LocalToPhysAddr(params[3], &forwardAddr);
+
+			Vector landingGoal;
+			Vector landingForward;
+			PawnVectorToVector(goalAddr, &landingGoal);
+			PawnVectorToVector(forwardAddr, &landingForward);
+
+			loco->BJumpAcrossGap(landingGoal, landingForward);
+			break;
+		}
+
+		case CBaseNPC_Locomotion::CallbackType_IsAbleToClimb:
+			result = loco->BIsAbleToClimb();
+			break;
+		
+		case CBaseNPC_Locomotion::CallbackType_IsClimbingUpToLedge:
+			result = loco->BIsClimbingUpToLedge();
+			break;
+		
+		case CBaseNPC_Locomotion::CallbackType_ClimbUpToLedge:
+		{
+			cell_t* goalAddr;
+			cell_t* forwardAddr;
+			pContext->LocalToPhysAddr(params[2], &goalAddr);
+			pContext->LocalToPhysAddr(params[3], &forwardAddr);
+			CBaseEntity* pEntity = gamehelpers->ReferenceToEntity(params[4]);
+
+			Vector vecGoal;
+			Vector vecForward;
+			PawnVectorToVector(goalAddr, &vecGoal);
+			PawnVectorToVector(forwardAddr, &vecForward);
+
+			result = loco->BClimbUpToLedge(vecGoal, vecForward, pEntity);
+			break;
+		}
+
+		case CBaseNPC_Locomotion::CallbackType_ShouldCollideWith:
+		{
+			CBaseEntity* pOther = gamehelpers->ReferenceToEntity(params[2]);
+			result = loco->BShouldCollideWith(pOther);
+			break;
+		}
+
+		case CBaseNPC_Locomotion::CallbackType_IsEntityTraversable:
+		{
+			CBaseEntity* pOther = gamehelpers->ReferenceToEntity(params[2]);
+			ILocomotion::TraverseWhenType when = (ILocomotion::TraverseWhenType)params[3];
+
+			result = loco->BIsEntityTraversable(pOther, when);
+			break;
+		}
+	}
+
+	return result;
+}
+
 CNPCSNATIVE(IsValidNPC)
 	if (params[2] < 0 || params[2] >= MAX_NPCS)
 	{
@@ -370,9 +465,6 @@ CBASENPCNATIVE(SetModel)
 	return 0;
 }
 
-CBASENPCNATIVE(SetCollisionBounds)
-	pContext->ReportError("CBaseNPC.SetCollisionBounds is deprecated and never did anything.\nWhat are you doing!");
-	return 0;
-}
+
 
 #endif
