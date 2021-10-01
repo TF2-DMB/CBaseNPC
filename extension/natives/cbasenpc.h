@@ -225,6 +225,7 @@ CBASENPCLOCONATIVE(SetCallback)
 	IPluginFunction* pCallback = pContext->GetFunctionById( params[3] );
 
 	loco->SetCallback(cbType, pCallback);
+	return 0;
 }
 
 CBASENPCLOCONATIVE(CallBaseFunction)
