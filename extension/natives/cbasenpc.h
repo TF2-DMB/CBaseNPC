@@ -242,11 +242,11 @@ CBASENPCLOCONATIVE(CallBaseFunction)
 	switch (cbType)
 	{
 		case CBaseNPC_Locomotion::CallbackType_IsAbleToJumpAcrossGaps:
-			result = loco->BIsAbleToJumpAcrossGaps();
+			result = loco->DefaultIsAbleToJumpAcrossGaps();
 			break;
 		
 		case CBaseNPC_Locomotion::CallbackType_IsJumpingAcrossGap:
-			result = loco->BIsJumpingAcrossGap();
+			result = loco->DefaultIsJumpingAcrossGap();
 			break;
 		
 		case CBaseNPC_Locomotion::CallbackType_JumpAcrossGap:
@@ -261,16 +261,16 @@ CBASENPCLOCONATIVE(CallBaseFunction)
 			PawnVectorToVector(goalAddr, &landingGoal);
 			PawnVectorToVector(forwardAddr, &landingForward);
 
-			loco->BJumpAcrossGap(landingGoal, landingForward);
+			loco->DefaultJumpAcrossGap(landingGoal, landingForward);
 			break;
 		}
 
 		case CBaseNPC_Locomotion::CallbackType_IsAbleToClimb:
-			result = loco->BIsAbleToClimb();
+			result = loco->DefaultIsAbleToClimb();
 			break;
 		
 		case CBaseNPC_Locomotion::CallbackType_IsClimbingUpToLedge:
-			result = loco->BIsClimbingUpToLedge();
+			result = loco->DefaultIsClimbingUpToLedge();
 			break;
 		
 		case CBaseNPC_Locomotion::CallbackType_ClimbUpToLedge:
@@ -286,14 +286,14 @@ CBASENPCLOCONATIVE(CallBaseFunction)
 			PawnVectorToVector(goalAddr, &vecGoal);
 			PawnVectorToVector(forwardAddr, &vecForward);
 
-			result = loco->BClimbUpToLedge(vecGoal, vecForward, pEntity);
+			result = loco->DefaultClimbUpToLedge(vecGoal, vecForward, pEntity);
 			break;
 		}
 
 		case CBaseNPC_Locomotion::CallbackType_ShouldCollideWith:
 		{
 			CBaseEntity* pOther = gamehelpers->ReferenceToEntity(params[2]);
-			result = loco->BShouldCollideWith(pOther);
+			result = loco->DefaultShouldCollideWith(pOther);
 			break;
 		}
 
@@ -302,7 +302,7 @@ CBASENPCLOCONATIVE(CallBaseFunction)
 			CBaseEntity* pOther = gamehelpers->ReferenceToEntity(params[2]);
 			ILocomotion::TraverseWhenType when = (ILocomotion::TraverseWhenType)params[3];
 
-			result = loco->BIsEntityTraversable(pOther, when);
+			result = loco->DefaultIsEntityTraversable(pOther, when);
 			break;
 		}
 	}

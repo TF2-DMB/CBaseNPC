@@ -141,6 +141,15 @@ protected:
 
 	CountdownTimer m_ignorePhysicsPropTimer;				// if active, don't collide with physics props (because we got stuck in one)
 	EHANDLE m_ignorePhysicsProp;							// which prop to ignore
+
+public:
+	static int vtable_entries;
+
+	VCALL_DECLARE_MEMBER(GetGravity, float)
+	VCALL_DECLARE_MEMBER(GetFrictionForward, float)
+	VCALL_DECLARE_MEMBER(GetFrictionSideways, float)
+	VCALL_DECLARE_MEMBER(GetMaxYawRate, float)
+
 };
 
 #endif

@@ -92,6 +92,106 @@
 				"windows"	"331"
 				"linux"		"331"
 			}
+			"INextBotComponent::Update"
+			{
+				"linux"		"44"
+				"windows"	"43"
+			}
+			"ILocomotion::ClimbUpToLedge"
+			{
+				"linux"		"49"
+				"windows"	"48"
+			}
+			"ILocomotion::JumpAcrossGap"
+			{
+				"linux"		"50"
+				"windows"	"49"
+			}
+			"ILocomotion::IsClimbingUpToLedge"
+			{
+				"linux"		"53"
+				"windows"	"52"
+			}
+			"ILocomotion::IsJumpingAcrossGap"
+			{
+				"linux"		"54"
+				"windows"	"53"
+			}
+			"ILocomotion::IsAbleToJumpAcrossGaps"
+			{
+				"linux"		"77"
+				"windows"	"76"
+			}
+			"ILocomotion::IsAbleToClimb"
+			{
+				"linux"		"78"
+				"windows"	"77"
+			}
+			"ILocomotion::GetStepHeight"
+			{
+				"linux"		"80"
+				"windows"	"79"
+			}
+			"ILocomotion::GetMaxJumpHeight"
+			{
+				"linux"		"81"
+				"windows"	"80"
+			}
+			"ILocomotion::GetDeathDropHeight"
+			{
+				"linux"		"82"
+				"windows"	"81"
+			}
+			"ILocomotion::GetRunSpeed"
+			{
+				"linux"		"83"
+				"windows"	"82"
+			}
+			"ILocomotion::GetWalkSpeed"
+			{
+				"linux"		"84"
+				"windows"	"83"
+			}
+			"ILocomotion::GetMaxAcceleration"
+			{
+				"linux"		"85"
+				"windows"	"84"
+			}
+			"ILocomotion::IsEntityTraversable"
+			{
+				"linux"		"95"
+				"windows"	"94"
+			}
+			"ILocomotion::ShouldCollideWith"
+			{
+				"linux"		"100"
+				"windows"	"99"
+			}
+			"NextBotGroundLocomotion::vtable_entries"
+			{
+				"linux"		"116"
+				"windows"	"116"
+			}
+			"NextBotGroundLocomotion::GetGravity"
+			{
+				"linux"		"106"
+				"windows"	"105"
+			}
+			"NextBotGroundLocomotion::GetFrictionForward"
+			{
+				"linux"		"107"
+				"windows"	"106"
+			}
+			"NextBotGroundLocomotion::GetFrictionSideways"
+			{
+				"linux"		"108"
+				"windows"	"107"
+			}
+			"NextBotGroundLocomotion::GetMaxYawRate"
+			{
+				"linux"		"109"
+				"windows"	"108"
+			}
 		}
 		"Signatures"
 		{

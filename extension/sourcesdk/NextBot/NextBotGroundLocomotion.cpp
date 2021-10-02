@@ -5,21 +5,37 @@
 
 MCall<void, INextBot*> NextBotGroundLocomotion::NextBotGroundLocomotion_Ctor;
 //MCall<Vector, const Vector&, const Vector&, int> NextBotGroundLocomotion::mResolveCollision;
+int NextBotGroundLocomotion::vtable_entries = 0;
+
+VCALL_DEFINE_MEMBER(NextBotGroundLocomotion, GetGravity, float)
+VCALL_DEFINE_MEMBER(NextBotGroundLocomotion, GetFrictionForward, float)
+VCALL_DEFINE_MEMBER(NextBotGroundLocomotion, GetFrictionSideways, float)
+VCALL_DEFINE_MEMBER(NextBotGroundLocomotion, GetMaxYawRate, float)
 
 ConVar base_npc_freeze("base_npc_freeze", "0", FCVAR_CHEAT);
 
 bool NextBotGroundLocomotion::Init(SourceMod::IGameConfig* config, char* error, size_t maxlength)
 {
+	if (!config->GetOffset("NextBotGroundLocomotion::vtable_entries", &vtable_entries))
+	{
+		snprintf(error, maxlength, "Could not retrieve NextBotGroundLocomotion::vtable_entries offset");
+		return false;
+	}
+
 	try
 	{
 		NextBotGroundLocomotion_Ctor.Init(config, "NextBotGroundLocomotion::NextBotGroundLocomotion");
-		//mResolveCollision.Init(config, "NextBotGroundLocomotion::ResolveCollision");
+		vGetGravity.Init(config, "NextBotGroundLocomotion::GetGravity");
+		vGetFrictionForward.Init(config, "NextBotGroundLocomotion::GetFrictionForward");
+		vGetFrictionSideways.Init(config, "NextBotGroundLocomotion::GetFrictionSideways");
+		vGetMaxYawRate.Init(config, "NextBotGroundLocomotion::GetMaxYawRate");
 	}
 	catch (const std::exception& e)
 	{
 		snprintf(error, maxlength, "%s", e.what());
 		return false;
 	}
+	
 	return true;
 }
 
