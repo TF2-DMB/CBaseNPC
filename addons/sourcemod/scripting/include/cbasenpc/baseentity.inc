@@ -343,7 +343,7 @@ methodmap CBaseEntity
 	 * @param pos		Position vector.
 	 * @error 		Invalid entity.
 	 */
-	public native void SetLocalOrigin(float pos[3]);
+	public native void SetLocalOrigin(const float pos[3]);
 
 	/**
 	 * Sets the entity local angles.
@@ -351,7 +351,7 @@ methodmap CBaseEntity
 	 * @param ang		Angles vector.
 	 * @error 		Invalid entity.
 	 */
-	public native void SetLocalAngles(float ang[3]);
+	public native void SetLocalAngles(const float ang[3]);
 
 #if defined _dhooks_included
 	/**
