@@ -303,7 +303,7 @@ methodmap CBaseEntity
 	 * @param pos		Position vector.
 	 * @error 		Invalid entity.
 	 */
-	public native void SetAbsOrigin(float pos[3]);
+	public native void SetAbsOrigin(const float pos[3]);
 
 	/**
 	 * Sets the entity absolute angles.
@@ -311,7 +311,7 @@ methodmap CBaseEntity
 	 * @param ang		Angles vector.
 	 * @error 		Invalid entity.
 	 */
-	public native void SetAbsAngles(float ang[3]);
+	public native void SetAbsAngles(const float ang[3]);
 
 	/**
 	 * Sets the entity absolute velocity.
@@ -319,7 +319,7 @@ methodmap CBaseEntity
 	 * @param ang		Velocity vector.
 	 * @error 		Invalid entity.
 	 */
-	public native void SetAbsVelocity(float vel[3]);
+	public native void SetAbsVelocity(const float vel[3]);
 
 	/**
 	 * Gets the entity local origin.
