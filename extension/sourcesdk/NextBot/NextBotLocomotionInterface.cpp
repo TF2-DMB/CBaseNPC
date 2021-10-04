@@ -20,20 +20,20 @@ bool ILocomotion::Init(SourceMod::IGameConfig* config, char* error, size_t maxle
 {
 	try
 	{
-		vClimbUpToLedge.Init(config, "ILocomotion::ClimbUpToLedge");
-		vJumpAcrossGap.Init(config, "ILocomotion::JumpAcrossGap");
-		vIsClimbingUpToLedge.Init(config, "ILocomotion::IsClimbingUpToLedge");
-		vIsJumpingAcrossGap.Init(config, "ILocomotion::IsJumpingAcrossGap");
-		vIsAbleToJumpAcrossGaps.Init(config, "ILocomotion::IsAbleToJumpAcrossGaps");
-		vIsAbleToClimb.Init(config, "ILocomotion::IsAbleToClimb");
-		vGetStepHeight.Init(config, "ILocomotion::GetStepHeight");
-		vGetMaxJumpHeight.Init(config, "ILocomotion::GetMaxJumpHeight");
-		vGetDeathDropHeight.Init(config, "ILocomotion::GetDeathDropHeight");
-		vGetRunSpeed.Init(config, "ILocomotion::GetRunSpeed");
-		vGetWalkSpeed.Init(config, "ILocomotion::GetWalkSpeed");
-		vGetMaxAcceleration.Init(config, "ILocomotion::GetMaxAcceleration");
-		vIsEntityTraversable.Init(config, "ILocomotion::IsEntityTraversable");
-		vShouldCollideWith.Init(config, "ILocomotion::ShouldCollideWith");
+		vClimbUpToLedge.Init(&ILocomotion::ClimbUpToLedge);
+		vJumpAcrossGap.Init(&ILocomotion::JumpAcrossGap);
+		vIsClimbingUpToLedge.Init(&ILocomotion::IsClimbingUpToLedge);
+		vIsJumpingAcrossGap.Init(&ILocomotion::IsJumpingAcrossGap);
+		vIsAbleToJumpAcrossGaps.Init(&ILocomotion::IsAbleToJumpAcrossGaps);
+		vIsAbleToClimb.Init(&ILocomotion::IsAbleToClimb);
+		vGetStepHeight.Init(&ILocomotion::GetStepHeight);
+		vGetMaxJumpHeight.Init(&ILocomotion::GetMaxJumpHeight);
+		vGetDeathDropHeight.Init(&ILocomotion::GetDeathDropHeight);
+		vGetRunSpeed.Init(&ILocomotion::GetRunSpeed);
+		vGetWalkSpeed.Init(&ILocomotion::GetWalkSpeed);
+		vGetMaxAcceleration.Init(&ILocomotion::GetMaxAcceleration);
+		vIsEntityTraversable.Init(&ILocomotion::IsEntityTraversable);
+		vShouldCollideWith.Init(&ILocomotion::ShouldCollideWith);
 	}
 	catch (const std::exception& e)
 	{

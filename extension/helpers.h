@@ -183,7 +183,7 @@ public:
 	}
 
 	template<typename Function>
-	int Init(Function f)
+	void Init(Function f)
 	{
 		SourceHook::MemFuncInfo mfi = {true, -1, 0, 0};
 		SourceHook::GetFuncInfo(f, mfi);

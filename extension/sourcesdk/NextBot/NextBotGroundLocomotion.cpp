@@ -25,10 +25,10 @@ bool NextBotGroundLocomotion::Init(SourceMod::IGameConfig* config, char* error, 
 	try
 	{
 		NextBotGroundLocomotion_Ctor.Init(config, "NextBotGroundLocomotion::NextBotGroundLocomotion");
-		vGetGravity.Init(config, "NextBotGroundLocomotion::GetGravity");
-		vGetFrictionForward.Init(config, "NextBotGroundLocomotion::GetFrictionForward");
-		vGetFrictionSideways.Init(config, "NextBotGroundLocomotion::GetFrictionSideways");
-		vGetMaxYawRate.Init(config, "NextBotGroundLocomotion::GetMaxYawRate");
+		vGetGravity.Init(&NextBotGroundLocomotion::GetGravity);
+		vGetFrictionForward.Init(&NextBotGroundLocomotion::GetFrictionForward);
+		vGetFrictionSideways.Init(&NextBotGroundLocomotion::GetFrictionSideways);
+		vGetMaxYawRate.Init(&NextBotGroundLocomotion::GetMaxYawRate);
 	}
 	catch (const std::exception& e)
 	{

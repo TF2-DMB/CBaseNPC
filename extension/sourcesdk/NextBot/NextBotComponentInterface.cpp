@@ -7,7 +7,7 @@ bool INextBotComponent::Init(SourceMod::IGameConfig* config, char* error, size_t
 {
 	try
 	{
-		vUpdate.Init(config, "INextBotComponent::Update");
+		vUpdate.Init(&INextBotComponent::Update);
 	}
 	catch (const std::exception& e)
 	{
