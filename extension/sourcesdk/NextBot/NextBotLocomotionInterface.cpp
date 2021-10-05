@@ -1,20 +1,20 @@
 
 #include "sourcesdk/NextBot/NextBotLocomotionInterface.h"
 
-VCALL_DEFINE_MEMBER(ILocomotion, ClimbUpToLedge, bool, const Vector&, const Vector&, const CBaseEntity*)
-VCALL_DEFINE_MEMBER(ILocomotion, JumpAcrossGap, void, const Vector&, const Vector&)
-VCALL_DEFINE_MEMBER(ILocomotion, IsClimbingUpToLedge, bool)
-VCALL_DEFINE_MEMBER(ILocomotion, IsJumpingAcrossGap, bool)
-VCALL_DEFINE_MEMBER(ILocomotion, IsAbleToJumpAcrossGaps, bool)
-VCALL_DEFINE_MEMBER(ILocomotion, IsAbleToClimb, bool)
-VCALL_DEFINE_MEMBER(ILocomotion, GetStepHeight, float)
-VCALL_DEFINE_MEMBER(ILocomotion, GetMaxJumpHeight, float)
-VCALL_DEFINE_MEMBER(ILocomotion, GetDeathDropHeight, float)
-VCALL_DEFINE_MEMBER(ILocomotion, GetRunSpeed, float)
-VCALL_DEFINE_MEMBER(ILocomotion, GetWalkSpeed, float)
-VCALL_DEFINE_MEMBER(ILocomotion, GetMaxAcceleration, float)
-VCALL_DEFINE_MEMBER(ILocomotion, IsEntityTraversable, bool, CBaseEntity*, ILocomotion::TraverseWhenType)
-VCALL_DEFINE_MEMBER(ILocomotion, ShouldCollideWith, bool, const CBaseEntity*)
+VCall<bool, const Vector&, const Vector&, const CBaseEntity*> ILocomotion::vClimbUpToLedge;
+VCall<void, const Vector&, const Vector&> ILocomotion::vJumpAcrossGap;
+VCall<bool> ILocomotion::vIsClimbingUpToLedge;
+VCall<bool> ILocomotion::vIsJumpingAcrossGap;
+VCall<bool> ILocomotion::vIsAbleToJumpAcrossGaps;
+VCall<bool> ILocomotion::vIsAbleToClimb;
+VCall<float> ILocomotion::vGetStepHeight;
+VCall<float> ILocomotion::vGetMaxJumpHeight;
+VCall<float> ILocomotion::vGetDeathDropHeight;
+VCall<float> ILocomotion::vGetRunSpeed;
+VCall<float> ILocomotion::vGetWalkSpeed;
+VCall<float> ILocomotion::vGetMaxAcceleration;
+VCall<bool, CBaseEntity*, ILocomotion::TraverseWhenType> ILocomotion::vIsEntityTraversable;
+VCall<bool, const CBaseEntity*> ILocomotion::vShouldCollideWith;
 
 bool ILocomotion::Init(SourceMod::IGameConfig* config, char* error, size_t maxlength)
 {

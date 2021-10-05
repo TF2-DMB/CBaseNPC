@@ -1,7 +1,7 @@
 #include "sourcesdk/NextBot/NextBotComponentInterface.h"
 #include "sourcesdk/NextBot/NextBotInterface.h"
 
-VCALL_DEFINE_MEMBER(INextBotComponent, Update, void)
+VCall<void> INextBotComponent::vUpdate;
 
 bool INextBotComponent::Init(SourceMod::IGameConfig* config, char* error, size_t maxlength)
 {

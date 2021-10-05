@@ -76,6 +76,26 @@ private:
 private:
 	static void** vtable;
 	
+	static MCall<void> m_OriginalUpdate;
+	static MCall<bool> m_OriginalIsAbleToJumpAcrossGaps;
+	static MCall<bool> m_OriginalIsJumpingAcrossGap;
+	static MCall<void, const Vector &, const Vector &> m_OriginalJumpAcrossGap;
+	static MCall<bool> m_OriginalIsAbleToClimb;
+	static MCall<bool> m_OriginalIsClimbingUpToLedge;
+	static MCall<bool, const Vector&, const Vector&, const CBaseEntity*> m_OriginalClimbUpToLedge;
+	static MCall<float> m_OriginalGetStepHeight;
+	static MCall<float> m_OriginalGetMaxJumpHeight;
+	static MCall<float> m_OriginalGetDeathDropHeight;
+	static MCall<float> m_OriginalGetWalkSpeed;
+	static MCall<float> m_OriginalGetRunSpeed;
+	static MCall<float> m_OriginalGetMaxAcceleration;
+	static MCall<float> m_OriginalGetGravity;
+	static MCall<bool, const CBaseEntity*> m_OriginalShouldCollideWith;
+	static MCall<bool, CBaseEntity*, ILocomotion::TraverseWhenType> m_OriginalIsEntityTraversable;
+	static MCall<float> m_OriginalGetFrictionForward;
+	static MCall<float> m_OriginalGetFrictionSideways;
+	static MCall<float> m_OriginalGetMaxYawRate;
+
 private:
 	std::vector<int> *m_pHookIds;
 public:

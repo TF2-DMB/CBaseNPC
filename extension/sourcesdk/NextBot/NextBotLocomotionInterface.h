@@ -111,20 +111,20 @@ protected:
 	IntervalTimer m_moveRequestTimer;
 
 public:
-	VCALL_DECLARE_MEMBER(ClimbUpToLedge, bool, const Vector&, const Vector&, const CBaseEntity*)
-	VCALL_DECLARE_MEMBER(JumpAcrossGap, void, const Vector&, const Vector&)
-	VCALL_DECLARE_MEMBER(IsClimbingUpToLedge, bool)
-	VCALL_DECLARE_MEMBER(IsJumpingAcrossGap, bool)
-	VCALL_DECLARE_MEMBER(IsAbleToJumpAcrossGaps, bool)
-	VCALL_DECLARE_MEMBER(IsAbleToClimb, bool)
-	VCALL_DECLARE_MEMBER(GetStepHeight, float)
-	VCALL_DECLARE_MEMBER(GetMaxJumpHeight, float)
-	VCALL_DECLARE_MEMBER(GetDeathDropHeight, float)
-	VCALL_DECLARE_MEMBER(GetRunSpeed, float)
-	VCALL_DECLARE_MEMBER(GetWalkSpeed, float)
-	VCALL_DECLARE_MEMBER(GetMaxAcceleration, float)
-	VCALL_DECLARE_MEMBER(IsEntityTraversable, bool, CBaseEntity*, ILocomotion::TraverseWhenType)
-	VCALL_DECLARE_MEMBER(ShouldCollideWith, bool, const CBaseEntity*)
+	static VCall<bool, const Vector&, const Vector&, const CBaseEntity*> vClimbUpToLedge;
+	static VCall<void, const Vector&, const Vector&> vJumpAcrossGap;
+	static VCall<bool> vIsClimbingUpToLedge;
+	static VCall<bool> vIsJumpingAcrossGap;
+	static VCall<bool> vIsAbleToJumpAcrossGaps;
+	static VCall<bool> vIsAbleToClimb;
+	static VCall<float> vGetStepHeight;
+	static VCall<float> vGetMaxJumpHeight;
+	static VCall<float> vGetDeathDropHeight;
+	static VCall<float> vGetRunSpeed;
+	static VCall<float> vGetWalkSpeed;
+	static VCall<float> vGetMaxAcceleration;
+	static VCall<bool, CBaseEntity*, TraverseWhenType> vIsEntityTraversable;
+	static VCall<bool, const CBaseEntity*> vShouldCollideWith;
 };
 
 inline void ILocomotion::TraceHull(const Vector& start, const Vector& end, const Vector& mins, const Vector& maxs, unsigned int fMask, ITraceFilter* pFilter, trace_t* pTrace) const

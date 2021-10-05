@@ -145,11 +145,10 @@ protected:
 public:
 	static int vtable_entries;
 
-	VCALL_DECLARE_MEMBER(GetGravity, float)
-	VCALL_DECLARE_MEMBER(GetFrictionForward, float)
-	VCALL_DECLARE_MEMBER(GetFrictionSideways, float)
-	VCALL_DECLARE_MEMBER(GetMaxYawRate, float)
-
+	static VCall<float> vGetGravity;
+	static VCall<float> vGetFrictionForward;
+	static VCall<float> vGetFrictionSideways;
+	static VCall<float> vGetMaxYawRate;
 };
 
 #endif

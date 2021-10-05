@@ -49,7 +49,7 @@ private:
 	INextBotComponent *m_nextComponent;
 
 public:
-	VCALL_DECLARE_MEMBER(Update, void)
+	static VCall<void> vUpdate;
 };
 
 inline bool INextBotComponent::ComputeUpdateInterval(void) 

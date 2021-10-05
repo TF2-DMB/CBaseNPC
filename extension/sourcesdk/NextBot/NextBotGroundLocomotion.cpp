@@ -7,10 +7,10 @@ MCall<void, INextBot*> NextBotGroundLocomotion::NextBotGroundLocomotion_Ctor;
 //MCall<Vector, const Vector&, const Vector&, int> NextBotGroundLocomotion::mResolveCollision;
 int NextBotGroundLocomotion::vtable_entries = 0;
 
-VCALL_DEFINE_MEMBER(NextBotGroundLocomotion, GetGravity, float)
-VCALL_DEFINE_MEMBER(NextBotGroundLocomotion, GetFrictionForward, float)
-VCALL_DEFINE_MEMBER(NextBotGroundLocomotion, GetFrictionSideways, float)
-VCALL_DEFINE_MEMBER(NextBotGroundLocomotion, GetMaxYawRate, float)
+VCall<float> NextBotGroundLocomotion::vGetGravity;
+VCall<float> NextBotGroundLocomotion::vGetFrictionForward;
+VCall<float> NextBotGroundLocomotion::vGetFrictionSideways;
+VCall<float> NextBotGroundLocomotion::vGetMaxYawRate;
 
 ConVar base_npc_freeze("base_npc_freeze", "0", FCVAR_CHEAT);
 

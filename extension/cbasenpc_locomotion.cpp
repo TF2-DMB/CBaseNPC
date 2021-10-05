@@ -6,6 +6,26 @@
 
 void** CBaseNPC_Locomotion::vtable = nullptr;
 
+MCall<void> CBaseNPC_Locomotion::m_OriginalUpdate;
+MCall<bool> CBaseNPC_Locomotion::m_OriginalIsAbleToJumpAcrossGaps;
+MCall<bool> CBaseNPC_Locomotion::m_OriginalIsJumpingAcrossGap;
+MCall<void, const Vector &, const Vector &> CBaseNPC_Locomotion::m_OriginalJumpAcrossGap;
+MCall<bool> CBaseNPC_Locomotion::m_OriginalIsAbleToClimb;
+MCall<bool> CBaseNPC_Locomotion::m_OriginalIsClimbingUpToLedge;
+MCall<bool, const Vector&, const Vector&, const CBaseEntity*> CBaseNPC_Locomotion::m_OriginalClimbUpToLedge;
+MCall<float> CBaseNPC_Locomotion::m_OriginalGetStepHeight;
+MCall<float> CBaseNPC_Locomotion::m_OriginalGetMaxJumpHeight;
+MCall<float> CBaseNPC_Locomotion::m_OriginalGetDeathDropHeight;
+MCall<float> CBaseNPC_Locomotion::m_OriginalGetWalkSpeed;
+MCall<float> CBaseNPC_Locomotion::m_OriginalGetRunSpeed;
+MCall<float> CBaseNPC_Locomotion::m_OriginalGetMaxAcceleration;
+MCall<float> CBaseNPC_Locomotion::m_OriginalGetGravity;
+MCall<bool, const CBaseEntity*> CBaseNPC_Locomotion::m_OriginalShouldCollideWith;
+MCall<bool, CBaseEntity*, ILocomotion::TraverseWhenType> CBaseNPC_Locomotion::m_OriginalIsEntityTraversable;
+MCall<float> CBaseNPC_Locomotion::m_OriginalGetFrictionForward;
+MCall<float> CBaseNPC_Locomotion::m_OriginalGetFrictionSideways;
+MCall<float> CBaseNPC_Locomotion::m_OriginalGetMaxYawRate;
+
 bool CBaseNPC_Locomotion::Init(SourceMod::IGameConfig* config, char* error, size_t maxlength)
 {
 	return true;
@@ -18,25 +38,25 @@ void** CBaseNPC_Locomotion::CreateVTable(BaseClass* pBase)
 	
 	vtable = vtable_dup(pBase, BaseClass::vtable_entries);
 
-	VCALL_REPLACE_MEMBER_EX(vtable, INextBotComponent, Update, CBaseNPC_Locomotion, V_Update);
-	VCALL_REPLACE_MEMBER_EX(vtable, ILocomotion, ClimbUpToLedge, CBaseNPC_Locomotion, V_ClimbUpToLedge);
-	VCALL_REPLACE_MEMBER_EX(vtable, ILocomotion, JumpAcrossGap, CBaseNPC_Locomotion, V_JumpAcrossGap);
-	VCALL_REPLACE_MEMBER_EX(vtable, ILocomotion, IsClimbingUpToLedge, CBaseNPC_Locomotion, V_IsClimbingUpToLedge);
-	VCALL_REPLACE_MEMBER_EX(vtable, ILocomotion, IsJumpingAcrossGap, CBaseNPC_Locomotion, V_IsJumpingAcrossGap);
-	VCALL_REPLACE_MEMBER_EX(vtable, ILocomotion, IsAbleToJumpAcrossGaps, CBaseNPC_Locomotion, V_IsAbleToJumpAcrossGaps);
-	VCALL_REPLACE_MEMBER_EX(vtable, ILocomotion, IsAbleToClimb, CBaseNPC_Locomotion, V_IsAbleToClimb);
-	VCALL_REPLACE_MEMBER_EX(vtable, ILocomotion, GetStepHeight, CBaseNPC_Locomotion, V_GetStepHeight);
-	VCALL_REPLACE_MEMBER_EX(vtable, ILocomotion, GetMaxJumpHeight, CBaseNPC_Locomotion, V_GetMaxJumpHeight);
-	VCALL_REPLACE_MEMBER_EX(vtable, ILocomotion, GetDeathDropHeight, CBaseNPC_Locomotion, V_GetDeathDropHeight);
-	VCALL_REPLACE_MEMBER_EX(vtable, ILocomotion, GetRunSpeed, CBaseNPC_Locomotion, V_GetRunSpeed);
-	VCALL_REPLACE_MEMBER_EX(vtable, ILocomotion, GetWalkSpeed, CBaseNPC_Locomotion, V_GetWalkSpeed);
-	VCALL_REPLACE_MEMBER_EX(vtable, ILocomotion, GetMaxAcceleration, CBaseNPC_Locomotion, V_GetMaxAcceleration);
-	VCALL_REPLACE_MEMBER_EX(vtable, ILocomotion, IsEntityTraversable, CBaseNPC_Locomotion, V_IsEntityTraversable);
-	VCALL_REPLACE_MEMBER_EX(vtable, ILocomotion, ShouldCollideWith, CBaseNPC_Locomotion, V_ShouldCollideWith);
-	VCALL_REPLACE_MEMBER_EX(vtable, NextBotGroundLocomotion, GetGravity, CBaseNPC_Locomotion, V_GetGravity);
-	VCALL_REPLACE_MEMBER_EX(vtable, NextBotGroundLocomotion, GetFrictionForward, CBaseNPC_Locomotion, V_GetFrictionForward);
-	VCALL_REPLACE_MEMBER_EX(vtable, NextBotGroundLocomotion, GetFrictionSideways, CBaseNPC_Locomotion, V_GetFrictionSideways);
-	VCALL_REPLACE_MEMBER_EX(vtable, NextBotGroundLocomotion, GetMaxYawRate, CBaseNPC_Locomotion, V_GetMaxYawRate);
+	INextBotComponent::vUpdate.Replace(vtable, &V_Update, m_OriginalUpdate);
+	ILocomotion::vClimbUpToLedge.Replace(vtable, &V_ClimbUpToLedge, m_OriginalClimbUpToLedge);
+	ILocomotion::vJumpAcrossGap.Replace(vtable, &V_JumpAcrossGap, m_OriginalJumpAcrossGap);
+	ILocomotion::vIsClimbingUpToLedge.Replace(vtable, &V_IsClimbingUpToLedge, m_OriginalIsClimbingUpToLedge);
+	ILocomotion::vIsJumpingAcrossGap.Replace(vtable, &V_IsJumpingAcrossGap, m_OriginalIsJumpingAcrossGap);
+	ILocomotion::vIsAbleToJumpAcrossGaps.Replace(vtable, &V_IsAbleToJumpAcrossGaps, m_OriginalIsAbleToJumpAcrossGaps);
+	ILocomotion::vIsAbleToClimb.Replace(vtable, &V_IsAbleToClimb, m_OriginalIsAbleToClimb);
+	ILocomotion::vGetStepHeight.Replace(vtable, &V_GetStepHeight, m_OriginalGetStepHeight);
+	ILocomotion::vGetMaxJumpHeight.Replace(vtable, &V_GetMaxJumpHeight, m_OriginalGetMaxJumpHeight);
+	ILocomotion::vGetDeathDropHeight.Replace(vtable, &V_GetDeathDropHeight, m_OriginalGetDeathDropHeight);
+	ILocomotion::vGetRunSpeed.Replace(vtable, &V_GetRunSpeed, m_OriginalGetRunSpeed);
+	ILocomotion::vGetWalkSpeed.Replace(vtable, &V_GetWalkSpeed, m_OriginalGetWalkSpeed);
+	ILocomotion::vGetMaxAcceleration.Replace(vtable, &V_GetMaxAcceleration, m_OriginalGetMaxAcceleration);
+	ILocomotion::vIsEntityTraversable.Replace(vtable, &V_IsEntityTraversable, m_OriginalIsEntityTraversable);
+	ILocomotion::vShouldCollideWith.Replace(vtable, &V_ShouldCollideWith, m_OriginalShouldCollideWith);
+	NextBotGroundLocomotion::vGetGravity.Replace(vtable, &V_GetGravity, m_OriginalGetGravity);
+	NextBotGroundLocomotion::vGetFrictionForward.Replace(vtable, &V_GetFrictionForward, m_OriginalGetFrictionForward);
+	NextBotGroundLocomotion::vGetFrictionSideways.Replace(vtable, &V_GetFrictionSideways, m_OriginalGetFrictionSideways);
+	NextBotGroundLocomotion::vGetMaxYawRate.Replace(vtable, &V_GetMaxYawRate, m_OriginalGetMaxYawRate);
 
 	return vtable;
 }
@@ -139,7 +159,7 @@ void CBaseNPC_Locomotion::V_Update()
 		}
 	}
 
-	mOriginalUpdate(this);
+	m_OriginalUpdate(this);
 }
 
 bool CBaseNPC_Locomotion::DefaultIsAbleToClimb()
@@ -175,7 +195,7 @@ bool CBaseNPC_Locomotion::V_IsAbleToClimb()
 
 bool CBaseNPC_Locomotion::DefaultIsClimbingUpToLedge()
 {
-	return mOriginalIsClimbingUpToLedge(this);
+	return m_OriginalIsClimbingUpToLedge(this);
 }
 
 bool CBaseNPC_Locomotion::V_IsClimbingUpToLedge()
@@ -314,7 +334,7 @@ bool CBaseNPC_Locomotion::V_IsAbleToJumpAcrossGaps()
 
 bool CBaseNPC_Locomotion::DefaultIsJumpingAcrossGap()
 {
-	return mOriginalIsJumpingAcrossGap(this);
+	return m_OriginalIsJumpingAcrossGap(this);
 }
 
 bool CBaseNPC_Locomotion::V_IsJumpingAcrossGap()
@@ -345,7 +365,7 @@ bool CBaseNPC_Locomotion::V_IsJumpingAcrossGap()
 
 void CBaseNPC_Locomotion::DefaultJumpAcrossGap(const Vector &landingGoal, const Vector &landingForward)
 {
-	mOriginalJumpAcrossGap(this, landingGoal, landingForward);
+	m_OriginalJumpAcrossGap(this, landingGoal, landingForward);
 }
 
 void CBaseNPC_Locomotion::V_JumpAcrossGap(const Vector& landingGoal, const Vector& landingForward)
