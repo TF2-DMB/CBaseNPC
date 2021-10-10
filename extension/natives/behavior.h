@@ -284,10 +284,11 @@ ACTIONDATANATIVE(SetDataString)
 
 	char* value;
 	pContext->LocalToStringNULL(src, &value);
-	if (!value) value = "";
-
-	if (!pFactory->SetObjectDataString( pData, prop, value, element, error, sizeof(error)))
+	const char* data = (value) ? value : "";
+	if (!pFactory->SetObjectDataString( pData, prop, data, element, error, sizeof(error)))
+	{
 		return pContext->ThrowNativeError( error );
+	}
 
 	return 0;
 }
