@@ -425,8 +425,8 @@ CPluginEntityFactory* CPluginEntityFactory::ToPluginEntityFactory( IEntityFactor
 
 CPluginEntityFactory::CPluginEntityFactory( IPlugin* plugin, const char* classname, IPluginFunction *postConstructor, IPluginFunction *onRemove ) :
 	IEntityDataMapContainer(),
-	m_pPlugin(plugin),
 	m_iClassname(classname),
+	m_pPlugin(plugin),
 	m_pPostConstructor(postConstructor),
 	m_pOnRemove(onRemove)
 {
