@@ -203,6 +203,16 @@ stock void MatrixPosition( const float matrix[3][4], float vec[3] )
 }
 
 /**
+ * Multiplies the first matrix with the second. It is safe to use either of the
+ * input matrices as the output matrix.
+ *
+ * @param in1      First input matrix
+ * @param in2      Second input matrix
+ * @param out      Output matrix
+ */
+native void ConcatTransforms( const float in1[3][4], const float in2[3][4], float outMat[3][4] ); 
+
+/**
  * Transform a set of angles in the space of parentMatrix to local space.
  * The input angles can also be the output.
  *
@@ -436,15 +446,5 @@ stock void MatrixInvertEx( const float matIn[3][4], float matOut[3][4] )
 	MatrixGetRowVector( matOut, 2, rowVec );
 	matOut[2][3] = -GetVectorDotProduct( tmp, rowVec );
 }
-
-/**
- * Multiplies the first matrix with the second. It is safe to use either of the
- * input matrices as the output matrix.
- *
- * @param in1      First input matrix
- * @param in2      Second input matrix
- * @param out      Output matrix
- */
-native void ConcatTransforms( const float in1[3][4], const float in2[3][4], float outMat[3][4] ); 
 
 #endif
