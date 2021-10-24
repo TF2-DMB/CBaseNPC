@@ -263,8 +263,8 @@ CBASEENTNATIVE(Teleport)
 	Vector vel = vec3_origin;
 	QAngle ang = QAngle(0, 0, 0);
 	PawnVectorToVector(originAdd, origin);
-	PawnVectorToVector(originAdd, ang);
-	PawnVectorToVector(originAdd, vel);
+	PawnVectorToVector(angAdd, ang);
+	PawnVectorToVector(velAdd, vel);
 
 	ent->Teleport((originAdd == nullAdd) ? NULL : &origin, (angAdd == nullAdd) ? NULL : &ang, (velAdd == nullAdd) ? NULL : &vel);
 
