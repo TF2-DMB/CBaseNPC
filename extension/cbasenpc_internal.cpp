@@ -149,6 +149,8 @@ void CBaseNPC_Entity::BotUpdateOnRemove()
 	// still access entity properties and virtual functions to perform cleanup
 	// on the entity.
 	GetNPC()->m_pIntention->DestroyBehavior();
+
+	mOriginalUpdateOnRemove(this);
 }
 
 #ifdef __linux__
