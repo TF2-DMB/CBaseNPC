@@ -80,18 +80,23 @@
 		return pContext->ThrowNativeError("Invalid Handle %x (error %i: %s)", hnd, chnderr, HandleErrorToString(chnderr)); \
 	} \
 
-void VectorToPawnVector(cell_t *vecAddr, const Vector vector);
-void VectorToPawnVector(cell_t *vecAddr, const Vector *vector);
-void VectorToPawnVector(cell_t *angAddr, const QAngle angle);
-void VectorToPawnVector(cell_t *angAddr, const QAngle *angle);
+void VectorToPawnVector(cell_t* vecAddr, const Vector vector);
+void VectorToPawnVector(cell_t* vecAddr, const Vector* vector);
+void VectorToPawnVector(cell_t* angAddr, const QAngle angle);
+void VectorToPawnVector(cell_t* angAddr, const QAngle* angle);
 
-void PawnVectorToVector(cell_t *vecAddr, Vector *vector);
-void PawnVectorToVector(cell_t *vecAddr, Vector &vector);
-void PawnVectorToVector(cell_t *angAddr, QAngle *angle);
-void PawnVectorToVector(cell_t *angAddr, QAngle &angle);
+void PawnVectorToVector(cell_t* vecAddr, Vector* vector);
+void PawnVectorToVector(cell_t* vecAddr, Vector& vector);
+void PawnVectorToVector(cell_t* angAddr, QAngle* angle);
+void PawnVectorToVector(cell_t* angAddr, QAngle& angle);
 
-void MatrixToPawnMatrix( cell_t *matAddr, const matrix3x4_t &mat );
-void PawnMatrixToMatrix( cell_t *matAddr, matrix3x4_t &mat );
+#if SOURCEPAWN_API_VERSION >= 0x0211
+void MatrixToPawnMatrix(IPluginContext* context, cell_t* matAddr, const matrix3x4_t& mat);
+void PawnMatrixToMatrix(IPluginContext* context, cell_t* matAddr, matrix3x4_t& mat);
+#else
+void MatrixToPawnMatrix(IPluginContext* context, cell_t* matAddr, const matrix3x4_t& mat);
+void PawnMatrixToMatrix(IPluginContext* context, cell_t* matAddr, matrix3x4_t& mat);
+#endif
 
 const char *HandleErrorToString(HandleError err);
 

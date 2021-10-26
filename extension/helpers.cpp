@@ -22,57 +22,107 @@ IPluginFunction *GetFunctionByNameEx(IPluginContext *pContext, const char *name)
 	return nullptr;
 }
 
-void PawnVectorToVector(cell_t *vecAddr, Vector &vector) {
+void PawnVectorToVector(cell_t* vecAddr, Vector& vector)
+{
 	vector.x = sp_ctof(vecAddr[0]);
 	vector.y = sp_ctof(vecAddr[1]);
 	vector.z = sp_ctof(vecAddr[2]);
 }
 
-void PawnVectorToVector(cell_t *angAddr, QAngle &angle) {
+void PawnVectorToVector(cell_t* angAddr, QAngle& angle)
+{
 	angle.x = sp_ctof(angAddr[0]);
 	angle.y = sp_ctof(angAddr[1]);
 	angle.z = sp_ctof(angAddr[2]);
 }
 
-void PawnVectorToVector(cell_t *vecAddr, Vector *vector) {
+void PawnVectorToVector(cell_t* vecAddr, Vector* vector)
+{
 	vector->x = sp_ctof(vecAddr[0]);
 	vector->y = sp_ctof(vecAddr[1]);
 	vector->z = sp_ctof(vecAddr[2]);
 }
 
-void PawnVectorToVector(cell_t *angAddr, QAngle *angle) {
+void PawnVectorToVector(cell_t* angAddr, QAngle* angle)
+{
 	angle->x = sp_ctof(angAddr[0]);
 	angle->y = sp_ctof(angAddr[1]);
 	angle->z = sp_ctof(angAddr[2]);
 }
 
-void VectorToPawnVector(cell_t *vecAddr, const Vector vector) {
+void VectorToPawnVector(cell_t* vecAddr, const Vector vector)
+{
 	vecAddr[0] = sp_ftoc(vector.x);
 	vecAddr[1] = sp_ftoc(vector.y);
 	vecAddr[2] = sp_ftoc(vector.z);
 }
 
-void VectorToPawnVector(cell_t *angAddr, const QAngle angle) {
+void VectorToPawnVector(cell_t* angAddr, const QAngle angle)
+{
 	angAddr[0] = sp_ftoc(angle.x);
 	angAddr[1] = sp_ftoc(angle.y);
 	angAddr[2] = sp_ftoc(angle.z);
 }
 
-void VectorToPawnVector(cell_t *vecAddr, const Vector *vector) {
+void VectorToPawnVector(cell_t* vecAddr, const Vector* vector)
+{
 	vecAddr[0] = sp_ftoc(vector->x);
 	vecAddr[1] = sp_ftoc(vector->y);
 	vecAddr[2] = sp_ftoc(vector->z);
 }
 
-void VectorToPawnVector(cell_t *angAddr, const QAngle *angle) {
+void VectorToPawnVector(cell_t* angAddr, const QAngle* angle)
+{
 	angAddr[0] = sp_ftoc(angle->x);
 	angAddr[1] = sp_ftoc(angle->y);
 	angAddr[2] = sp_ftoc(angle->z);
 }
 
-// About double arrays:
+#if SOURCEPAWN_API_VERSION >= 0x0211
+void MatrixToPawnMatrix(IPluginContext* context, cell_t* matAddr, const matrix3x4_t& mat)
+{
+	for ( int r = 0; r < 3; r++ )
+	{
+		cell_t* row = nullptr;
+		if (context->GetRuntime()->UsesDirectArrays())
+		{
+			context->LocalToPhysAddr(matAddr[r], &row);
+		}
+		else
+		{
+			row = (cell_t *)( (uint8_t *)( &matAddr[r] ) + matAddr[r] );
+		}
+
+		for ( int c = 0; c < 4; c++ )
+		{
+			row[c] = sp_ftoc( mat[r][c] );
+		}
+	}
+}
+
+void PawnMatrixToMatrix(IPluginContext* context, cell_t* matAddr, matrix3x4_t& mat)
+{
+	for ( int r = 0; r < 3; r++ )
+	{
+		cell_t* row = nullptr;
+		if (context->GetRuntime()->UsesDirectArrays())
+		{
+			context->LocalToPhysAddr(matAddr[r], &row);
+		}
+		else
+		{
+			row = (cell_t *)( (uint8_t *)( &matAddr[r] ) + matAddr[r] );
+		}
+
+		for ( int c = 0; c < 4; c++ )
+		{
+			mat[r][c] = sp_ctof( row[c] );
+		}
+	}
+}
+#else
 // https://github.com/alliedmodders/sourcemod/blob/b3672916dee4bc6ad4368e31bc6f9b2779b36d79/core/logic/smn_sorting.cpp#L43
-void MatrixToPawnMatrix( cell_t *matAddr, const matrix3x4_t &mat )
+void MatrixToPawnMatrix(IPluginContext* context, cell_t* matAddr, const matrix3x4_t& mat)
 {
 	for ( int r = 0; r < 3; r++ )
 	{
@@ -85,7 +135,7 @@ void MatrixToPawnMatrix( cell_t *matAddr, const matrix3x4_t &mat )
 	}
 }
 
-void PawnMatrixToMatrix( cell_t *matAddr, matrix3x4_t &mat )
+void PawnMatrixToMatrix(IPluginContext* context, cell_t* matAddr, matrix3x4_t& mat)
 {
 	for ( int r = 0; r < 3; r++ )
 	{
@@ -97,6 +147,7 @@ void PawnMatrixToMatrix( cell_t *matAddr, matrix3x4_t &mat )
 		}
 	}
 }
+#endif
 
 const char *HandleErrorToString(HandleError err)
 {

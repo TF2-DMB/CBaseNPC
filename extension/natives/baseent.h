@@ -280,9 +280,9 @@ CBASEENTNATIVE(SetModel)
 
 CBASEENTNATIVE(EntityToWorldTransform)
 	cell_t * pawnMat = nullptr;
-	pContext->LocalToPhysAddr( params[2], &pawnMat );
+	pContext->LocalToPhysAddr(params[2], &pawnMat);
 
-	MatrixToPawnMatrix( pawnMat, ent->EntityToWorldTransform() );
+	MatrixToPawnMatrix(pContext, pawnMat, ent->EntityToWorldTransform());
 	return 0;
 }
 
