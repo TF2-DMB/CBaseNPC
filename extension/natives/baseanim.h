@@ -49,12 +49,12 @@ CBASEANIMNATIVE(GetAttachmentMatrix)
 	int iAttachment = params[2];
 
 	cell_t * pawnMat;
-	pContext->LocalToPhysAddr( params[3], &pawnMat );
+	pContext->LocalToPhysAddr(params[3], &pawnMat);
 
-	cell_t result = anim->GetAttachment( iAttachment, matrix );
-	if ( result )
+	cell_t result = anim->GetAttachment(iAttachment, matrix);
+	if (result)
 	{
-		MatrixToPawnMatrix( pawnMat, matrix );
+		MatrixToPawnMatrix(pContext, pawnMat, matrix);
 	}
 
 	return result;
