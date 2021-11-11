@@ -1,6 +1,4 @@
 # CBaseNPC
 
-Remember that this is a private repo, anything found here is confidential and should not be shared with people that are not in this repo. Thanks!
-
-Required External Dependencies:
-- DHooks
+We're public! Check out the AM post for more information :
+https://forums.alliedmods.net/showthread.php?p=2763133
