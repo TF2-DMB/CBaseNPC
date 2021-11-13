@@ -6,12 +6,8 @@ on:
   pull_request:
     branches: [ master ]
 
-  # Allows you to run this workflow manually from the Actions tab
-  workflow_dispatch:
-
 jobs:
   build:
-
     strategy:
       matrix:
         os: [ubuntu-18.04, ubuntu-latest, windows-latest]
@@ -115,9 +111,9 @@ jobs:
           ${{ matrix.cxx }} --version
 
       - name: Build
-        working-directory: CBaseNPC/extension
+        working-directory: CBaseNPC
         run: |
           mkdir build
           cd build
-          python ../configure.py --enable-optimize --sdks=${{ join(fromJSON(env.SDKS)) }} --mms-path=${{ env.CACHE_PATH }}/metamod --hl2sdk-root=${{ env.CACHE_PATH }} --sm-path=${{ env.CACHE_PATH }}/sourcemod
+          python ../configure.py --enable-auto-versioning --enable-optimize --sdks=${{ join(fromJSON(env.SDKS)) }} --mms-path=${{ env.CACHE_PATH }}/metamod --hl2sdk-root=${{ env.CACHE_PATH }} --sm-path=${{ env.CACHE_PATH }}/sourcemod
           ambuild

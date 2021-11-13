@@ -55,17 +55,6 @@ methodmap SurroundingAreasCollector < Handle
 	public native int Count();
 };
 
-methodmap TSurroundingAreasCollector < Handle
-{
-	public native CTNavArea Get(int index);
-	public native int Count();
-};
-
-typeset CollectSurroundingAreasCallback
-{
-	function void (TSurroundingAreasCollector collector, any data);
-};
-
 /**
  * The global interface to the Navigation Mesh.
  */
@@ -87,9 +76,7 @@ methodmap CNavMesh
 	 *                                when you are done with it.
  	 */
 	public native SurroundingAreasCollector CollectSurroundingAreas(CNavArea startArea, float travelDistanceLimit = 1500.0, float maxStepUpLimit = 18.0, float maxDropDownLimit = 100.0);
-
-	public native void TCollectSurroundingAreas(CNavArea startArea, float travelDistanceLimit = 1500.0, float maxStepUpLimit = 18.0, float maxDropDownLimit = 100.0, CollectSurroundingAreasCallback callback, any data = 0);
-
+	
 	/**
 	 * Finds the nearest CNavArea to the given position.
 	 *
@@ -260,13 +247,6 @@ methodmap CNavArea
 	 * @param alternate
 	 */
 	public native void ComputeNormal(float vecNormal[3], bool alternate = false);
-};
-
-methodmap CTNavArea
-{
-	public native NavTraverseType GetParentHow();
-	public native float GetCostSoFar();
-	public native CNavArea GetRealNavArea();
 };
 
 #endif

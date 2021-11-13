@@ -8,13 +8,15 @@ includes = builder.AddFolder('includes')
 
 argv = [
   sys.executable,
-  os.path.join(builder.sourcePath, 'tools', 'buildbot', 'generate_headers.py'),
+  # We could use Extension.sm_root and retrieve their generate_headers, but it doesn't generate
+  # a simple file containing just the version number
+  os.path.join(builder.sourcePath, 'tools', 'generate_headers.py'),
   os.path.join(builder.sourcePath),
   os.path.join(builder.buildPath, 'includes'),
 ]
 outputs = [
   os.path.join(builder.buildFolder, 'includes', 'sourcemod_version_auto.h'),
-  os.path.join(builder.buildFolder, 'includes', 'version_auto.inc'),
+  os.path.join(builder.buildFolder, 'includes', 'git_action_release'),
 ]
 
 with open(os.path.join(builder.sourcePath, '.git', 'HEAD')) as fp:

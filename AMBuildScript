@@ -118,11 +118,30 @@ class ExtensionConfig(object):
     if not self.all_targets:
         raise Exception('No suitable C/C++ compiler was found.')
 
+  def use_auto_versioning(self):
+    if builder.backend != 'amb2':
+      return False
+    return not getattr(builder.options, 'disable_auto_versioning', False)
+
   @property
   def tag(self):
     if builder.options.debug == '1':
       return 'Debug'
     return 'Release'
+
+  def detectProductVersion(self):
+    builder.AddConfigureFile('product.version')
+
+    # For OS X dylib versioning
+    import re
+    with open(os.path.join(builder.sourcePath, 'product.version'), 'r') as fp:
+      productContents = fp.read()
+    m = re.match('(\d+)\.(\d+)\.(\d+).*', productContents)
+    if m == None:
+      self.productVersion = '1.0.0'
+    else:
+      major, minor, release = m.groups()
+      self.productVersion = '{0}.{1}.{2}'.format(major, minor, release)
 
   def detectSDKs(self):
     sdk_list = builder.options.sdks.split(',')
@@ -196,7 +215,7 @@ class ExtensionConfig(object):
       self.configure_gcc(cxx)
     elif cxx.family == 'msvc':
       self.configure_msvc(cxx)
-
+    
     # Optimizaiton
     if builder.options.opt == '1':
       cxx.defines += ['NDEBUG']
@@ -212,6 +231,13 @@ class ExtensionConfig(object):
       self.configure_mac(cxx)
     elif cxx.target.platform == 'windows':
       self.configure_windows(cxx)
+
+    if self.use_auto_versioning():
+      cxx.defines += ['GIT_ACTION_BUILD']
+      cxx.includes += [
+        os.path.join(builder.buildPath, 'includes'),
+        os.path.join(builder.sourcePath, 'versionlib'),
+      ]
 
     cxx.includes += [
       os.path.join(self.sm_root, 'public'),
@@ -353,7 +379,7 @@ class ExtensionConfig(object):
 
   def configure_windows(self, cxx):
     cxx.defines += ['WIN32', '_WINDOWS']
-	
+
   def ConfigureForExtension(self, context, compiler):
     compiler.cxxincludes += [
       os.path.join(context.currentSourcePath),
@@ -507,6 +533,25 @@ class ExtensionConfig(object):
 
     return binary
 
+  def AddVersioning(self, binary):
+    if binary.compiler.target.platform == 'windows':
+      binary.sources += ['version.rc']
+      binary.compiler.rcdefines += [
+        'BINARY_NAME="{0}"'.format(binary.outputFile),
+        'RC_COMPILE',
+      ]
+      if self.use_auto_versioning():
+        binary.compiler.rcdefines += ['GIT_ACTION_BUILD']
+    elif binary.compiler.target.platform == 'mac':
+      if binary.type == 'library':
+        binary.compiler.postlink += [
+          '-compatibility_version', '1.0.0',
+          '-current_version', self.productVersion
+        ]
+    if self.use_auto_versioning():
+      binary.compiler.sourcedeps += Extension.generated_headers
+    return binary
+
   def HL2Library(self, context, compiler, name, sdk):
     binary = self.Library(context, compiler, name)
     self.ConfigureForExtension(context, binary.compiler)
@@ -515,28 +560,33 @@ class ExtensionConfig(object):
   def HL2Config(self, project, context, compiler, name, sdk):
     binary = project.Configure(compiler, name,
                                '{0} - {1} {2}'.format(self.tag, sdk.name, compiler.target.arch))
+    self.AddVersioning(binary)
     return self.ConfigureForHL2(context, binary, sdk)
 
   def HL2ExtConfig(self, project, context, compiler, name, sdk):
     binary = project.Configure(compiler, name,
                                '{0} - {1} {2}'.format(self.tag, sdk.name, compiler.target.arch))
+    self.AddVersioning(binary)
     self.ConfigureForHL2(context, binary, sdk)
     self.ConfigureForExtension(context, binary.compiler)
     return binary
 
 Extension = ExtensionConfig()
+Extension.detectProductVersion()
 Extension.detectSDKs()
 Extension.configure()
+
+if Extension.use_auto_versioning():
+  Extension.generated_headers = builder.Build(
+    'tools/Versioning',
+    { 'Extension': Extension }
+  )
 
 builder.targets = builder.CloneableList(Extension.all_targets)
 # Add additional buildscripts here
 BuildScripts = [
-  'AMBuilder',
+  'extension/AMBuilder',
+  'PackageScript'
 ]
-
-if builder.backend == 'amb2':
-  BuildScripts += [
-    'PackageScript',
-  ]
 
 builder.Build(BuildScripts, {'Extension': Extension})

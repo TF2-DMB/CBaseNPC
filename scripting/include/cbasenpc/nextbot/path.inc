@@ -372,10 +372,6 @@ methodmap Path
 	 * Invalids and destroys the Path from memory.
 	 */
 	public native void Destroy();
-	
-	// Threaded
-	public native bool ComputeToPosT(INextBot bot, float vecPos[3], float maxPathLength = 0.0, bool includeGoalIfPathFails = true, PathComputeCallback callback, any data = 0);
-	public native bool ComputeToTargetT(INextBot bot, int entity, float maxPathLength = 0.0, bool includeGoalIfPathFails = true, PathComputeCallback callback, any data = 0);
 };
 
 methodmap PathFollower < Path
