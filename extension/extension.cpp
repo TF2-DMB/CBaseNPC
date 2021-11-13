@@ -1,3 +1,5 @@
+#include <memory>
+
 #include "extension.h"
 #include "CDetour/detours.h"
 #include "helpers.h"
@@ -26,7 +28,6 @@ IStaticPropMgrServer* staticpropmgr = nullptr;
 IBaseNPC_Tools* g_pBaseNPCTools = new BaseNPC_Tools_API;
 
 DEFINEHANDLEOBJ(SurroundingAreasCollector, CUtlVector< CNavArea* >);
-DEFINEHANDLEOBJ(TSurroundingAreasCollector, CUtlVector< CTNavArea >);
 
 ConVar* g_cvDeveloper = nullptr;
 extern ConVar* NextBotDebugHistory;
@@ -40,17 +41,9 @@ SMEXT_LINK(&g_CBaseNPCExt);
 
 IForward *g_pForwardEventKilled = nullptr;
 
-CDetour* g_pNavMeshAddArea = nullptr;
-
 bool (CTraceFilterSimpleHack:: *CTraceFilterSimpleHack::func_ShouldHitEntity)(IHandleEntity *pHandleEntity, int contentsMask) = nullptr;
 
 CUtlMap<int32_t, int32_t> g_EntitiesHooks;
-
-DETOUR_DECL_MEMBER1(CNavMesh_AddNavArea, void, CNavArea*, area)
-{
-	CTNavMesh::Add(area);
-	DETOUR_MEMBER_CALL(CNavMesh_AddNavArea)(area);
-}
 
 bool CBaseNPCExt::SDK_OnLoad(char *error, size_t maxlength, bool late)
 {
@@ -88,11 +81,6 @@ bool CBaseNPCExt::SDK_OnLoad(char *error, size_t maxlength, bool late)
 		return false;
 	}
 
-	g_pNavMeshAddArea = DETOUR_CREATE_MEMBER(CNavMesh_AddNavArea, "CNavMesh::AddNavArea");
-	if (g_pNavMeshAddArea != nullptr)
-	{
-		g_pNavMeshAddArea->EnableDetour();
-	}
 	g_pForwardEventKilled = forwards->CreateForward("CBaseCombatCharacter_EventKilled", ET_Event, 9, nullptr, Param_Cell, Param_CellByRef, Param_CellByRef, Param_FloatByRef, Param_CellByRef, Param_CellByRef, Param_Array, Param_Array, Param_Cell);
 	g_pBaseNPCFactory = new CBaseNPCFactory;
 	
@@ -101,7 +89,6 @@ bool CBaseNPCExt::SDK_OnLoad(char *error, size_t maxlength, bool late)
 	SH_MANUALHOOK_RECONFIGURE(MEvent_Killed, iOffset, 0, 0);
 	
 	CREATEHANDLETYPE(SurroundingAreasCollector);
-	CREATEHANDLETYPE(TSurroundingAreasCollector);
 
 	sharesys->AddDependency(myself, "bintools.ext", true, true);
 	sharesys->AddDependency(myself, "sdktools.ext", true, true);
@@ -110,9 +97,7 @@ bool CBaseNPCExt::SDK_OnLoad(char *error, size_t maxlength, bool late)
 	sharesys->RegisterLibrary(myself, "cbasenpc");
 	sharesys->AddInterface(myself, g_pBaseNPCTools);
 
-	CTNavMesh::Init();
 	SetDefLessFunc(g_EntitiesHooks);
-
 	return true;
 }
 
@@ -153,16 +138,12 @@ bool CBaseNPCExt::RegisterConCommandBase(ConCommandBase *pVar)
 
 void CBaseNPCExt::OnCoreMapStart(edict_t *pEdictList, int edictCount, int clientMax)
 {
-	CTNavMesh::CleanUp();
-	CTNavMesh::RefreshHooks();
 }
 
 void CBaseNPCExt::OnCoreMapEnd()
 {
 	g_pBaseNPCPluginActionFactories->OnCoreMapEnd();
 	g_pPluginEntityFactories->OnCoreMapEnd();
-
-	CTNavMesh::CleanUp();
 }
 
 void CBaseNPCExt::OnEntityCreated(CBaseEntity* pEntity, const char* classname)
@@ -225,7 +206,6 @@ void CBaseNPCExt::SDK_OnAllLoaded()
 	} 
 
 	g_pEntityList = (CBaseEntityList *)gamehelpers->GetGlobalEntityList();
-	CTNavMesh::RefreshHooks();
 
 	g_pPluginEntityFactories->SDK_OnAllLoaded();
 
@@ -274,11 +254,6 @@ void CBaseNPCExt::SDK_OnUnload()
 {
 	gameconfs->CloseGameConfigFile(g_pGameConf);
 	forwards->ReleaseForward(g_pForwardEventKilled);
-
-	if (g_pNavMeshAddArea != nullptr)
-	{
-		g_pNavMeshAddArea->Destroy();
-	}
 
 	g_pBaseNPCPluginActionFactories->SDK_OnUnload();
 	g_pPluginEntityFactories->SDK_OnUnload();

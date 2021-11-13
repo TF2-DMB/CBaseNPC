@@ -4,20 +4,22 @@ from ambuild2 import run
 
 # Simple extensions do not need to modify this file.
 
-builder = run.PrepareBuild(sourcePath = sys.path[0])
+parser = run.BuildParser(sourcePath = sys.path[0], api='2.2')
 
-builder.options.add_option('--hl2sdk-root', type=str, dest='hl2sdk_root', default=None,
+parser.options.add_argument('--hl2sdk-root', type=str, dest='hl2sdk_root', default=None,
 		                   help='Root search folder for HL2SDKs')
-builder.options.add_option('--mms-path', type=str, dest='mms_path', default=None,
+parser.options.add_argument('--mms-path', type=str, dest='mms_path', default=None,
                        help='Path to Metamod:Source')
-builder.options.add_option('--sm-path', type=str, dest='sm_path', default=None,
+parser.options.add_argument('--sm-path', type=str, dest='sm_path', default=None,
                        help='Path to SourceMod')
-builder.options.add_option('--enable-debug', action='store_const', const='1', dest='debug',
+parser.options.add_argument('--enable-debug', action='store_const', const='1', dest='debug',
                        help='Enable debugging symbols')
-builder.options.add_option('--enable-optimize', action='store_const', const='1', dest='opt',
+parser.options.add_argument('--enable-optimize', action='store_const', const='1', dest='opt',
                        help='Enable optimization')
-builder.options.add_option('-s', '--sdks', default='all', dest='sdks',
+parser.options.add_argument('-s', '--sdks', default='all', dest='sdks',
                        help='Build against specified SDKs; valid args are "all", "present", or '
                             'comma-delimited list of engine names (default: %default)')
+parser.options.add_argument('--targets', type=str, dest='targets', default=None,
+		                      help="Override the target architecture (use commas to separate multiple targets).")
 
-builder.Configure()
+parser.Configure()

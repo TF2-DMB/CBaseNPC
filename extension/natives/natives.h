@@ -573,8 +573,6 @@ const sp_nativeinfo_t g_NativesInfo[] =
 	NATIVENAME(Path, ComputeToPos)
 	NATIVENAME(Path, ComputeToTarget)
 	NATIVENAME(Path, Destroy)
-	NATIVENAME(Path, ComputeToPosT)
-	NATIVENAME(Path, ComputeToTargetT)
 
 	NATIVENAME(PathFollower, PathFollower)
 	NATIVENAME(PathFollower, Update)
@@ -626,17 +624,10 @@ const sp_nativeinfo_t g_NativesInfo[] =
 #endif
 	
 	NATIVENAME(CNavMesh, CollectSurroundingAreas)
-	NATIVENAME(CNavMesh, TCollectSurroundingAreas)
 	NATIVENAME(CNavMesh, GetNearestNavArea)
 	
 	NATIVENAME(SurroundingAreasCollector, Get)
 	NATIVENAME(SurroundingAreasCollector, Count)
-	NATIVENAME(TSurroundingAreasCollector, Get)
-	NATIVENAME(TSurroundingAreasCollector, Count)
-
-	NATIVENAME(CTNavArea, GetParentHow)
-	NATIVENAME(CTNavArea, GetCostSoFar)
-	NATIVENAME(CTNavArea, GetRealNavArea)
 	
 	{ "CEntityFactory.CEntityFactory", &CPluginEntityFactory_CPluginEntityFactory },
 	NATIVENAMEEX(CEntityFactory, CPluginEntityFactory, DeriveFromBaseEntity)
