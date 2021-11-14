@@ -29,9 +29,14 @@
 /* Basic information exposed publicly */
 #define SMEXT_CONF_NAME			"CBaseNPC"
 #define SMEXT_CONF_DESCRIPTION	"Primarily exposes valve's NextBot framework. But also various functions from public SDK."
-#define SMEXT_CONF_VERSION		"1.5"
-#define SMEXT_CONF_AUTHOR		"Kenzzer & Arthurdead & Pelipoika"
-#define SMEXT_CONF_URL			""
+#ifndef GIT_ACTION_BUILD
+#define SMEXT_CONF_VERSION		"Manual Build"
+#else
+#include "sourcemod_version_auto.h"
+#define SMEXT_CONF_VERSION		SM_VERSION_STRING
+#endif
+#define SMEXT_CONF_AUTHOR		"Kenzzer & KitRifty & Arthurdead & Pelipoika"
+#define SMEXT_CONF_URL			"https://github.com/TF2-DMB/CBaseNPC"
 #define SMEXT_CONF_LOGTAG		"CBASENPC"
 #define SMEXT_CONF_LICENSE		"GPL"
 #define SMEXT_CONF_DATESTRING	__DATE__

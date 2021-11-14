@@ -1,6 +1,7 @@
 #ifndef CBASENPC_INTERNAL_H_SHARED
 #define CBASENPC_INTERNAL_H_SHARED
 
+#include <vector>
 #include <utlvector.h>
 
 #include "shared/cbasenpc.h"
@@ -129,6 +130,7 @@ private:
 
 public:
 	CBaseNPCFactory();
+	virtual ~CBaseNPCFactory();
 	virtual size_t GetEntitySize() override final;
 	virtual void Create_Extra(CBaseEntityHack* ent) override final;
 	virtual void Create_PostConstructor(CBaseEntityHack* ent) override final;

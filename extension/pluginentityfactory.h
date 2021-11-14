@@ -1,6 +1,8 @@
 #ifndef CPLUGINENTITYFACTORY_H
 #define CPLUGINENTITYFACTORY_H
 
+#include <vector>
+
 #include <itoolentity.h>
 #include <tier0/platform.h>
 #include <IEngineTrace.h>

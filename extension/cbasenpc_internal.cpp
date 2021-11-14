@@ -71,6 +71,10 @@ CBaseNPCFactory::CBaseNPCFactory()
 	m_pInitialActionFactory = nullptr;
 }
 
+CBaseNPCFactory::~CBaseNPCFactory()
+{
+}
+
 void CBaseNPCFactory::Create_Extra(CBaseEntityHack* ent)
 {
 	// Replace the vtable with ours

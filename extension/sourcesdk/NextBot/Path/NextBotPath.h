@@ -10,7 +10,6 @@
 
 #include "sourcesdk/tracefilter_simple.h"
 #include "sourcesdk/nav_mesh.h"
-#include "sourcesdk/nav_threaded.h"
 #include "sourcesdk/basecombatcharacter.h"
 #include "NextBotInterface.h"
 #include "NextBotIntentionInterface.h"
@@ -266,7 +265,6 @@ public:
 
 		return pathResult;
 	}
-	bool ComputeThreaded(INextBot *bot, CBaseCombatCharacterHack *subject, float maxPathLength = 0.0f, bool includeGoalIfPathFails = true);
 
 
 	//-----------------------------------------------------------------------------------------------------------------
@@ -390,8 +388,6 @@ public:
 
 		return pathResult;
 	}
-	bool ComputeT(CTNavMesh::NavPathThreadedData* pData);
-	bool ComputePathDetailsT(CTNavMesh::NavPathThreadedData* pData);
 
 	//-----------------------------------------------------------------------------------------------------------------
 	/**

@@ -21,7 +21,7 @@ BEGIN_DATADESC_NO_BASE(CServerNetworkProperty)
 //	DEFINE_FIELD( m_pPev, FIELD_CLASSPTR ),
 //	DEFINE_FIELD( m_PVSInfo, PVSInfo_t ),
 //	DEFINE_FIELD( m_pServerClass, FIELD_CLASSPTR ),
-DEFINE_GLOBAL_FIELD(m_hParent, FIELD_EHANDLE),
+//  DEFINE_GLOBAL_FIELD(m_hParent, FIELD_EHANDLE),
 //	DEFINE_FIELD( m_TimerEvent, CEventRegister ),
 //	DEFINE_FIELD( m_bPendingStateChange, FIELD_BOOLEAN ),
 END_DATADESC()
