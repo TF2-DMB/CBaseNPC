@@ -62,7 +62,7 @@ methodmap CBaseNPC < CExtNPC
 	
 	// Interfaces
 	public native INextBot GetBot();
-	public native NextBotGroundLocomotion GetLocomotion();
+	public native CBaseNPC_Locomotion GetLocomotion();
 	public native IBody GetBody();
 	public native IVision GetVision();
 	public native IIntention GetIntention();
@@ -130,6 +130,62 @@ methodmap CBaseNPC < CExtNPC
 
 native INextBot CBaseNPC_GetNextBotOfEntity(int iEntity);
 native void CBaseNPC_HookEventKilled(int iEntity);
+
+enum LocomotionCallbackType
+{
+	LocomotionCallback_IsAbleToJumpAcrossGaps = 0,
+	LocomotionCallback_IsJumpingAcrossGap,
+	LocomotionCallback_JumpAcrossGap,
+	LocomotionCallback_IsAbleToClimb,
+	LocomotionCallback_IsClimbingUpToLedge,
+	LocomotionCallback_ClimbUpToLedge,
+	LocomotionCallback_ShouldCollideWith,
+	LocomotionCallback_IsEntityTraversable,
+	LocomotionCallback_Max
+};
+
+typeset LocomotionCallback
+{
+	// IsAbleToJumpAcrossGaps
+	// IsJumpingAcrossGap
+	// IsAbleToClimb
+	// IsClimbingUpToLedge
+	function bool (CBaseNPC_Locomotion loco);
+
+	// JumpAcrossGap
+	function void (CBaseNPC_Locomotion loco, const float landingGoal[3], const float landingForward[3]);
+
+	// ClimbUpToLedge
+	function bool (CBaseNPC_Locomotion loco, const float vecGoal[3], const float vecForward[3], int entity);
+
+	// ShouldCollideWith
+	function bool (CBaseNPC_Locomotion loco, int other);
+
+	// IsEntityTraversable
+	function bool (CBaseNPC_Locomotion loco, int other, TraverseWhenType when);
+};
+
+methodmap CBaseNPC_Locomotion < NextBotGroundLocomotion
+{
+	/**
+	 * Sets a callback function on the locomotion.
+	 * 
+	 * @param callbackType     Type of callback
+	 * @param callback         Callback function
+	 * @error                  Locomotion is invalid
+	 */
+	public native void SetCallback(LocomotionCallbackType callbackType, LocomotionCallback callback);
+
+	/**
+	 * Calls the base function of the current callback. This can only be used
+	 * within a callback function.
+	 * 
+	 * @param any     Function arguments
+	 * @return        Function return
+	 * @error         Locomotion is invalid or used outside of a callback function
+	 */
+	public native any CallBaseFunction(any ...);
+};
 
 enum CNPCs
 {

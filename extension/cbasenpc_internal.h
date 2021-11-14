@@ -3,10 +3,13 @@
 
 #include <vector>
 #include <utlvector.h>
+#include <map>
+#include <stack>
 
 #include "shared/cbasenpc.h"
 #include "extension.h"
 #include "sourcesdk/customfactory.h"
+#include "cbasenpc_locomotion.h"
 
 class CBaseNPC_Entity;
 
@@ -31,45 +34,6 @@ public:
 
 	Vector m_vecBodyMins;
 	Vector m_vecBodyMaxs;
-};
-
-class CBaseNPC_Locomotion : public NextBotGroundLocomotion
-{
-public:
-	static CBaseNPC_Locomotion* New(INextBot* bot);
-	void Destroy();
-	void Init();
-
-	void Hook_Update();
-	bool Hook_IsAbleToJumpAcrossGaps() const;
-	bool Hook_IsAbleToClimb() const;
-	bool Hook_ClimbUpToLedge(const Vector& vecGoal, const Vector& vecForward, const CBaseEntity* pEntity);
-	float Hook_GetStepHeight() const;
-	float Hook_GetMaxJumpHeight() const;
-	float Hook_GetDeathDropHeight() const;
-	float Hook_GetWalkSpeed() const;
-	float Hook_GetRunSpeed() const;
-	float Hook_GetMaxAcceleration() const;
-	float Hook_GetGravity() const;
-	bool Hook_ShouldCollideWith(const CBaseEntity* pCollider) const;
-	bool Hook_IsEntityTraversable(CBaseEntity* pEntity, ILocomotion::TraverseWhenType when) const;
-	float Hook_GetFrictionForward() const;
-	float Hook_GetFrictionSideways() const;
-	float Hook_GetMaxYawRate() const;
-
-private:
-	std::vector<int> *m_pHookIds;
-public:
-	float m_flJumpHeight;
-	float m_flStepSize;
-	float m_flGravity;
-	float m_flAcceleration;
-	float m_flDeathDropHeight;
-	float m_flWalkSpeed;
-	float m_flRunSpeed;
-	float m_flFrictionForward;
-	float m_flFrictionSideways;
-	float m_flMaxYawRate;
 };
 
 class NextBotCombatCharacter;

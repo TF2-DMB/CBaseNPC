@@ -62,10 +62,13 @@ bool CBaseNPCExt::SDK_OnLoad(char *error, size_t maxlength, bool late)
 		|| !CNavMesh::Init(g_pGameConf, error, maxlength)
 		|| !CBaseCombatCharacterHack::Init(g_pGameConf, error, maxlength)
 		|| !CTraceFilterSimpleHack::Init(g_pGameConf, error, maxlength)
+		|| !INextBotComponent::Init(g_pGameConf, error, maxlength)
+		|| !ILocomotion::Init(g_pGameConf, error, maxlength)
 		|| !NextBotCombatCharacter::Init(g_pGameConf, error, maxlength)
 		|| !NextBotGroundLocomotion::Init(g_pGameConf, error, maxlength)
 		|| !CTFGameRules::Init(g_pGameConf, error, maxlength)
 		|| !CBaseEntityOutputHack::Init(g_pGameConf, error, maxlength)
+		|| !CBaseNPC_Locomotion::Init(g_pGameConf, error, maxlength)
 		)
 	{
 		return false;
@@ -164,6 +167,7 @@ void CBaseNPCExt::OnEntityDestroyed(CBaseEntity* pEntity)
 	{
 		int iHookID = g_EntitiesHooks.Element(iIndex);
 		SH_REMOVE_HOOK_ID(iHookID);
+		g_EntitiesHooks.RemoveAt(iIndex);
 	}
 }
 
@@ -261,8 +265,6 @@ void CBaseNPCExt::SDK_OnUnload()
 	delete g_pBaseNPCFactory;
 	g_pBaseNPCFactory = nullptr;
 	
-	gameconfs->CloseGameConfigFile(g_pGameConf);
-
 	if (g_pSDKHooks)
 	{
 		g_pSDKHooks->RemoveEntityListener(this);

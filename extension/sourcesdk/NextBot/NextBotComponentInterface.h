@@ -1,6 +1,7 @@
 #ifndef _NEXT_BOT_COMPONENT_INTERFACE_H_
 #define _NEXT_BOT_COMPONENT_INTERFACE_H_
 
+#include "helpers.h"
 #include "NextBotEventResponderInterface.h"
 
 class INextBot;
@@ -25,6 +26,8 @@ public:
 class INextBotComponent : public INextBotEventResponder
 {
 public:
+	static bool Init(SourceMod::IGameConfig* config, char* error, size_t maxlength);
+
 	INextBotComponent(INextBot *bot);
 	virtual ~INextBotComponent() { };
 
@@ -44,6 +47,9 @@ private:
 	
 	INextBot *m_bot;
 	INextBotComponent *m_nextComponent;
+
+public:
+	static VCall<void> vUpdate;
 };
 
 inline bool INextBotComponent::ComputeUpdateInterval(void) 

@@ -165,6 +165,9 @@ protected:
 };
 
 template<typename ReturnType, typename... Args>
+class MCall;
+
+template<typename ReturnType, typename... Args>
 class VCall : public CCall<ReturnType, Args...>
 {
 public:
@@ -183,7 +186,7 @@ public:
 	}
 
 	template<typename Function>
-	int Init(Function f)
+	void Init(Function f)
 	{
 		SourceHook::MemFuncInfo mfi = {true, -1, 0, 0};
 		SourceHook::GetFuncInfo(f, mfi);
@@ -219,6 +222,14 @@ public:
 		void* oldFunc = vtable[offset];
 		vtable[offset] = func;
 		return oldFunc;
+	}
+
+	template<typename hackClass>
+	void* Replace(void** vtable, ReturnType (hackClass::*infecfunc)(Args...), MCall<ReturnType, Args...>& pOriginalCall)
+	{
+		void* pOldFunc = Replace(vtable, infecfunc);
+		pOriginalCall.Init(pOldFunc);
+		return pOldFunc;
 	}
 
 	ReturnType operator()(void* thisPtr, Args... args)

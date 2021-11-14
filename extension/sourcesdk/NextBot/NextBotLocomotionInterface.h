@@ -10,6 +10,8 @@ class CNavLadder;
 class ILocomotion : public INextBotComponent
 {
 public:
+	static bool Init(SourceMod::IGameConfig* config, char* error, size_t maxlength);
+
 	virtual ~ILocomotion() {};
 
 	virtual void Reset(void) = 0;
@@ -107,6 +109,22 @@ protected:
 	CountdownTimer m_stillStuckTimer;
 	Vector m_stuckPos;
 	IntervalTimer m_moveRequestTimer;
+
+public:
+	static VCall<bool, const Vector&, const Vector&, const CBaseEntity*> vClimbUpToLedge;
+	static VCall<void, const Vector&, const Vector&> vJumpAcrossGap;
+	static VCall<bool> vIsClimbingUpToLedge;
+	static VCall<bool> vIsJumpingAcrossGap;
+	static VCall<bool> vIsAbleToJumpAcrossGaps;
+	static VCall<bool> vIsAbleToClimb;
+	static VCall<float> vGetStepHeight;
+	static VCall<float> vGetMaxJumpHeight;
+	static VCall<float> vGetDeathDropHeight;
+	static VCall<float> vGetRunSpeed;
+	static VCall<float> vGetWalkSpeed;
+	static VCall<float> vGetMaxAcceleration;
+	static VCall<bool, CBaseEntity*, TraverseWhenType> vIsEntityTraversable;
+	static VCall<bool, const CBaseEntity*> vShouldCollideWith;
 };
 
 inline void ILocomotion::TraceHull(const Vector& start, const Vector& end, const Vector& mins, const Vector& maxs, unsigned int fMask, ITraceFilter* pFilter, trace_t* pTrace) const

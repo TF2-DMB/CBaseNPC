@@ -92,6 +92,11 @@
 				"windows"	"331"
 				"linux"		"331"
 			}
+			"NextBotGroundLocomotion::vtable_entries"
+			{
+				"linux"		"116"
+				"windows"	"116"
+			}
 		}
 		"Signatures"
 		{

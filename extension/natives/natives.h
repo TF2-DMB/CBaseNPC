@@ -320,10 +320,12 @@ const sp_nativeinfo_t g_NativesInfo[] =
 	NATIVENAME(CBaseNPC, GetLastKnownArea)
 	NATIVENAME(CBaseNPC, Spawn)
 	NATIVENAME(CBaseNPC, Teleport)
-	NATIVENAME(CBaseNPC, SetCollisionBounds)
 	NATIVENAME(CBaseNPC, GetLastKnownArea)
 	NATIVENAME(CBaseNPC, GetVectors)
 	NATIVENAME(CBaseNPC, SetModel)
+
+	NATIVENAME(CBaseNPC_Locomotion, SetCallback)
+	NATIVENAME(CBaseNPC_Locomotion, CallBaseFunction)
 
 	NATIVENAME(CNPCs, IsValidNPC)
 	NATIVENAME(CNPCs, FindNPCByEntIndex)
