@@ -23,5 +23,4 @@ parser.options.add_argument('-s', '--sdks', default='all', dest='sdks',
                             'comma-delimited list of engine names (default: %default)')
 parser.options.add_argument('--targets', type=str, dest='targets', default=None,
 		                      help="Override the target architecture (use commas to separate multiple targets).")
-
 parser.Configure()
