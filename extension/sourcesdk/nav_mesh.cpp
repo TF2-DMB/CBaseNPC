@@ -75,6 +75,12 @@ bool CNavMesh::Init(SourceMod::IGameConfig* config, char* error, size_t maxlengt
 	return true;
 }
 
+void CNavMesh::OnCoreMapEnd()
+{
+	TheHidingSpots.RemoveAll();
+	TheNavAreas.RemoveAll();
+}
+
 void CNavMesh::SDK_OnUnload()
 {
 	if (g_pNavMeshAddArea != nullptr)

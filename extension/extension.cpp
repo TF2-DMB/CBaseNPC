@@ -147,9 +147,7 @@ void CBaseNPCExt::OnCoreMapEnd()
 {
 	g_pBaseNPCPluginActionFactories->OnCoreMapEnd();
 	g_pPluginEntityFactories->OnCoreMapEnd();
-
-	TheHidingSpots.RemoveAll();
-	TheNavAreas.RemoveAll();
+	CNavMesh::OnCoreMapEnd();
 }
 
 void CBaseNPCExt::OnEntityCreated(CBaseEntity* pEntity, const char* classname)

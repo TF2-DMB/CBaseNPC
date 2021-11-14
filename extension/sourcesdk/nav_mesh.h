@@ -4,7 +4,7 @@
 #include "sourcesdk/nav_area.h"
 #include "sourcesdk/baseentity.h"
 #include "sourcesdk/basecombatcharacter.h"
-#include <igameevents.h>
+#include "sourcesdk/GameEventListener.h"
 
 #pragma once
 
@@ -24,22 +24,11 @@ public:
 
 extern CNavMesh *TheNavMesh;
 
-class CGameEventListener : public IGameEventListener2
-{
-public:
-	CGameEventListener() : m_bRegisteredForEvents(false)
-	{
-	}
-
-private:
-	// Have we registered for any events?
-	bool m_bRegisteredForEvents;
-};
-
 class CNavMesh : public CGameEventListener
 {
 public:
 	static bool Init(SourceMod::IGameConfig* config, char* error, size_t maxlength);
+	static void OnCoreMapEnd();
 	static void SDK_OnUnload();
 
 	bool IsLoaded( void ) const		{ return m_isLoaded; }
