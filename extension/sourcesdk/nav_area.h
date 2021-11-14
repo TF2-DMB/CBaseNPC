@@ -70,7 +70,55 @@ union NavLadderConnect
 typedef CUtlVectorUltraConservative<NavLadderConnect, CNavVectorAllocator> NavLadderConnectVector;
 
 
-class HidingSpot;
+//--------------------------------------------------------------------------------------------------------------
+/**
+ * A HidingSpot is a good place for a bot to crouch and wait for enemies
+ */
+class HidingSpot
+{
+public:
+	virtual ~HidingSpot() = 0;
+
+	enum 
+	{ 
+		IN_COVER			= 0x01,							// in a corner with good hard cover nearby
+		GOOD_SNIPER_SPOT	= 0x02,							// had at least one decent sniping corridor
+		IDEAL_SNIPER_SPOT	= 0x04,							// can see either very far, or a large area, or both
+		EXPOSED				= 0x08							// spot in the open, usually on a ledge or cliff
+	};
+
+	bool HasGoodCover( void ) const			{ return (m_flags & IN_COVER) ? true : false; }	// return true if hiding spot in in cover
+	bool IsGoodSniperSpot( void ) const		{ return (m_flags & GOOD_SNIPER_SPOT) ? true : false; }
+	bool IsIdealSniperSpot( void ) const	{ return (m_flags & IDEAL_SNIPER_SPOT) ? true : false; }
+	bool IsExposed( void ) const			{ return (m_flags & EXPOSED) ? true : false; }	
+
+	int GetFlags( void ) const		{ return m_flags; }
+
+	const Vector &GetPosition( void ) const		{ return m_pos; }	// get the position of the hiding spot
+	unsigned int GetID( void ) const			{ return m_id; }
+	const CNavArea *GetArea( void ) const		{ return m_area; }	// return nav area this hiding spot is within
+
+public:
+	void SetFlags( int flags )				{ m_flags |= flags; }	// FOR INTERNAL USE ONLY
+	void SetPosition( const Vector &pos )	{ m_pos = pos; }		// FOR INTERNAL USE ONLY
+
+private:
+	friend class CNavMesh;
+
+	HidingSpot( void );										// must use factory to create
+
+	Vector m_pos;											// world coordinates of the spot
+	unsigned int m_id;										// this spot's unique ID
+	unsigned int m_marker;									// this spot's unique marker
+	CNavArea *m_area;										// the nav area containing this hiding spot
+
+	unsigned char m_flags;									// bit flags
+};
+
+typedef CUtlVectorUltraConservative< HidingSpot * > HidingSpotVector;
+extern HidingSpotVector TheHidingSpots;
+
+HidingSpot *GetHidingSpotByID( unsigned int id );
 
 //--------------------------------------------------------------------------------------------------------------
 /**
@@ -199,6 +247,7 @@ class CNavArea : protected CNavAreaCriticalData
 		int GetAttributes( void ) const			{ return m_attributeFlags; }
 		bool HasAttributes( int bits ) const	{ return ( m_attributeFlags & bits ) ? true : false; }
 		
+		Vector GetCorner( NavCornerType corner ) const;
 		void ComputeNormal( Vector *normal, bool alternate = false ) const;
 		float GetSizeX( void ) const			{ return m_seCorner.x - m_nwCorner.x; }
 		float GetSizeY( void ) const			{ return m_seCorner.y - m_nwCorner.y; }
@@ -221,6 +270,14 @@ class CNavArea : protected CNavAreaCriticalData
 		const NavConnectVector *GetAdjacentAreas( NavDirType dir ) const	{ return &m_connect[dir]; }
 		const NavLadderConnectVector *GetLadders( CNavLadder::LadderDirectionType dir ) const	{ return &m_ladder[dir]; }
 		
+		const NavConnectVector *GetIncomingConnections( NavDirType dir ) const	{ return &m_incomingConnect[dir]; }	// get areas connected TO this area by a ONE-WAY link (ie: we have no connection back to them)
+
+		float GetLightIntensity( const Vector &pos ) const;			// returns a 0..1 light intensity for the given point
+		float GetLightIntensity( float x, float y ) const;			// returns a 0..1 light intensity for the given point
+		float GetLightIntensity( void ) const;						// returns a 0..1 light intensity averaged over the whole area
+
+		const HidingSpotVector *GetHidingSpots( void ) const	{ return &m_hidingSpots; }
+
 		static void MakeNewMarker( void )	{ ++m_masterMarker; if (m_masterMarker == 0) m_masterMarker = 1; }
 		void Mark( void )					{ m_marker = m_masterMarker; };
 		BOOL IsMarked( void ) const			{ return (m_marker == m_masterMarker) ? true : false; };
@@ -362,6 +419,9 @@ class CNavArea : protected CNavAreaCriticalData
 		CUtlVector< CBaseHandle > m_funcNavCostVector;	// active, overlapping cost entities
 };
 
+typedef CUtlVector< CNavArea * > NavAreaVector;
+extern NavAreaVector TheNavAreas;
+
 inline float CNavArea::GetZ( const Vector * RESTRICT pos ) const
 {
 	return GetZ( pos->x, pos->y );
@@ -372,6 +432,33 @@ inline float CNavArea::GetZ( const Vector & pos ) const
 	return GetZ( pos.x, pos.y );
 }
 
+inline Vector CNavArea::GetCorner( NavCornerType corner ) const
+{
+	Vector pos;
+
+	switch( corner )
+	{
+	case NORTH_WEST:
+		return m_nwCorner;
+
+	case NORTH_EAST:
+		pos.x = m_seCorner.x;
+		pos.y = m_nwCorner.y;
+		pos.z = m_neZ;
+		return pos;
+
+	case SOUTH_WEST:
+		pos.x = m_nwCorner.x;
+		pos.y = m_seCorner.y;
+		pos.z = m_swZ;
+		return pos;
+
+	case SOUTH_EAST:
+		return m_seCorner;
+	}
+
+	return vec3_origin;
+}
 
 //--------------------------------------------------------------------------------------------------------------
 inline CNavArea *CNavArea::GetAdjacentArea( NavDirType dir, int i ) const
