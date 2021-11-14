@@ -34,29 +34,31 @@ bool CBaseNPC_Locomotion::Init(SourceMod::IGameConfig* config, char* error, size
 void** CBaseNPC_Locomotion::CreateVTable(BaseClass* pBase)
 {
 	if (vtable)
+	{
 		return vtable;
+	}
 	
 	vtable = vtable_dup(pBase, BaseClass::vtable_entries);
 
-	INextBotComponent::vUpdate.Replace(vtable, &V_Update, m_OriginalUpdate);
-	ILocomotion::vClimbUpToLedge.Replace(vtable, &V_ClimbUpToLedge, m_OriginalClimbUpToLedge);
-	ILocomotion::vJumpAcrossGap.Replace(vtable, &V_JumpAcrossGap, m_OriginalJumpAcrossGap);
-	ILocomotion::vIsClimbingUpToLedge.Replace(vtable, &V_IsClimbingUpToLedge, m_OriginalIsClimbingUpToLedge);
-	ILocomotion::vIsJumpingAcrossGap.Replace(vtable, &V_IsJumpingAcrossGap, m_OriginalIsJumpingAcrossGap);
-	ILocomotion::vIsAbleToJumpAcrossGaps.Replace(vtable, &V_IsAbleToJumpAcrossGaps, m_OriginalIsAbleToJumpAcrossGaps);
-	ILocomotion::vIsAbleToClimb.Replace(vtable, &V_IsAbleToClimb, m_OriginalIsAbleToClimb);
-	ILocomotion::vGetStepHeight.Replace(vtable, &V_GetStepHeight, m_OriginalGetStepHeight);
-	ILocomotion::vGetMaxJumpHeight.Replace(vtable, &V_GetMaxJumpHeight, m_OriginalGetMaxJumpHeight);
-	ILocomotion::vGetDeathDropHeight.Replace(vtable, &V_GetDeathDropHeight, m_OriginalGetDeathDropHeight);
-	ILocomotion::vGetRunSpeed.Replace(vtable, &V_GetRunSpeed, m_OriginalGetRunSpeed);
-	ILocomotion::vGetWalkSpeed.Replace(vtable, &V_GetWalkSpeed, m_OriginalGetWalkSpeed);
-	ILocomotion::vGetMaxAcceleration.Replace(vtable, &V_GetMaxAcceleration, m_OriginalGetMaxAcceleration);
-	ILocomotion::vIsEntityTraversable.Replace(vtable, &V_IsEntityTraversable, m_OriginalIsEntityTraversable);
-	ILocomotion::vShouldCollideWith.Replace(vtable, &V_ShouldCollideWith, m_OriginalShouldCollideWith);
-	NextBotGroundLocomotion::vGetGravity.Replace(vtable, &V_GetGravity, m_OriginalGetGravity);
-	NextBotGroundLocomotion::vGetFrictionForward.Replace(vtable, &V_GetFrictionForward, m_OriginalGetFrictionForward);
-	NextBotGroundLocomotion::vGetFrictionSideways.Replace(vtable, &V_GetFrictionSideways, m_OriginalGetFrictionSideways);
-	NextBotGroundLocomotion::vGetMaxYawRate.Replace(vtable, &V_GetMaxYawRate, m_OriginalGetMaxYawRate);
+	INextBotComponent::vUpdate.Replace(vtable, &CBaseNPC_Locomotion::V_Update, m_OriginalUpdate);
+	ILocomotion::vClimbUpToLedge.Replace(vtable, &CBaseNPC_Locomotion::V_ClimbUpToLedge, m_OriginalClimbUpToLedge);
+	ILocomotion::vJumpAcrossGap.Replace(vtable, &CBaseNPC_Locomotion::V_JumpAcrossGap, m_OriginalJumpAcrossGap);
+	ILocomotion::vIsClimbingUpToLedge.Replace(vtable, &CBaseNPC_Locomotion::V_IsClimbingUpToLedge, m_OriginalIsClimbingUpToLedge);
+	ILocomotion::vIsJumpingAcrossGap.Replace(vtable, &CBaseNPC_Locomotion::V_IsJumpingAcrossGap, m_OriginalIsJumpingAcrossGap);
+	ILocomotion::vIsAbleToJumpAcrossGaps.Replace(vtable, &CBaseNPC_Locomotion::V_IsAbleToJumpAcrossGaps, m_OriginalIsAbleToJumpAcrossGaps);
+	ILocomotion::vIsAbleToClimb.Replace(vtable, &CBaseNPC_Locomotion::V_IsAbleToClimb, m_OriginalIsAbleToClimb);
+	ILocomotion::vGetStepHeight.Replace(vtable, &CBaseNPC_Locomotion::V_GetStepHeight, m_OriginalGetStepHeight);
+	ILocomotion::vGetMaxJumpHeight.Replace(vtable, &CBaseNPC_Locomotion::V_GetMaxJumpHeight, m_OriginalGetMaxJumpHeight);
+	ILocomotion::vGetDeathDropHeight.Replace(vtable, &CBaseNPC_Locomotion::V_GetDeathDropHeight, m_OriginalGetDeathDropHeight);
+	ILocomotion::vGetRunSpeed.Replace(vtable, &CBaseNPC_Locomotion::V_GetRunSpeed, m_OriginalGetRunSpeed);
+	ILocomotion::vGetWalkSpeed.Replace(vtable, &CBaseNPC_Locomotion::V_GetWalkSpeed, m_OriginalGetWalkSpeed);
+	ILocomotion::vGetMaxAcceleration.Replace(vtable, &CBaseNPC_Locomotion::V_GetMaxAcceleration, m_OriginalGetMaxAcceleration);
+	ILocomotion::vIsEntityTraversable.Replace(vtable, &CBaseNPC_Locomotion::V_IsEntityTraversable, m_OriginalIsEntityTraversable);
+	ILocomotion::vShouldCollideWith.Replace(vtable, &CBaseNPC_Locomotion::V_ShouldCollideWith, m_OriginalShouldCollideWith);
+	NextBotGroundLocomotion::vGetGravity.Replace(vtable, &CBaseNPC_Locomotion::V_GetGravity, m_OriginalGetGravity);
+	NextBotGroundLocomotion::vGetFrictionForward.Replace(vtable, &CBaseNPC_Locomotion::V_GetFrictionForward, m_OriginalGetFrictionForward);
+	NextBotGroundLocomotion::vGetFrictionSideways.Replace(vtable, &CBaseNPC_Locomotion::V_GetFrictionSideways, m_OriginalGetFrictionSideways);
+	NextBotGroundLocomotion::vGetMaxYawRate.Replace(vtable, &CBaseNPC_Locomotion::V_GetMaxYawRate, m_OriginalGetMaxYawRate);
 
 	return vtable;
 }

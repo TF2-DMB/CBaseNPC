@@ -3,6 +3,7 @@
 
 #include <map>
 #include <stack>
+#include <vector>
 
 #include "sourcesdk/NextBot/NextBotGroundLocomotion.h"
 #include "helpers.h"
