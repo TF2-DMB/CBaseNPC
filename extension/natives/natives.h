@@ -599,6 +599,11 @@ const sp_nativeinfo_t g_NativesInfo[] =
 	{ "CBaseNPC_GetNextBotOfEntity", &CBaseNPC_GetNextBotOfEntity },
 	{ "CBaseNPC_HookEventKilled", &CBaseNPC_HookEventKilled },
 	
+	NATIVENAME(HidingSpot, GetID)
+	NATIVENAME(HidingSpot, GetFlags)
+	NATIVENAME(HidingSpot, GetPosition)
+	NATIVENAME(HidingSpot, GetArea)
+
 	NATIVENAME(CNavArea, UpdateBlocked)
 	NATIVENAME(CNavArea, IsBlocked)
 	NATIVENAME(CNavArea, GetID)
@@ -607,8 +612,13 @@ const sp_nativeinfo_t g_NativesInfo[] =
 	NATIVENAME(CNavArea, GetParentHow)
 	NATIVENAME(CNavArea, GetCostSoFar)
 	NATIVENAME(CNavArea, GetAttributes)
+	NATIVENAME(CNavArea, GetCorner)
 	NATIVENAME(CNavArea, GetCenter)
+	NATIVENAME(CNavArea, GetAdjacentCount)
+	NATIVENAME(CNavArea, GetAdjacentArea)
 	NATIVENAME(CNavArea, IsConnected)
+	NATIVENAME(CNavArea, GetIncomingConnectionCount)
+	NATIVENAME(CNavArea, GetIncomingConnection)
 	NATIVENAME(CNavArea, IsEdge)
 	NATIVENAME(CNavArea, Contains)
 	NATIVENAME(CNavArea, GetSizeX)
@@ -616,6 +626,19 @@ const sp_nativeinfo_t g_NativesInfo[] =
 	NATIVENAME(CNavArea, GetZ)
 	NATIVENAME(CNavArea, GetZVector)
 	NATIVENAME(CNavArea, ComputeNormal)
+	NATIVENAME(CNavArea, GetLightIntensity)
+	NATIVENAME(CNavArea, GetPositionLightIntensity)
+	NATIVENAME(CNavArea, GetHidingSpotCount)
+	NATIVENAME(CNavArea, GetHidingSpot)
+	NATIVENAME(CNavArea, ClearSearchLists)
+	NATIVENAME(CNavArea, IsOpenListEmpty)
+	NATIVENAME(CNavArea, PopOpenList)
+	NATIVENAME(CNavArea, IsOpen)
+	NATIVENAME(CNavArea, AddToOpenList)
+	NATIVENAME(CNavArea, AddToOpenListTail)
+	NATIVENAME(CNavArea, UpdateOnOpenList)
+	NATIVENAME(CNavArea, IsClosed)
+	NATIVENAME(CNavArea, AddToClosedList)
 	NATIVENAMEGET(CNavLadder, length)
 
 #if SOURCE_ENGINE == SE_TF2
@@ -625,9 +648,22 @@ const sp_nativeinfo_t g_NativesInfo[] =
 	NATIVENAME(CTFNavArea, HasAttributeTF)
 #endif
 	
+	NATIVENAMEGET(CNavMesh, Address)
+	NATIVENAME(CNavMesh, IsLoaded)
+	NATIVENAME(CNavMesh, IsAnalyzed)
+	NATIVENAME(CNavMesh, IsOutOfDate)
+	NATIVENAME(CNavMesh, GetNavAreaCount)
 	NATIVENAME(CNavMesh, CollectSurroundingAreas)
+	NATIVENAME(CNavMesh, GetNavAreaByID)
 	NATIVENAME(CNavMesh, GetNearestNavArea)
 	
+	NATIVENAMEGET(TheNavAreasVector, Length)
+	NATIVENAME(TheNavAreasVector, Get)
+
+	NATIVENAMEGET(TheHidingSpotsVector, Length)
+	NATIVENAME(TheHidingSpotsVector, Get)
+	{ "GetHidingSpotByID", smn_GetHidingSpotByID },
+
 	NATIVENAME(SurroundingAreasCollector, Get)
 	NATIVENAME(SurroundingAreasCollector, Count)
 	

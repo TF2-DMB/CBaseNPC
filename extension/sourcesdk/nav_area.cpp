@@ -6,6 +6,8 @@
 #include "sourcesdk/nav_area.h"
 #include "sourcesdk/nav_mesh.h"
 
+NavAreaVector TheNavAreas;
+
 unsigned int CNavArea::m_masterMarker = 1;
 CNavArea *CNavArea::m_openList = NULL;
 CNavArea *CNavArea::m_openListTail = NULL;
@@ -116,6 +118,40 @@ void CNavArea::AddToOpenList( void )
 
 		m_openListTail = this;
 	}
+}
+
+//--------------------------------------------------------------------------------------------------------------
+/**
+ * Add to tail of the open list
+ */
+void CNavArea::AddToOpenListTail( void )
+{
+	if ( IsOpen() )
+	{
+		// already on list
+		return;
+	}
+
+	// mark as being on open list for quick check
+	m_openMarker = m_masterMarker;
+
+	// if list is empty, add and return
+	if ( m_openList == NULL )
+	{
+		m_openList = this;
+		m_openListTail = this;
+		this->m_prevOpen = NULL;
+		this->m_nextOpen = NULL;
+		return;
+	}
+
+	// append to end of list
+	m_openListTail->m_nextOpen = this;
+
+	this->m_prevOpen = m_openListTail;
+	this->m_nextOpen = NULL;
+
+	m_openListTail = this;
 }
 
 //--------------------------------------------------------------------------------------------------------------
@@ -584,4 +620,49 @@ bool CNavArea::IsBlocked(int teamID, bool ignoreNavBlockers) const
 
 	int teamIdx = teamID % MAX_NAV_TEAMS;
 	return m_isBlocked[teamIdx];
+}
+
+//--------------------------------------------------------------------------------------------------------------
+/**
+ * Returns a 0..1 light intensity for the given point
+ */
+float CNavArea::GetLightIntensity( const Vector &pos ) const
+{
+	Vector testPos;
+	testPos.x = clamp( pos.x, m_nwCorner.x, m_seCorner.x );
+	testPos.y = clamp( pos.y, m_nwCorner.y, m_seCorner.y );
+	testPos.z = pos.z;
+
+	float dX = (testPos.x - m_nwCorner.x) / (m_seCorner.x - m_nwCorner.x);
+	float dY = (testPos.y - m_nwCorner.y) / (m_seCorner.y - m_nwCorner.y);
+
+	float northLight = m_lightIntensity[ NORTH_WEST ] * ( 1 - dX ) + m_lightIntensity[ NORTH_EAST ] * dX;
+	float southLight = m_lightIntensity[ SOUTH_WEST ] * ( 1 - dX ) + m_lightIntensity[ SOUTH_EAST ] * dX;
+	float light = northLight * ( 1 - dY ) + southLight * dY;
+
+	return light;
+}
+
+
+//--------------------------------------------------------------------------------------------------------------
+/**
+ * Returns a 0..1 light intensity for the given point
+ */
+float CNavArea::GetLightIntensity( float x, float y ) const
+{
+	return GetLightIntensity( Vector( x, y, 0 ) );
+}
+
+
+//--------------------------------------------------------------------------------------------------------------
+/**
+ * Returns a 0..1 light intensity averaged over the whole area
+ */
+float CNavArea::GetLightIntensity( void ) const
+{
+	float light = m_lightIntensity[ NORTH_WEST ];
+	light += m_lightIntensity[ NORTH_EAST ];
+	light += m_lightIntensity[ SOUTH_WEST];
+	light += m_lightIntensity[ SOUTH_EAST ];
+	return light / 4.0f;
 }

@@ -147,6 +147,7 @@ void CBaseNPCExt::OnCoreMapEnd()
 {
 	g_pBaseNPCPluginActionFactories->OnCoreMapEnd();
 	g_pPluginEntityFactories->OnCoreMapEnd();
+	CNavMesh::OnCoreMapEnd();
 }
 
 void CBaseNPCExt::OnEntityCreated(CBaseEntity* pEntity, const char* classname)
@@ -269,6 +270,8 @@ void CBaseNPCExt::SDK_OnUnload()
 	{
 		g_pSDKHooks->RemoveEntityListener(this);
 	}
+
+	CNavMesh::SDK_OnUnload();
 	
 	FOR_EACH_MAP_FAST(g_EntitiesHooks, iHookID)
 		SH_REMOVE_HOOK_ID(iHookID);

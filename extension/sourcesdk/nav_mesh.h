@@ -4,6 +4,7 @@
 #include "sourcesdk/nav_area.h"
 #include "sourcesdk/baseentity.h"
 #include "sourcesdk/basecombatcharacter.h"
+#include "sourcesdk/GameEventListener.h"
 
 #pragma once
 
@@ -23,11 +24,21 @@ public:
 
 extern CNavMesh *TheNavMesh;
 
-class CNavMesh
+class CNavMesh : public CGameEventListener
 {
 public:
-	DECLARE_CLASS_NOBASE(CNavMesh);
 	static bool Init(SourceMod::IGameConfig* config, char* error, size_t maxlength);
+	static void OnCoreMapEnd();
+	static void SDK_OnUnload();
+
+	bool IsLoaded( void ) const		{ return m_isLoaded; }
+	bool IsAnalyzed( void ) const	{ return m_isAnalyzed; }
+	bool IsOutOfDate( void ) const	{ return m_isOutOfDate; }
+	unsigned int GetNavAreaCount( void ) const	{ return m_areaCount; }
+
+	int ComputeHashKey( unsigned int id ) const;				// returns a hash key for the given nav area ID
+
+	CNavArea *GetNavAreaByID( unsigned int id ) const;
 
 	static MCall<CNavArea*, const Vector&, bool, float, bool, bool, int> mGetNearestNavArea;
 	CNavArea* GetNearestNavArea(const Vector&, bool, float, bool, bool, int);
@@ -35,11 +46,27 @@ public:
 	static MCall<bool, const Vector&, float*, Vector*> mGetGroundHeight;
 	bool GetGroundHeight(const Vector&, float*, Vector*);
 
-	public:
+public:
 	bool IsAuthoritative()
 	{
 		return true; //TF2 has simple geometry
 	}
+
+private:
+	CUtlVector<NavAreaVector> m_grid;
+	float m_gridCellSize;										// the width/height of a grid cell for spatially partitioning nav areas for fast access
+	int m_gridSizeX;
+	int m_gridSizeY;
+	float m_minX;
+	float m_minY;
+	unsigned int m_areaCount;									// total number of nav areas
+
+	bool m_isLoaded;											// true if a Navigation Mesh has been loaded
+	bool m_isOutOfDate;											// true if the Navigation Mesh is older than the actual BSP
+	bool m_isAnalyzed;											// true if the Navigation Mesh needs analysis
+
+	enum { HASH_TABLE_SIZE = 256 };
+	CNavArea *m_hashTable[ HASH_TABLE_SIZE ];					// hash table to optimize lookup by ID
 };
 
 inline void CollectSurroundingAreas( CUtlVector< CNavArea * > *nearbyAreaVector, CNavArea *startArea, float travelDistanceLimit = 1500.0f, float maxStepUpLimit = StepHeight, float maxDropDownLimit = 100.0f )
@@ -111,6 +138,12 @@ inline void CollectSurroundingAreas( CUtlVector< CNavArea * > *nearbyAreaVector,
 			}
 		}
 	}
+}
+
+//--------------------------------------------------------------------------------------------------------------
+inline int CNavMesh::ComputeHashKey( unsigned int id ) const
+{
+	return id & 0xFF;
 }
 
 #define IGNORE_NAV_BLOCKERS true

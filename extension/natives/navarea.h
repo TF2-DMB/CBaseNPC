@@ -14,6 +14,14 @@
 		return pContext->ThrowNativeError("Entity %d (%d) is not a CBaseEntity", gamehelpers->ReferenceToIndex(ref), ref); \
 	}
 
+#define HIDINGSPOT_NATIVE(name) \
+	cell_t HidingSpot_##name(IPluginContext *pContext, const cell_t *params) \
+	{ \
+		HidingSpot *pSpot = (HidingSpot *)(params[1]); \
+		if(!pSpot) { \
+			return pContext->ThrowNativeError("Invalid hiding spot %x", params[1]); \
+		} \
+
 #define NAVAREA_NATIVE(name) \
 	cell_t CNavArea_##name(IPluginContext *pContext, const cell_t *params) \
 	{ \
@@ -29,8 +37,25 @@
 		if(!pArea) { \
 			return pContext->ThrowNativeError("Invalid nav area %x", params[1]); \
 		} \
-	
-	
+
+HIDINGSPOT_NATIVE(GetID)
+	return pSpot->GetID();
+}
+
+HIDINGSPOT_NATIVE(GetFlags)
+	return pSpot->GetFlags();
+}
+
+HIDINGSPOT_NATIVE(GetPosition)
+	cell_t *posAddr;
+	pContext->LocalToPhysAddr(params[2], &posAddr);
+	VectorToPawnVector(posAddr, pSpot->GetPosition());
+	return 0;
+}
+
+HIDINGSPOT_NATIVE(GetArea)
+	return reinterpret_cast<cell_t>(pSpot->GetArea());
+}
 
 NAVAREA_NATIVE(UpdateBlocked)
 	pArea->UpdateBlocked(params[2], params[3]);
@@ -47,7 +72,7 @@ NAVAREA_NATIVE(GetID)
 
 NAVAREA_NATIVE(SetParent)
 	pArea->SetParent((CNavArea *)params[2], (NavTraverseType)params[3]);
-return 1;
+	return 1;
 }
 
 NAVAREA_NATIVE(GetParent)
@@ -71,6 +96,18 @@ NAVAREA_NATIVE(GetAttributes)
 	return pArea->GetAttributes();
 }
 
+NAVAREA_NATIVE(GetCorner)
+	NavCornerType corner = (NavCornerType)params[2];
+	if (corner < 0 || corner >= NUM_CORNERS)
+		return pContext->ThrowNativeError("Invalid corner type %d", corner);
+
+	cell_t *posAddr;
+	pContext->LocalToPhysAddr(params[3], &posAddr);
+	Vector pos = pArea->GetCorner(corner);
+	VectorToPawnVector(posAddr, pos);
+	return 0;
+}
+
 NAVAREA_NATIVE(GetCenter)
 	cell_t *posAddr;
 	pContext->LocalToPhysAddr(params[2], &posAddr);
@@ -81,6 +118,38 @@ NAVAREA_NATIVE(GetCenter)
 
 NAVAREA_NATIVE(IsConnected)
 	return pArea->IsConnected((CNavArea *)params[2], (NavDirType)params[3]);
+}
+
+NAVAREA_NATIVE(GetAdjacentCount)
+	NavDirType dir = (NavDirType)params[2];
+	if (dir < 0 || dir >= NUM_DIRECTIONS)
+		return pContext->ThrowNativeError("Invalid direction %d", dir);
+	return pArea->GetAdjacentCount(dir);
+}
+
+NAVAREA_NATIVE(GetAdjacentArea)
+	NavDirType dir = (NavDirType)params[2];
+	if (dir < 0 || dir >= NUM_DIRECTIONS)
+		return pContext->ThrowNativeError("Invalid direction %d", dir);
+	return reinterpret_cast<cell_t>(pArea->GetAdjacentArea(dir, params[3]));
+}
+
+NAVAREA_NATIVE(GetIncomingConnectionCount)
+	NavDirType dir = (NavDirType)params[2];
+	if (dir < 0 || dir >= NUM_DIRECTIONS)
+		return pContext->ThrowNativeError("Invalid direction %d", dir);
+	return pArea->GetIncomingConnections(dir)->Count();
+}
+
+NAVAREA_NATIVE(GetIncomingConnection)
+	NavDirType dir = (NavDirType)params[2];
+	if (dir < 0 || dir >= NUM_DIRECTIONS)
+		return pContext->ThrowNativeError("Invalid direction %d", dir);
+	int i = params[3];
+	const NavConnectVector *incoming = pArea->GetIncomingConnections(dir);
+	if ((i < 0) || (i >= incoming->Count()))
+		return NULL;
+	return reinterpret_cast<cell_t>(incoming->Element(i).area);
 }
 
 NAVAREA_NATIVE(IsEdge)
@@ -120,8 +189,89 @@ NAVAREA_NATIVE(ComputeNormal)
 	return 1;
 }
 
+NAVAREA_NATIVE(GetLightIntensity)
+	return sp_ftoc(pArea->GetLightIntensity());
+}
+
+NAVAREA_NATIVE(GetPositionLightIntensity)
+	cell_t *posAddr;
+	pContext->LocalToPhysAddr(params[2], &posAddr);
+	Vector vecPos;
+	PawnVectorToVector(posAddr, &vecPos);
+	return sp_ftoc(pArea->GetLightIntensity(vecPos));
+}
+
+NAVAREA_NATIVE(GetHidingSpotCount)
+	return pArea->GetHidingSpots()->Count();
+}
+
+NAVAREA_NATIVE(GetHidingSpot)
+	int i = params[2];
+	const HidingSpotVector* pSpots = pArea->GetHidingSpots();
+	if ((i < 0) || (i >= pSpots->Count()))
+		return NULL;
+	return reinterpret_cast<cell_t>(pSpots->Element(i));
+}
+
+cell_t CNavArea_ClearSearchLists(IPluginContext *pContext, const cell_t* params)
+{
+	CNavArea::ClearSearchLists();
+	return 0;
+}
+
+cell_t CNavArea_IsOpenListEmpty(IPluginContext *pContext, const cell_t* params)
+{
+	return CNavArea::IsOpenListEmpty();
+}
+
+cell_t CNavArea_PopOpenList(IPluginContext *pContext, const cell_t* params)
+{
+	return reinterpret_cast<cell_t>(CNavArea::PopOpenList());
+}
+
+NAVAREA_NATIVE(IsOpen)
+	return pArea->IsOpen();
+}
+
+NAVAREA_NATIVE(AddToOpenList)
+	pArea->AddToOpenList();
+	return 0;
+}
+
+NAVAREA_NATIVE(AddToOpenListTail)
+	pArea->AddToOpenListTail();
+	return 0;
+}
+
+NAVAREA_NATIVE(UpdateOnOpenList)
+	pArea->UpdateOnOpenList();
+	return 0;
+}
+
+NAVAREA_NATIVE(IsClosed)
+	return pArea->IsClosed();
+}
+
+NAVAREA_NATIVE(AddToClosedList)
+	pArea->AddToClosedList();
+	return 0;
+}
+
 NAVLADDER_NATIVE(lengthGet)
 	return sp_ftoc(pArea->m_length);
+}
+
+cell_t TheNavAreasVector_LengthGet(IPluginContext* pContext, const cell_t* params)
+{
+	return TheNavAreas.Count();
+}
+
+cell_t TheNavAreasVector_Get(IPluginContext* pContext, const cell_t* params)
+{
+	int i = params[2];
+	if ((i < 0) || (i >= TheNavAreas.Count()))
+		return NULL;
+	return reinterpret_cast<cell_t>(TheNavAreas[i]);
 }
 
 #if SOURCE_ENGINE == SE_TF2

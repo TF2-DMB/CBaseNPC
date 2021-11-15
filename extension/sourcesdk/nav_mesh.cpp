@@ -1,14 +1,33 @@
 #include "extension.h"
+#include "CDetour/detours.h"
 #include <shareddefs.h>
 #include <enginecallback.h>
 #include <util_shared.h>
 #include "sourcesdk/nav.h"
 #include "sourcesdk/nav_area.h"
 #include "sourcesdk/nav_mesh.h"
+
 CNavMesh *TheNavMesh = nullptr;
 
+HidingSpotVector TheHidingSpots;
+
+CDetour* g_pNavMeshAddArea = nullptr;
 MCall<CNavArea*, const Vector&, bool, float, bool, bool, int> CNavMesh::mGetNearestNavArea;
 MCall<bool, const Vector&, float*, Vector*> CNavMesh::mGetGroundHeight;
+
+DETOUR_DECL_MEMBER1(CNavMesh_AddNavArea, void, CNavArea*, area)
+{
+	TheNavAreas.AddToTail(area);
+	
+	auto pSpots = area->GetHidingSpots();
+	FOR_EACH_VEC((*pSpots), it)
+	{
+		HidingSpot* spot = (*pSpots)[ it ];
+		TheHidingSpots.AddToTail(spot);
+	}
+
+	DETOUR_MEMBER_CALL(CNavMesh_AddNavArea)(area);
+}
 
 bool CNavMesh::Init(SourceMod::IGameConfig* config, char* error, size_t maxlength)
 {
@@ -40,6 +59,12 @@ bool CNavMesh::Init(SourceMod::IGameConfig* config, char* error, size_t maxlengt
 	{
 		mGetNearestNavArea.Init(config, "CNavMesh::GetNearestNavArea");
 		mGetGroundHeight.Init(config, "CNavMesh::GetGroundHeight");
+
+		g_pNavMeshAddArea = DETOUR_CREATE_MEMBER(CNavMesh_AddNavArea, "CNavMesh::AddNavArea");
+		if (g_pNavMeshAddArea != nullptr)
+		{
+			g_pNavMeshAddArea->EnableDetour();
+		}
 	}
 	catch (const std::exception& e)
 	{
@@ -50,9 +75,63 @@ bool CNavMesh::Init(SourceMod::IGameConfig* config, char* error, size_t maxlengt
 	return true;
 }
 
+void CNavMesh::OnCoreMapEnd()
+{
+	TheHidingSpots.RemoveAll();
+	TheNavAreas.RemoveAll();
+}
+
+void CNavMesh::SDK_OnUnload()
+{
+	if (g_pNavMeshAddArea != nullptr)
+	{
+		g_pNavMeshAddArea->Destroy();
+		g_pNavMeshAddArea = nullptr;
+	}
+}
+
+//--------------------------------------------------------------------------------------------------------------
+/**
+ * Given a HidingSpot ID, return the associated HidingSpot
+ */
+HidingSpot *GetHidingSpotByID( unsigned int id )
+{
+	FOR_EACH_VEC( TheHidingSpots, it )
+	{
+		HidingSpot *spot = TheHidingSpots[ it ];
+
+		if (spot->GetID() == id)
+			return spot;
+	}	
+
+	return NULL;
+}
+
 CNavArea* CNavMesh::GetNearestNavArea(const Vector& v, bool b, float f, bool b2, bool b3, int t)
 {
 	return mGetNearestNavArea(this, v, b, f, b2, b3, t);
+}
+
+//--------------------------------------------------------------------------------------------------------------
+/**
+ * Given an ID, return the associated area
+ */
+CNavArea *CNavMesh::GetNavAreaByID( unsigned int id ) const
+{
+	if (id == 0)
+		return NULL;
+
+	int key = ComputeHashKey( id );
+
+	for( CNavArea *area = m_hashTable[key]; area; area = area->m_nextHash )
+	{
+		if (area->GetID() == id)
+		{
+			return area;
+		}
+	}
+
+	return NULL;
 }
 
 bool CNavMesh::GetGroundHeight(const Vector& vec, float* f, Vector* vec2)
