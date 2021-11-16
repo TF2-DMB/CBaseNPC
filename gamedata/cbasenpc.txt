@@ -6,8 +6,8 @@
 		{
 			"CBaseCombatCharacter::EventKilled"
 			{
-				"windows"	"66"
 				"linux"		"67"
+				"windows"	"66"
 			}
 			"TheNavMesh"
 			{
@@ -15,43 +15,43 @@
 			}
 			"CBaseEntity::PostConstructor"
 			{
-				"windows"	"26"
 				"linux"		"27"
+				"windows"	"26"
 			}
 			"CBaseEntity::GetBaseAnimating"
 			{
-				"windows"	"50"
 				"linux"		"51"
+				"windows"	"50"
 			}
 			"CBaseEntity::MyCombatCharacterPointer"
 			{
-				"windows"	"71"
 				"linux"		"72"
+				"windows"	"71"
 			}
 			"CBaseEntity::MyNextBotPointer"
 			{
-				"windows"	"72"
 				"linux"		"73"
+				"windows"	"72"
 			}
 			"CBaseEntity::UpdateOnRemove"
 			{
-				"windows"	"105"
-				"linux"		"106"
+				"linux"		"109"
+				"windows"	"108"
 			}
 			"CBaseEntity::EyeAngles"
 			{
-				"windows"	"131"
-				"linux"		"132"
+				"linux"		"135"
+				"windows"	"134"
 			}
 			"CBaseEntity::GetVectors"
 			{
-				"linux"		"137"
-				"windows"	"136"
+				"linux"		"140"
+				"windows"	"139"
 			}
 			"CBaseEntity::WorldSpaceCenter"		
-			{		
-				"windows"	"149"		
-				"linux"		"150"
+			{
+				"linux"		"153"
+				"windows"	"152"
 			}
 			"g_EntityListPool"
 			{
@@ -59,38 +59,38 @@
 			}
 			"CBaseAnimating::StudioFrameAdvance"
 			{
-				"linux"		"195"
-				"windows"	"194"
+				"linux"		"198"
+				"windows"	"197"
 			}
 			"CBaseAnimating::DispatchAnimEvents"
-			{
-				"linux"		"207"
-				"windows"	"206"
-			}
-			"CBaseAnimating::HandleAnimEvent"
-			{
-				"linux"		"208"
-				"windows"	"207"
-			}
-			"CBaseAnimating::GetAttachment"
 			{
 				"linux"		"210"
 				"windows"	"209"
 			}
-			"CBaseCombatCharacter::GetLastKnownArea"
+			"CBaseAnimating::HandleAnimEvent"
 			{
-				"linux"		"317"
-				"windows"	"316"
+				"linux"		"211"
+				"windows"	"210"
 			}
-			"CBaseCombatCharacter::UpdateLastKnownArea"
+			"CBaseAnimating::GetAttachment"
+			{
+				"linux"		"213"
+				"windows"	"212"
+			}
+			"CBaseCombatCharacter::GetLastKnownArea"
 			{
 				"linux"		"320"
 				"windows"	"319"
 			}
+			"CBaseCombatCharacter::UpdateLastKnownArea"
+			{
+				"linux"		"323"
+				"windows"	"322"
+			}
 			"NextBotCombatCharacter::vtable_entries"
 			{
-				"windows"	"331"
-				"linux"		"331"
+				"windows"	"336"
+				"linux"		"336"
 			}
 			"NextBotGroundLocomotion::vtable_entries"
 			{
