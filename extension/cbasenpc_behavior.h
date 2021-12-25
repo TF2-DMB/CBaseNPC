@@ -260,6 +260,8 @@ public:
 	};
 
 private:
+	bool m_bDestroying;
+
 	CUtlMap<CallbackType, IPluginFunction*> m_Callbacks;
 	CUtlMap<QueryCallbackType, IPluginFunction*> m_QueryCallbacks;
 	CUtlMap<EventResponderCallbackType, IPluginFunction*> m_EventCallbacks;
@@ -293,9 +295,6 @@ public:
 	void OnActionCreated( Action <CBaseNPC_Entity>* pAction );
 	void OnActionRemoved( Action <CBaseNPC_Entity>* pAction );
 	void OnCreateInitialAction( Action <CBaseNPC_Entity>* pAction );
-
-	// Removes all entities that use Actions created from this factory.
-	void RemoveAllEntities();
 };
 
 #endif

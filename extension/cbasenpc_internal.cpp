@@ -1,6 +1,7 @@
 #include "extension.h"
 #include "cbasenpc_internal.h"
 #include "cbasenpc_behavior.h"
+#include "pluginentityfactory.h"
 #include "sourcesdk/baseentity.h"
 #include "sourcesdk/tf_gamerules.h"
 #include "NextBot/Path/NextBotPathFollow.h"
@@ -68,6 +69,7 @@ void CBaseNPCFactory::Create_Extra(CBaseEntityHack* ent)
 	}
 	vtable_replace(ent, CBaseNPC_Entity::vtable);
 	new (((CBaseNPC_Entity*)ent)->GetNPC()) CBaseNPC_Entity::CBaseNPC((NextBotCombatCharacter*)ent, m_pInitialActionFactory);
+	SetInitialActionFactory(nullptr);
 }
 
 void CBaseNPCFactory::Create_PostConstructor(CBaseEntityHack* ent)
@@ -124,11 +126,6 @@ IBody* CBaseNPC_Entity::CBaseNPC::Hook_GetBodyInterface(void) const
 
 void CBaseNPC_Entity::BotUpdateOnRemove()
 {
-	// Destroy Behavior system early so Action OnEnd() callbacks can
-	// still access entity properties and virtual functions to perform cleanup
-	// on the entity.
-	GetNPC()->m_pIntention->DestroyBehavior();
-
 	mOriginalUpdateOnRemove(this);
 }
 
@@ -147,6 +144,8 @@ void CBaseNPC_Entity::BotDestroy(void)
 {
 	CBaseNPC* npc = this->GetNPC();
 	npc->~CBaseNPC();
+
+	g_pPluginEntityFactories->NotifyEntityDestruction(this);
 }
 
 void CBaseNPC_Entity::BotSpawn(void)

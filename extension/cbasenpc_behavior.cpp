@@ -1,5 +1,6 @@
 
 #include "cbasenpc_behavior.h"
+#include <set>
 
 #define CBPUSHCELL(cell) pCallback->PushCell((cell_t)(cell));
 #define CBPUSHFLOAT(fl) pCallback->PushCell(sp_ftoc(fl));
@@ -593,12 +594,6 @@ bool CBaseNPCPluginActionFactories::Init( IGameConfig* config, char* error, size
 
 void CBaseNPCPluginActionFactories::OnCoreMapEnd()
 {
-	// Remove entities early. This is to make sure that some ending callbacks
-	// are called before some Handles are freed (like timer mapchange handles).
-	for (int i = 0; i < m_Factories.Count(); i++)
-	{
-		m_Factories[i]->RemoveAllEntities();
-	}
 }
 
 void CBaseNPCPluginActionFactories::SDK_OnUnload()
@@ -609,8 +604,6 @@ void CBaseNPCPluginActionFactories::SDK_OnUnload()
 void CBaseNPCPluginActionFactories::OnHandleDestroy( HandleType_t type, void * object )
 {
 	CBaseNPCPluginActionFactory* factory = (CBaseNPCPluginActionFactory*)object;
-	factory->RemoveAllEntities();
-	factory->DestroyDataDesc();
 	delete factory;
 }
 
@@ -642,7 +635,8 @@ void CBaseNPCPluginActionFactories::OnFactoryDestroyed( CBaseNPCPluginActionFact
 
 CBaseNPCPluginActionFactory::CBaseNPCPluginActionFactory( IPlugin* plugin, const char* actionName ) : 
 	IDataMapContainer(),
-	m_iActionName(actionName)
+	m_iActionName(actionName),
+	m_bDestroying(false)
 {
 	SetDefLessFunc(m_Callbacks);
 	SetDefLessFunc(m_QueryCallbacks);
@@ -655,31 +649,45 @@ CBaseNPCPluginActionFactory::CBaseNPCPluginActionFactory( IPlugin* plugin, const
 
 CBaseNPCPluginActionFactory::~CBaseNPCPluginActionFactory()
 {
-	g_pBaseNPCPluginActionFactories->OnFactoryDestroyed( this );
-}
+	m_bDestroying = true;
 
-void CBaseNPCPluginActionFactory::RemoveAllEntities()
-{
-	if (!m_Actions.Count())
-		return;
-	
-	CUtlVector< CBaseEntity* > entities;
-	for ( int i = 0; i < m_Actions.Count(); i++ )
+	if (m_Actions.Count() > 0)
 	{
-		Action< CBaseNPC_Entity > *pAction = m_Actions[i];
-		if (!pAction) continue;
+		// Reset any intentions using my actions. Can this potentially
+		// gimp the actors' behavior? Yeah, but at least it only happens 
+		// in dev environments, right? Right?
 
-		CBaseNPC_Entity* pActor = pAction->GetActor();
-		if (pActor && !entities.IsValidIndex( entities.Find(pActor) ) )
+		std::set< CBaseNPCIntention* > intentions;
+		for ( int i = 0; i < m_Actions.Count(); i++ )
 		{
-			entities.AddToTail( pActor );
+			Action< CBaseNPC_Entity > *pAction = m_Actions[i];
+			if (!pAction) continue;
+
+			CBaseNPC_Entity* pActor = pAction->GetActor();
+			if (!pActor) continue;
+
+			CBaseNPCIntention* pIntention = pActor->GetNPC()->m_pIntention;
+			if (!pIntention) continue;
+
+			intentions.insert(pIntention);
+		}
+
+		for ( auto iter = intentions.begin(); iter != intentions.end(); iter++ )
+		{
+			CBaseNPCIntention* pIntention = *iter;
+
+			if (pIntention->m_pInitialActionFactory == this)
+			{
+				pIntention->m_pInitialActionFactory = nullptr;
+			}
+
+			pIntention->Reset();
 		}
 	}
 
-	for ( int i = 0; i < entities.Count(); i++ )
-	{
-		servertools->RemoveEntity( entities[i] );
-	}
+	DestroyDataDesc();
+
+	g_pBaseNPCPluginActionFactories->OnFactoryDestroyed( this );
 }
 
 IPluginFunction* CBaseNPCPluginActionFactory::GetCallback(CallbackType cbType)
@@ -726,6 +734,9 @@ void CBaseNPCPluginActionFactory::SetEventCallback(EventResponderCallbackType ev
 
 Action <CBaseNPC_Entity>* CBaseNPCPluginActionFactory::Create()
 {
+	if (m_bDestroying)
+		return nullptr;
+
 	if (HasDataDesc() && !GetDataDescMap())
 		CreateDataDescMap(nullptr);
 

@@ -32,7 +32,7 @@ public:
 	CPluginEntityFactory* pFactory = nullptr;
 	datamap_t* m_pDataMap = nullptr;
 
-	void Hook();
+	void Hook(bool bHookDestructor = true);
 	void Unhook();
 
 	PluginFactoryEntityRecord_t() : pEntity( nullptr ) { }
@@ -50,6 +50,7 @@ public:
 	CPluginEntityFactories();
 
 	// IPluginsListener
+	virtual void OnPluginLoaded( IPlugin* plugin ) override final;
 	virtual void OnPluginUnloaded( IPlugin* plugin ) override final;
 
 	// IHandleTypeDispatch
@@ -77,6 +78,8 @@ public:
 	size_t GetBaseClassSize( PluginEntityFactoryBaseClass_t classType ) const { 
 		return m_BaseClassSizes[ classType ];
 	};
+
+	void NotifyEntityDestruction( CBaseEntity* pEntity );
 
 	datamap_t* Hook_GetDataDescMap();
 	void Hook_UpdateOnRemove();
@@ -119,6 +122,11 @@ public:
 	virtual IServerNetworkable* Create(const char*) override final;
 	virtual size_t GetEntitySize() override final { return GetBaseEntitySize() + GetDataDescSize(); };
 	virtual void Destroy(IServerNetworkable*) override final;
+
+private:
+	IServerNetworkable* RecursiveCreate(const char*, CPluginEntityFactory *);
+
+public:
 
 	void OnRemove(CBaseEntity* pEntity);
 
@@ -200,11 +208,6 @@ public:
 	// the base factory. If not, returns the size of the entity created by
 	// this factory.
 	size_t GetBaseEntitySize() const;
-
-protected:
-
-	// The factory that first called Create in the entity creation chain.
-	CPluginEntityFactory* m_pCreatingFactory;
 
 public:
 

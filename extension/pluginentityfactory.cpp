@@ -100,6 +100,46 @@ public:
 
 } g_EntityMemAllocHook;
 
+// https://github.com/alliedmodders/sourcemod/blob/7d6eb2bd81323e6c191dacf3b34781b53dc495a0/core/logic/PluginSys.cpp#L638
+time_t GetPluginFileTimeStamp(IPlugin* plugin)
+{
+	char path[PLATFORM_MAX_PATH];
+	g_pSM->BuildPath(Path_SM, path, sizeof(path), "plugins/%s", plugin->GetFilename());
+#ifdef PLATFORM_WINDOWS
+	struct _stat s;
+	if (_stat(path, &s) != 0)
+#elif defined PLATFORM_POSIX
+	struct stat s;
+	if (stat(path, &s) != 0)
+#endif
+	{
+		return 0;
+	}
+	else
+	{
+		return s.st_mtime;
+	}
+}
+
+struct PluginInfo_t
+{
+	time_t m_LastFileModTime;
+};
+
+std::map<IPlugin*, PluginInfo_t> g_PluginInfo;
+
+// https://github.com/alliedmodders/sourcemod/blob/7d6eb2bd81323e6c191dacf3b34781b53dc495a0/core/logic/PluginSys.cpp#L2144
+bool WillPluginBeRefreshed( IPlugin* plugin )
+{
+	time_t t = GetPluginFileTimeStamp(plugin);
+	PluginInfo_t &record = g_PluginInfo[plugin];
+
+	if (!t || t > record.m_LastFileModTime) {
+		return true;
+	}
+	return false;
+}
+
 CPluginEntityFactories::CPluginEntityFactories()
 {
 	SetDefLessFunc( m_Records );
@@ -207,15 +247,28 @@ void CPluginEntityFactories::SDK_OnAllLoaded()
 
 void CPluginEntityFactories::OnCoreMapEnd()
 {
-	// Remove entities early. This is to make sure that some ending callbacks
-	// are called before some Handles are freed (like timer mapchange handles).
+	// SM refreshes edited plugins after extension and plugin map end callbacks.
+	// Since refreshing = reloading the plugin, that means factories will be reinstalled in 
+	// the same manner. Uninstalling a factory also IMMEDIATELY removes all entities hat are created 
+	// by the factory, or at least related to it, to prevent destructor code from accessing bad memory.
+
+	// However, if an entity is already being removed by normal means via UTIL_Remove(), this immediate
+	// removal can't take place since the entity is already marked for deletion and will be destroyed 
+	// in the NEXT frame, thus when the entity is ultimately destroyed will result in accessing data
+	// of a factory that was already destroyed.
+
+	// Therefore, we need to predict if a plugin is going to be refreshed to determine to either remove
+	// entities immediately or not.
 
 	for (int i = 0; i < m_Factories.Count(); i++)
 	{
 		CPluginEntityFactory* pFactory = m_Factories[i];
 		if ( !pFactory->m_bInstalled ) continue;
 		
-		m_Factories[i]->RemoveAllEntities();
+		if (WillPluginBeRefreshed(pFactory->m_pPlugin))
+		{
+			pFactory->RemoveAllEntities();
+		}
 	}
 }
 
@@ -277,6 +330,14 @@ int CPluginEntityFactories::GetInstalledFactoryHandles(Handle_t* pHandleArray, s
 	return j;
 }
 
+void CPluginEntityFactories::OnPluginLoaded( IPlugin* plugin )
+{
+	PluginInfo_t info;
+	info.m_LastFileModTime = GetPluginFileTimeStamp( plugin );
+
+	g_PluginInfo[plugin] = info;
+}
+
 void CPluginEntityFactories::OnPluginUnloaded( IPlugin* plugin )
 {
 	// Uninstall the factories before Handles start to get freed during
@@ -321,6 +382,8 @@ void CPluginEntityFactories::OnPluginUnloaded( IPlugin* plugin )
 	{
 		factoriesToUninstall[i]->Uninstall();
 	}
+
+	g_PluginInfo.erase(plugin);
 }
 
 void CPluginEntityFactories::OnHandleDestroy( HandleType_t type, void * object )
@@ -338,6 +401,15 @@ CPluginEntityFactory* CPluginEntityFactories::ToPluginEntityFactory( IEntityFact
 
 	CPluginEntityFactory* pAsPluginFactory = reinterpret_cast< CPluginEntityFactory* >(pFactory);
 	return m_Factories.HasElement(pAsPluginFactory) ? pAsPluginFactory : nullptr;
+}
+
+void CPluginEntityFactories::NotifyEntityDestruction( CBaseEntity* pEntity )
+{
+	CPluginEntityFactory* pFactory = GetFactory(pEntity);
+	if (pFactory)
+	{
+		pFactory->OnDestroy(pEntity);
+	}
 }
 
 datamap_t* CPluginEntityFactories::Hook_GetDataDescMap()
@@ -388,7 +460,7 @@ void CPluginEntityFactories::Hook_EntityDestructor( unsigned int flags )
 	RETURN_META(MRES_IGNORED);
 }
 
-void PluginFactoryEntityRecord_t::Hook()
+void PluginFactoryEntityRecord_t::Hook(bool bHookDestructor)
 {
 	if ( m_bHooked ) return;
 	m_bHooked = true;
@@ -398,7 +470,11 @@ void PluginFactoryEntityRecord_t::Hook()
 
 	m_pHookIds->push_back( SH_ADD_MANUALHOOK(FactoryEntity_GetDataDescMap, pEntity, SH_MEMBER(g_pPluginEntityFactories, &CPluginEntityFactories::Hook_GetDataDescMap), false) );
 	m_pHookIds->push_back( SH_ADD_MANUALHOOK(FactoryEntity_UpdateOnRemove, pEntity, SH_MEMBER(g_pPluginEntityFactories, &CPluginEntityFactories::Hook_UpdateOnRemove), false) );
-	m_pHookIds->push_back( SH_ADD_MANUALHOOK(FactoryEntity_Dtor, pEntity, SH_MEMBER(g_pPluginEntityFactories, &CPluginEntityFactories::Hook_EntityDestructor), false) );
+
+	if (bHookDestructor)
+	{
+		m_pHookIds->push_back( SH_ADD_MANUALHOOK(FactoryEntity_Dtor, pEntity, SH_MEMBER(g_pPluginEntityFactories, &CPluginEntityFactories::Hook_EntityDestructor), false) );
+	}
 }
 
 void PluginFactoryEntityRecord_t::Unhook()
@@ -435,8 +511,6 @@ CPluginEntityFactory::CPluginEntityFactory( IPlugin* plugin, const char* classna
 	m_bInstalled = false;
 
 	m_Handle = handlesys->CreateHandle( g_pPluginEntityFactories->GetFactoryType(), this, plugin->GetIdentity(), myself->GetIdentity(), nullptr );
-
-	m_pCreatingFactory = nullptr;
 
 	m_bIsAbstract = false;
 	m_pBaseFactory = nullptr;
@@ -634,15 +708,7 @@ void CPluginEntityFactory::RemoveAllEntities()
 	for (int i = 0; i < entities.Count(); i++)
 	{
 		CBaseEntityHack* pEntity = reinterpret_cast< CBaseEntityHack* >( entities[i] );
-
-		servertools->RemoveEntity( pEntity );
-
-		if ( g_pPluginEntityFactories->FindRecord( pEntity ) )
-		{
-			// Unhook early so the destructor hook won't call bad memory,
-			// especially if we're unloading.
-			OnDestroy( pEntity );
-		}
+		servertools->RemoveEntityImmediate( pEntity );
 	}
 }
 
@@ -723,15 +789,17 @@ size_t CPluginEntityFactory::GetBaseEntitySize() const
 
 IServerNetworkable* CPluginEntityFactory::Create(const char* classname)
 {
+	return RecursiveCreate(classname, this);
+}
+
+IServerNetworkable* CPluginEntityFactory::RecursiveCreate(const char* classname, CPluginEntityFactory *pCreatingFactory)
+{
 	IServerNetworkable * pNet = nullptr;
 
-	if (!m_pCreatingFactory)
-	{
-		// m_pCreatingFactory wasn't set before the call was made, so this is the creating factory.
-		m_pCreatingFactory = this;
-	}
+	bool bIsInstantiating = false;
+	bool bHookDestructor = true;
 
-	size_t entitySize = m_pCreatingFactory->GetEntitySize();
+	size_t entitySize = pCreatingFactory->GetEntitySize();
 
 	IEntityFactory *pBaseFactory = GetBaseFactory();
 	if (pBaseFactory)
@@ -740,21 +808,23 @@ IServerNetworkable* CPluginEntityFactory::Create(const char* classname)
 		if (pAsPluginFactory)
 		{
 			// Defer instantiation to the base CPluginEntityFactory.
-			pAsPluginFactory->m_pCreatingFactory = m_pCreatingFactory;
-			pNet = pBaseFactory->Create(classname);
-			pAsPluginFactory->m_pCreatingFactory = nullptr;
+			pNet = pAsPluginFactory->RecursiveCreate(classname, pCreatingFactory);
 		}
 		else
 		{
-			// At the end of a creation chain. This factory is responsible for allocating the entity so that
-			// it fits the datamap size.
+			bIsInstantiating = true;
 
-			bool bIsBaseNPCFactory = pBaseFactory == g_pBaseNPCFactory;
-			if (bIsBaseNPCFactory)
+			if (pBaseFactory == g_pBaseNPCFactory)
 			{
-				CBaseNPCPluginActionFactory* pInitialActionFactory = nullptr;
+				// Do not hook destructor manually. Instead, we'll let CBaseNPC tell us when it's destroyed
+				// before performing cleanup so that any plugin callbacks/actions can run their own cleanup
+				// code first before removing our hooks.
 
-				CPluginEntityFactory* pFactory = m_pCreatingFactory;
+				bHookDestructor = false;
+
+				// Start from creating factory to base to find the initial action factory.
+				CBaseNPCPluginActionFactory* pInitialActionFactory = nullptr;
+				CPluginEntityFactory* pFactory = pCreatingFactory;
 				while (pFactory)
 				{
 					if ( pFactory->GetBaseNPCInitialActionFactory() )
@@ -772,11 +842,6 @@ IServerNetworkable* CPluginEntityFactory::Create(const char* classname)
 			pNet = pBaseFactory->Create(classname);
 			g_EntityMemAllocHook.StopWatching();
 
-			if (bIsBaseNPCFactory)
-			{
-				g_pBaseNPCFactory->SetInitialActionFactory( nullptr );
-			}
-
 			if (!g_EntityMemAllocHook.DidHandleAlloc())
 			{
 				g_pSM->LogError(myself, "WARNING! Entity %s was instantiated with possibly incorrect size. (instantiating plugin factory: %s)", classname, m_iClassname.c_str());
@@ -785,6 +850,8 @@ IServerNetworkable* CPluginEntityFactory::Create(const char* classname)
 	}
 	else if (m_Derive.m_DeriveFrom == DERIVETYPE_BASECLASS && m_Derive.m_BaseType == FACTORYBASECLASS_BASEENTITY)
 	{
+		bIsInstantiating = true;
+
 		CBaseEntityHack* pEnt = (CBaseEntityHack*)engine->PvAllocEntPrivateData(entitySize);
 		CBaseEntityHack::CBaseEntity_Ctor(pEnt, m_Derive.m_bBaseEntityServerOnly);
 		pEnt->PostConstructor(classname);
@@ -792,6 +859,8 @@ IServerNetworkable* CPluginEntityFactory::Create(const char* classname)
 	}
 	else if (m_Derive.m_DeriveFrom == DERIVETYPE_CONFIG)
 	{
+		bIsInstantiating = true;
+
 		CBaseEntityHack* pEnt = (CBaseEntityHack*)engine->PvAllocEntPrivateData(entitySize);
 		(pEnt->*(m_Derive.m_pConstructorFunc))();
 		pEnt->PostConstructor(classname);
@@ -807,9 +876,11 @@ IServerNetworkable* CPluginEntityFactory::Create(const char* classname)
 			CreateDataDescMap( gamehelpers->GetDataMap(pEnt) );
 		}
 
-		PluginFactoryEntityRecord_t * pEntityRecord = g_pPluginEntityFactories->FindRecord(pEnt, true);
-		if (!pEntityRecord->pFactory)
-			pEntityRecord->pFactory = m_pCreatingFactory;
+		PluginFactoryEntityRecord_t * pEntityRecord = g_pPluginEntityFactories->FindRecord(pEnt, bIsInstantiating);
+		if (bIsInstantiating)
+		{
+			pEntityRecord->pFactory = pCreatingFactory;
+		}
 
 		datamap_t * pDataMap = GetDataDescMap();
 
@@ -819,18 +890,16 @@ IServerNetworkable* CPluginEntityFactory::Create(const char* classname)
 			CreateUserEntityData(pEnt);
 		}
 
-		pEntityRecord->Hook();
+		if (bIsInstantiating)
+		{
+			pEntityRecord->Hook(bHookDestructor);
+		}
 
 		if (m_pPostConstructor && m_pPostConstructor->IsRunnable())
 		{
 			m_pPostConstructor->PushCell(gamehelpers->EntityToBCompatRef(pEnt));
 			m_pPostConstructor->Execute(nullptr);
 		}
-	}
-
-	if (m_pCreatingFactory == this)
-	{
-		m_pCreatingFactory = nullptr;
 	}
 
 	return pNet;
