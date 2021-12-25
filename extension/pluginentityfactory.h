@@ -50,7 +50,6 @@ public:
 	CPluginEntityFactories();
 
 	// IPluginsListener
-	virtual void OnPluginLoaded( IPlugin* plugin ) override final;
 	virtual void OnPluginUnloaded( IPlugin* plugin ) override final;
 
 	// IHandleTypeDispatch

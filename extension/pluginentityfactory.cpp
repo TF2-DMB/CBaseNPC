@@ -100,46 +100,6 @@ public:
 
 } g_EntityMemAllocHook;
 
-// https://github.com/alliedmodders/sourcemod/blob/7d6eb2bd81323e6c191dacf3b34781b53dc495a0/core/logic/PluginSys.cpp#L638
-time_t GetPluginFileTimeStamp(IPlugin* plugin)
-{
-	char path[PLATFORM_MAX_PATH];
-	g_pSM->BuildPath(Path_SM, path, sizeof(path), "plugins/%s", plugin->GetFilename());
-#ifdef PLATFORM_WINDOWS
-	struct _stat s;
-	if (_stat(path, &s) != 0)
-#elif defined PLATFORM_POSIX
-	struct stat s;
-	if (stat(path, &s) != 0)
-#endif
-	{
-		return 0;
-	}
-	else
-	{
-		return s.st_mtime;
-	}
-}
-
-struct PluginInfo_t
-{
-	time_t m_LastFileModTime;
-};
-
-std::map<IPlugin*, PluginInfo_t> g_PluginInfo;
-
-// https://github.com/alliedmodders/sourcemod/blob/7d6eb2bd81323e6c191dacf3b34781b53dc495a0/core/logic/PluginSys.cpp#L2144
-bool WillPluginBeRefreshed( IPlugin* plugin )
-{
-	time_t t = GetPluginFileTimeStamp(plugin);
-	PluginInfo_t &record = g_PluginInfo[plugin];
-
-	if (!t || t > record.m_LastFileModTime) {
-		return true;
-	}
-	return false;
-}
-
 CPluginEntityFactories::CPluginEntityFactories()
 {
 	SetDefLessFunc( m_Records );
@@ -247,29 +207,6 @@ void CPluginEntityFactories::SDK_OnAllLoaded()
 
 void CPluginEntityFactories::OnCoreMapEnd()
 {
-	// SM refreshes edited plugins after extension and plugin map end callbacks.
-	// Since refreshing = reloading the plugin, that means factories will be reinstalled in 
-	// the same manner. Uninstalling a factory also IMMEDIATELY removes all entities hat are created 
-	// by the factory, or at least related to it, to prevent destructor code from accessing bad memory.
-
-	// However, if an entity is already being removed by normal means via UTIL_Remove(), this immediate
-	// removal can't take place since the entity is already marked for deletion and will be destroyed 
-	// in the NEXT frame, thus when the entity is ultimately destroyed will result in accessing data
-	// of a factory that was already destroyed.
-
-	// Therefore, we need to predict if a plugin is going to be refreshed to determine to either remove
-	// entities immediately or not.
-
-	for (int i = 0; i < m_Factories.Count(); i++)
-	{
-		CPluginEntityFactory* pFactory = m_Factories[i];
-		if ( !pFactory->m_bInstalled ) continue;
-		
-		if (WillPluginBeRefreshed(pFactory->m_pPlugin))
-		{
-			pFactory->RemoveAllEntities();
-		}
-	}
 }
 
 void CPluginEntityFactories::SDK_OnUnload()
@@ -330,14 +267,6 @@ int CPluginEntityFactories::GetInstalledFactoryHandles(Handle_t* pHandleArray, s
 	return j;
 }
 
-void CPluginEntityFactories::OnPluginLoaded( IPlugin* plugin )
-{
-	PluginInfo_t info;
-	info.m_LastFileModTime = GetPluginFileTimeStamp( plugin );
-
-	g_PluginInfo[plugin] = info;
-}
-
 void CPluginEntityFactories::OnPluginUnloaded( IPlugin* plugin )
 {
 	// Uninstall the factories before Handles start to get freed during
@@ -382,8 +311,6 @@ void CPluginEntityFactories::OnPluginUnloaded( IPlugin* plugin )
 	{
 		factoriesToUninstall[i]->Uninstall();
 	}
-
-	g_PluginInfo.erase(plugin);
 }
 
 void CPluginEntityFactories::OnHandleDestroy( HandleType_t type, void * object )
