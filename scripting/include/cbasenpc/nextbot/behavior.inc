@@ -637,6 +637,11 @@ methodmap NextBotActionFactory < Handle
 
 	/**
 	 * Defines a callback for the Action.
+	 * 
+	 * Note: Be cautious when using KillTimer() in the OnEnd() callback on timers flagged
+	 * with TIMER_FLAG_NO_MAPCHANGE. When a map changes, timers with this flag are removed 
+	 * first before it is called, so consider letting the timers end on their own instead 
+	 * (i.e. returning Plugin_Stop).
 	 *
 	 * @param callbackType     Type of callback
 	 * @param callback

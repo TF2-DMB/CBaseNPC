@@ -58,6 +58,11 @@ methodmap CEntityFactory < Handle
 	 * the factory to create entities under its classname, and can also be
 	 * utilized by maps.
 	 *
+	 * Note: Be cautious when using KillTimer() in the `onRemove` callback on timers flagged
+	 * with TIMER_FLAG_NO_MAPCHANGE. When a map changes, timers with this flag are removed 
+	 * first before this is called, so consider letting the timers end on their own instead 
+	 * (i.e. returning Plugin_Stop).
+	 *
 	 * @param classname         The entity's classname. This cannot match the
 	 *                          classname of an already installed factory.
 	 * @param postConstructor   Called when the factory finishes creating the entity.
