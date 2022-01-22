@@ -1,7 +1,7 @@
 
 methodmap ScoutBody < IBody
 {
-	public void Update()
+	public void UpdateAnimation()
 	{
 		INextBot bot = this.GetBot();
 		int ent = bot.GetEntity();
@@ -82,7 +82,5 @@ methodmap ScoutBody < IBody
 				pCC.SetPoseParameter( m_moveYPoseParameter, sideVel );
 			}
 		}
-
-		view_as<IBody>(this).Update();
 	}
 }

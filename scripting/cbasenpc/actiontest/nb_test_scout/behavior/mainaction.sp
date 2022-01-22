@@ -19,7 +19,7 @@ void ScoutMainAction_Init()
 	ActionFactory.SetEventCallback( EventResponderType_OnKilled, ScoutMainAction_OnKilled );
 }
 
-static int ScoutMainAction_OnStart( NextBotAction action, int actor, NextBotAction prevAction )
+static void ScoutMainAction_OnStart( NextBotAction action, int actor, NextBotAction prevAction )
 {
 	action.SetData( "m_PathFollower", ChasePath(LEAD_SUBJECT, _, Path_FilterIgnoreActors, Path_FilterOnlyActors) );
 }
@@ -34,7 +34,7 @@ static int ScoutMainAction_Update( NextBotAction action, int actor, float interv
 	INextBot bot = pNPC.GetBot();
 	CBaseCombatCharacter pCC = CBaseCombatCharacter(actor);
 
-	bool onGround = !!(GetEntityFlags(actor) & FL_ONGROUND);
+	bool onGround = !!(pCC.GetFlags() & FL_ONGROUND);
 
 	int target = GetEntPropEnt(actor, Prop_Data, "m_Target");
 	if (IsValidEntity(target))

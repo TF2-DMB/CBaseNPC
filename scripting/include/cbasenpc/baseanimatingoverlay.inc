@@ -90,13 +90,13 @@ methodmap CAnimationOverlay
 	#pragma deprecated Use CAnimationLayer.NoEvents() instead
 	public bool NoEvents()    { return ((this.Get(m_fFlags) & ANIM_LAYER_NOEVENTS) != 0); }
 	#pragma deprecated Use CAnimationLayer.KillMe() instead
-	public void KillMe()      { int iFlags = this.Get(m_fFlags); this.Set(m_fFlags, (iFlags |= ANIM_LAYER_KILLME)); } 
+	public void KillMe()      { this.Set(m_fFlags, this.Get(m_fFlags) | ANIM_LAYER_KILLME); } 
 	#pragma deprecated Use CAnimationLayer.AutoKill() instead
-	public void AutoKill()    { int iFlags = this.Get(m_fFlags); this.Set(m_fFlags, (iFlags |= ANIM_LAYER_AUTOKILL)); }
+	public void AutoKill()    { this.Set(m_fFlags, this.Get(m_fFlags) | ANIM_LAYER_AUTOKILL); }
 	#pragma deprecated Use CAnimationLayer.Dying() instead
-	public void Dying()       { int iFlags = this.Get(m_fFlags); this.Set(m_fFlags, (iFlags |= ANIM_LAYER_DYING));  } 
+	public void Dying()       { this.Set(m_fFlags, this.Get(m_fFlags) | ANIM_LAYER_DYING);  } 
 	#pragma deprecated Use CAnimationLayer.Dead() instead
-	public void Dead()        { int iFlags = this.Get(m_fFlags); this.Set(m_fFlags, (iFlags &= ~ANIM_LAYER_DYING)); }
+	public void Dead()        { this.Set(m_fFlags, this.Get(m_fFlags) & ~ANIM_LAYER_DYING); }
 	#pragma deprecated Use CAnimationLayer.IsAlive() instead
 	public bool IsAlive()         { int iFlags = this.Get(m_fFlags); return (((iFlags & ANIM_LAYER_ACTIVE) != 0) || ((iFlags & ANIM_LAYER_KILLME) == 0)); }
 

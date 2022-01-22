@@ -96,6 +96,7 @@ static void ScoutNextBot_Create(int ent)
 	npc.flWalkSpeed = 400.0;
 	npc.flRunSpeed = 400.0;
 	npc.flDeathDropHeight = 2000.0;
+	npc.flMaxYawRate = 250.0;
 
 	SDKHook(ent, SDKHook_SpawnPost, ScoutNextBot_SpawnPost);
 	SDKHook(ent, SDKHook_Think, ScoutNextBot_Think);
@@ -144,13 +145,12 @@ static void ScoutNextBot_UpdateTarget(int ent)
 
 static void ScoutNextBot_Think(int ent) 
 {
-	CBaseNPC npc = TheNPCs.FindNPCByEntIndex(ent);
-	if (npc == INVALID_NPC)
-		return;
-	
+	INextBot bot = CBaseEntity(ent).MyNextBotPointer();
+	if (!bot) return;
+
 	ScoutNextBot_UpdateTarget(ent);
 
-	view_as<ScoutBody>(npc.GetBody()).Update();
+	view_as<ScoutBody>(bot.GetBodyInterface()).UpdateAnimation();
 }
 
 static void ScoutNextBot_OnTakeDamageAlivePost(int ent, 
