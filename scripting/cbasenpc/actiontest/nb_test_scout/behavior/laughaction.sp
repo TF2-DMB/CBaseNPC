@@ -41,7 +41,7 @@ static int ScoutLaughAction_OnStart( NextBotAction action, int actor, NextBotAct
 	EmitSoundToAll("vo/scout_laughlong02.mp3", actor, SNDCHAN_VOICE, SNDLEVEL_SCREAMING);
 
 	anim.SetLayerCycle(layer, 0.0);
-	anim.SetLayerPlaybackRate(layer, 0.5);
+	anim.SetLayerPlaybackRate(layer, 1.0);
 
 	action.SetData("m_iLayerSequence", layer);
 	

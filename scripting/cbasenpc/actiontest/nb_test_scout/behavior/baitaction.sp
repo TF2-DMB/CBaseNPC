@@ -49,7 +49,7 @@ static int ScoutBaitAction_OnStart( NextBotAction action, int actor, NextBotActi
 	return action.Continue();
 }
 
-static int ScoutBaitAction_MakeSound( NextBotAction action )
+static void ScoutBaitAction_MakeSound( NextBotAction action )
 {
 	int actor = action.Actor;
 	int randomSound = GetRandomInt(0, sizeof(g_sStartSounds) - 1);
