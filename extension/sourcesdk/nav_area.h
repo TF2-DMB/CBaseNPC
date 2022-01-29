@@ -252,6 +252,12 @@ class CNavArea : protected CNavAreaCriticalData
 		float GetSizeX( void ) const			{ return m_seCorner.x - m_nwCorner.x; }
 		float GetSizeY( void ) const			{ return m_seCorner.y - m_nwCorner.y; }
 		const Vector &GetCenter( void ) const	{ return m_center; }
+
+		bool IsUnderwater( void ) const		{ return m_isUnderwater; }
+
+		bool IsOverlapping( const Vector &pos, float tolerance = 0.0f ) const;	// return true if 'pos' is within 2D extents of area.
+		bool IsOverlapping( const CNavArea *area ) const;			// return true if 'area' overlaps our 2D extents
+		bool IsOverlapping( const Extent &extent ) const;			// return true if 'extent' overlaps our 2D extents
 		inline float GetZ( const Vector * RESTRICT pPos ) const;
 		inline float GetZ( const Vector &pos ) const;
 		float GetZ( float x, float y ) const RESTRICT;

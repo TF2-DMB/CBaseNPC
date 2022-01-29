@@ -340,6 +340,42 @@ NavDirType CNavArea::ComputeDirection( Vector *point )
 	return NUM_DIRECTIONS;
 }
 
+//--------------------------------------------------------------------------------------------------------------
+/**
+ * Return true if 'pos' is within 2D extents of area.
+ */
+bool CNavArea::IsOverlapping( const Vector &pos, float tolerance ) const
+{
+	if (pos.x + tolerance >= m_nwCorner.x && pos.x - tolerance <= m_seCorner.x &&
+		pos.y + tolerance >= m_nwCorner.y && pos.y - tolerance <= m_seCorner.y)
+		return true;
+
+	return false;
+}
+
+//--------------------------------------------------------------------------------------------------------------
+/**
+ * Return true if 'area' overlaps our 2D extents
+ */
+bool CNavArea::IsOverlapping( const CNavArea *area ) const
+{
+	if (area->m_nwCorner.x < m_seCorner.x && area->m_seCorner.x > m_nwCorner.x && 
+		area->m_nwCorner.y < m_seCorner.y && area->m_seCorner.y > m_nwCorner.y)
+		return true;
+
+	return false;
+}
+
+
+//--------------------------------------------------------------------------------------------------------------
+/**
+ * Return true if 'extent' overlaps our 2D extents
+ */
+bool CNavArea::IsOverlapping( const Extent &extent ) const
+{
+	return ( extent.lo.x < m_seCorner.x && extent.hi.x > m_nwCorner.x && 
+			 extent.lo.y < m_seCorner.y && extent.hi.y > m_nwCorner.y );
+}
 
 //--------------------------------------------------------------------------------------------------------------
 /**

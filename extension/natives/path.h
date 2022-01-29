@@ -7,10 +7,10 @@
 #include "NextBotPathFollow.h"
 #include "NextBotChasePath.h"
 
-class SMPathCost : public IPathCost
+class SMBotPathCost : public IPathCost
 {
 public:
-	SMPathCost( INextBot *pBot, IPluginFunction *pFunc = NULL )
+	SMBotPathCost( INextBot *pBot, IPluginFunction *pFunc = NULL )
 	{
 		m_pFunc = pFunc;
 		m_bot = pBot;
@@ -56,7 +56,7 @@ public:
 			m_pFunc->PushCell((cell_t)fromArea);
 			m_pFunc->PushCell((cell_t)ladder);
 			m_pFunc->PushCell(gamehelpers->EntityToBCompatRef((CBaseEntity *)elevator));
-			m_pFunc->PushCell(sp_ftoc(length));
+			m_pFunc->PushFloat(length);
 			m_pFunc->Execute(&cost);
 			
 			return sp_ctof(cost);
@@ -363,7 +363,7 @@ PATHNATIVE(ComputeToPos)
 	float maxPathLength = sp_ctof(params[4]);
 	bool includePathIfGoalFails = params[5];
 	
-	SMPathCost pCostFunc(pBot, pPath->pCostFunction);
+	SMBotPathCost pCostFunc(pBot, pPath->pCostFunction);
 	
 	return pPath->Compute(pBot, vecGoal, pCostFunc, maxPathLength, includePathIfGoalFails);
 }
@@ -373,7 +373,7 @@ PATHNATIVE(ComputeToTarget)
 	CBaseEntity *pTarget;
 	ENTINDEX_TO_CBASEENTITY(params[3], pTarget);
 
-	SMPathCost pCostFunc(pBot, pPath->pCostFunction);
+	SMBotPathCost pCostFunc(pBot, pPath->pCostFunction);
 	
 	return pPath->Compute(pBot, (CBaseCombatCharacterHack *)pTarget, pCostFunc, sp_ctof(params[4]), (params[5]) ? true : false);
 }
@@ -452,7 +452,7 @@ CHASEPATHNATIVE(Update)
 	CBaseEntity *pTarget;
 	ENTINDEX_TO_CBASEENTITY(params[3], pTarget);
 
-	SMPathCost pCostFunc(pBot, pChasePath->pCostFunction);
+	SMBotPathCost pCostFunc(pBot, pChasePath->pCostFunction);
 	
 	cell_t *predictPos;
 	pContext->LocalToPhysAddr(params[4], &predictPos);

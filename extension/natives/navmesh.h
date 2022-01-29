@@ -62,6 +62,78 @@ NAVMESHNATIVE(CollectSurroundingAreas)
 	return CREATEHANDLE(SurroundingAreasCollector, pCollector);
 }
 
+class SMPathCost : public IPathCost
+{
+public:
+	SMPathCost(IPluginFunction *pFunc) : m_pFunc(pFunc)
+	{
+	}
+
+	virtual float operator()(CNavArea *pArea, CNavArea *pFromArea, const CNavLadder *pLadder, const CFuncElevator *elevator, float length) const override final
+	{
+		cell_t result = sp_ftoc(0.0);
+		m_pFunc->PushCell(0); // INextBot
+		m_pFunc->PushCell(reinterpret_cast<cell_t>(pArea));
+		m_pFunc->PushCell(reinterpret_cast<cell_t>(pFromArea));
+		m_pFunc->PushCell(reinterpret_cast<cell_t>(pLadder));
+		m_pFunc->PushCell(gamehelpers->EntityToBCompatRef((CBaseEntity *)elevator));
+		m_pFunc->PushFloat(length);
+		m_pFunc->Execute(&result);
+		return sp_ctof(result);
+	}
+
+private:
+	IPluginFunction *m_pFunc;
+};
+
+NAVMESHNATIVE(BuildPath)
+	CNavArea *startArea = (CNavArea *)params[2];
+	if (!startArea)
+	{
+		return pContext->ThrowNativeError("Invalid starting area!");
+	}
+
+	CNavArea *goalArea = (CNavArea *)params[3];
+	cell_t* goalPosAddr;
+	pContext->LocalToPhysAddr(params[4], &goalPosAddr);
+	Vector goalPos;
+	if (pContext->GetNullRef(SP_NULL_VECTOR) != goalPosAddr)
+	{
+		PawnVectorToVector(goalPosAddr, &goalPos);
+	}
+
+	IPluginFunction *pFunc = pContext->GetFunctionById(params[5]);
+	if (!pFunc)
+	{
+		return pContext->ThrowNativeError("Invalid path cost function!");
+	}
+
+	SMPathCost pathCost(pFunc);
+
+	cell_t* closestAreaAddr;
+	pContext->LocalToPhysAddr(params[6], &closestAreaAddr);
+	CNavArea *closestArea = nullptr;
+	float maxPathLength = sp_ctof(params[7]);
+	int teamID = params[8];
+	bool ignoreNavBlockers = params[9] != 0;
+
+	bool result = NavAreaBuildPath(startArea, 
+		goalArea,
+		pContext->GetNullRef(SP_NULL_VECTOR) == goalPosAddr ? nullptr : &goalPos, 
+		pathCost, 
+		&closestArea,
+		maxPathLength,
+		teamID,
+		ignoreNavBlockers);
+
+	if (closestAreaAddr)
+	{
+		*closestAreaAddr = (cell_t)closestArea;
+	}
+
+	return result;
+}
+
 cell_t TheHidingSpotsVector_LengthGet(IPluginContext* pContext, const cell_t* params)
 {
 	return TheHidingSpots.Count();

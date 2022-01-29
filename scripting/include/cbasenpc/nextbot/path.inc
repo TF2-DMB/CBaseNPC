@@ -1,11 +1,6 @@
 #if !defined _CBASENPC_NEXTBOT_PATH_INC_
 #define _CBASENPC_NEXTBOT_PATH_INC_
 
-typeset NavPathCostFunctor
-{
-	function float(INextBot bot, CNavArea area, CNavArea fromArea, CNavLadder ladder, int iElevator, float length);
-};
-
 enum SegmentType
 {
 	ON_GROUND,
@@ -487,50 +482,6 @@ methodmap DirectChasePath < ChasePath
 {
 	public native DirectChasePath(SubjectChaseType how = DONT_LEAD_SUBJECT, NavPathCostFunctor costfunction = INVALID_FUNCTION, TraceFilterActors ignoreActorsFilter, TraceFilterActors onlyActorsFilter);
 };
-
-public float Path_Cost(INextBot bot, CNavArea area, CNavArea fromArea, CNavLadder ladder, int iElevator, float length)
-{
-	static int iTime = 0;
-	if (iTime < GetTime())
-	{
-		iTime = GetTime();
-	}
-	
-	float dist;
-	if ( ladder != NULL_LADDER_AREA )
-	{
-		dist = ladder.length;
-	}
-	else if ( length > 0.0 )
-	{
-		dist = length;
-	}
-	else
-	{
-		float vecAreaCenter[3], vecFromAreaCenter[3];
-		area.GetCenter(vecAreaCenter);
-		fromArea.GetCenter(vecFromAreaCenter);
-		dist = GetVectorDistance(vecAreaCenter, vecFromAreaCenter);
-	}
-
-	float cost = dist + fromArea.GetCostSoFar();
-	
-	// if this is a "crouch" area, add penalty
-	int attributes = area.GetAttributes();
-	if ( (attributes & NAV_MESH_CROUCH) )
-	{
-		const float crouchPenalty = 20.0;
-		cost += crouchPenalty * dist;
-	}
-
-	// if this is a "jump" area, add penalty
-	if ( (attributes & NAV_MESH_JUMP) )
-	{
-		const float jumpPenalty = 5.0;
-		cost += jumpPenalty * dist;
-	}
-	return cost;
-}
 
 public bool Path_FilterIgnoreActors(int entity, int contentsMask, int desiredcollisiongroup)
 {
