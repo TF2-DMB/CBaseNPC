@@ -69,17 +69,63 @@ public:
 	{
 	}
 
-	virtual float operator()(CNavArea *pArea, CNavArea *pFromArea, const CNavLadder *pLadder, const CFuncElevator *elevator, float length) const override final
+	virtual float operator()(CNavArea *area, CNavArea *fromArea, const CNavLadder *ladder, const CFuncElevator *elevator, float length) const override final
 	{
-		cell_t result = sp_ftoc(0.0);
-		m_pFunc->PushCell(0); // INextBot
-		m_pFunc->PushCell(reinterpret_cast<cell_t>(pArea));
-		m_pFunc->PushCell(reinterpret_cast<cell_t>(pFromArea));
-		m_pFunc->PushCell(reinterpret_cast<cell_t>(pLadder));
-		m_pFunc->PushCell(gamehelpers->EntityToBCompatRef((CBaseEntity *)elevator));
-		m_pFunc->PushFloat(length);
-		m_pFunc->Execute(&result);
-		return sp_ctof(result);
+		if (m_pFunc && m_pFunc->IsRunnable())
+		{
+			cell_t result = sp_ftoc(0.0);
+			m_pFunc->PushCell(reinterpret_cast<cell_t>(area));
+			m_pFunc->PushCell(reinterpret_cast<cell_t>(fromArea));
+			m_pFunc->PushCell(reinterpret_cast<cell_t>(ladder));
+			m_pFunc->PushCell(gamehelpers->EntityToBCompatRef((CBaseEntity *)elevator));
+			m_pFunc->PushFloat(length);
+			m_pFunc->Execute(&result);
+			return sp_ctof(result);
+		}
+		else
+		{
+			if ( fromArea == nullptr )
+			{
+				// first area in path, no cost
+				return 0.0f;
+			}
+			else
+			{
+				// compute distance traveled along path so far
+				float dist;
+
+				if ( ladder )
+				{
+					dist = ladder->m_length;
+				}
+				else if ( length > 0.0 )
+				{
+					dist = length;
+				}
+				else
+				{
+					dist = ( area->GetCenter() - fromArea->GetCenter() ).Length();
+				}
+
+				float cost = dist + fromArea->GetCostSoFar();
+
+				// if this is a "crouch" area, add penalty
+				if ( area->GetAttributes() & NAV_MESH_CROUCH )
+				{
+					const float crouchPenalty = 20.0f;		// 10
+					cost += crouchPenalty * dist;
+				}
+
+				// if this is a "jump" area, add penalty
+				if ( area->GetAttributes() & NAV_MESH_JUMP )
+				{
+					const float jumpPenalty = 5.0f;
+					cost += jumpPenalty * dist;
+				}
+
+				return cost;
+			}
+		}
 	}
 
 private:
@@ -103,11 +149,6 @@ NAVMESHNATIVE(BuildPath)
 	}
 
 	IPluginFunction *pFunc = pContext->GetFunctionById(params[5]);
-	if (!pFunc)
-	{
-		return pContext->ThrowNativeError("Invalid path cost function!");
-	}
-
 	SMPathCost pathCost(pFunc);
 
 	cell_t* closestAreaAddr;

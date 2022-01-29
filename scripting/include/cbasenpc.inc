@@ -203,57 +203,6 @@ methodmap CNPCs __nullable__
 forward Action CBaseEntity_SetLocalAngles(int iEntity, float vecNewAngles[3]);
 forward Action CBaseCombatCharacter_EventKilled(int iEntity, int &iAttacker, int &iInflictor, float &flDamage, int &iDamagetype, int &iWeapon, float vecDamageForce[3], float vecDamagePosition[3], int iDamagecustom);
 
-public float Path_Cost(INextBot bot, CNavArea area, CNavArea fromArea, CNavLadder ladder, int iElevator, float length)
-{
-	if ( fromArea == NULL_AREA )
-	{
-		// At the start of the path
-		return 0.0;
-	}
-
-	static int iTime = 0;
-	if (iTime < GetTime())
-	{
-		iTime = GetTime();
-	}
-	
-	float dist;
-	if ( ladder != NULL_LADDER_AREA )
-	{
-		dist = ladder.length;
-	}
-	else if ( length > 0.0 )
-	{
-		dist = length;
-	}
-	else
-	{
-		float vecAreaCenter[3], vecFromAreaCenter[3];
-		area.GetCenter(vecAreaCenter);
-		fromArea.GetCenter(vecFromAreaCenter);
-		dist = GetVectorDistance(vecAreaCenter, vecFromAreaCenter);
-	}
-
-	float cost = dist + fromArea.GetCostSoFar();
-	
-	// if this is a "crouch" area, add penalty
-	int attributes = area.GetAttributes();
-	if ( (attributes & NAV_MESH_CROUCH) )
-	{
-		const float crouchPenalty = 20.0;
-		cost += crouchPenalty * dist;
-	}
-
-	// if this is a "jump" area, add penalty
-	if ( (attributes & NAV_MESH_JUMP) )
-	{
-		const float jumpPenalty = 5.0;
-		cost += jumpPenalty * dist;
-	}
-	
-	return cost;
-}
-
 public Extension __ext_cbasenpc = 
 {
 	name = "cbasenpc",

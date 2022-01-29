@@ -7,10 +7,10 @@
 #include "NextBotPathFollow.h"
 #include "NextBotChasePath.h"
 
-class SMBotPathCost : public IPathCost
+class SMPathFollowerCost : public IPathCost
 {
 public:
-	SMBotPathCost( INextBot *pBot, IPluginFunction *pFunc = NULL )
+	SMPathFollowerCost( INextBot *pBot, IPluginFunction *pFunc = NULL )
 	{
 		m_pFunc = pFunc;
 		m_bot = pBot;
@@ -363,7 +363,7 @@ PATHNATIVE(ComputeToPos)
 	float maxPathLength = sp_ctof(params[4]);
 	bool includePathIfGoalFails = params[5];
 	
-	SMBotPathCost pCostFunc(pBot, pPath->pCostFunction);
+	SMPathFollowerCost pCostFunc(pBot, pPath->pCostFunction);
 	
 	return pPath->Compute(pBot, vecGoal, pCostFunc, maxPathLength, includePathIfGoalFails);
 }
@@ -373,7 +373,7 @@ PATHNATIVE(ComputeToTarget)
 	CBaseEntity *pTarget;
 	ENTINDEX_TO_CBASEENTITY(params[3], pTarget);
 
-	SMBotPathCost pCostFunc(pBot, pPath->pCostFunction);
+	SMPathFollowerCost pCostFunc(pBot, pPath->pCostFunction);
 	
 	return pPath->Compute(pBot, (CBaseCombatCharacterHack *)pTarget, pCostFunc, sp_ctof(params[4]), (params[5]) ? true : false);
 }
@@ -452,7 +452,7 @@ CHASEPATHNATIVE(Update)
 	CBaseEntity *pTarget;
 	ENTINDEX_TO_CBASEENTITY(params[3], pTarget);
 
-	SMBotPathCost pCostFunc(pBot, pChasePath->pCostFunction);
+	SMPathFollowerCost pCostFunc(pBot, pChasePath->pCostFunction);
 	
 	cell_t *predictPos;
 	pContext->LocalToPhysAddr(params[4], &predictPos);

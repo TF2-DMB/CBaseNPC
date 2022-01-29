@@ -69,7 +69,17 @@ enum NavCornerType
 
 typeset NavPathCostFunctor
 {
-	function float(INextBot bot, CNavArea area, CNavArea fromArea, CNavLadder ladder, int iElevator, float length);
+	/**
+	 * Path cost function
+	 * 
+	 * @param area         Area arriving to
+	 * @param fromArea     Area leaving from. This will be NULL_AREA if `area` is the first area in the path.
+	 * @param ladder       If ladder used to traverse to `area`, CNavLadder pointer, otherwise is NULL_LADDER.
+	 * @param elevator     If elevator used to traverse to `area`, entity index of elevator, otherwise is -1.
+	 * @param length       Length of connection between areas. If ladder or elevator is used, this is -1.0.
+	 * @return             Cost to move from `fromArea` to `area`
+	 */
+	function float(CNavArea area, CNavArea fromArea, CNavLadder ladder, int elevator, float length);
 };
 
 enum CNavMesh 
@@ -184,7 +194,7 @@ methodmap CNavMesh
 	public native bool BuildPath( CNavArea startArea, 
 		CNavArea goalArea, 
 		const float goalPos[3], 
-		NavPathCostFunctor costFunc, 
+		NavPathCostFunctor costFunc = INVALID_FUNCTION,
 		CNavArea &closestArea = NULL_AREA, 
 		float maxPathLength = 0.0,
 		int teamID = TEAM_ANY,
@@ -777,5 +787,59 @@ methodmap TheNavAreasVector
 	 */
 	public native CNavArea Get(int i);
 };
+
+/**
+ * Default shortest path cost function. This is the default cost function used by BuildPath().
+ */
+public float Path_Cost(CNavArea area, CNavArea fromArea, CNavLadder ladder, int elevator, float length)
+{
+	if ( fromArea == NULL_AREA )
+	{
+		// At the start of the path
+		return 0.0;
+	}
+
+	static int iTime = 0;
+	if (iTime < GetTime())
+	{
+		iTime = GetTime();
+	}
+	
+	float dist;
+	if ( ladder != NULL_LADDER_AREA )
+	{
+		dist = ladder.length;
+	}
+	else if ( length > 0.0 )
+	{
+		dist = length;
+	}
+	else
+	{
+		float vecAreaCenter[3], vecFromAreaCenter[3];
+		area.GetCenter(vecAreaCenter);
+		fromArea.GetCenter(vecFromAreaCenter);
+		dist = GetVectorDistance(vecAreaCenter, vecFromAreaCenter);
+	}
+
+	float cost = dist + fromArea.GetCostSoFar();
+	
+	// if this is a "crouch" area, add penalty
+	int attributes = area.GetAttributes();
+	if ( (attributes & NAV_MESH_CROUCH) )
+	{
+		const float crouchPenalty = 20.0;
+		cost += crouchPenalty * dist;
+	}
+
+	// if this is a "jump" area, add penalty
+	if ( (attributes & NAV_MESH_JUMP) )
+	{
+		const float jumpPenalty = 5.0;
+		cost += jumpPenalty * dist;
+	}
+	
+	return cost;
+}
 
 #endif

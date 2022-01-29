@@ -27,6 +27,22 @@ enum MoveToFailureType
 	FAIL_FELL_OFF     = 2,
 };
 
+typeset PathFollowerCostFunctor
+{
+	/**
+	 * Path cost function for PathFollower
+	 * 
+	 * @param bot          The bot to calculate the cost for
+	 * @param area         Area arriving to
+	 * @param fromArea     Area leaving from. This will be NULL_AREA if `area` is the first area in the path.
+	 * @param ladder       If ladder used to traverse to `area`, CNavLadder pointer, otherwise is NULL_LADDER.
+	 * @param elevator     If elevator used to traverse to `area`, entity index of elevator, otherwise is -1.
+	 * @param length       Length of connection between areas. If ladder or elevator is used, this is -1.0.
+	 * @return             Cost to move from `fromArea` to `area`
+	 */
+	function float(INextBot bot, CNavArea area, CNavArea fromArea, CNavLadder ladder, int elevator, float length);
+};
+
 /**
  * A segment of a Path.
  */
@@ -185,7 +201,7 @@ methodmap Path
 	 * @param ignoreActorsFilter     Callback that determines which actors to ignore
 	 * @param onlyActorsFilter       Callback that determines which actors to hit
 	 */
-	public native Path(NavPathCostFunctor costfunction = INVALID_FUNCTION, TraceFilterActors ignoreActorsFilter, TraceFilterActors onlyActorsFilter);
+	public native Path(PathFollowerCostFunctor costfunction = INVALID_FUNCTION, TraceFilterActors ignoreActorsFilter, TraceFilterActors onlyActorsFilter);
 
 	/**
 	 * The total length of the Path.
@@ -371,7 +387,7 @@ methodmap Path
 
 methodmap PathFollower < Path
 {
-	public native PathFollower(NavPathCostFunctor costfunction = INVALID_FUNCTION, TraceFilterActors ignoreActorsFilter, TraceFilterActors onlyActorsFilter);
+	public native PathFollower(PathFollowerCostFunctor costfunction = INVALID_FUNCTION, TraceFilterActors ignoreActorsFilter, TraceFilterActors onlyActorsFilter);
 
 	/**
 	 * Moves the bot along the path.
@@ -424,7 +440,7 @@ methodmap ChasePath < PathFollower
 	 * @param ignoreActorsFilter     Callback that determines which actors to ignore
 	 * @param onlyActorsFilter       Callback that determines which actors to hit
 	 */
-	public native ChasePath(SubjectChaseType how = DONT_LEAD_SUBJECT, NavPathCostFunctor costfunction = INVALID_FUNCTION, TraceFilterActors ignoreActorsFilter, TraceFilterActors onlyActorsFilter);
+	public native ChasePath(SubjectChaseType how = DONT_LEAD_SUBJECT, PathFollowerCostFunctor costfunction = INVALID_FUNCTION, TraceFilterActors ignoreActorsFilter, TraceFilterActors onlyActorsFilter);
 	
 	/**
 	 * Updates path progress to the goal entity, automatically recomputing
@@ -480,7 +496,7 @@ methodmap ChasePath < PathFollower
 
 methodmap DirectChasePath < ChasePath
 {
-	public native DirectChasePath(SubjectChaseType how = DONT_LEAD_SUBJECT, NavPathCostFunctor costfunction = INVALID_FUNCTION, TraceFilterActors ignoreActorsFilter, TraceFilterActors onlyActorsFilter);
+	public native DirectChasePath(SubjectChaseType how = DONT_LEAD_SUBJECT, PathFollowerCostFunctor costfunction = INVALID_FUNCTION, TraceFilterActors ignoreActorsFilter, TraceFilterActors onlyActorsFilter);
 };
 
 public bool Path_FilterIgnoreActors(int entity, int contentsMask, int desiredcollisiongroup)
