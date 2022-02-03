@@ -184,12 +184,12 @@ methodmap CNavMesh
 	 * @param goalArea              Goal area. If NULL_AREA, will compute a path as close as possible to goalPos.
 	 * @param goalPos               Goal position. If NULL_VECTOR, then will use the center of goalArea as the goal position.
 	 * @param costFunc              Cost function. If cost function returns -1 for an area, that area is considered a dead end.
-	 * @param closestArea           Optional. If path fails, this contains the closest area to goal. Otherwise, contains the goal area.
-	 * @param maxPathLength         Optional. If non-zero, the maximum length of the path.
-	 * @param teamID                Optional. If non-zero, the team ID to use for pathfinding.
-	 * @param ignoreNavBlockers     Optional. If true, ignores nav blockers.
+	 * @param closestArea           If path fails, this contains the closest area to goal. Otherwise, contains the goal area.
+	 * @param maxPathLength         If non-zero, the maximum length of the path.
+	 * @param teamID                If non-zero, the team ID to use for pathfinding.
+	 * @param ignoreNavBlockers     If true, ignores nav blockers.
 	 * @return                      True if path was found to goal, false otherwise
-	 * @error					    Invalid start area.
+	 * @error                       Invalid start area.
 	 */
 	public native bool BuildPath( CNavArea startArea, 
 		CNavArea goalArea, 
@@ -445,11 +445,11 @@ methodmap CNavArea
 	/**
 	 * Calculates the closest point to pos within the computed portal.
 	 *
-	 * @param area		  Area to calculate portal to
-	 * @param dir		  Direction to calculate portal to
-	 * @param pos		  Position to calculate closest point to
-	 * @param close	      Buffer to store closest point
-	 * @error			  Invalid area
+	 * @param area        Area to calculate portal to
+	 * @param dir         Direction to calculate portal to
+	 * @param pos         Position to calculate closest point to
+	 * @param close       Buffer to store closest point
+	 * @error             Invalid area
 	 */
 	public native void ComputeClosestPointInPortal(CNavArea area, NavDirType dir, const float pos[3], float close[3]);
 
@@ -462,11 +462,19 @@ methodmap CNavArea
 	public native void GetClosestPointOnArea(const float pos[3], float close[3]);
 
 	/**
+	 * Gets the shortest squared distance from area to point.
+	 *
+	 * @param pos      Position to calculate distance to.
+	 * @return         Squared distance
+	 */
+	public native float GetDistanceSquaredToPoint(const float pos[3]);
+
+	/**
 	 * Computes the height difference between this area and the other area.
 	 *
 	 * @param other    Area to compute height change from
 	 * @return         Height difference
-	 * @error		   Invalid area
+	 * @error          Invalid area
 	 */
 	public native float ComputeAdjacentConnectionHeightChange(CNavArea other);
 
@@ -597,6 +605,20 @@ methodmap CNavArea
 	public native bool Contains(CNavArea area);
 
 	/**
+	 * Gets the size of the area along the x axis.
+	 *
+	 * @return         Size along X-axis
+	 */
+	public native float GetSizeX();
+
+	/**
+	 * Gets the size of the area along the y axis.
+	 *
+	 * @return         Size along Y-axis
+	 */
+	public native float GetSizeY();
+
+	/**
 	 * Checks if the point overlaps the 2D extents of the area.
 	 *
 	 * @param pos          Position to check
@@ -616,8 +638,8 @@ methodmap CNavArea
 	/**
 	 * Checks if the given extent overlaps the 2D extents of the area.
 	 *
-	 * @param mins		 Minimum 2D extents
-	 * @param maxs		 Maximum 2D extents
+	 * @param mins       Minimum 2D extents
+	 * @param maxs       Maximum 2D extents
 	 * @return           True if overlaps, false otherwise
 	 */
 	public native bool IsOverlappingExtent(const float mins[3], const float maxs[3]);
@@ -757,6 +779,48 @@ methodmap CNavArea
 	 * Adds the area to the closed list.
 	 */
 	public native void AddToClosedList();
+
+	/**
+	 * Checks if the entire area is visible from the given eyepoint.
+	 *
+	 * @note                  This is CPU-intensive as this performs trace checks against the four corners and the center of the area.
+	 * @param eye             Position to check
+	 * @param ignoreEntity    Entity to ignore for trace checks
+	 * @return                True if totally visible, false otherwise
+	 */
+	public native bool IsEntirelyVisible(const float eye[3], int ignoreEntity = -1);
+
+	/**
+	 * Checks if the area is partially visible from the given eyepoint.
+	 *
+	 * @note                  This is CPU-intensive as this performs trace checks against the four corners and the center of the area.
+	 * @param eye             Position to check
+	 * @param ignoreEntity    Entity to ignore for trace checks
+	 * @return                True if partially visible, false otherwise
+	 */
+	public native bool IsPartiallyVisible(const float eye[3], int ignoreEntity = -1);
+
+	/**
+	 * Checks if the given area is potentially visible from somewhere in this area.
+	 *
+	 * @note          This is very fast as it relies on precomputed visibility data.
+	 * @note          This only works if the navigation mesh is analyzed.
+	 * @param area    Area to check
+	 * @return        True if potentially visible, false otherwise
+	 * @error         Invalid area
+	 */
+	public native bool IsPotentiallyVisible(CNavArea area);
+
+	/**
+	 * Checks if the given area is completely visible from somewhere in this area.
+	 *
+	 * @note          This is very fast as it relies on precomputed visibility data.
+	 * @note          This only works if the navigation mesh is analyzed.
+	 * @param area    Area to check
+	 * @return        True if potentially visible, false otherwise
+	 * @error         Invalid area
+	 */
+	public native bool IsCompletelyVisible(CNavArea area);
 };
 
 enum TheNavAreasVector

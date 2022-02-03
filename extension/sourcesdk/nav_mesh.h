@@ -33,24 +33,24 @@ public:
 
 	bool IsLoaded( void ) const		{ return m_isLoaded; }
 	bool IsAnalyzed( void ) const	{ return m_isAnalyzed; }
-	bool IsOutOfDate( void ) const	{ return m_isOutOfDate; }
-	unsigned int GetNavAreaCount( void ) const	{ return m_areaCount; }
 
-	int ComputeHashKey( unsigned int id ) const;				// returns a hash key for the given nav area ID
+	/**
+	 * Return true if nav mesh can be trusted for all climbing/jumping decisions because game environment is fairly simple.
+	 * Authoritative meshes mean path followers can skip CPU intensive realtime scanning of unpredictable geometry.
+	 */
+	/*virtual*/ bool IsAuthoritative() { return true; }
+
+	bool IsOutOfDate( void ) const	{ return m_isOutOfDate; }
+
+	unsigned int GetNavAreaCount( void ) const	{ return m_areaCount; }
 
 	CNavArea *GetNavAreaByID( unsigned int id ) const;
 
 	static MCall<CNavArea*, const Vector&, bool, float, bool, bool, int> mGetNearestNavArea;
-	CNavArea* GetNearestNavArea(const Vector&, bool, float, bool, bool, int);
+	CNavArea* GetNearestNavArea( const Vector &pos, bool anyZ = false, float maxDist = 10000.0f, bool checkLOS = false, bool checkGround = true, int team = TEAM_ANY );
 
 	static MCall<bool, const Vector&, float*, Vector*> mGetGroundHeight;
 	bool GetGroundHeight(const Vector&, float*, Vector*);
-
-public:
-	bool IsAuthoritative()
-	{
-		return true; //TF2 has simple geometry
-	}
 
 private:
 	CUtlVector<NavAreaVector> m_grid;
@@ -67,6 +67,7 @@ private:
 
 	enum { HASH_TABLE_SIZE = 256 };
 	CNavArea *m_hashTable[ HASH_TABLE_SIZE ];					// hash table to optimize lookup by ID
+	int ComputeHashKey( unsigned int id ) const;				// returns a hash key for the given nav area ID
 };
 
 inline void CollectSurroundingAreas( CUtlVector< CNavArea * > *nearbyAreaVector, CNavArea *startArea, float travelDistanceLimit = 1500.0f, float maxStepUpLimit = StepHeight, float maxDropDownLimit = 100.0f )

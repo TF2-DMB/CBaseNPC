@@ -163,6 +163,14 @@ NAVAREA_NATIVE(GetClosestPointOnArea)
 	return 1;
 }
 
+NAVAREA_NATIVE(GetDistanceSquaredToPoint)
+	cell_t *posAddr;
+	pContext->LocalToPhysAddr(params[2], &posAddr);
+	Vector pos;
+	PawnVectorToVector(posAddr, &pos);
+	return pArea->GetDistanceSquaredToPoint(pos);
+}
+
 NAVAREA_NATIVE(ComputeAdjacentConnectionHeightChange)
 	CNavArea *pOther = (CNavArea *)params[2];
 	if (!pOther) 
@@ -373,6 +381,38 @@ NAVAREA_NATIVE(IsClosed)
 NAVAREA_NATIVE(AddToClosedList)
 	pArea->AddToClosedList();
 	return 0;
+}
+
+NAVAREA_NATIVE(IsEntirelyVisible)
+	cell_t *eyeAddr;
+	pContext->LocalToPhysAddr(params[2], &eyeAddr);
+	Vector eye;
+	PawnVectorToVector(eyeAddr, &eye);
+	CBaseEntity *ignore = gamehelpers->ReferenceToEntity(params[3]);
+	return pArea->IsEntirelyVisible(eye, ignore);
+}
+
+NAVAREA_NATIVE(IsPartiallyVisible)
+	cell_t *eyeAddr;
+	pContext->LocalToPhysAddr(params[2], &eyeAddr);
+	Vector eye;
+	PawnVectorToVector(eyeAddr, &eye);
+	CBaseEntity *ignore = gamehelpers->ReferenceToEntity(params[3]);
+	return pArea->IsPartiallyVisible(eye, ignore);
+}
+
+NAVAREA_NATIVE(IsPotentiallyVisible)
+	CNavArea *viewedArea = (CNavArea *)params[2];
+	if (!viewedArea)
+		return pContext->ThrowNativeError("Invalid nav area %x", params[2]);
+	return pArea->IsPotentiallyVisible(viewedArea);
+}
+
+NAVAREA_NATIVE(IsCompletelyVisible)
+	CNavArea *viewedArea = (CNavArea *)params[2];
+	if (!viewedArea)
+		return pContext->ThrowNativeError("Invalid nav area %x", params[2]);
+	return pArea->IsCompletelyVisible(viewedArea);
 }
 
 NAVLADDER_NATIVE(lengthGet)

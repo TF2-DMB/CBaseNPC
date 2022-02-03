@@ -12,6 +12,142 @@ unsigned int CNavArea::m_masterMarker = 1;
 CNavArea *CNavArea::m_openList = NULL;
 CNavArea *CNavArea::m_openListTail = NULL;
 
+//--------------------------------------------------------------------------------------------------------------
+/**
+ * Return true if given area is connected in given direction
+ * if dir == NUM_DIRECTIONS, check all directions (direction is unknown)
+ * @todo Formalize "asymmetric" flag on connections
+ */
+bool CNavArea::IsConnected( const CNavArea *area, NavDirType dir ) const
+{
+	// we are connected to ourself
+	if (area == this)
+		return true;
+
+	if (dir == NUM_DIRECTIONS)
+	{
+		// search all directions
+		for( int d=0; d<NUM_DIRECTIONS; ++d )
+		{
+			FOR_EACH_VEC( m_connect[ d ], it )
+			{
+				if (area == m_connect[ d ][ it ].area)
+					return true;
+			}
+		}
+
+		// check ladder connections
+		FOR_EACH_VEC( m_ladder[ CNavLadder::LADDER_UP ], it )
+		{
+			CNavLadder *ladder = m_ladder[ CNavLadder::LADDER_UP ][ it ].ladder;
+
+			if (ladder->m_topBehindArea == area ||
+				ladder->m_topForwardArea == area ||
+				ladder->m_topLeftArea == area ||
+				ladder->m_topRightArea == area)
+				return true;
+		}
+
+		FOR_EACH_VEC( m_ladder[ CNavLadder::LADDER_DOWN ], dit )
+		{
+			CNavLadder *ladder = m_ladder[ CNavLadder::LADDER_DOWN ][ dit ].ladder;
+
+			if (ladder->m_bottomArea == area)
+				return true;
+		}
+	}
+	else
+	{
+		// check specific direction
+		FOR_EACH_VEC( m_connect[ dir ], it )
+		{
+			if (area == m_connect[ dir ][ it ].area)
+				return true;
+		}
+	}
+
+	return false;
+}
+
+//--------------------------------------------------------------------------------------------------------------
+/**
+ * Return true if 'pos' is within 2D extents of area.
+ */
+bool CNavArea::IsOverlapping( const Vector &pos, float tolerance ) const
+{
+	if (pos.x + tolerance >= m_nwCorner.x && pos.x - tolerance <= m_seCorner.x &&
+		pos.y + tolerance >= m_nwCorner.y && pos.y - tolerance <= m_seCorner.y)
+		return true;
+
+	return false;
+}
+
+//--------------------------------------------------------------------------------------------------------------
+/**
+ * Return true if 'area' overlaps our 2D extents
+ */
+bool CNavArea::IsOverlapping( const CNavArea *area ) const
+{
+	if (area->m_nwCorner.x < m_seCorner.x && area->m_seCorner.x > m_nwCorner.x && 
+		area->m_nwCorner.y < m_seCorner.y && area->m_seCorner.y > m_nwCorner.y)
+		return true;
+
+	return false;
+}
+
+//--------------------------------------------------------------------------------------------------------------
+/**
+ * Return true if 'extent' overlaps our 2D extents
+ */
+bool CNavArea::IsOverlapping( const Extent &extent ) const
+{
+	return ( extent.lo.x < m_seCorner.x && extent.hi.x > m_nwCorner.x && 
+			 extent.lo.y < m_seCorner.y && extent.hi.y > m_nwCorner.y );
+}
+
+//--------------------------------------------------------------------------------------------------------------
+/**
+* Returns true if area completely contains other area
+*/
+bool CNavArea::Contains( const CNavArea *area ) const
+{
+	return ( ( m_nwCorner.x <= area->m_nwCorner.x ) && ( m_seCorner.x >= area->m_seCorner.x ) &&
+		( m_nwCorner.y <= area->m_nwCorner.y ) && ( m_seCorner.y >= area->m_seCorner.y ) &&
+		( m_nwCorner.z <= area->m_nwCorner.z ) && ( m_seCorner.z >= area->m_seCorner.z ) );
+}
+
+void CNavArea::ComputeNormal( Vector *normal, bool alternate ) const
+{
+	if ( !normal )
+		return;
+
+	Vector u, v;
+
+	if ( !alternate )
+	{
+		u.x = m_seCorner.x - m_nwCorner.x;
+		u.y = 0.0f;
+		u.z = m_neZ - m_nwCorner.z;
+
+		v.x = 0.0f;
+		v.y = m_seCorner.y - m_nwCorner.y;
+		v.z = m_swZ - m_nwCorner.z;
+	}
+	else
+	{
+		u.x = m_nwCorner.x - m_seCorner.x;
+		u.y = 0.0f;
+		u.z = m_swZ - m_seCorner.z;
+
+		v.x = 0.0f;
+		v.y = m_nwCorner.y - m_seCorner.y;
+		v.z = m_neZ - m_seCorner.z;
+	}
+
+	*normal = CrossProduct( u, v );
+	normal->NormalizeInPlace();
+}
+
 float CNavArea::GetZ( float x, float y ) const RESTRICT
 {
 	if (m_invDxCorners == 0.0f || m_invDyCorners == 0.0f)
@@ -36,31 +172,366 @@ float CNavArea::GetZ( float x, float y ) const RESTRICT
 
 //--------------------------------------------------------------------------------------------------------------
 /**
-* Returns true if area completely contains other area
-*/
-bool CNavArea::Contains( const CNavArea *area ) const
+ * Return closest point to 'pos' on 'area'.
+ * Returned point is in 'close'.
+ */
+void CNavArea::GetClosestPointOnArea( const Vector * RESTRICT pPos, Vector *close ) const RESTRICT 
 {
-	return ( ( m_nwCorner.x <= area->m_nwCorner.x ) && ( m_seCorner.x >= area->m_seCorner.x ) &&
-		( m_nwCorner.y <= area->m_nwCorner.y ) && ( m_seCorner.y >= area->m_seCorner.y ) &&
-		( m_nwCorner.z <= area->m_nwCorner.z ) && ( m_seCorner.z >= area->m_seCorner.z ) );
+	float x, y, z;
+
+	// Using fsel rather than compares, as much faster on 360 [7/28/2008 tom]
+	x = fsel( pPos->x - m_nwCorner.x, pPos->x, m_nwCorner.x );
+	x = fsel( x - m_seCorner.x, m_seCorner.x, x );
+
+	y = fsel( pPos->y - m_nwCorner.y, pPos->y, m_nwCorner.y );
+	y = fsel( y - m_seCorner.y, m_seCorner.y, y );
+
+	z = GetZ( x, y );
+
+	close->Init( x, y, z );
 }
 
 //--------------------------------------------------------------------------------------------------------------
 /**
- * Clears the open and closed lists for a new search
+ * Return shortest distance squared between point and this area
  */
-void CNavArea::ClearSearchLists( void )
+float CNavArea::GetDistanceSquaredToPoint( const Vector &pos ) const
 {
-	// effectively clears all open list pointers and closed flags
-	CNavArea::MakeNewMarker();
-
-	m_openList = NULL;
-	m_openListTail = NULL;
+	if (pos.x < m_nwCorner.x)
+	{
+		if (pos.y < m_nwCorner.y)
+		{
+			// position is north-west of area
+			return (m_nwCorner - pos).LengthSqr();
+		}
+		else if (pos.y > m_seCorner.y)
+		{
+			// position is south-west of area
+			Vector d;
+			d.x = m_nwCorner.x - pos.x;
+			d.y = m_seCorner.y - pos.y;
+			d.z = m_swZ - pos.z;
+			return d.LengthSqr();
+		}
+		else
+		{
+			// position is west of area
+			float d = m_nwCorner.x - pos.x;
+			return d * d;
+		}
+	}
+	else if (pos.x > m_seCorner.x)
+	{
+		if (pos.y < m_nwCorner.y)
+		{
+			// position is north-east of area
+			Vector d;
+			d.x = m_seCorner.x - pos.x;
+			d.y = m_nwCorner.y - pos.y;
+			d.z = m_neZ - pos.z;
+			return d.LengthSqr();
+		}
+		else if (pos.y > m_seCorner.y)
+		{
+			// position is south-east of area
+			return (m_seCorner - pos).LengthSqr();
+		}
+		else
+		{
+			// position is east of area
+			float d = pos.x - m_seCorner.x;
+			return d * d;
+		}
+	}
+	else if (pos.y < m_nwCorner.y)
+	{
+		// position is north of area
+		float d = m_nwCorner.y - pos.y;
+		return d * d;
+	}
+	else if (pos.y > m_seCorner.y)
+	{
+		// position is south of area
+		float d = pos.y - m_seCorner.y;
+		return d * d;
+	}
+	else
+	{
+		// position is inside of 2D extent of area - find delta Z
+		float z = GetZ( pos );
+		float d = z - pos.z;
+		return d * d;
+	}
 }
 
+//--------------------------------------------------------------------------------------------------------------
+/**
+ * Compute "portal" between two adjacent areas. 
+ * Return center of portal opening, and half-width defining sides of portal from center.
+ * NOTE: center->z is unset.
+ */
+void CNavArea::ComputePortal( const CNavArea *to, NavDirType dir, Vector *center, float *halfWidth ) const
+{
+	if ( dir == NORTH || dir == SOUTH )
+	{
+		if ( dir == NORTH )
+		{
+			center->y = m_nwCorner.y;
+		}
+		else
+		{
+			center->y = m_seCorner.y;
+		}
+
+		float left = MAX( m_nwCorner.x, to->m_nwCorner.x );
+		float right = MIN( m_seCorner.x, to->m_seCorner.x );
+
+		// clamp to our extent in case areas are disjoint
+		if ( left < m_nwCorner.x )
+		{
+			left = m_nwCorner.x;
+		}
+		else if ( left > m_seCorner.x )
+		{
+			left = m_seCorner.x;
+		}
+
+		if ( right < m_nwCorner.x )
+		{
+			right = m_nwCorner.x;
+		}
+		else if ( right > m_seCorner.x )
+		{
+			right = m_seCorner.x;
+		}
+
+		center->x = ( left + right )/2.0f;
+		*halfWidth = ( right - left )/2.0f;
+	}
+	else	// EAST or WEST
+	{
+		if ( dir == WEST )
+		{
+			center->x = m_nwCorner.x;
+		}
+		else
+		{
+			center->x = m_seCorner.x;
+		}
+
+		float top = MAX( m_nwCorner.y, to->m_nwCorner.y );
+		float bottom = MIN( m_seCorner.y, to->m_seCorner.y );
+
+		// clamp to our extent in case areas are disjoint
+		if ( top < m_nwCorner.y )
+		{
+			top = m_nwCorner.y;
+		}
+		else if ( top > m_seCorner.y )
+		{
+			top = m_seCorner.y;
+		}
+
+		if ( bottom < m_nwCorner.y )
+		{
+			bottom = m_nwCorner.y;
+		}
+		else if ( bottom > m_seCorner.y )
+		{
+			bottom = m_seCorner.y;
+		}
+
+		center->y = (top + bottom)/2.0f;
+		*halfWidth = (bottom - top)/2.0f;
+	}
+
+	center->z = GetZ( center->x, center->y );
+}
+
+//--------------------------------------------------------------------------------------------------------------
+/**
+ * Compute closest point within the "portal" between to adjacent areas. 
+ */
+void CNavArea::ComputeClosestPointInPortal( const CNavArea *to, NavDirType dir, const Vector &fromPos, Vector *closePos ) const
+{
+	const float margin = GenerationStepSize;
+
+	if ( dir == NORTH || dir == SOUTH )
+	{
+		if ( dir == NORTH )
+		{
+			closePos->y = m_nwCorner.y;
+		}
+		else
+		{
+			closePos->y = m_seCorner.y;
+		}
+
+		float left = MAX( m_nwCorner.x, to->m_nwCorner.x );
+		float right = MIN( m_seCorner.x, to->m_seCorner.x );
+		
+		/// @todo Need better check whether edge is outer edge or not - partial overlap is missed
+		float leftMargin = ( to->IsEdge( WEST ) ) ? ( left + margin ) : left;
+		float rightMargin = ( to->IsEdge( EAST ) ) ? ( right - margin ) : right;
+		
+		// if area is narrow, margins may have crossed
+		if ( leftMargin > rightMargin )
+		{
+			// use midline
+			float mid = ( left + right )/2.0f;
+			leftMargin = mid;
+			rightMargin = mid;
+		}
+
+		// limit x to within portal
+		if ( fromPos.x < leftMargin )
+		{
+			closePos->x = leftMargin;
+		}
+		else if ( fromPos.x > rightMargin )
+		{
+			closePos->x = rightMargin;
+		}
+		else
+		{
+			closePos->x = fromPos.x;
+		}
+	}
+	else	// EAST or WEST
+	{
+		if ( dir == WEST )
+		{
+			closePos->x = m_nwCorner.x;
+		}
+		else
+		{
+			closePos->x = m_seCorner.x;
+		}
+
+		float top = MAX( m_nwCorner.y, to->m_nwCorner.y );
+		float bottom = MIN( m_seCorner.y, to->m_seCorner.y );
+		
+		// keep margin if against edge
+		float topMargin = ( to->IsEdge( NORTH ) ) ? ( top + margin ) : top;
+		float bottomMargin = ( to->IsEdge( SOUTH ) ) ? ( bottom - margin ) : bottom;
+
+		// if area is narrow, margins may have crossed
+		if ( topMargin > bottomMargin )
+		{
+			// use midline
+			float mid = ( top + bottom )/2.0f;
+			topMargin = mid;
+			bottomMargin = mid;
+		}
+
+		// limit y to within portal
+		if ( fromPos.y < topMargin )
+		{
+			closePos->y = topMargin;
+		}
+		else if ( fromPos.y > bottomMargin )
+		{
+			closePos->y = bottomMargin;
+		}
+		else
+		{
+			closePos->y = fromPos.y;
+		}
+	}
+
+	closePos->z = GetZ( closePos->x, closePos->y );
+}
+
+//--------------------------------------------------------------------------------------------------------------
+/**
+ * Return height change between edges of adjacent nav areas (not actual underlying ground)
+ */
+float CNavArea::ComputeAdjacentConnectionHeightChange( const CNavArea *destinationArea ) const
+{
+	// find which side it is connected on
+	int dir;
+	for( dir=0; dir<NUM_DIRECTIONS; ++dir )
+	{
+		if ( this->IsConnected( destinationArea, (NavDirType)dir ) )
+			break;
+	}
+
+	if ( dir == NUM_DIRECTIONS )
+		return FLT_MAX;
+
+	Vector myEdge;
+	float halfWidth;
+	this->ComputePortal( destinationArea, (NavDirType)dir, &myEdge, &halfWidth );
+
+	Vector otherEdge;
+	destinationArea->ComputePortal( this, OppositeDirection( (NavDirType)dir ), &otherEdge, &halfWidth );
+
+	return otherEdge.z - myEdge.z;
+}
+
+//--------------------------------------------------------------------------------------------------------------
+/**
+ * Return true if there are no bi-directional links on the given side
+ */
+bool CNavArea::IsEdge( NavDirType dir ) const
+{
+	FOR_EACH_VEC( m_connect[ dir ], it )
+	{
+		const NavConnect connect = m_connect[ dir ][ it ];
+
+		if (connect.area->IsConnected( this, OppositeDirection( dir ) ))
+			return false;
+	}
+
+	return true;
+}
+
+//--------------------------------------------------------------------------------------------------------------
+/**
+ * Return direction from this area to the given point
+ */
+NavDirType CNavArea::ComputeDirection( Vector *point ) const
+{
+	if (point->x >= m_nwCorner.x && point->x <= m_seCorner.x)
+	{
+		if (point->y < m_nwCorner.y)
+			return NORTH;
+		else if (point->y > m_seCorner.y)
+			return SOUTH;
+	}
+	else if (point->y >= m_nwCorner.y && point->y <= m_seCorner.y)
+	{
+		if (point->x < m_nwCorner.x)
+			return WEST;
+		else if (point->x > m_seCorner.x)
+			return EAST;
+	}
+
+	// find closest direction
+	Vector to = *point - m_center;
+
+	if (fabs(to.x) > fabs(to.y))
+	{
+		if (to.x > 0.0f)
+			return EAST;
+		return WEST;
+	}
+	else
+	{
+		if (to.y > 0.0f)
+			return SOUTH;
+		return NORTH;
+	}
+
+	return NUM_DIRECTIONS;
+}
+
+//--------------------------------------------------------------------------------------------------------------
+/**
+ * Add to open list in decreasing value order
+ */
 void CNavArea::AddToOpenList( void )
 {
-
 	if ( IsOpen() )
 	{
 		// already on list
@@ -228,434 +699,15 @@ void CNavArea::UpdateOnOpenList( void )
 
 //--------------------------------------------------------------------------------------------------------------
 /**
- * Return true if there are no bi-directional links on the given side
+ * Clears the open and closed lists for a new search
  */
-bool CNavArea::IsEdge( NavDirType dir ) const
+void CNavArea::ClearSearchLists( void )
 {
-	FOR_EACH_VEC( m_connect[ dir ], it )
-	{
-		const NavConnect connect = m_connect[ dir ][ it ];
+	// effectively clears all open list pointers and closed flags
+	CNavArea::MakeNewMarker();
 
-		if (connect.area->IsConnected( this, OppositeDirection( dir ) ))
-			return false;
-	}
-
-	return true;
-}
-
-//--------------------------------------------------------------------------------------------------------------
-/**
- * Return true if given area is connected in given direction
- * if dir == NUM_DIRECTIONS, check all directions (direction is unknown)
- * @todo Formalize "asymmetric" flag on connections
- */
-bool CNavArea::IsConnected( const CNavArea *area, NavDirType dir ) const
-{
-	// we are connected to ourself
-	if (area == this)
-		return true;
-
-	if (dir == NUM_DIRECTIONS)
-	{
-		// search all directions
-		for( int d=0; d<NUM_DIRECTIONS; ++d )
-		{
-			FOR_EACH_VEC( m_connect[ d ], it )
-			{
-				if (area == m_connect[ d ][ it ].area)
-					return true;
-			}
-		}
-
-		// check ladder connections
-		FOR_EACH_VEC( m_ladder[ CNavLadder::LADDER_UP ], it )
-		{
-			CNavLadder *ladder = m_ladder[ CNavLadder::LADDER_UP ][ it ].ladder;
-
-			if (ladder->m_topBehindArea == area ||
-				ladder->m_topForwardArea == area ||
-				ladder->m_topLeftArea == area ||
-				ladder->m_topRightArea == area)
-				return true;
-		}
-
-		FOR_EACH_VEC( m_ladder[ CNavLadder::LADDER_DOWN ], dit )
-		{
-			CNavLadder *ladder = m_ladder[ CNavLadder::LADDER_DOWN ][ dit ].ladder;
-
-			if (ladder->m_bottomArea == area)
-				return true;
-		}
-	}
-	else
-	{
-		// check specific direction
-		FOR_EACH_VEC( m_connect[ dir ], it )
-		{
-			if (area == m_connect[ dir ][ it ].area)
-				return true;
-		}
-	}
-
-	return false;
-}
-
-//--------------------------------------------------------------------------------------------------------------
-/**
- * Return direction from this area to the given point
- */
-NavDirType CNavArea::ComputeDirection( Vector *point )
-{
-	if (point->x >= m_nwCorner.x && point->x <= m_seCorner.x)
-	{
-		if (point->y < m_nwCorner.y)
-			return NORTH;
-		else if (point->y > m_seCorner.y)
-			return SOUTH;
-	}
-	else if (point->y >= m_nwCorner.y && point->y <= m_seCorner.y)
-	{
-		if (point->x < m_nwCorner.x)
-			return WEST;
-		else if (point->x > m_seCorner.x)
-			return EAST;
-	}
-
-	// find closest direction
-	Vector to = *point - m_center;
-
-	if (fabs(to.x) > fabs(to.y))
-	{
-		if (to.x > 0.0f)
-			return EAST;
-		return WEST;
-	}
-	else
-	{
-		if (to.y > 0.0f)
-			return SOUTH;
-		return NORTH;
-	}
-
-	return NUM_DIRECTIONS;
-}
-
-//--------------------------------------------------------------------------------------------------------------
-/**
- * Return true if 'pos' is within 2D extents of area.
- */
-bool CNavArea::IsOverlapping( const Vector &pos, float tolerance ) const
-{
-	if (pos.x + tolerance >= m_nwCorner.x && pos.x - tolerance <= m_seCorner.x &&
-		pos.y + tolerance >= m_nwCorner.y && pos.y - tolerance <= m_seCorner.y)
-		return true;
-
-	return false;
-}
-
-//--------------------------------------------------------------------------------------------------------------
-/**
- * Return true if 'area' overlaps our 2D extents
- */
-bool CNavArea::IsOverlapping( const CNavArea *area ) const
-{
-	if (area->m_nwCorner.x < m_seCorner.x && area->m_seCorner.x > m_nwCorner.x && 
-		area->m_nwCorner.y < m_seCorner.y && area->m_seCorner.y > m_nwCorner.y)
-		return true;
-
-	return false;
-}
-
-
-//--------------------------------------------------------------------------------------------------------------
-/**
- * Return true if 'extent' overlaps our 2D extents
- */
-bool CNavArea::IsOverlapping( const Extent &extent ) const
-{
-	return ( extent.lo.x < m_seCorner.x && extent.hi.x > m_nwCorner.x && 
-			 extent.lo.y < m_seCorner.y && extent.hi.y > m_nwCorner.y );
-}
-
-//--------------------------------------------------------------------------------------------------------------
-/**
- * Return closest point to 'pos' on 'area'.
- * Returned point is in 'close'.
- */
-void CNavArea::GetClosestPointOnArea( const Vector * RESTRICT pPos, Vector *close ) const RESTRICT 
-{
-	float x, y, z;
-
-	// Using fsel rather than compares, as much faster on 360 [7/28/2008 tom]
-	x = fsel( pPos->x - m_nwCorner.x, pPos->x, m_nwCorner.x );
-	x = fsel( x - m_seCorner.x, m_seCorner.x, x );
-
-	y = fsel( pPos->y - m_nwCorner.y, pPos->y, m_nwCorner.y );
-	y = fsel( y - m_seCorner.y, m_seCorner.y, y );
-
-	z = GetZ( x, y );
-
-	close->Init( x, y, z );
-}
-
-//--------------------------------------------------------------------------------------------------------------
-/**
- * Compute closest point within the "portal" between to adjacent areas. 
- */
-void CNavArea::ComputeClosestPointInPortal( const CNavArea *to, NavDirType dir, const Vector &fromPos, Vector *closePos ) const
-{
-	const float margin = GenerationStepSize;
-
-	if ( dir == NORTH || dir == SOUTH )
-	{
-		if ( dir == NORTH )
-		{
-			closePos->y = m_nwCorner.y;
-		}
-		else
-		{
-			closePos->y = m_seCorner.y;
-		}
-
-		float left = MAX( m_nwCorner.x, to->m_nwCorner.x );
-		float right = MIN( m_seCorner.x, to->m_seCorner.x );
-		
-		/// @todo Need better check whether edge is outer edge or not - partial overlap is missed
-		float leftMargin = ( to->IsEdge( WEST ) ) ? ( left + margin ) : left;
-		float rightMargin = ( to->IsEdge( EAST ) ) ? ( right - margin ) : right;
-		
-		// if area is narrow, margins may have crossed
-		if ( leftMargin > rightMargin )
-		{
-			// use midline
-			float mid = ( left + right )/2.0f;
-			leftMargin = mid;
-			rightMargin = mid;
-		}
-
-		// limit x to within portal
-		if ( fromPos.x < leftMargin )
-		{
-			closePos->x = leftMargin;
-		}
-		else if ( fromPos.x > rightMargin )
-		{
-			closePos->x = rightMargin;
-		}
-		else
-		{
-			closePos->x = fromPos.x;
-		}
-	}
-	else	// EAST or WEST
-	{
-		if ( dir == WEST )
-		{
-			closePos->x = m_nwCorner.x;
-		}
-		else
-		{
-			closePos->x = m_seCorner.x;
-		}
-
-		float top = MAX( m_nwCorner.y, to->m_nwCorner.y );
-		float bottom = MIN( m_seCorner.y, to->m_seCorner.y );
-		
-		// keep margin if against edge
-		float topMargin = ( to->IsEdge( NORTH ) ) ? ( top + margin ) : top;
-		float bottomMargin = ( to->IsEdge( SOUTH ) ) ? ( bottom - margin ) : bottom;
-
-		// if area is narrow, margins may have crossed
-		if ( topMargin > bottomMargin )
-		{
-			// use midline
-			float mid = ( top + bottom )/2.0f;
-			topMargin = mid;
-			bottomMargin = mid;
-		}
-
-		// limit y to within portal
-		if ( fromPos.y < topMargin )
-		{
-			closePos->y = topMargin;
-		}
-		else if ( fromPos.y > bottomMargin )
-		{
-			closePos->y = bottomMargin;
-		}
-		else
-		{
-			closePos->y = fromPos.y;
-		}
-	}
-
-	closePos->z = GetZ( closePos->x, closePos->y );
-}
-
-void CNavArea::ComputeNormal( Vector *normal, bool alternate ) const
-{
-	if ( !normal )
-		return;
-
-	Vector u, v;
-
-	if ( !alternate )
-	{
-		u.x = m_seCorner.x - m_nwCorner.x;
-		u.y = 0.0f;
-		u.z = m_neZ - m_nwCorner.z;
-
-		v.x = 0.0f;
-		v.y = m_seCorner.y - m_nwCorner.y;
-		v.z = m_swZ - m_nwCorner.z;
-	}
-	else
-	{
-		u.x = m_nwCorner.x - m_seCorner.x;
-		u.y = 0.0f;
-		u.z = m_swZ - m_seCorner.z;
-
-		v.x = 0.0f;
-		v.y = m_nwCorner.y - m_seCorner.y;
-		v.z = m_neZ - m_seCorner.z;
-	}
-
-	*normal = CrossProduct( u, v );
-	normal->NormalizeInPlace();
-}
-
-//--------------------------------------------------------------------------------------------------------------
-/**
- * Compute "portal" between two adjacent areas. 
- * Return center of portal opening, and half-width defining sides of portal from center.
- * NOTE: center->z is unset.
- */
-void CNavArea::ComputePortal( const CNavArea *to, NavDirType dir, Vector *center, float *halfWidth ) const
-{
-	if ( dir == NORTH || dir == SOUTH )
-	{
-		if ( dir == NORTH )
-		{
-			center->y = m_nwCorner.y;
-		}
-		else
-		{
-			center->y = m_seCorner.y;
-		}
-
-		float left = MAX( m_nwCorner.x, to->m_nwCorner.x );
-		float right = MIN( m_seCorner.x, to->m_seCorner.x );
-
-		// clamp to our extent in case areas are disjoint
-		if ( left < m_nwCorner.x )
-		{
-			left = m_nwCorner.x;
-		}
-		else if ( left > m_seCorner.x )
-		{
-			left = m_seCorner.x;
-		}
-
-		if ( right < m_nwCorner.x )
-		{
-			right = m_nwCorner.x;
-		}
-		else if ( right > m_seCorner.x )
-		{
-			right = m_seCorner.x;
-		}
-
-		center->x = ( left + right )/2.0f;
-		*halfWidth = ( right - left )/2.0f;
-	}
-	else	// EAST or WEST
-	{
-		if ( dir == WEST )
-		{
-			center->x = m_nwCorner.x;
-		}
-		else
-		{
-			center->x = m_seCorner.x;
-		}
-
-		float top = MAX( m_nwCorner.y, to->m_nwCorner.y );
-		float bottom = MIN( m_seCorner.y, to->m_seCorner.y );
-
-		// clamp to our extent in case areas are disjoint
-		if ( top < m_nwCorner.y )
-		{
-			top = m_nwCorner.y;
-		}
-		else if ( top > m_seCorner.y )
-		{
-			top = m_seCorner.y;
-		}
-
-		if ( bottom < m_nwCorner.y )
-		{
-			bottom = m_nwCorner.y;
-		}
-		else if ( bottom > m_seCorner.y )
-		{
-			bottom = m_seCorner.y;
-		}
-
-		center->y = (top + bottom)/2.0f;
-		*halfWidth = (bottom - top)/2.0f;
-	}
-
-	center->z = GetZ( center->x, center->y );
-}
-
-//--------------------------------------------------------------------------------------------------------------
-/**
- * Return height change between edges of adjacent nav areas (not actual underlying ground)
- */
-float CNavArea::ComputeAdjacentConnectionHeightChange( const CNavArea *destinationArea ) const
-{
-
-	// find which side it is connected on
-	int dir;
-	for( dir=0; dir<NUM_DIRECTIONS; ++dir )
-	{
-		if ( this->IsConnected( destinationArea, (NavDirType)dir ) )
-			break;
-	}
-
-	if ( dir == NUM_DIRECTIONS )
-		return FLT_MAX;
-
-	Vector myEdge;
-	float halfWidth;
-	this->ComputePortal( destinationArea, (NavDirType)dir, &myEdge, &halfWidth );
-
-	Vector otherEdge;
-	destinationArea->ComputePortal( this, OppositeDirection( (NavDirType)dir ), &otherEdge, &halfWidth );
-
-	return otherEdge.z - myEdge.z;
-}
-
-bool CNavArea::IsBlocked(int teamID, bool ignoreNavBlockers) const
-{
-	if (ignoreNavBlockers && (m_attributeFlags & NAV_MESH_NAV_BLOCKER))
-	{
-		return false;
-	}
-
-	if (teamID == TEAM_ANY)
-	{
-		bool isBlocked = false;
-		for (int i = 0; i < MAX_NAV_TEAMS; ++i)
-		{
-			isBlocked |= m_isBlocked[i];
-		}
-
-		return isBlocked;
-	}
-
-	int teamIdx = teamID % MAX_NAV_TEAMS;
-	return m_isBlocked[teamIdx];
+	m_openList = NULL;
+	m_openListTail = NULL;
 }
 
 //--------------------------------------------------------------------------------------------------------------

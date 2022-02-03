@@ -619,6 +619,7 @@ const sp_nativeinfo_t g_NativesInfo[] =
 	NATIVENAME(CNavArea, ComputePortal)
 	NATIVENAME(CNavArea, ComputeClosestPointInPortal)
 	NATIVENAME(CNavArea, GetClosestPointOnArea)
+	NATIVENAME(CNavArea, GetDistanceSquaredToPoint)
 	NATIVENAME(CNavArea, ComputeAdjacentConnectionHeightChange)
 	NATIVENAME(CNavArea, GetAttributes)
 	NATIVENAME(CNavArea, GetCorner)
@@ -651,6 +652,10 @@ const sp_nativeinfo_t g_NativesInfo[] =
 	NATIVENAME(CNavArea, UpdateOnOpenList)
 	NATIVENAME(CNavArea, IsClosed)
 	NATIVENAME(CNavArea, AddToClosedList)
+	NATIVENAME(CNavArea, IsPartiallyVisible)
+	NATIVENAME(CNavArea, IsEntirelyVisible)
+	NATIVENAME(CNavArea, IsPotentiallyVisible)
+	NATIVENAME(CNavArea, IsCompletelyVisible)
 	NATIVENAMEGET(CNavLadder, length)
 
 #if SOURCE_ENGINE == SE_TF2
