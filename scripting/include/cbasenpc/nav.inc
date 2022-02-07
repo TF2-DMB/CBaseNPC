@@ -67,6 +67,21 @@ enum NavCornerType
 	NUM_CORNERS
 };
 
+typeset NavPathCostFunctor
+{
+	/**
+	 * Path cost function
+	 * 
+	 * @param area         Area arriving to
+	 * @param fromArea     Area leaving from. This will be NULL_AREA if `area` is the first area in the path.
+	 * @param ladder       If ladder used to traverse to `area`, CNavLadder pointer, otherwise is NULL_LADDER.
+	 * @param elevator     If elevator used to traverse to `area`, entity index of elevator, otherwise is -1.
+	 * @param length       Length of connection between areas. If ladder or elevator is used, this is -1.0.
+	 * @return             Cost to move from `fromArea` to `area`
+	 */
+	function float(CNavArea area, CNavArea fromArea, CNavLadder ladder, int elevator, float length);
+};
+
 enum CNavMesh 
 {
 	TheNavMesh
@@ -127,6 +142,8 @@ methodmap CNavMesh
 	 * Each area in the collection's GetCostSoFar() will be approximate travel
 	 * distance from startArea.
 	 *
+	 * @note                          Travel cost is calculated between the centers of the areas. This will introduce some inaccuracy to the true travel distance.
+	 * @note                          This utilizes the area's SetCostSoFar() and SetTotalCost() functions, which will change the cost stored on the area which is shared with BuildPath(). Be wary of using this with BuildPath(), as doing so may produce unexpected results.
 	 * @param startArea               Area to start searching from
 	 * @param travelDistanceLimit     Maximum travel distance
 	 * @param maxStepUpLimit          Maximum step height
@@ -157,6 +174,31 @@ methodmap CNavMesh
 	 * @return                   CNavArea, or NULL_AREA if no area was found
 	 */
 	public native CNavArea GetNearestNavArea(const float pos[3], bool anyZ = false, float maxDist = 10000.0, bool checkLOS = false, bool checkGround = true, int team = TEAM_ANY);
+
+	/**
+	 * Find path from startArea to goalArea via an A* search, using supplied cost heuristic.
+	 * 
+	 * @note                        To use the created path, travel using pointers from closestArea to the startArea via the GetParent() method until GetParent() is NULL.
+	 * @note                        This utilizes the area's SetPathLengthSoFar() and SetTotalCost() functions, which will change the cost stored on the area which is shared with CollectSurroundingAreas(). Be wary of using this with CollectSurroundingAreas(), as doing so may produce unexpected results.
+	 * @param startArea             Start area
+	 * @param goalArea              Goal area. If NULL_AREA, will compute a path as close as possible to goalPos.
+	 * @param goalPos               Goal position. If NULL_VECTOR, then will use the center of goalArea as the goal position.
+	 * @param costFunc              Cost function. If cost function returns -1 for an area, that area is considered a dead end.
+	 * @param closestArea           If path fails, this contains the closest area to goal. Otherwise, contains the goal area.
+	 * @param maxPathLength         If non-zero, the maximum length of the path.
+	 * @param teamID                If non-zero, the team ID to use for pathfinding.
+	 * @param ignoreNavBlockers     If true, ignores nav blockers.
+	 * @return                      True if path was found to goal, false otherwise
+	 * @error                       Invalid start area.
+	 */
+	public native bool BuildPath( CNavArea startArea, 
+		CNavArea goalArea, 
+		const float goalPos[3], 
+		NavPathCostFunctor costFunc = INVALID_FUNCTION,
+		CNavArea &closestArea = NULL_AREA, 
+		float maxPathLength = 0.0,
+		int teamID = TEAM_ANY,
+		bool ignoreNavBlockers = false);
 };
 
 methodmap CNavLadder
@@ -358,6 +400,85 @@ methodmap CNavArea
 	public native float GetCostSoFar();
 	
 	/**
+	 * Sets the total travel cost. This is mainly used in area collection and pathfinding
+	 * algorithms.
+	 *
+	 * @param value     Total cost
+	 */
+	public native void SetTotalCost(float value);
+
+	/**
+	 * Total travel cost. This is mainly used in area collection and pathfinding
+	 * algorithms.
+	 *
+	 * @return     Total cost
+	 */
+	public native float GetTotalCost();
+
+	/**
+	 * Sets the path length so far. This is mainly used in area collection and
+	 * pathfinding algorithms.
+	 *
+	 * @param parent    Area to set parent to
+	 */
+	public native void SetPathLengthSoFar(float value);
+
+	/**
+	 * Path length so far. This is mainly used in area collection and pathfinding
+	 * algorithms.
+	 *
+	 * @return     Path length so far
+	 */
+	public native float GetPathLengthSoFar();
+
+	/**
+	 * Calculates the portal between this area and the other.
+	 *
+	 * @param area          Area to calculate portal to
+	 * @param dir           Direction to calculate portal to
+	 * @param center        Buffer to store portal position
+	 * @param halfWidth     Optional. Half the width of the portal
+	 * @error               Invalid area
+	 */
+	public native void ComputePortal(CNavArea area, NavDirType dir, float center[3], float &halfWidth = 0.0);
+
+	/**
+	 * Calculates the closest point to pos within the computed portal.
+	 *
+	 * @param area        Area to calculate portal to
+	 * @param dir         Direction to calculate portal to
+	 * @param pos         Position to calculate closest point to
+	 * @param close       Buffer to store closest point
+	 * @error             Invalid area
+	 */
+	public native void ComputeClosestPointInPortal(CNavArea area, NavDirType dir, const float pos[3], float close[3]);
+
+	/**
+	 * Gets the closest point to pos on the area.
+	 *
+	 * @param pos      Position to try to get closest to. This does not have to be on the area.
+	 * @param close    Buffer to store the closest point
+	 */
+	public native void GetClosestPointOnArea(const float pos[3], float close[3]);
+
+	/**
+	 * Gets the shortest squared distance from area to point.
+	 *
+	 * @param pos      Position to calculate distance to.
+	 * @return         Squared distance
+	 */
+	public native float GetDistanceSquaredToPoint(const float pos[3]);
+
+	/**
+	 * Computes the height difference between this area and the other area.
+	 *
+	 * @param other    Area to compute height change from
+	 * @return         Height difference
+	 * @error          Invalid area
+	 */
+	public native float ComputeAdjacentConnectionHeightChange(CNavArea other);
+
+	/**
 	 * Attributes of the area.
 	 *
 	 * @return     Attribute flags
@@ -482,6 +603,46 @@ methodmap CNavArea
 	 * @return         True if completely contains area, false otherwise
 	 */
 	public native bool Contains(CNavArea area);
+
+	/**
+	 * Gets the size of the area along the x axis.
+	 *
+	 * @return         Size along X-axis
+	 */
+	public native float GetSizeX();
+
+	/**
+	 * Gets the size of the area along the y axis.
+	 *
+	 * @return         Size along Y-axis
+	 */
+	public native float GetSizeY();
+
+	/**
+	 * Checks if the point overlaps the 2D extents of the area.
+	 *
+	 * @param pos          Position to check
+	 * @param tolerance    Tolerance to use
+	 * @return             True if overlaps, false otherwise
+	 */
+	public native bool IsOverlappingPoint(const float pos[3], float tolerance = 0.0);
+
+	/**
+	 * Checks if the given area overlaps the 2D extents of the area.
+	 *
+	 * @param area         Area to check
+	 * @return             True if overlaps, false otherwise
+	 */
+	public native bool IsOverlappingArea(CNavArea area);
+
+	/**
+	 * Checks if the given extent overlaps the 2D extents of the area.
+	 *
+	 * @param mins       Minimum 2D extents
+	 * @param maxs       Maximum 2D extents
+	 * @return           True if overlaps, false otherwise
+	 */
+	public native bool IsOverlappingExtent(const float mins[3], const float maxs[3]);
 
 	/**
 	 * Returns the Z component of the given world XY values.
@@ -618,6 +779,48 @@ methodmap CNavArea
 	 * Adds the area to the closed list.
 	 */
 	public native void AddToClosedList();
+
+	/**
+	 * Checks if the entire area is visible from the given eyepoint.
+	 *
+	 * @note                  This is CPU-intensive as this performs trace checks against the four corners and the center of the area.
+	 * @param eye             Position to check
+	 * @param ignoreEntity    Entity to ignore for trace checks
+	 * @return                True if totally visible, false otherwise
+	 */
+	public native bool IsEntirelyVisible(const float eye[3], int ignoreEntity = -1);
+
+	/**
+	 * Checks if the area is partially visible from the given eyepoint.
+	 *
+	 * @note                  This is CPU-intensive as this performs trace checks against the four corners and the center of the area.
+	 * @param eye             Position to check
+	 * @param ignoreEntity    Entity to ignore for trace checks
+	 * @return                True if partially visible, false otherwise
+	 */
+	public native bool IsPartiallyVisible(const float eye[3], int ignoreEntity = -1);
+
+	/**
+	 * Checks if the given area is potentially visible from somewhere in this area.
+	 *
+	 * @note          This is very fast as it relies on precomputed visibility data.
+	 * @note          This only works if the navigation mesh is analyzed.
+	 * @param area    Area to check
+	 * @return        True if potentially visible, false otherwise
+	 * @error         Invalid area
+	 */
+	public native bool IsPotentiallyVisible(CNavArea area);
+
+	/**
+	 * Checks if the given area is completely visible from somewhere in this area.
+	 *
+	 * @note          This is very fast as it relies on precomputed visibility data.
+	 * @note          This only works if the navigation mesh is analyzed.
+	 * @param area    Area to check
+	 * @return        True if potentially visible, false otherwise
+	 * @error         Invalid area
+	 */
+	public native bool IsCompletelyVisible(CNavArea area);
 };
 
 enum TheNavAreasVector
@@ -648,5 +851,53 @@ methodmap TheNavAreasVector
 	 */
 	public native CNavArea Get(int i);
 };
+
+/**
+ * Default shortest path cost function. This is the default cost function used by BuildPath().
+ */
+public float Path_Cost(CNavArea area, CNavArea fromArea, CNavLadder ladder, int elevator, float length)
+{
+	if ( fromArea == NULL_AREA )
+	{
+		// At the start of the path
+		return 0.0;
+	}
+
+	float dist;
+	if ( ladder != NULL_LADDER_AREA )
+	{
+		dist = ladder.length;
+	}
+	else if ( length > 0.0 )
+	{
+		dist = length;
+	}
+	else
+	{
+		float vecAreaCenter[3], vecFromAreaCenter[3];
+		area.GetCenter(vecAreaCenter);
+		fromArea.GetCenter(vecFromAreaCenter);
+		dist = GetVectorDistance(vecAreaCenter, vecFromAreaCenter);
+	}
+
+	float cost = dist + fromArea.GetCostSoFar();
+	
+	// if this is a "crouch" area, add penalty
+	int attributes = area.GetAttributes();
+	if ( (attributes & NAV_MESH_CROUCH) )
+	{
+		const float crouchPenalty = 20.0;
+		cost += crouchPenalty * dist;
+	}
+
+	// if this is a "jump" area, add penalty
+	if ( (attributes & NAV_MESH_JUMP) )
+	{
+		const float jumpPenalty = 5.0;
+		cost += jumpPenalty * dist;
+	}
+	
+	return cost;
+}
 
 #endif

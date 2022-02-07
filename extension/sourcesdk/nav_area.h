@@ -202,13 +202,14 @@ class CNavArea : protected CNavAreaCriticalData
 {
 	public:
 		DECLARE_CLASS_NOBASE( CNavArea )
+
 		virtual ~CNavArea() = 0;
 		
 		virtual void OnServerActivate( void ) = 0;						// (EXTEND) invoked when map is initially loaded
 		virtual void OnRoundRestart( void ) = 0;						// (EXTEND) invoked for each area when the round restarts
-		virtual void OnRoundRestartPreEntity( void ) { };			// invoked for each area when the round restarts, but before entities are deleted and recreated
-		virtual void OnEnter( CBaseCombatCharacterHack* who, CNavArea *areaJustLeft ) { };	// invoked when player enters this area 
-		virtual void OnExit(CBaseCombatCharacterHack* who, CNavArea *areaJustEntered ) { };// invoked when player exits this area 
+		virtual void OnRoundRestartPreEntity( void ) = 0;			// invoked for each area when the round restarts, but before entities are deleted and recreated
+		virtual void OnEnter( CBaseCombatCharacterHack* who, CNavArea *areaJustLeft ) = 0;	// invoked when player enters this area 
+		virtual void OnExit( CBaseCombatCharacterHack* who, CNavArea *areaJustEntered ) = 0; // invoked when player exits this area 
 
 		virtual void OnDestroyNotify( CNavArea *dead ) = 0;				// invoked when given area is going away
 		virtual void OnDestroyNotify( CNavLadder *dead ) = 0;			// invoked when given ladder is going away
@@ -223,79 +224,75 @@ class CNavArea : protected CNavAreaCriticalData
 
 		virtual void SaveToSelectedSet( KeyValues *areaKey ) const = 0;		// (EXTEND) saves attributes for the area to a KeyValues
 		virtual void RestoreFromSelectedSet( KeyValues *areaKey ) = 0;		// (EXTEND) restores attributes from a KeyValues
-		
-		virtual void UpdateBlocked( bool force = false, int teamID = TEAM_ANY ) = 0;		// Updates the (un)blocked status of the nav area (throttled)
-		//virtual bool IsBlocked( int teamID, bool ignoreNavBlockers = false ) const = 0;
-	public:
+
 		unsigned int GetID( void ) const	{ return m_id; }
-		
-		void SetParent( CNavArea *parent, NavTraverseType how = NUM_TRAVERSE_TYPES )	{ m_parent = parent; m_parentHow = how; }
-		CNavArea *GetParent( void ) const	{ return m_parent; }
-		NavTraverseType GetParentHow( void ) const	{ return m_parentHow; }
-		
-		void SetCostSoFar( float value )	{ m_costSoFar = value; }
-		float GetCostSoFar( void ) const	{ return m_costSoFar; }
-		
-		void SetTotalCost( float value )	{ m_totalCost = value; }
-		float GetTotalCost( void ) const	{ return m_totalCost; }
-		
-		void SetPathLengthSoFar( float value )	{ m_pathLengthSoFar = value; }
-		float GetPathLengthSoFar( void ) const	{ return m_pathLengthSoFar; }
-		
-		static void ClearSearchLists( void );
 		
 		int GetAttributes( void ) const			{ return m_attributeFlags; }
 		bool HasAttributes( int bits ) const	{ return ( m_attributeFlags & bits ) ? true : false; }
-		
-		Vector GetCorner( NavCornerType corner ) const;
-		void ComputeNormal( Vector *normal, bool alternate = false ) const;
-		float GetSizeX( void ) const			{ return m_seCorner.x - m_nwCorner.x; }
-		float GetSizeY( void ) const			{ return m_seCorner.y - m_nwCorner.y; }
-		const Vector &GetCenter( void ) const	{ return m_center; }
+
+		virtual void UpdateBlocked( bool force = false, int teamID = TEAM_ANY ) = 0;		// Updates the (un)blocked status of the nav area (throttled)
+		virtual bool IsBlocked( int teamID, bool ignoreNavBlockers = false ) const = 0;
+
+		bool IsUnderwater( void ) const		{ return m_isUnderwater; }
+
+		bool IsOverlapping( const Vector &pos, float tolerance = 0.0f ) const;	// return true if 'pos' is within 2D extents of area.
+		bool IsOverlapping( const CNavArea *area ) const;			// return true if 'area' overlaps our 2D extents
+		bool IsOverlapping( const Extent &extent ) const;			// return true if 'extent' overlaps our 2D extents
 		inline float GetZ( const Vector * RESTRICT pPos ) const;
 		inline float GetZ( const Vector &pos ) const;
 		float GetZ( float x, float y ) const RESTRICT;
-		//static bool (CNavArea::*func_Contains)(const Vector &pos) const;
-		bool Contains(const Vector &pos) const
-		{
-			//return (this->*func_Contains)(pos);
-			return false;
-		};
+		bool Contains( const Vector &pos ) const { return false; };
 		bool Contains( const CNavArea *area ) const;
+		void GetClosestPointOnArea( const Vector * RESTRICT pPos, Vector *close ) const RESTRICT;	// return closest point to 'pos' on this area - returned point in 'close'
+		void GetClosestPointOnArea( const Vector &pos, Vector *close ) const { return GetClosestPointOnArea( &pos, close ); }
+		float GetDistanceSquaredToPoint( const Vector &pos ) const;	// return shortest distance between point and this area
 		
-		NavDirType ComputeDirection( Vector *point );
-		
+		float ComputeAdjacentConnectionHeightChange( const CNavArea *destinationArea ) const;			// return height change between edges of adjacent nav areas (not actual underlying ground)
+
+		bool IsEdge( NavDirType dir ) const;						// return true if there are no bi-directional links on the given side
+
 		int GetAdjacentCount( NavDirType dir ) const	{ return m_connect[ dir ].Count(); }
 		CNavArea *GetAdjacentArea( NavDirType dir, int i ) const;
-		const NavConnectVector *GetAdjacentAreas( NavDirType dir ) const	{ return &m_connect[dir]; }
-		const NavLadderConnectVector *GetLadders( CNavLadder::LadderDirectionType dir ) const	{ return &m_ladder[dir]; }
 		
+		const NavConnectVector *GetAdjacentAreas( NavDirType dir ) const	{ return &m_connect[dir]; }
+		bool IsConnected( const CNavArea *area, NavDirType dir ) const;	// return true if given area is connected in given direction
+
 		const NavConnectVector *GetIncomingConnections( NavDirType dir ) const	{ return &m_incomingConnect[dir]; }	// get areas connected TO this area by a ONE-WAY link (ie: we have no connection back to them)
 
+		const NavLadderConnectVector *GetLadders( CNavLadder::LadderDirectionType dir ) const	{ return &m_ladder[dir]; }
+		CFuncElevator *GetElevator( void ) const												{ return ( m_attributeFlags & NAV_MESH_HAS_ELEVATOR ) ? m_elevator : NULL; }
+		const NavConnectVector &GetElevatorAreas( void ) const									{ return m_elevatorAreas; };
+
+		void ComputePortal( const CNavArea *to, NavDirType dir, Vector *center, float *halfWidth ) const;		// compute portal to adjacent area
+		void ComputeClosestPointInPortal( const CNavArea *to, NavDirType dir, const Vector &fromPos, Vector *closePos ) const; // compute closest point within the "portal" between to adjacent areas
+		NavDirType ComputeDirection( Vector *point ) const;
+
+		//- hiding spots ------------------------------------------------------------------------------------
+		const HidingSpotVector *GetHidingSpots( void ) const	{ return &m_hidingSpots; }
+
+		//- "danger" ----------------------------------------------------------------------------------------
+		virtual float GetDangerDecayRate( void ) const = 0;				// return danger decay rate per second
+
+		//- extents -----------------------------------------------------------------------------------------
+		float GetSizeX( void ) const			{ return m_seCorner.x - m_nwCorner.x; }
+		float GetSizeY( void ) const			{ return m_seCorner.y - m_nwCorner.y; }
+		const Vector &GetCenter( void ) const	{ return m_center; }
+		Vector GetCorner( NavCornerType corner ) const;
+		void ComputeNormal( Vector *normal, bool alternate = false ) const;
+
+		//- lighting ----------------------------------------------------------------------------------------
 		float GetLightIntensity( const Vector &pos ) const;			// returns a 0..1 light intensity for the given point
 		float GetLightIntensity( float x, float y ) const;			// returns a 0..1 light intensity for the given point
 		float GetLightIntensity( void ) const;						// returns a 0..1 light intensity averaged over the whole area
 
-		const HidingSpotVector *GetHidingSpots( void ) const	{ return &m_hidingSpots; }
-
+		//- A* pathfinding algorithm ------------------------------------------------------------------------
 		static void MakeNewMarker( void )	{ ++m_masterMarker; if (m_masterMarker == 0) m_masterMarker = 1; }
 		void Mark( void )					{ m_marker = m_masterMarker; };
 		BOOL IsMarked( void ) const			{ return (m_marker == m_masterMarker) ? true : false; };
-		
-		float ComputeAdjacentConnectionHeightChange( const CNavArea *destinationArea ) const;			// return height change between edges of adjacent nav areas (not actual underlying ground)
-		
-		void GetClosestPointOnArea( const Vector * RESTRICT pPos, Vector *close ) const RESTRICT;	// return closest point to 'pos' on this area - returned point in 'close'
-		void GetClosestPointOnArea( const Vector &pos, Vector *close ) const { return GetClosestPointOnArea( &pos, close ); }
-		
-		bool IsConnected( const CNavArea *area, NavDirType dir ) const;	// return true if given area is connected in given direction
-		bool IsBlocked(int teamID, bool ignoreNavBlockers = false) const;
-		bool IsEdge( NavDirType dir ) const;						// return true if there are no bi-directional links on the given side
-		
-		CFuncElevator *GetElevator( void ) const												{ return ( m_attributeFlags & NAV_MESH_HAS_ELEVATOR ) ? m_elevator : NULL; }
-		const NavConnectVector &GetElevatorAreas( void ) const									{ return m_elevatorAreas; };
-		
-		void ComputeClosestPointInPortal( const CNavArea *to, NavDirType dir, const Vector &fromPos, Vector *closePos ) const; // compute closest point within the "portal" between to adjacent areas
-		void ComputePortal( const CNavArea *to, NavDirType dir, Vector *center, float *halfWidth ) const;		// compute portal to adjacent area
+
+		void SetParent( CNavArea *parent, NavTraverseType how = NUM_TRAVERSE_TYPES )	{ m_parent = parent; m_parentHow = how; }
+		CNavArea *GetParent( void ) const	{ return m_parent; }
+		NavTraverseType GetParentHow( void ) const	{ return m_parentHow; }
 		
 		bool IsOpen( void ) const;									// true if on "open list"
 		void AddToOpenList( void );									// add to open list in decreasing value order
@@ -304,10 +301,39 @@ class CNavArea : protected CNavAreaCriticalData
 		void RemoveFromOpenList( void );
 		static bool IsOpenListEmpty( void );
 		static CNavArea *PopOpenList( void );
+		
 		bool IsClosed( void ) const;
 		void AddToClosedList( void );
 		void RemoveFromClosedList( void );
 
+		static void ClearSearchLists( void );
+
+		void SetTotalCost( float value )	{ m_totalCost = value; }
+		float GetTotalCost( void ) const	{ return m_totalCost; }
+
+		void SetCostSoFar( float value )	{ m_costSoFar = value; }
+		float GetCostSoFar( void ) const	{ return m_costSoFar; }
+		
+		void SetPathLengthSoFar( float value )	{ m_pathLengthSoFar = value; }
+		float GetPathLengthSoFar( void ) const	{ return m_pathLengthSoFar; }
+		
+		//- editing -----------------------------------------------------------------------------------------
+		virtual void Draw( void ) const = 0;							// draw area for debugging & editing
+		virtual void DrawFilled( int r, int g, int b, int a, float deltaT = 0.1f, bool noDepthTest = true, float margin = 5.0f ) const = 0;	// draw area as a filled rect of the given color
+		virtual void DrawSelectedSet( const Vector &shift ) const = 0;
+		
+		//- generation and analysis -------------------------------------------------------------------------
+		virtual void ComputeHidingSpots( void ) = 0;					// analyze local area neighborhood to find "hiding spots" in this area - for map learning
+		virtual void ComputeSniperSpots( void ) = 0;					// analyze local area neighborhood to find "sniper spots" in this area - for map learning
+		virtual void ComputeSpotEncounters( void ) = 0;					// compute spot encounter data - for map learning
+		virtual void ComputeEarliestOccupyTimes( void ) = 0;
+		virtual void CustomAnalysis( bool isIncremental = false ) = 0;	// for game-specific analysis
+		virtual bool ComputeLighting( void ) = 0;						// compute 0..1 light intensity at corners and center (requires client via listenserver)
+		virtual bool IsAbleToMergeWith( CNavArea *other ) const = 0;
+
+		virtual void InheritAttributes( CNavArea *first, CNavArea *second = nullptr ) = 0;
+
+		//- visibility -------------------------------------------------------------------------------------
 		struct AreaBindInfo							// for pointer loading and binding
 		{
 			union
@@ -323,6 +349,15 @@ class CNavArea : protected CNavAreaCriticalData
 				return ( area == other.area );
 			}
 		};
+
+		virtual bool IsEntirelyVisible( const Vector &eye, const CBaseEntity *ignore = nullptr ) const = 0;				// return true if entire area is visible from given eyepoint (CPU intensive)
+		virtual bool IsPartiallyVisible( const Vector &eye, const CBaseEntity *ignore = nullptr ) const = 0;				// return true if any portion of the area is visible from given eyepoint (CPU intensive)
+
+		virtual bool IsPotentiallyVisible( const CNavArea *area ) const = 0;		// return true if given area is potentially visible from somewhere in this area (very fast)
+		virtual bool IsPotentiallyVisibleToTeam( int team ) const = 0;				// return true if any portion of this area is visible to anyone on the given team (very fast)
+
+		virtual bool IsCompletelyVisible( const CNavArea *area ) const = 0;			// return true if given area is completely visible from somewhere in this area (very fast)
+		virtual bool IsCompletelyVisibleToTeam( int team ) const = 0;				// return true if given area is completely visible from somewhere in this area by someone on the team (very fast)
 
 	private:
 		friend class CNavMesh;
@@ -392,6 +427,7 @@ class CNavArea : protected CNavAreaCriticalData
 		// CBaseNPC and the game's NextBots are used simultaneously. It's not a common case, but the possibility is there.
 		// Consider modifying the engine's variables instead to prevent this from happening?
 		static unsigned int m_masterMarker;
+
 		static CNavArea *m_openList;
 		static CNavArea *m_openListTail;
 

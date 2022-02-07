@@ -1,11 +1,6 @@
 #if !defined _CBASENPC_NEXTBOT_PATH_INC_
 #define _CBASENPC_NEXTBOT_PATH_INC_
 
-typeset NavPathCostFunctor
-{
-	function float(INextBot bot, CNavArea area, CNavArea fromArea, CNavLadder ladder, int iElevator, float length);
-};
-
 enum SegmentType
 {
 	ON_GROUND,
@@ -30,6 +25,22 @@ enum MoveToFailureType
 	FAIL_NO_PATH_EXISTS = 0,
 	FAIL_STUCK        = 1,
 	FAIL_FELL_OFF     = 2,
+};
+
+typeset PathFollowerCostFunctor
+{
+	/**
+	 * Path cost function for PathFollower
+	 * 
+	 * @param bot          The bot to calculate the cost for
+	 * @param area         Area arriving to
+	 * @param fromArea     Area leaving from. This will be NULL_AREA if `area` is the first area in the path.
+	 * @param ladder       If ladder used to traverse to `area`, CNavLadder pointer, otherwise is NULL_LADDER.
+	 * @param elevator     If elevator used to traverse to `area`, entity index of elevator, otherwise is -1.
+	 * @param length       Length of connection between areas. If ladder or elevator is used, this is -1.0.
+	 * @return             Cost to move from `fromArea` to `area`
+	 */
+	function float(INextBot bot, CNavArea area, CNavArea fromArea, CNavLadder ladder, int elevator, float length);
 };
 
 /**
@@ -190,7 +201,7 @@ methodmap Path
 	 * @param ignoreActorsFilter     Callback that determines which actors to ignore
 	 * @param onlyActorsFilter       Callback that determines which actors to hit
 	 */
-	public native Path(NavPathCostFunctor costfunction = INVALID_FUNCTION, TraceFilterActors ignoreActorsFilter, TraceFilterActors onlyActorsFilter);
+	public native Path(PathFollowerCostFunctor costfunction = INVALID_FUNCTION, TraceFilterActors ignoreActorsFilter, TraceFilterActors onlyActorsFilter);
 
 	/**
 	 * The total length of the Path.
@@ -376,7 +387,7 @@ methodmap Path
 
 methodmap PathFollower < Path
 {
-	public native PathFollower(NavPathCostFunctor costfunction = INVALID_FUNCTION, TraceFilterActors ignoreActorsFilter, TraceFilterActors onlyActorsFilter);
+	public native PathFollower(PathFollowerCostFunctor costfunction = INVALID_FUNCTION, TraceFilterActors ignoreActorsFilter, TraceFilterActors onlyActorsFilter);
 
 	/**
 	 * Moves the bot along the path.
@@ -429,7 +440,7 @@ methodmap ChasePath < PathFollower
 	 * @param ignoreActorsFilter     Callback that determines which actors to ignore
 	 * @param onlyActorsFilter       Callback that determines which actors to hit
 	 */
-	public native ChasePath(SubjectChaseType how = DONT_LEAD_SUBJECT, NavPathCostFunctor costfunction = INVALID_FUNCTION, TraceFilterActors ignoreActorsFilter, TraceFilterActors onlyActorsFilter);
+	public native ChasePath(SubjectChaseType how = DONT_LEAD_SUBJECT, PathFollowerCostFunctor costfunction = INVALID_FUNCTION, TraceFilterActors ignoreActorsFilter, TraceFilterActors onlyActorsFilter);
 	
 	/**
 	 * Updates path progress to the goal entity, automatically recomputing
@@ -485,52 +496,8 @@ methodmap ChasePath < PathFollower
 
 methodmap DirectChasePath < ChasePath
 {
-	public native DirectChasePath(SubjectChaseType how = DONT_LEAD_SUBJECT, NavPathCostFunctor costfunction = INVALID_FUNCTION, TraceFilterActors ignoreActorsFilter, TraceFilterActors onlyActorsFilter);
+	public native DirectChasePath(SubjectChaseType how = DONT_LEAD_SUBJECT, PathFollowerCostFunctor costfunction = INVALID_FUNCTION, TraceFilterActors ignoreActorsFilter, TraceFilterActors onlyActorsFilter);
 };
-
-public float Path_Cost(INextBot bot, CNavArea area, CNavArea fromArea, CNavLadder ladder, int iElevator, float length)
-{
-	static int iTime = 0;
-	if (iTime < GetTime())
-	{
-		iTime = GetTime();
-	}
-	
-	float dist;
-	if ( ladder != NULL_LADDER_AREA )
-	{
-		dist = ladder.length;
-	}
-	else if ( length > 0.0 )
-	{
-		dist = length;
-	}
-	else
-	{
-		float vecAreaCenter[3], vecFromAreaCenter[3];
-		area.GetCenter(vecAreaCenter);
-		fromArea.GetCenter(vecFromAreaCenter);
-		dist = GetVectorDistance(vecAreaCenter, vecFromAreaCenter);
-	}
-
-	float cost = dist + fromArea.GetCostSoFar();
-	
-	// if this is a "crouch" area, add penalty
-	int attributes = area.GetAttributes();
-	if ( (attributes & NAV_MESH_CROUCH) )
-	{
-		const float crouchPenalty = 20.0;
-		cost += crouchPenalty * dist;
-	}
-
-	// if this is a "jump" area, add penalty
-	if ( (attributes & NAV_MESH_JUMP) )
-	{
-		const float jumpPenalty = 5.0;
-		cost += jumpPenalty * dist;
-	}
-	return cost;
-}
 
 public bool Path_FilterIgnoreActors(int entity, int contentsMask, int desiredcollisiongroup)
 {
