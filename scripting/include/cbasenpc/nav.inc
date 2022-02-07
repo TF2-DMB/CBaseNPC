@@ -863,12 +863,6 @@ public float Path_Cost(CNavArea area, CNavArea fromArea, CNavLadder ladder, int 
 		return 0.0;
 	}
 
-	static int iTime = 0;
-	if (iTime < GetTime())
-	{
-		iTime = GetTime();
-	}
-	
 	float dist;
 	if ( ladder != NULL_LADDER_AREA )
 	{

@@ -98,7 +98,7 @@ NAVAREA_NATIVE(SetTotalCost)
 }
 
 NAVAREA_NATIVE(GetTotalCost)
-	return pArea->GetTotalCost();
+	return sp_ftoc(pArea->GetTotalCost());
 }
 
 NAVAREA_NATIVE(SetPathLengthSoFar)
@@ -107,7 +107,7 @@ NAVAREA_NATIVE(SetPathLengthSoFar)
 }
 
 NAVAREA_NATIVE(GetPathLengthSoFar)
-	return pArea->GetPathLengthSoFar();
+	return sp_ftoc(pArea->GetPathLengthSoFar());
 }
 
 NAVAREA_NATIVE(ComputePortal)
@@ -168,7 +168,7 @@ NAVAREA_NATIVE(GetDistanceSquaredToPoint)
 	pContext->LocalToPhysAddr(params[2], &posAddr);
 	Vector pos;
 	PawnVectorToVector(posAddr, &pos);
-	return pArea->GetDistanceSquaredToPoint(pos);
+	return sp_ftoc(pArea->GetDistanceSquaredToPoint(pos));
 }
 
 NAVAREA_NATIVE(ComputeAdjacentConnectionHeightChange)
@@ -178,7 +178,7 @@ NAVAREA_NATIVE(ComputeAdjacentConnectionHeightChange)
 		return pContext->ThrowNativeError("Invalid nav area %x", params[2]);
 	}
 
-	return pArea->ComputeAdjacentConnectionHeightChange(pOther);
+	return sp_ftoc(pArea->ComputeAdjacentConnectionHeightChange(pOther));
 }
 
 NAVAREA_NATIVE(GetAttributes)
