@@ -40,6 +40,65 @@ stock NavDirType OppositeDirection(NavDirType dir)
 	return NORTH;
 }
 
+stock NavDirType DirectionLeft(NavDirType dir)
+{
+	switch (dir)
+	{
+		case NORTH: return WEST;
+		case SOUTH: return EAST;
+		case EAST:	return NORTH;
+		case WEST:	return SOUTH;
+	}
+
+	return NORTH;
+}
+
+stock NavDirType DirectionRight(NavDirType dir)
+{
+	switch (dir)
+	{
+		case NORTH: return EAST;
+		case SOUTH: return WEST;
+		case EAST:	return SOUTH;
+		case WEST:	return NORTH;
+	}
+
+	return NORTH;
+}
+
+stock float DirectionToAngle(NavDirType dir)
+{
+	switch (dir)
+	{
+		case NORTH:	return 270.0;
+		case SOUTH:	return 90.0;
+		case EAST:	return 0.0;
+		case WEST:	return 180.0;
+	}
+
+	return 0.0;
+}
+
+stock NavDirType AngleToDirection(float angle)
+{
+	while (angle < 0.0)
+		angle += 360.0;
+
+	while (angle > 360.0)
+		angle -= 360.0;
+
+	if (angle < 45.0 || angle > 315.0)
+		return EAST;
+
+	if (angle >= 45.0 && angle < 135.0)
+		return SOUTH;
+
+	if (angle >= 135.0 && angle < 225.0)
+		return WEST;
+
+	return NORTH;
+}
+
 enum NavTraverseType
 {
 	// NOTE: First 4 directions MUST match NavDirType

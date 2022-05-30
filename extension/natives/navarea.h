@@ -214,8 +214,8 @@ NAVAREA_NATIVE(IsOverlappingPoint)
 	pContext->LocalToPhysAddr(params[2], &posAddr);
 	Vector pos;
 	PawnVectorToVector(posAddr, &pos);
-	float flTolerance = sp_ctof(params[3]);
-	return pArea->IsOverlapping(pos, flTolerance);
+	float tolerance = sp_ctof(params[3]);
+	return pArea->IsOverlapping(pos, tolerance);
 }
 
 NAVAREA_NATIVE(IsOverlappingX)
