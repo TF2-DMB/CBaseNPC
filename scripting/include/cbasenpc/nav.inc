@@ -605,6 +605,14 @@ methodmap CNavArea
 	public native bool Contains(CNavArea area);
 
 	/**
+	 * Checks if this area completely contains the given position.
+	 *
+	 * @param pos      Position to check
+	 * @return         True if completely contains position, false otherwise
+	 */
+	public native bool ContainsPoint(const float pos[3]);
+
+	/**
 	 * Gets the size of the area along the x axis.
 	 *
 	 * @return         Size along X-axis
@@ -617,6 +625,20 @@ methodmap CNavArea
 	 * @return         Size along Y-axis
 	 */
 	public native float GetSizeY();
+
+	/**
+	 * Returns true if 'area' overlaps our X extent.
+	 *
+	 * @return         True if overlaps, false otherwise
+	 */
+	public native bool IsOverlappingX(CNavArea area);
+
+	/**
+	 * Returns true if 'area' overlaps our Y extent.
+	 *
+	 * @return         True if overlaps, false otherwise
+	 */
+	public native bool IsOverlappingY(CNavArea area);
 
 	/**
 	 * Checks if the point overlaps the 2D extents of the area.
@@ -643,6 +665,14 @@ methodmap CNavArea
 	 * @return           True if overlaps, false otherwise
 	 */
 	public native bool IsOverlappingExtent(const float mins[3], const float maxs[3]);
+
+	/**
+	 * Return a computed extent (XY is in m_nwCorner and m_seCorner, Z is computed).
+	 *
+	 * @param mins       Minimum 2D extents
+	 * @param maxs       Maximum 2D extents
+	 */
+	public native void GetExtent(float mins[3], float maxs[3]);
 
 	/**
 	 * Returns the Z component of the given world XY values.

@@ -52,6 +52,69 @@ public:
 	static MCall<bool, const Vector&, float*, Vector*> mGetGroundHeight;
 	bool GetGroundHeight(const Vector&, float*, Vector*);
 
+	//-------------------------------------------------------------------------------------
+	/**
+	 * Apply the functor to all navigation areas that overlap the given extent.
+	 * If functor returns false, stop processing and return false.
+	 */
+	template < typename Functor >
+	bool ForAllAreasOverlappingExtent( Functor &func, const Extent &extent )
+	{
+		if ( !m_grid.Count() )
+		{
+			return true;
+		}
+		static unsigned int searchMarker = RandomInt(0, 1024*1024 );
+		if ( ++searchMarker == 0 )
+		{
+			++searchMarker;
+		}
+
+		Extent areaExtent;
+
+		// get list in cell that contains position
+		int startX = WorldToGridX( extent.lo.x );
+		int endX = WorldToGridX( extent.hi.x );
+		int startY = WorldToGridY( extent.lo.y );
+		int endY = WorldToGridY( extent.hi.y );
+
+		for( int x = startX; x <= endX; ++x )
+		{
+			for( int y = startY; y <= endY; ++y )
+			{
+				int iGrid = x + y*m_gridSizeX;
+				if ( iGrid >= m_grid.Count() )
+				{
+					ExecuteNTimes( 10, Warning( "** Walked off of the CNavMesh::m_grid in ForAllAreasOverlappingExtent()\n" ) );
+					return true;
+				}
+
+				NavAreaVector *areaVector = &m_grid[ iGrid ];
+
+				// find closest area in this cell
+				FOR_EACH_VEC( (*areaVector), it )
+				{
+					CNavArea *area = (*areaVector)[ it ];
+
+					// skip if we've already visited this area
+					if ( area->m_nearNavSearchMarker == searchMarker )
+						continue;
+
+					// mark as visited
+					area->m_nearNavSearchMarker = searchMarker;
+					area->GetExtent( &areaExtent );
+
+					if ( extent.IsOverlapping( areaExtent ) )
+					{
+						if ( func( area ) == false )
+							return false;
+					}
+				}
+			}
+		}
+		return true;
+	}
+
 private:
 	CUtlVector<NavAreaVector> m_grid;
 	float m_gridCellSize;										// the width/height of a grid cell for spatially partitioning nav areas for fast access
@@ -68,6 +131,9 @@ private:
 	enum { HASH_TABLE_SIZE = 256 };
 	CNavArea *m_hashTable[ HASH_TABLE_SIZE ];					// hash table to optimize lookup by ID
 	int ComputeHashKey( unsigned int id ) const;				// returns a hash key for the given nav area ID
+
+	int WorldToGridX( float wx ) const;							// given X component, return grid index
+	int WorldToGridY( float wy ) const;							// given Y component, return grid index
 };
 
 inline void CollectSurroundingAreas( CUtlVector< CNavArea * > *nearbyAreaVector, CNavArea *startArea, float travelDistanceLimit = 1500.0f, float maxStepUpLimit = StepHeight, float maxDropDownLimit = 100.0f )
@@ -146,6 +212,33 @@ inline int CNavMesh::ComputeHashKey( unsigned int id ) const
 {
 	return id & 0xFF;
 }
+
+//--------------------------------------------------------------------------------------------------------------
+inline int CNavMesh::WorldToGridX( float wx ) const
+{ 
+	int x = (int)( (wx - m_minX) / m_gridCellSize );
+
+	if (x < 0)
+		x = 0;
+	else if (x >= m_gridSizeX)
+		x = m_gridSizeX-1;
+	
+	return x;
+}
+
+//--------------------------------------------------------------------------------------------------------------
+inline int CNavMesh::WorldToGridY( float wy ) const
+{ 
+	int y = (int)( (wy - m_minY) / m_gridCellSize );
+
+	if (y < 0)
+		y = 0;
+	else if (y >= m_gridSizeY)
+		y = m_gridSizeY-1;
+	
+	return y;
+}
+
 
 #define IGNORE_NAV_BLOCKERS true
 bool NavAreaBuildPath(CNavArea *startArea, CNavArea *goalArea, Vector *goalPos, IPathCost &costFunc, CNavArea **closestArea = NULL, float maxPathLength = 0.0f, int teamID = TEAM_ANY, bool ignoreNavBlockers = false);

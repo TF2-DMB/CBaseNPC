@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+//========= Copyright ï¿½ 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -170,6 +170,14 @@ struct Extent
 		return (pos.x >= lo.x && pos.x <= hi.x &&
 				pos.y >= lo.y && pos.y <= hi.y &&
 				pos.z >= lo.z && pos.z <= hi.z);
+	}
+
+	// return true if this extent overlaps the given one
+	bool IsOverlapping( const Extent &other ) const
+	{
+		return (lo.x <= other.hi.x && hi.x >= other.lo.x &&
+				lo.y <= other.hi.y && hi.y >= other.lo.y &&
+				lo.z <= other.hi.z && hi.z >= other.lo.z);
 	}
 };
 

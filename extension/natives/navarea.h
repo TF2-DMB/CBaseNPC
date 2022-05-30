@@ -218,6 +218,24 @@ NAVAREA_NATIVE(IsOverlappingPoint)
 	return pArea->IsOverlapping(pos, flTolerance);
 }
 
+NAVAREA_NATIVE(IsOverlappingX)
+	CNavArea *pOther = (CNavArea *)params[2];
+	if (!pOther) 
+	{
+		return pContext->ThrowNativeError("Invalid nav area %x", params[2]);
+	}
+	return pArea->IsOverlappingX(pOther);
+}
+
+NAVAREA_NATIVE(IsOverlappingY)
+	CNavArea *pOther = (CNavArea *)params[2];
+	if (!pOther) 
+	{
+		return pContext->ThrowNativeError("Invalid nav area %x", params[2]);
+	}
+	return pArea->IsOverlappingY(pOther);
+}
+
 NAVAREA_NATIVE(IsOverlappingArea)
 	CNavArea *pOther = (CNavArea *)params[2];
 	if (!pOther) 
@@ -244,6 +262,28 @@ NAVAREA_NATIVE(IsOverlappingExtent)
 	extent.hi = max;
 
 	return pArea->IsOverlapping(extent);
+}
+
+NAVAREA_NATIVE(GetExtent)
+	cell_t *minAddr;
+	pContext->LocalToPhysAddr(params[2], &minAddr);
+	Vector min;
+	PawnVectorToVector(minAddr, &min);
+	cell_t *maxAddr;
+	pContext->LocalToPhysAddr(params[3], &maxAddr);
+	Vector max;
+	PawnVectorToVector(maxAddr, &max);
+
+	Extent extent;
+	extent.Init();
+	extent.lo = min;
+	extent.hi = max;
+
+	pArea->GetExtent(&extent);
+
+	VectorToPawnVector(minAddr, extent.lo);
+	VectorToPawnVector(maxAddr, extent.hi);
+	return 1;
 }
 
 NAVAREA_NATIVE(GetAdjacentCount)
@@ -284,6 +324,14 @@ NAVAREA_NATIVE(IsEdge)
 
 NAVAREA_NATIVE(Contains)
 	return pArea->Contains((CNavArea *)params[2]);
+}
+
+NAVAREA_NATIVE(ContainsPoint)
+	cell_t *posAddr;
+	pContext->LocalToPhysAddr(params[2], &posAddr);
+	Vector pos;
+	PawnVectorToVector(posAddr, &pos);
+	return pArea->Contains(pos);
 }
 
 NAVAREA_NATIVE(GetSizeX)
