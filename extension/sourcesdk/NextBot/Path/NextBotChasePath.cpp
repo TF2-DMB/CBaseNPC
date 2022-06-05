@@ -112,7 +112,7 @@ Vector ChasePath::PredictSubjectPosition( INextBot *bot, CBaseEntityHack *subjec
 
 		if ( !bFound )
 		{
-			leadArea = TheNavMesh->GetNearestNavArea( pathTarget );
+			leadArea = ToolsNavMesh->GetNearestNavArea( pathTarget );
 			if ( leadArea )
 			{
 				cache[iNext].target = pathTarget;
@@ -122,7 +122,7 @@ Vector ChasePath::PredictSubjectPosition( INextBot *bot, CBaseEntityHack *subjec
 		}
 	}
 #else
-	leadArea = TheNavMesh->GetNearestNavArea( pathTarget, false, 10000.0f, false, true, TEAM_ANY);
+	leadArea = ToolsNavMesh->GetNearestNavArea( pathTarget, false, 10000.0f, false, true, TEAM_ANY);
 #endif
 
 

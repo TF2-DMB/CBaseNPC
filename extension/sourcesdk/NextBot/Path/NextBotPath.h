@@ -17,6 +17,8 @@
 #include "NextBotDebug.h"
 #include "NextBotBodyInterface.h"
 
+#include "toolsnav_mesh.h"
+
 #include <tier0/vprof.h>
 
 #define PATH_NO_LENGTH_LIMIT 0.0f				// non-default argument value for Path::Compute()
@@ -290,7 +292,7 @@ public:
 
 		// check line-of-sight to the goal position when finding it's nav area
 		const float maxDistanceToArea = 200.0f;
-		CNavArea *goalArea = TheNavMesh->GetNearestNavArea( goal, true, maxDistanceToArea, true, true, TEAM_ANY);
+		CNavArea *goalArea = ToolsNavMesh->GetNearestNavArea( goal, true, maxDistanceToArea, true, true, TEAM_ANY);
 
 		// if we are already in the goal area, build trivial path
 		if ( startArea == goalArea )

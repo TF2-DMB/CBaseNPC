@@ -2,6 +2,7 @@
 #define NATIVES_NAVMESH_H_INCLUDED_
 
 #include "sourcesdk/nav_mesh.h"
+#include "toolsnav_mesh.h"
 
 #define NAVMESHNATIVE(name) \
 	cell_t CNavMesh_##name(IPluginContext *pContext, const cell_t *params) \
@@ -27,7 +28,7 @@ NAVMESHNATIVE(AddressGet)
 }
 
 NAVMESHNATIVE(IsLoaded)
-	return TheNavMesh->IsLoaded();
+	return ToolsNavMesh->IsLoaded();
 }
 
 NAVMESHNATIVE(IsAnalyzed)
@@ -39,7 +40,24 @@ NAVMESHNATIVE(IsOutOfDate)
 }
 
 NAVMESHNATIVE(GetNavAreaCount)
-	return TheNavMesh->GetNavAreaCount();
+	return ToolsNavMesh->GetNavAreaCount();
+}
+
+NAVMESHNATIVE(GetNavArea)
+	cell_t *vecAddr;
+	pContext->LocalToPhysAddr(params[2], &vecAddr);
+	Vector vecPos;
+	PawnVectorToVector(vecAddr, vecPos);
+	return (cell_t)ToolsNavMesh->GetNavArea(vecPos, sp_ctof(params[3]));
+}
+
+NAVMESHNATIVE(GetNavAreaEntity)
+	CBaseEntityHack* ent = (CBaseEntityHack *)gamehelpers->ReferenceToEntity(params[2]);
+	if (!ent)
+	{
+		return pContext->ThrowNativeError("Invalid entity %x", params[1]);
+	}
+	return (cell_t)ToolsNavMesh->GetNavArea(ent, params[3], sp_ctof(params[4]));
 }
 
 NAVMESHNATIVE(GetNearestNavArea)
@@ -47,12 +65,12 @@ NAVMESHNATIVE(GetNearestNavArea)
 	pContext->LocalToPhysAddr(params[2], &vecAddr);
 	Vector vecPos;
 	PawnVectorToVector(vecAddr, vecPos);
-	return (cell_t)TheNavMesh->GetNearestNavArea(vecPos, params[3], sp_ctof(params[4]), params[5], params[6], params[7]);
+	return (cell_t)ToolsNavMesh->GetNearestNavArea(vecPos, params[3], sp_ctof(params[4]), params[5], params[6], params[7]);
 }
 
 NAVMESHNATIVE(GetNavAreaByID)
 	unsigned int id = (unsigned int)params[2];
-	return (cell_t)TheNavMesh->GetNavAreaByID(id);
+	return (cell_t)ToolsNavMesh->GetNavAreaByID(id);
 }
 
 NAVMESHNATIVE(CollectSurroundingAreas)

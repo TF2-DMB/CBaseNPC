@@ -44,6 +44,13 @@ typedef unsigned int Place;
 #define UNDEFINED_PLACE 0				// ie: "no place"
 #define ANY_PLACE 0xFFFF
 
+enum GetNavAreaFlags_t
+{
+	GETNAVAREA_CHECK_LOS			= 0x1,
+	GETNAVAREA_ALLOW_BLOCKED_AREAS	= 0x2,
+	GETNAVAREA_CHECK_GROUND			= 0x4,
+};
+
 enum NavErrorType
 {
 	NAV_OK,
@@ -319,9 +326,11 @@ inline void CornerToVector2D( NavCornerType dir, Vector2D *v )
 /**
  * Return true if given entity can be ignored when moving
  */
-#define WALK_THRU_DOORS				0x01
-#define WALK_THRU_BREAKABLES		0x02
-#define WALK_THRU_TOGGLE_BRUSHES	0x04
+#define WALK_THRU_PROP_DOORS		0x01
+#define WALK_THRU_FUNC_DOORS		0x02
+#define WALK_THRU_DOORS				(WALK_THRU_PROP_DOORS | WALK_THRU_FUNC_DOORS)
+#define WALK_THRU_BREAKABLES		0x04
+#define WALK_THRU_TOGGLE_BRUSHES	0x08
 #define WALK_THRU_EVERYTHING		(WALK_THRU_DOORS | WALK_THRU_BREAKABLES | WALK_THRU_TOGGLE_BRUSHES)
 
 #endif // _NAV_H_

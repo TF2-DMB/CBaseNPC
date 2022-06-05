@@ -635,8 +635,8 @@ void CBaseNPCPluginActionFactories::OnFactoryDestroyed( CBaseNPCPluginActionFact
 
 CBaseNPCPluginActionFactory::CBaseNPCPluginActionFactory( IPlugin* plugin, const char* actionName ) : 
 	IDataMapContainer(),
-	m_iActionName(actionName),
-	m_bDestroying(false)
+	m_bDestroying(false),
+	m_iActionName(actionName)
 {
 	SetDefLessFunc(m_Callbacks);
 	SetDefLessFunc(m_QueryCallbacks);

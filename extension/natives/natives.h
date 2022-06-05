@@ -678,6 +678,8 @@ const sp_nativeinfo_t g_NativesInfo[] =
 	NATIVENAME(CNavMesh, GetNavAreaByID)
 	NATIVENAME(CNavMesh, GetNearestNavArea)
 	NATIVENAME(CNavMesh, BuildPath)
+	NATIVENAME(CNavMesh, GetNavArea)
+	NATIVENAME(CNavMesh, GetNavAreaEntity)
 	
 	NATIVENAMEGET(TheNavAreasVector, Length)
 	NATIVENAME(TheNavAreasVector, Get)

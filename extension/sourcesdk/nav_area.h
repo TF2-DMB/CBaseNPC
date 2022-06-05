@@ -2,6 +2,7 @@
 #define _NAV_AREA_H_
 
 enum { MAX_NAV_TEAMS = 2 };
+class CToolsNavMesh;
 
 #include "tier1/utlvector.h"
 #include "nav.h"
@@ -364,6 +365,7 @@ class CNavArea : protected CNavAreaCriticalData
 
 	private:
 		friend class CNavMesh;
+		friend class CToolsNavMesh;
 		friend class CNavLadder;
 		friend class CCSNavArea;	
 	

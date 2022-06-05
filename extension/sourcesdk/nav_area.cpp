@@ -5,6 +5,7 @@
 #include "sourcesdk/nav.h"
 #include "sourcesdk/nav_area.h"
 #include "sourcesdk/nav_mesh.h"
+#include "toolsnav_mesh.h"
 
 NavAreaVector TheNavAreas;
 
@@ -211,7 +212,7 @@ bool CNavArea::Contains( const Vector &pos ) const
 	GetExtent( &areaExtent );
 
 	COverlapCheck overlap( this, pos );
-	return TheNavMesh->ForAllAreasOverlappingExtent( overlap, areaExtent );
+	return ToolsNavMesh->ForAllAreasOverlappingExtent( overlap, areaExtent );
 }
 
 //--------------------------------------------------------------------------------------------------------------

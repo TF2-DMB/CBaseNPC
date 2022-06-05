@@ -7,16 +7,21 @@
 #include "sourcesdk/nav_area.h"
 #include "sourcesdk/nav_mesh.h"
 
-CNavMesh *TheNavMesh = nullptr;
+CNavMesh* TheNavMesh = nullptr;
 
 HidingSpotVector TheHidingSpots;
 
 CDetour* g_pNavMeshAddArea = nullptr;
-MCall<CNavArea*, const Vector&, bool, float, bool, bool, int> CNavMesh::mGetNearestNavArea;
 MCall<bool, const Vector&, float*, Vector*> CNavMesh::mGetGroundHeight;
+int CNavMesh::offset_m_isLoaded = 0;
 
 DETOUR_DECL_MEMBER1(CNavMesh_AddNavArea, void, CNavArea*, area)
 {
+	if (!TheNavMesh)
+	{
+		TheNavMesh = reinterpret_cast<CNavMesh*>(this);
+	}
+
 	TheNavAreas.AddToTail(area);
 	
 	auto pSpots = area->GetHidingSpots();
@@ -31,33 +36,14 @@ DETOUR_DECL_MEMBER1(CNavMesh_AddNavArea, void, CNavArea*, area)
 
 bool CNavMesh::Init(SourceMod::IGameConfig* config, char* error, size_t maxlength)
 {
-	CNavMesh * *ppTheNavMesh;
-	char* addr;
-	if (g_pGameConf->GetMemSig("TheNavMesh", (void**)&addr) && addr)
-	{
-		ppTheNavMesh = reinterpret_cast<CNavMesh**>(addr);
-	}
-	else if (g_pGameConf->GetMemSig("CNavMesh::SnapToGrid", (void**)&addr) && addr)
-	{
-		int offset;
-		if (!g_pGameConf->GetOffset("TheNavMesh", &offset) || !offset)
-		{
-			snprintf(error, maxlength, "Couldn't find offset for TheNavMesh ptr!");
-			return false;
-		}
-		ppTheNavMesh = *reinterpret_cast<CNavMesh***>(addr + offset);
-	}
-	else
-	{
-		snprintf(error, maxlength, "Failed to retrieve TheNavMesh ptr!");
-		return false;
-	}
-
-	TheNavMesh = *ppTheNavMesh;
-
 	try
 	{
-		mGetNearestNavArea.Init(config, "CNavMesh::GetNearestNavArea");
+		if (!config->GetOffset("CNavMesh::m_isLoaded", &CNavMesh::offset_m_isLoaded))
+		{
+			snprintf(error, maxlength, "Couldn't find CNavMesh::m_isLoaded offset!");
+			return false;
+		}
+
 		mGetGroundHeight.Init(config, "CNavMesh::GetGroundHeight");
 
 		g_pNavMeshAddArea = DETOUR_CREATE_MEMBER(CNavMesh_AddNavArea, "CNavMesh::AddNavArea");
@@ -103,33 +89,6 @@ HidingSpot *GetHidingSpotByID( unsigned int id )
 		if (spot->GetID() == id)
 			return spot;
 	}	
-
-	return NULL;
-}
-
-CNavArea* CNavMesh::GetNearestNavArea(const Vector& v, bool b, float f, bool b2, bool b3, int t)
-{
-	return mGetNearestNavArea(this, v, b, f, b2, b3, t);
-}
-
-//--------------------------------------------------------------------------------------------------------------
-/**
- * Given an ID, return the associated area
- */
-CNavArea *CNavMesh::GetNavAreaByID( unsigned int id ) const
-{
-	if (id == 0)
-		return NULL;
-
-	int key = ComputeHashKey( id );
-
-	for( CNavArea *area = m_hashTable[key]; area; area = area->m_nextHash )
-	{
-		if (area->GetID() == id)
-		{
-			return area;
-		}
-	}
 
 	return NULL;
 }

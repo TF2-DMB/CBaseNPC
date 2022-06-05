@@ -165,6 +165,13 @@ public:
 	void DispatchUpdateTransmitState(void);
 
 	const char* GetClassname() const;
+	string_t GetStringClassname() const;
+
+	int GetSpawnFlags(void) const;
+	void AddSpawnFlags(int nFlags);
+	void RemoveSpawnFlags(int nFlags);
+	void ClearSpawnFlags(void);
+	bool HasSpawnFlags(int nFlags) const;
 
 	int	entindex(void) const;
 	bool IsWorld(void) const;
@@ -179,6 +186,11 @@ public:
 
 	string_t GetModelName(void) const;
 	void	SetModelName(string_t name);
+
+	char GetTakeDamage(void) const;
+
+	int		GetHealth() const;
+	void	SetHealth(int amt);
 
 	int		 RegisterThinkContext(const char* szContext);
 	HBASEPTR ThinkSet(HBASEPTR func, float flNextThinkTime = 0, const char* szContext = nullptr);
@@ -243,6 +255,13 @@ private:
 	DECLAREVAR(string_t, m_iClassname);
 	DECLAREVAR(short, m_nModelIndex);
 	DECLAREVAR(float, m_flSimulationTime);
+
+	DECLAREVAR(int, m_iMaxHealth);
+	DECLAREVAR(int, m_iHealth);
+	DECLAREVAR(char, m_lifeState);
+	DECLAREVAR(char , m_takedamage);
+
+	DECLAREVAR(int, m_spawnflags);
 
 	DECLAREVAR(int, m_fFlags);
 	DECLAREVAR(int, m_iEFlags);
@@ -317,7 +336,40 @@ inline int CBaseEntityHack::entindex(void) const
 
 inline const char* CBaseEntityHack::GetClassname() const
 {
+	if (*m_iClassname() == NULL_STRING)
+	{
+		return nullptr;
+	}
 	return m_iClassname()->ToCStr();
+}
+
+inline string_t CBaseEntityHack::GetStringClassname() const
+{
+	return *m_iClassname();
+}
+
+inline int CBaseEntityHack::GetSpawnFlags(void) const
+{ 
+	return *m_spawnflags();
+}
+
+inline void CBaseEntityHack::AddSpawnFlags(int nFlags)
+{ 
+	*m_spawnflags() |= nFlags;
+}
+inline void CBaseEntityHack::RemoveSpawnFlags(int nFlags)
+{ 
+	*m_spawnflags() &= ~nFlags;
+}
+
+inline void CBaseEntityHack::ClearSpawnFlags(void)
+{ 
+	*m_spawnflags() = 0;
+}
+
+inline bool CBaseEntityHack::HasSpawnFlags(int nFlags) const
+{ 
+	return (*m_spawnflags() & nFlags) != 0; 
 }
 
 inline bool CBaseEntityHack::IsWorld(void) const 
@@ -379,6 +431,21 @@ inline void CBaseEntityHack::SetModelName(string_t name)
 inline string_t CBaseEntityHack::GetModelName(void) const
 {
 	return *m_ModelName();
+}
+
+inline char CBaseEntityHack::GetTakeDamage(void) const
+{
+	return *m_takedamage();
+}
+
+inline int CBaseEntityHack::GetHealth() const
+{
+	return *m_iHealth();
+}
+
+inline void CBaseEntityHack::SetHealth(int amt)
+{
+	*m_iHealth() = amt;
 }
 
 inline CBaseEntity* CBaseEntityHack::GetGroundEntity(void)
@@ -497,6 +564,50 @@ inline bool IsEntityPositionReasonable(const Vector& v)
 		v.x > -r && v.x < r &&
 		v.y > -r && v.y < r &&
 		v.z > -r && v.z < r;
+}
+
+inline bool NamesMatch(const char *pszQuery, string_t nameToMatch)
+{
+	if (nameToMatch == NULL_STRING)
+		return (!pszQuery || *pszQuery == 0 || *pszQuery == '*');
+
+	const char *pszNameToMatch = STRING(nameToMatch);
+
+	// If the pointers are identical, we're identical
+	if ( pszNameToMatch == pszQuery )
+		return true;
+
+	while ( *pszNameToMatch && *pszQuery )
+	{
+		unsigned char cName = *pszNameToMatch;
+		unsigned char cQuery = *pszQuery;
+		// simple ascii case conversion
+		if ( cName == cQuery )
+			;
+		else if ( cName - 'A' <= (unsigned char)'Z' - 'A' && cName - 'A' + 'a' == cQuery )
+			;
+		else if ( cName - 'a' <= (unsigned char)'z' - 'a' && cName - 'a' + 'A' == cQuery )
+			;
+		else
+			break;
+		++pszNameToMatch;
+		++pszQuery;
+	}
+
+	if ( *pszQuery == 0 && *pszNameToMatch == 0 )
+		return true;
+
+	// @TODO (toml 03-18-03): Perhaps support real wildcards. Right now, only thing supported is trailing *
+	if ( *pszQuery == '*' )
+		return true;
+
+	return false;
+}
+
+inline bool FClassnameIs(const CBaseEntity* entity, const char* classname)
+{
+	return (((CBaseEntityHack*)entity)->GetClassname() != nullptr && strcmp(((CBaseEntityHack*)entity)->GetClassname(), classname) == 0)
+	|| (NamesMatch(classname, ((CBaseEntityHack*)entity)->GetStringClassname()));
 }
 
 #endif // H_BASEENTITY_CBASENPC_
