@@ -5,12 +5,31 @@
 #include "sourcesdk/nav.h"
 #include "sourcesdk/nav_area.h"
 #include "sourcesdk/nav_mesh.h"
+#include "toolsnav_mesh.h"
 
 NavAreaVector TheNavAreas;
 
 unsigned int CNavArea::m_masterMarker = 1;
 CNavArea *CNavArea::m_openList = NULL;
 CNavArea *CNavArea::m_openListTail = NULL;
+
+//--------------------------------------------------------------------------------------------------------------
+// Return a computed extent (XY is in m_nwCorner and m_seCorner, Z is computed)
+void CNavArea::GetExtent( Extent *extent ) const
+{
+	extent->lo = m_nwCorner;
+	extent->hi = m_seCorner;
+
+	extent->lo.z = MIN( extent->lo.z, m_nwCorner.z );
+	extent->lo.z = MIN( extent->lo.z, m_seCorner.z );
+	extent->lo.z = MIN( extent->lo.z, m_neZ );
+	extent->lo.z = MIN( extent->lo.z, m_swZ );
+
+	extent->hi.z = MAX( extent->hi.z, m_nwCorner.z );
+	extent->hi.z = MAX( extent->hi.z, m_seCorner.z );
+	extent->hi.z = MAX( extent->hi.z, m_neZ );
+	extent->hi.z = MAX( extent->hi.z, m_swZ );
+}
 
 //--------------------------------------------------------------------------------------------------------------
 /**
@@ -103,6 +122,97 @@ bool CNavArea::IsOverlapping( const Extent &extent ) const
 {
 	return ( extent.lo.x < m_seCorner.x && extent.hi.x > m_nwCorner.x && 
 			 extent.lo.y < m_seCorner.y && extent.hi.y > m_nwCorner.y );
+}
+
+//--------------------------------------------------------------------------------------------------------------
+/**
+ * Return true if 'area' overlaps our X extent
+ */
+bool CNavArea::IsOverlappingX( const CNavArea *area ) const
+{
+	if (area->m_nwCorner.x < m_seCorner.x && area->m_seCorner.x > m_nwCorner.x)
+		return true;
+
+	return false;
+}
+
+//--------------------------------------------------------------------------------------------------------------
+/**
+ * Return true if 'area' overlaps our Y extent
+ */
+bool CNavArea::IsOverlappingY( const CNavArea *area ) const
+{
+	if (area->m_nwCorner.y < m_seCorner.y && area->m_seCorner.y > m_nwCorner.y)
+		return true;
+
+	return false;
+}
+
+
+//--------------------------------------------------------------------------------------------------------------
+class COverlapCheck
+{
+public:
+	COverlapCheck( const CNavArea *me, const Vector &pos ) : m_pos( pos )
+	{
+		m_me = me;
+		m_myZ = me->GetZ( pos );
+	}
+
+	bool operator() ( CNavArea *area )
+	{
+		// skip self
+		if ( area == m_me )
+			return true;
+
+		// check 2D overlap
+		if ( !area->IsOverlapping( m_pos ) )
+			return true;
+
+		float theirZ = area->GetZ( m_pos );
+		if ( theirZ > m_pos.z )
+		{
+			// they are above the point
+			return true;
+		}
+
+		if ( theirZ > m_myZ )
+		{
+			// we are below an area that is beneath the given position
+			return false;
+		}
+
+		return true;
+	}
+
+	const CNavArea *m_me;
+	float m_myZ;
+	const Vector &m_pos;
+};
+
+//--------------------------------------------------------------------------------------------------------------
+/**
+ * Return true if given point is on or above this area, but no others
+ */
+bool CNavArea::Contains( const Vector &pos ) const
+{
+	// check 2D overlap
+	if (!IsOverlapping( pos ))
+		return false;
+
+	// the point overlaps us, check that it is above us, but not above any areas that overlap us
+	float myZ = GetZ( pos );
+
+	// if the nav area is above the given position, fail
+	// allow nav area to be as much as a step height above the given position
+	if (myZ - StepHeight > pos.z)
+		return false;
+
+	Extent areaExtent;
+	GetExtent( &areaExtent );
+
+	COverlapCheck overlap( this, pos );
+	return ToolsNavMesh->ForAllAreasOverlappingExtent( overlap, areaExtent );
 }
 
 //--------------------------------------------------------------------------------------------------------------

@@ -2,6 +2,7 @@
 #define _NAV_AREA_H_
 
 enum { MAX_NAV_TEAMS = 2 };
+class CToolsNavMesh;
 
 #include "tier1/utlvector.h"
 #include "nav.h"
@@ -238,10 +239,12 @@ class CNavArea : protected CNavAreaCriticalData
 		bool IsOverlapping( const Vector &pos, float tolerance = 0.0f ) const;	// return true if 'pos' is within 2D extents of area.
 		bool IsOverlapping( const CNavArea *area ) const;			// return true if 'area' overlaps our 2D extents
 		bool IsOverlapping( const Extent &extent ) const;			// return true if 'extent' overlaps our 2D extents
+		bool IsOverlappingX( const CNavArea *area ) const;			// return true if 'area' overlaps our X extent
+		bool IsOverlappingY( const CNavArea *area ) const;			// return true if 'area' overlaps our Y extent
 		inline float GetZ( const Vector * RESTRICT pPos ) const;
 		inline float GetZ( const Vector &pos ) const;
 		float GetZ( float x, float y ) const RESTRICT;
-		bool Contains( const Vector &pos ) const { return false; };
+		bool Contains( const Vector &pos ) const;
 		bool Contains( const CNavArea *area ) const;
 		void GetClosestPointOnArea( const Vector * RESTRICT pPos, Vector *close ) const RESTRICT;	// return closest point to 'pos' on this area - returned point in 'close'
 		void GetClosestPointOnArea( const Vector &pos, Vector *close ) const { return GetClosestPointOnArea( &pos, close ); }
@@ -276,6 +279,7 @@ class CNavArea : protected CNavAreaCriticalData
 		//- extents -----------------------------------------------------------------------------------------
 		float GetSizeX( void ) const			{ return m_seCorner.x - m_nwCorner.x; }
 		float GetSizeY( void ) const			{ return m_seCorner.y - m_nwCorner.y; }
+		void GetExtent( Extent *extent ) const;						// return a computed extent (XY is in m_nwCorner and m_seCorner, Z is computed)
 		const Vector &GetCenter( void ) const	{ return m_center; }
 		Vector GetCorner( NavCornerType corner ) const;
 		void ComputeNormal( Vector *normal, bool alternate = false ) const;
@@ -361,6 +365,7 @@ class CNavArea : protected CNavAreaCriticalData
 
 	private:
 		friend class CNavMesh;
+		friend class CToolsNavMesh;
 		friend class CNavLadder;
 		friend class CCSNavArea;	
 	

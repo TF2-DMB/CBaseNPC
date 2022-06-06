@@ -374,11 +374,11 @@ bool Path::BuildTrivialPath( INextBot *bot, const Vector &goal )
 	m_segmentCount = 0;
 
 	/// @todo Dangerous to use "nearset" nav area - could be far away
-	CNavArea* startArea = TheNavMesh->GetNearestNavArea(start, false, 10000.0f, false, true, TEAM_ANY);
+	CNavArea* startArea = ToolsNavMesh->GetNearestNavArea(start, false, 10000.0f, false, true, TEAM_ANY);
 	if (startArea == NULL)
 		return false;
 
-	CNavArea *goalArea = TheNavMesh->GetNearestNavArea(goal, false, 10000.0f, false, true, TEAM_ANY);
+	CNavArea *goalArea = ToolsNavMesh->GetNearestNavArea(goal, false, 10000.0f, false, true, TEAM_ANY);
 	if (goalArea == NULL)
 		return false;
 
@@ -420,11 +420,11 @@ bool Path::BuildTrivialPathT(const Vector& start, const Vector& goal)
 	m_segmentCount = 0;
 
 	/// @todo Dangerous to use "nearset" nav area - could be far away
-	CNavArea* startArea = TheNavMesh->GetNearestNavArea(start, false, 10000.0f, false, true, TEAM_ANY);
+	CNavArea* startArea = ToolsNavMesh->GetNearestNavArea(start, false, 10000.0f, false, true, TEAM_ANY);
 	if (startArea == NULL)
 		return false;
 
-	CNavArea* goalArea = TheNavMesh->GetNearestNavArea(goal, false, 10000.0f, false, true, TEAM_ANY);
+	CNavArea* goalArea = ToolsNavMesh->GetNearestNavArea(goal, false, 10000.0f, false, true, TEAM_ANY);
 	if (goalArea == NULL)
 		return false;
 

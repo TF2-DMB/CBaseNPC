@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+//========= Copyright Â© 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -43,6 +43,13 @@ const float HumanHeight = 72.0f;
 typedef unsigned int Place;
 #define UNDEFINED_PLACE 0				// ie: "no place"
 #define ANY_PLACE 0xFFFF
+
+enum GetNavAreaFlags_t
+{
+	GETNAVAREA_CHECK_LOS			= 0x1,
+	GETNAVAREA_ALLOW_BLOCKED_AREAS	= 0x2,
+	GETNAVAREA_CHECK_GROUND			= 0x4,
+};
 
 enum NavErrorType
 {
@@ -170,6 +177,14 @@ struct Extent
 		return (pos.x >= lo.x && pos.x <= hi.x &&
 				pos.y >= lo.y && pos.y <= hi.y &&
 				pos.z >= lo.z && pos.z <= hi.z);
+	}
+
+	// return true if this extent overlaps the given one
+	bool IsOverlapping( const Extent &other ) const
+	{
+		return (lo.x <= other.hi.x && hi.x >= other.lo.x &&
+				lo.y <= other.hi.y && hi.y >= other.lo.y &&
+				lo.z <= other.hi.z && hi.z >= other.lo.z);
 	}
 };
 
@@ -311,9 +326,11 @@ inline void CornerToVector2D( NavCornerType dir, Vector2D *v )
 /**
  * Return true if given entity can be ignored when moving
  */
-#define WALK_THRU_DOORS				0x01
-#define WALK_THRU_BREAKABLES		0x02
-#define WALK_THRU_TOGGLE_BRUSHES	0x04
+#define WALK_THRU_PROP_DOORS		0x01
+#define WALK_THRU_FUNC_DOORS		0x02
+#define WALK_THRU_DOORS				(WALK_THRU_PROP_DOORS | WALK_THRU_FUNC_DOORS)
+#define WALK_THRU_BREAKABLES		0x04
+#define WALK_THRU_TOGGLE_BRUSHES	0x08
 #define WALK_THRU_EVERYTHING		(WALK_THRU_DOORS | WALK_THRU_BREAKABLES | WALK_THRU_TOGGLE_BRUSHES)
 
 #endif // _NAV_H_

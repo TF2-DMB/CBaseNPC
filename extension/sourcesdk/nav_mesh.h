@@ -23,16 +23,18 @@ public:
 
 
 extern CNavMesh *TheNavMesh;
+extern NavAreaVector* pTheNavAreas;
 
-class CNavMesh : public CGameEventListener
+class CNavMesh
 {
 public:
 	static bool Init(SourceMod::IGameConfig* config, char* error, size_t maxlength);
 	static void OnCoreMapEnd();
 	static void SDK_OnUnload();
 
-	bool IsLoaded( void ) const		{ return m_isLoaded; }
-	bool IsAnalyzed( void ) const	{ return m_isAnalyzed; }
+	bool IsLoaded( void ) const		{ return *(bool*)((uint8_t*)this + offset_m_isLoaded); }
+	bool IsAnalyzed( void ) const	{ return *(bool*)((uint8_t*)this + offset_m_isLoaded + 1); }
+	bool IsOutOfDate( void ) const	{ return *(bool*)((uint8_t*)this + offset_m_isLoaded + 2); }
 
 	/**
 	 * Return true if nav mesh can be trusted for all climbing/jumping decisions because game environment is fairly simple.
@@ -40,34 +42,10 @@ public:
 	 */
 	/*virtual*/ bool IsAuthoritative() { return true; }
 
-	bool IsOutOfDate( void ) const	{ return m_isOutOfDate; }
-
-	unsigned int GetNavAreaCount( void ) const	{ return m_areaCount; }
-
-	CNavArea *GetNavAreaByID( unsigned int id ) const;
-
-	static MCall<CNavArea*, const Vector&, bool, float, bool, bool, int> mGetNearestNavArea;
-	CNavArea* GetNearestNavArea( const Vector &pos, bool anyZ = false, float maxDist = 10000.0f, bool checkLOS = false, bool checkGround = true, int team = TEAM_ANY );
-
 	static MCall<bool, const Vector&, float*, Vector*> mGetGroundHeight;
 	bool GetGroundHeight(const Vector&, float*, Vector*);
 
-private:
-	CUtlVector<NavAreaVector> m_grid;
-	float m_gridCellSize;										// the width/height of a grid cell for spatially partitioning nav areas for fast access
-	int m_gridSizeX;
-	int m_gridSizeY;
-	float m_minX;
-	float m_minY;
-	unsigned int m_areaCount;									// total number of nav areas
-
-	bool m_isLoaded;											// true if a Navigation Mesh has been loaded
-	bool m_isOutOfDate;											// true if the Navigation Mesh is older than the actual BSP
-	bool m_isAnalyzed;											// true if the Navigation Mesh needs analysis
-
-	enum { HASH_TABLE_SIZE = 256 };
-	CNavArea *m_hashTable[ HASH_TABLE_SIZE ];					// hash table to optimize lookup by ID
-	int ComputeHashKey( unsigned int id ) const;				// returns a hash key for the given nav area ID
+	static int offset_m_isLoaded;
 };
 
 inline void CollectSurroundingAreas( CUtlVector< CNavArea * > *nearbyAreaVector, CNavArea *startArea, float travelDistanceLimit = 1500.0f, float maxStepUpLimit = StepHeight, float maxDropDownLimit = 100.0f )
@@ -84,8 +62,6 @@ inline void CollectSurroundingAreas( CUtlVector< CNavArea * > *nearbyAreaVector,
 		startArea->SetCostSoFar( 0.0f );
 		startArea->SetParent( NULL );
 		startArea->Mark();
-
-		CUtlVector< CNavArea * > adjVector;
 
 		while( !CNavArea::IsOpenListEmpty() )
 		{
@@ -141,11 +117,6 @@ inline void CollectSurroundingAreas( CUtlVector< CNavArea * > *nearbyAreaVector,
 	}
 }
 
-//--------------------------------------------------------------------------------------------------------------
-inline int CNavMesh::ComputeHashKey( unsigned int id ) const
-{
-	return id & 0xFF;
-}
 
 #define IGNORE_NAV_BLOCKERS true
 bool NavAreaBuildPath(CNavArea *startArea, CNavArea *goalArea, Vector *goalPos, IPathCost &costFunc, CNavArea **closestArea = NULL, float maxPathLength = 0.0f, int teamID = TEAM_ANY, bool ignoreNavBlockers = false);

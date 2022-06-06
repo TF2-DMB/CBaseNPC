@@ -10,6 +10,7 @@ project.sources = [
   'npc_tools_internal.cpp',
   'idatamapcontainer.cpp',
   'pluginentityfactory.cpp',
+  'toolsnav_mesh.cpp',
   'CDetour/detours.cpp',
   'asm/asm.c',
   'helpers.cpp',
@@ -36,6 +37,9 @@ project.sources = [
   'sourcesdk/collisionproperty.cpp',
   'sourcesdk/tf_gamerules.cpp',
   'sourcesdk/tracefilter_simple.cpp',
+  'sourcesdk/basedoor.cpp',
+  'sourcesdk/basetoggle.cpp',
+  'sourcesdk/funcbrush.cpp',
   os.path.join(Extension.sm_root, 'public', 'smsdk_ext.cpp')
 ]
 

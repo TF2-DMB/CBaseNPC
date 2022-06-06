@@ -33,6 +33,7 @@ ConVar* g_cvDeveloper = nullptr;
 extern ConVar* NextBotDebugHistory;
 extern ConVar* NextBotPathDrawIncrement;
 extern ConVar* NextBotPathSegmentInfluenceRadius;
+extern ConVar* nav_solid_props;
 
 HandleType_t g_KeyValueType;
 
@@ -59,6 +60,8 @@ bool CBaseNPCExt::SDK_OnLoad(char *error, size_t maxlength, bool late)
 	if (!CBaseEntityHack::Init(g_pGameConf, error, maxlength)
 		|| !CBaseAnimatingHack::Init(g_pGameConf, error, maxlength)
 		|| !CBaseAnimatingOverlayHack::Init(g_pGameConf, error, maxlength)
+		|| !CFuncBrushHack::Init(g_pGameConf, error, maxlength)
+		|| !CBaseToggleHack::Init(g_pGameConf, error, maxlength)
 		|| !CNavMesh::Init(g_pGameConf, error, maxlength)
 		|| !CBaseCombatCharacterHack::Init(g_pGameConf, error, maxlength)
 		|| !CTraceFilterSimpleHack::Init(g_pGameConf, error, maxlength)
@@ -127,6 +130,7 @@ bool CBaseNPCExt::SDK_OnMetamodLoad(ISmmAPI *ismm, char *error, size_t maxlen, b
 	NextBotDebugHistory = g_pCVar->FindVar("nb_debug_history");
 	NextBotPathDrawIncrement = g_pCVar->FindVar("nb_path_draw_inc");
 	NextBotPathSegmentInfluenceRadius = g_pCVar->FindVar("nb_path_segment_influence_radius");
+	nav_solid_props = g_pCVar->FindVar("nav_solid_props");
 
 	g_pSharedChangeInfo = engine->GetSharedEdictChangeInfo();
 	gpGlobals = ismm->GetCGlobals();

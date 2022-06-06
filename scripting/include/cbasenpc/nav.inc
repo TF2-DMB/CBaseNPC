@@ -1,6 +1,13 @@
 #if !defined _CBASENPC_NAV_INC_
 #define _CBASENPC_NAV_INC_
 
+enum GetNavAreaFlags_t
+{
+	GETNAVAREA_CHECK_LOS			= 0x1,
+	GETNAVAREA_ALLOW_BLOCKED_AREAS	= 0x2,
+	GETNAVAREA_CHECK_GROUND			= 0x4,
+};
+
 enum
 {
 	NAV_MESH_CROUCH = 0x0001, 
@@ -27,6 +34,8 @@ enum NavDirType
 	NUM_DIRECTIONS
 };
 
+
+
 stock NavDirType OppositeDirection(NavDirType dir)
 {
 	switch (dir)
@@ -36,6 +45,65 @@ stock NavDirType OppositeDirection(NavDirType dir)
 		case EAST:	return WEST;
 		case WEST:	return EAST;
 	}
+
+	return NORTH;
+}
+
+stock NavDirType DirectionLeft(NavDirType dir)
+{
+	switch (dir)
+	{
+		case NORTH: return WEST;
+		case SOUTH: return EAST;
+		case EAST:	return NORTH;
+		case WEST:	return SOUTH;
+	}
+
+	return NORTH;
+}
+
+stock NavDirType DirectionRight(NavDirType dir)
+{
+	switch (dir)
+	{
+		case NORTH: return EAST;
+		case SOUTH: return WEST;
+		case EAST:	return SOUTH;
+		case WEST:	return NORTH;
+	}
+
+	return NORTH;
+}
+
+stock float DirectionToAngle(NavDirType dir)
+{
+	switch (dir)
+	{
+		case NORTH:	return 270.0;
+		case SOUTH:	return 90.0;
+		case EAST:	return 0.0;
+		case WEST:	return 180.0;
+	}
+
+	return 0.0;
+}
+
+stock NavDirType AngleToDirection(float angle)
+{
+	while (angle < 0.0)
+		angle += 360.0;
+
+	while (angle > 360.0)
+		angle -= 360.0;
+
+	if (angle < 45.0 || angle > 315.0)
+		return EAST;
+
+	if (angle >= 45.0 && angle < 135.0)
+		return SOUTH;
+
+	if (angle >= 135.0 && angle < 225.0)
+		return WEST;
 
 	return NORTH;
 }
@@ -133,6 +201,25 @@ methodmap CNavMesh
 	 * @return     Amount of areas
 	 */
 	public native int GetNavAreaCount();
+
+	/**
+	 * Given a position, returns the associated nav area.
+	 * 
+	 * @param pos           World position.
+	 * @param beneathLimit  How far beneath the position can we go.
+	 * @return              CNavArea, or NULL_AREA if not found.
+	 */
+	public native CNavArea GetNavArea(const float pos[3], float beneathLimit = 120.0);
+
+	/**
+	 * Given an entity, returns the associated nav area.
+	 * 
+	 * @param entity           Entity to use as position.
+	 * @param beneathLimit     How far beneath the position can we go.
+	 * @param nGetNavAreaFlags Conditions the search should follow.
+	 * @return                 CNavArea, or NULL_AREA if not found.
+	 */
+	public native CNavArea GetNavAreaEntity(int entity, GetNavAreaFlags_t nGetNavAreaFlags, float flBeneathLimit = 120.0);
 
 	/**
 	 * Starting from startArea, collect adjacent areas via a breadth-first
@@ -605,6 +692,14 @@ methodmap CNavArea
 	public native bool Contains(CNavArea area);
 
 	/**
+	 * Checks if this area completely contains the given position.
+	 *
+	 * @param pos      Position to check
+	 * @return         True if completely contains position, false otherwise
+	 */
+	public native bool ContainsPoint(const float pos[3]);
+
+	/**
 	 * Gets the size of the area along the x axis.
 	 *
 	 * @return         Size along X-axis
@@ -617,6 +712,20 @@ methodmap CNavArea
 	 * @return         Size along Y-axis
 	 */
 	public native float GetSizeY();
+
+	/**
+	 * Returns true if 'area' overlaps our X extent.
+	 *
+	 * @return         True if overlaps, false otherwise
+	 */
+	public native bool IsOverlappingX(CNavArea area);
+
+	/**
+	 * Returns true if 'area' overlaps our Y extent.
+	 *
+	 * @return         True if overlaps, false otherwise
+	 */
+	public native bool IsOverlappingY(CNavArea area);
 
 	/**
 	 * Checks if the point overlaps the 2D extents of the area.
@@ -643,6 +752,14 @@ methodmap CNavArea
 	 * @return           True if overlaps, false otherwise
 	 */
 	public native bool IsOverlappingExtent(const float mins[3], const float maxs[3]);
+
+	/**
+	 * Return a computed extent (XY is in m_nwCorner and m_seCorner, Z is computed).
+	 *
+	 * @param mins       Minimum 2D extents
+	 * @param maxs       Maximum 2D extents
+	 */
+	public native void GetExtent(float mins[3], float maxs[3]);
 
 	/**
 	 * Returns the Z component of the given world XY values.
