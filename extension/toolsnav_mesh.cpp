@@ -65,7 +65,7 @@ void CToolsNavMesh::Load()
 	}
 	m_isLoaded = true;
 
-	g_pSM->LogMessage(myself, "Parsed %d areas.", GetNavAreaCount());
+	g_pSM->LogMessage(myself, "Parsed %d nav areas.", GetNavAreaCount());
 }
 
 void CToolsNavMesh::Clear()
