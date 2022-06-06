@@ -1,6 +1,13 @@
 #if !defined _CBASENPC_NAV_INC_
 #define _CBASENPC_NAV_INC_
 
+enum GetNavAreaFlags_t
+{
+	GETNAVAREA_CHECK_LOS			= 0x1,
+	GETNAVAREA_ALLOW_BLOCKED_AREAS	= 0x2,
+	GETNAVAREA_CHECK_GROUND			= 0x4,
+};
+
 enum
 {
 	NAV_MESH_CROUCH = 0x0001, 
@@ -26,6 +33,8 @@ enum NavDirType
 
 	NUM_DIRECTIONS
 };
+
+
 
 stock NavDirType OppositeDirection(NavDirType dir)
 {
@@ -192,6 +201,25 @@ methodmap CNavMesh
 	 * @return     Amount of areas
 	 */
 	public native int GetNavAreaCount();
+
+	/**
+	 * Given a position, returns the associated nav area.
+	 * 
+	 * @param pos           World position.
+	 * @param beneathLimit  How far beneath the position can we go.
+	 * @return              CNavArea, or NULL_AREA if not found.
+	 */
+	public native CNavArea GetNavArea(const float pos[3], float beneathLimit = 120.0);
+
+	/**
+	 * Given an entity, returns the associated nav area.
+	 * 
+	 * @param entity           Entity to use as position.
+	 * @param beneathLimit     How far beneath the position can we go.
+	 * @param nGetNavAreaFlags Conditions the search should follow.
+	 * @return                 CNavArea, or NULL_AREA if not found.
+	 */
+	public native CNavArea GetNavAreaEntity(int entity, GetNavAreaFlags_t nGetNavAreaFlags, float flBeneathLimit = 120.0);
 
 	/**
 	 * Starting from startArea, collect adjacent areas via a breadth-first

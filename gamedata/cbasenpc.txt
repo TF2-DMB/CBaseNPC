@@ -4,14 +4,26 @@
 	{
 		"Offsets"
 		{
+			// Locate vtable CNavMesh::CreateArea call, first dword is TheNavMesh second is TheNavAreas
+			"TheNavMesh"
+			{
+				"linux"		"979"
+				"windows"	"786"
+			}
+			"TheNavAreas"
+			{
+				"linux"		"1058"
+				"windows"	"819"
+			}
+			"CNavMesh::m_isLoaded"
+			{
+				"linux"		"52"
+				"windows"	"52"
+			}
 			"CBaseCombatCharacter::EventKilled"
 			{
 				"linux"		"67"
 				"windows"	"66"
-			}
-			"TheNavMesh"
-			{
-				"windows"	"5"
 			}
 			"CBaseEntity::PostConstructor"
 			{
@@ -112,23 +124,12 @@
 				"windows"		"\x55\x8B\xEC\x81\xEC\x2A\x00\x00\x00\x53\x8B\x5D\x0C\x89\x2A\x2A\x56"
 				"linux"			"@_ZN12CTFGameRules29ApplyOnDamageAliveModifyRulesERK15CTakeDamageInfoP11CBaseEntityRNS_20DamageModifyExtras_tE"
 			}
-			"TheNavMesh"
+			// Find string "Invalid navigation file.\n"
+			"CNavMesh::Load"
 			{
 				"library"		"server"
-				"linux"			"@TheNavMesh"
-			}
-			// Find string "NavEndArea: Out of memory\n", then look for EmitSound("EDIT_END_AREA.Creating") within func
-			"CNavMesh::AddNavArea"
-			{
-				"library"		"server"
-				"linux"			"@_ZN8CNavMesh10AddNavAreaEP8CNavArea"
-				"windows"		"\x55\x8B\xEC\x83\xEC\x20\x53\x8B\xD9\x56\x57\x89\x5D\xEC\x83" 
-			}
-			"CNavMesh::GetNearestNavArea"
-			{
-				"library"		"server"
-				"windows"		"\x55\x8B\xEC\x81\xEC\xF8\x00\x00\x00\x8B\x15"
-				"linux"			"@_ZNK8CNavMesh17GetNearestNavAreaERK6Vectorbfbbi"
+				"linux"			"@_ZN8CNavMesh4LoadEv"
+				"windows"		"\x55\x8B\xEC\x81\xEC\x84\x01\x00\x00\x53\x56\x8B\x35\x2A\x2A\x2A\x2A" 
 			}
 			"CNavMesh::GetGroundHeight"
 			{
@@ -141,11 +142,6 @@
 				"library"		"server"
 				"windows"		"\x55\x8B\xEC\x53\x8B\x5D\x0C\x56\x8B\x75\x08\x57\x53\x56"
 				"linux"			"@_ZN18CTraceFilterSimple15ShouldHitEntityEP13IHandleEntityi"
-			}
-			"CNavMesh::SnapToGrid"
-			{
-				"library"		"server"
-				"windows"		"\x55\x8B\xEC\x51\xA1\x2A\x2A\x2A\x2A\x83\xB8\x10\x05\x00\x00\x00"
 			}
 			"__GetAnimationEvent__"
 			{
@@ -246,12 +242,6 @@
 				"library"		"server"
 				"windows"		"\x55\x8B\xEC\x56\xFF\x75\x08\x8B\xF1\xE8\x2A\x2A\x2A\x2A\xC7\x06\x2A\x2A\x2A\x2A\x8B\xC6\xC7\x86\xB0\x00\x00\x00\xFF\xFF\xFF\xFF"
 				"linux"			"@_ZN23NextBotGroundLocomotionC1EP8INextBot"
-			}
-			"NextBotGroundLocomotion::ResolveCollision"
-			{
-				"library"		"server"
-				"windows"		""
-				"linux"			"@_ZN23NextBotGroundLocomotion16ResolveCollisionERK6VectorS2_i"
 			}
 			"NextBotCombatCharacter::NextBotCombatCharacter"
 			{

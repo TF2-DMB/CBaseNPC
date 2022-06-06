@@ -17,9 +17,11 @@ CToolsNavMesh::CToolsNavMesh() :
 {
 }
 
-void CToolsNavMesh::OnCoreMapStart()
+void CToolsNavMesh::Load()
 {
-	if (TheNavAreas.Count() <= 0)
+	this->Clear();
+
+	if (pTheNavAreas->Count() <= 0)
 	{
 		return;
 	}
@@ -31,9 +33,20 @@ void CToolsNavMesh::OnCoreMapStart()
 	extent.hi.y = -9999999999.9f;
 
 	Extent areaExtent;
-	FOR_EACH_VEC(TheNavAreas, it)
+	for (std::uint32_t i = 0; i < pTheNavAreas->Count(); i++)
 	{
-		TheNavAreas[it]->GetExtent( &areaExtent );
+		CNavArea* area = pTheNavAreas->Element(i);
+
+		auto pSpots = area->GetHidingSpots();
+		FOR_EACH_VEC((*pSpots), it)
+		{
+			HidingSpot* spot = (*pSpots)[ it ];
+			TheHidingSpots.AddToTail(spot);
+		}
+
+		TheNavAreas.AddToTail(area);
+
+		area->GetExtent(&areaExtent);
 
 		if (areaExtent.lo.x < extent.lo.x)
 			extent.lo.x = areaExtent.lo.x;
@@ -55,12 +68,14 @@ void CToolsNavMesh::OnCoreMapStart()
 	g_pSM->LogMessage(myself, "Parsed %d areas.", GetNavAreaCount());
 }
 
-void CToolsNavMesh::OnCoreMapEnd()
+void CToolsNavMesh::Clear()
 {
 	m_isLoaded = false;
 	m_grid.clear();
 	m_areas.clear();
 	m_hashmap.clear();
+	TheHidingSpots.RemoveAll();
+	TheNavAreas.RemoveAll();
 }
 
 void CToolsNavMesh::AllocateGrid(float minX, float maxX, float minY, float maxY)

@@ -30,8 +30,8 @@ class CToolsNavMesh
 {
 public:
 	CToolsNavMesh();
-	void OnCoreMapStart();
-	void OnCoreMapEnd();
+	void Load();
+	void Clear();
 
 	void AddNavArea(CNavArea* area);
 

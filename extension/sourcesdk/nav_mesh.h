@@ -23,6 +23,7 @@ public:
 
 
 extern CNavMesh *TheNavMesh;
+extern NavAreaVector* pTheNavAreas;
 
 class CNavMesh
 {

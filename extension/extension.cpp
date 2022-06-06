@@ -145,14 +145,12 @@ bool CBaseNPCExt::RegisterConCommandBase(ConCommandBase *pVar)
 
 void CBaseNPCExt::OnCoreMapStart(edict_t *pEdictList, int edictCount, int clientMax)
 {
-	ToolsNavMesh->OnCoreMapStart();
 }
 
 void CBaseNPCExt::OnCoreMapEnd()
 {
 	g_pBaseNPCPluginActionFactories->OnCoreMapEnd();
 	g_pPluginEntityFactories->OnCoreMapEnd();
-	ToolsNavMesh->OnCoreMapEnd();
 	CNavMesh::OnCoreMapEnd();
 }
 
