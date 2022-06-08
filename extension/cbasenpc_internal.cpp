@@ -16,7 +16,7 @@ SH_DECL_MANUALHOOK0_void(CBaseNPC_Dtor, 1, 0, 0);
 SH_DECL_MANUALHOOK1_void(CBaseNPC_Dtor, 0, 0, 0, unsigned int);
 #endif
 
-// INextBotEventResponder
+// INextBotComponent
 SH_DECL_HOOK0_void(INextBotComponent, Update, SH_NOATTRIB, 0);
 
 // INextBot
@@ -82,9 +82,32 @@ size_t CBaseNPCFactory::GetEntitySize()
 	return sizeof(CBaseNPC_Entity::CBaseNPC) + NextBotCombatCharacter::size_of;
 }
 
+void IBaseNPCComponent::OnPawnEvent(const char* eventName, cell_t eventData) 
+{
+	INextBotEventResponder* _this = dynamic_cast<INextBotEventResponder*>(this);
+
+	if (_this)
+	{
+		for (INextBotEventResponder* sub = _this->FirstContainedResponder(); sub; sub = _this->NextContainedResponder(sub))
+		{
+			IBaseNPCComponent* responder = dynamic_cast<IBaseNPCComponent*>(sub);
+			if (_this)
+			{
+				responder->OnPawnEvent(eventName, eventData);
+			}
+		}
+	}
+}
+
+QueryResultType IBaseNPCComponent::OnPawnQuery(INextBot* bot, const char* queryName, cell_t data) const
+{
+	return ANSWER_UNDEFINED;
+}
+
 CBaseNPC_Entity::CBaseNPC::CBaseNPC(NextBotCombatCharacter* ent, CBaseNPCPluginActionFactory* initialActionFactory) : CExtNPC()
 {
-	INextBot* bot = ent->MyNextBotPointer();
+	INextBot* bot = GetBot();
+
 	m_pIntention = new CBaseNPCIntention(bot, initialActionFactory);
 	m_pMover = CBaseNPC_Locomotion::New(bot);
 	m_pBody = new CBaseNPC_Body(bot);
@@ -93,6 +116,25 @@ CBaseNPC_Entity::CBaseNPC::CBaseNPC(NextBotCombatCharacter* ent, CBaseNPCPluginA
 	m_hookids.push_back(SH_ADD_HOOK(INextBot, GetLocomotionInterface, bot, SH_MEMBER(this, &CBaseNPC_Entity::CBaseNPC::Hook_GetLocomotionInterface), false));
 	m_hookids.push_back(SH_ADD_HOOK(INextBot, GetBodyInterface, bot, SH_MEMBER(this, &CBaseNPC_Entity::CBaseNPC::Hook_GetBodyInterface), false));
 	m_hookids.push_back(SH_ADD_MANUALHOOK(CBaseNPC_Dtor, ent, SH_MEMBER((CBaseNPC_Entity*)ent, &CBaseNPC_Entity::Hook_Destructor), false));
+}
+
+void CBaseNPC_Entity::CBaseNPC::SendPawnEvent(const char* eventName, cell_t eventData)
+{
+	INextBot* bot = GetBot();
+
+	for (INextBotEventResponder* sub = bot->FirstContainedResponder(); sub; sub = bot->NextContainedResponder(sub))
+	{
+		IBaseNPCComponent* responder = dynamic_cast<IBaseNPCComponent*>(sub);
+		if (responder)
+		{
+			responder->OnPawnEvent(eventName, eventData);
+		}
+	}
+}
+
+QueryResultType CBaseNPC_Entity::CBaseNPC::SendPawnQuery(const char* queryName, cell_t data) const
+{
+	return m_pIntention->OnPawnQuery(GetBot(), queryName, data);
 }
 
 CBaseNPC_Entity::CBaseNPC::~CBaseNPC()

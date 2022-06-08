@@ -62,7 +62,7 @@ cell_t CBaseNPC_CBaseNPC(IPluginContext * pContext, const cell_t * params)
 }
 
 CBASENPCNATIVE(GetBot)
-	return (cell_t)npc->GetEntity()->MyNextBotPointer();
+	return (cell_t)npc->GetBot();
 }
 
 CBASENPCNATIVE(GetLocomotion)
@@ -74,7 +74,7 @@ CBASENPCNATIVE(GetBody)
 }
 
 CBASENPCNATIVE(GetVision)
-	return (cell_t)npc->GetEntity()->MyNextBotPointer()->GetVisionInterface();
+	return (cell_t)npc->GetBot()->GetVisionInterface();
 }
 
 CBASENPCNATIVE(GetIntention)
@@ -218,6 +218,21 @@ CBASENPCNATIVE(flMaxYawRateGet)
 CBASENPCNATIVE(flMaxYawRateSet)
 	npc->m_pMover->m_flMaxYawRate = sp_ctof(params[2]);
 	return 0;
+}
+
+CBASENPCNATIVE(SendPawnEvent)
+	char *eventName = nullptr;
+	pContext->LocalToString(params[2], &eventName);
+	cell_t eventData = params[3];
+	npc->SendPawnEvent(eventName, eventData);
+	return 0;
+}
+
+CBASENPCNATIVE(SendPawnQuery)
+	char *queryName = nullptr;
+	pContext->LocalToString(params[2], &queryName);
+	cell_t queryData = params[3];
+	return (cell_t)npc->SendPawnQuery(queryName, queryData);
 }
 
 CBASENPCLOCONATIVE(SetCallback)

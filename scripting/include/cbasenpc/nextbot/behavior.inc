@@ -624,6 +624,17 @@ enum NextBotActionCallbackType
 	NextBotActionCallbackType_Max
 }
 
+typeset NextBotActionPawnEventCallback
+{
+	function int (NextBotAction action, int actor, const char[] eventName, any eventData);
+	function void (NextBotAction action, int actor, const char[] eventName, any eventData);
+}
+
+typeset NextBotActionPawnQueryCallback
+{
+	function QueryResultType (NextBotAction action, INextBot bot, const char[] queryName, any queryData);
+}
+
 methodmap NextBotActionFactory < Handle
 {
 	/**
@@ -666,6 +677,20 @@ methodmap NextBotActionFactory < Handle
 	 * @error                  Invalid handle.
 	 */
 	public native void SetEventCallback(EventResponderType callbackType, ActionEventResponderCallback callback);
+
+	/**
+	 * Sets the handler of events sent by `CBaseNPC.SendPawnEvent()`.
+	 *
+	 * @param callback  The handler
+	 */
+	public native void SetPawnEventCallback(NextBotActionPawnEventCallback callback);
+
+	/**
+	 * Sets the handler of queries sent by `CBaseNPC.SendPawnQuery()`.
+	 *
+	 * @param callback  The handler
+	 */
+	public native void SetPawnQueryCallback(NextBotActionPawnQueryCallback callback);
 
 	/**
 	 * Begins defining properties stored on the Action.

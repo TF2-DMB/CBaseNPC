@@ -287,6 +287,9 @@ const sp_nativeinfo_t g_NativesInfo[] =
 
 	NATIVENAME(CBaseNPC, SetType)
 	NATIVENAME(CBaseNPC, GetType)
+
+	NATIVENAME(CBaseNPC, SendPawnEvent)
+	NATIVENAME(CBaseNPC, SendPawnQuery)
 	
 	// IBody
 	NATIVENAME(CBaseNPC, SetBodyMins)
@@ -756,6 +759,8 @@ const sp_nativeinfo_t g_NativesInfo[] =
 	NATIVENAME(NextBotAction, TryToSustain)
 
 	NATIVENAME(NextBotActionFactory, NextBotActionFactory)
+	NATIVENAME(NextBotActionFactory, SetPawnEventCallback)
+	NATIVENAME(NextBotActionFactory, SetPawnQueryCallback)
 	NATIVENAME(NextBotActionFactory, SetCallback)
 	NATIVENAME(NextBotActionFactory, SetQueryCallback)
 	NATIVENAME(NextBotActionFactory, SetEventCallback)

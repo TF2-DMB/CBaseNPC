@@ -522,6 +522,135 @@ ENDEVENTCALLBACK()
 BEGINEVENTCALLBACK(OnLose)
 ENDEVENTCALLBACK()
 
+void CBaseNPCPluginAction::OnPawnEvent(const char* eventName, cell_t eventData)
+{
+	if ( !m_isStarted )
+	{
+		return;
+	}
+
+	Action<CBaseNPC_Entity>* _action = this;
+	EventDesiredResult<CBaseNPC_Entity> _result;
+
+	while (_action)
+	{
+		if (m_actor && (m_actor->IsDebugging(NEXTBOT_EVENTS) || NextBotDebugHistory->GetBool()))
+		{
+			m_actor->DebugConColorMsg( NEXTBOT_EVENTS, Color( 100, 100, 100, 255 ), "%3.2f: %s:%s: %s received EVENT %s\n", gpGlobals->curtime, m_actor->GetDebugIdentifier(), m_behavior->GetName(), _action->GetFullName(), "OnPawnEvent" );
+		}
+
+		CBaseNPCPluginAction* pluginAction = dynamic_cast<CBaseNPCPluginAction*>(_action);
+		if (pluginAction)
+		{
+			_result = pluginAction->OnPawnEvent(m_actor, eventName, eventData);
+		}
+
+		if (!_result.IsContinue())
+		{
+			break;
+		}
+
+		_action = _action->GetActionBuriedUnderMe();
+	}
+
+	if (_action)
+	{
+		if (m_actor && (m_actor->IsDebugging(NEXTBOT_BEHAVIOR) || NextBotDebugHistory->GetBool()) && _result.IsRequestingChange())
+		{
+			m_actor->DebugConColorMsg(NEXTBOT_BEHAVIOR, Color( 255, 255, 0, 255 ), "%3.2f: %s:%s: ", gpGlobals->curtime, m_actor->GetDebugIdentifier(), m_behavior->GetName());
+			m_actor->DebugConColorMsg(NEXTBOT_BEHAVIOR, Color( 255, 255, 255, 255 ), "%s ", _action->GetFullName());
+			m_actor->DebugConColorMsg(NEXTBOT_BEHAVIOR, Color( 255, 255,   0, 255 ), "responded to EVENT %s with ", "OnPawnEvent");
+			m_actor->DebugConColorMsg(NEXTBOT_BEHAVIOR, Color( 255,   0,   0, 255 ), "%s %s ", _result.GetTypeName(), _result.m_action ? _result.m_action->GetName() : "");
+			m_actor->DebugConColorMsg(NEXTBOT_BEHAVIOR, Color(   0, 255,   0, 255 ), "%s\n", _result.m_reason ? _result.m_reason : "");
+		}
+		
+		_action->StorePendingEventResult(_result, "OnPawnEvent");
+	}
+	
+	IBaseNPCComponent::OnPawnEvent(eventName, eventData);
+}
+
+EventDesiredResult<CBaseNPC_Entity> CBaseNPCPluginAction::OnPawnEvent(CBaseNPC_Entity* me, const char *eventName, cell_t eventData)
+{
+	m_eventResultStack.push(m_pluginEventResult);
+	ResetPluginEventResult();
+
+	IPluginFunction* callback = m_pFactory->GetPawnEventCallback();
+	if (callback && callback->IsRunnable()) 
+	{
+		callback->PushCell((cell_t)this);
+		callback->PushCell(gamehelpers->EntityToBCompatRef(me));
+		callback->PushString(eventName);
+		callback->PushCell(eventData);
+		callback->Execute(nullptr);
+	}
+
+	EventDesiredResult<CBaseNPC_Entity> result = m_pluginEventResult;
+	m_pluginEventResult = m_eventResultStack.front();
+	m_eventResultStack.pop();
+	return result;
+}
+
+QueryResultType	CBaseNPCPluginAction::OnPawnQuery(INextBot* me, const char* queryName, cell_t data) const
+{
+	cell_t result = ANSWER_UNDEFINED;
+	IPluginFunction* callback = m_pFactory->GetPawnQueryCallback();
+	if (callback && callback->IsRunnable()) 
+	{
+		callback->PushCell((cell_t)this);
+		callback->PushCell((cell_t)me);
+		callback->PushString(queryName);
+		callback->PushCell(data);
+		callback->Execute(&result);
+
+		if (result > ANSWER_UNDEFINED || result < ANSWER_NO)
+		{
+			result = ANSWER_UNDEFINED;
+		}
+	}
+
+	return (QueryResultType)result;
+}
+
+CBaseNPC_Behavior::CBaseNPC_Behavior(Action<CBaseNPC_Entity> *initialAction, const char *name) 
+	: Behavior<CBaseNPC_Entity>(initialAction, name)
+{
+}
+
+QueryResultType	CBaseNPC_Behavior::OnPawnQuery(INextBot* me, const char* queryName, cell_t data) const
+{
+	QueryResultType result = ANSWER_UNDEFINED;
+
+	Action<CBaseNPC_Entity>* _action = static_cast<Action<CBaseNPC_Entity>*>(FirstContainedResponder());
+
+	if (_action)
+	{
+		Action<CBaseNPC_Entity> *action;
+		for (action = _action; action->m_child; action = action->m_child)
+			;
+
+		while (action && result == ANSWER_UNDEFINED)
+		{
+			Action<CBaseNPC_Entity> *containingAction = action->m_parent;
+
+			while (action && result == ANSWER_UNDEFINED)
+			{
+				IBaseNPCComponent* responder = dynamic_cast<IBaseNPCComponent*>(action);
+				if (responder)
+				{
+					result = responder->OnPawnQuery(me, queryName, data);
+				}
+
+				action = action->GetActionBuriedUnderMe();
+			}
+
+			action = containingAction;
+		}
+	}
+
+	return result;
+}
+
 CBaseNPCIntention::CBaseNPCIntention( INextBot * bot, CBaseNPCPluginActionFactory* initialActionFactory ) 
 	: IIntention( bot ), m_pInitialActionFactory(initialActionFactory)
 {
@@ -549,7 +678,7 @@ void CBaseNPCIntention::InitBehavior()
 	{
 		Action< CBaseNPC_Entity > * pAction = m_pInitialActionFactory->Create();
 		m_pInitialActionFactory->OnCreateInitialAction( pAction );
-		m_pBehavior = new Behavior< CBaseNPC_Entity >( pAction );
+		m_pBehavior = new CBaseNPC_Behavior( pAction );
 	}
 	else 
 	{
@@ -574,6 +703,24 @@ void CBaseNPCIntention::Update()
 	{
 		m_pBehavior->Update( me, GetUpdateInterval() );
 	}
+}
+
+QueryResultType	CBaseNPCIntention::OnPawnQuery(INextBot* me, const char* queryName, cell_t data) const
+{
+	for (INextBotEventResponder *sub = FirstContainedResponder(); sub; sub = NextContainedResponder(sub))
+	{
+		const IBaseNPCComponent *responder = dynamic_cast<const IBaseNPCComponent*>( sub );
+		if (responder)
+		{
+			QueryResultType result = responder->OnPawnQuery(me, queryName, data);
+			if (result != ANSWER_UNDEFINED)
+			{
+				return result;
+			}
+		}
+	}	
+
+	return ANSWER_UNDEFINED;
 }
 
 CBaseNPCPluginActionFactories::CBaseNPCPluginActionFactories()
@@ -641,6 +788,9 @@ CBaseNPCPluginActionFactory::CBaseNPCPluginActionFactory( IPlugin* plugin, const
 	SetDefLessFunc(m_Callbacks);
 	SetDefLessFunc(m_QueryCallbacks);
 	SetDefLessFunc(m_EventCallbacks);
+
+	m_PawnQueryCallback = nullptr;
+	m_PawnEventCallback = nullptr;
 
 	m_Handle = handlesys->CreateHandle( g_pBaseNPCPluginActionFactories->GetFactoryType(), this, plugin->GetIdentity(), myself->GetIdentity(), nullptr );
 

@@ -71,6 +71,23 @@ methodmap CBaseNPC < CExtNPC
 	public native void SetType(char[] sBuffer);
 	public native void GetType(char[] sBuffer, int length);
 	
+	/**
+	 * Sends a custom event to all components of the CBaseNPC's NextBot.
+	 *
+	 * @param eventName     The name of the event to send.
+	 * @param eventData     The data to send with the event.
+	 */
+	public native void SendPawnEvent(const char[] eventName, any eventData = 0);
+
+	/**
+	 * Sends a custom query to the CBaseNPC's intention interface.
+	 *
+	 * @param queryName     The name of the query to send.
+	 * @param queryData     The data to send with the query.
+	 * @return              The result of the query.
+	 */
+	public native QueryResultType SendPawnQuery(const char[] queryName, any queryData = 0);
+
 	// Body Functions
 	public native void SetBodyMins(float vec[3]);
 	public native void SetBodyMaxs(float vec[3]);

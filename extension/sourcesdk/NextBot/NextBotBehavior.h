@@ -949,7 +949,7 @@ private:
 	virtual void OnDominated() override { PROCESS_EVENT( OnDominated ); }
 	virtual void OnWarped( Vector vStartPos ) override { PROCESS_EVENT_WITH_1_ARG( OnWarped, vStartPos ); }
 #endif
-
+public:
 	friend class Behavior< Actor>;							// the containing Behavior class
 	Behavior< Actor > *m_behavior;							// the Behavior this Action is part of
 
@@ -963,7 +963,7 @@ private:
 	mutable EventDesiredResult< Actor > m_eventResult;		// set by event handlers
 	bool m_isStarted;										// Action doesn't start until OnStart() is invoked
 	bool m_isSuspended;										// are we suspended for another Action
-public:
+
 	Action< Actor > *GetActionBuriedUnderMe( void ) const	// return Action just "under" us that we will resume to when we finish
 	{
 		return m_buriedUnderMe;
@@ -1042,7 +1042,7 @@ private:
 	void					InvokeOnEnd( Actor *me, Behavior< Actor > *behavior, Action< Actor > *nextAction );
 	Action< Actor > *		InvokeOnSuspend( Actor *me, Behavior< Actor > *behavior, Action< Actor > *interruptingAction );
 	ActionResult< Actor >	InvokeOnResume( Actor *me, Behavior< Actor > *behavior, Action< Actor > *interruptingAction );
-
+public:
 	/**
 	 * Store the given event result, attending to priorities
 	 */

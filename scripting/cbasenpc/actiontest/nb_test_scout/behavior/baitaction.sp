@@ -19,6 +19,7 @@ void ScoutBaitAction_Init()
 	ActionFactory.SetCallback( NextBotActionCallbackType_OnEnd, ScoutBaitAction_OnEnd );
 	ActionFactory.SetCallback( NextBotActionCallbackType_OnSuspend, ScoutBaitAction_OnSuspend );
 	ActionFactory.SetEventCallback( EventResponderType_OnInjured, ScoutBaitAction_OnInjured );
+	ActionFactory.SetPawnQueryCallback(OnPawnQuery);
 }
 
 NextBotAction ScoutBaitAction_Create()
@@ -125,4 +126,14 @@ static int ScoutBaitAction_OnInjured(NextBotAction action,
 	const float damagePosition[3], int damageCustom )
 {
 	return action.TryDone();
+}
+
+static QueryResultType OnPawnQuery(NextBotAction action, INextBot bot, const char[] query, any data)
+{
+	if (strcmp(query, "IsBaiting") == 0)
+	{
+		return ANSWER_YES;
+	}
+
+	return ANSWER_UNDEFINED;
 }

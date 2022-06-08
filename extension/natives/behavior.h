@@ -43,6 +43,18 @@ cell_t NextBotActionFactory_NextBotActionFactory(IPluginContext *pContext, const
 	return pFactory->m_Handle;
 }
 
+ACTIONFACTORYNATIVE(SetPawnEventCallback)
+	IPluginFunction* handler = pContext->GetFunctionById( params[2] );
+	pFactory->SetPawnEventCallback(handler);
+	return 0;
+}
+
+ACTIONFACTORYNATIVE(SetPawnQueryCallback)
+	IPluginFunction* handler = pContext->GetFunctionById( params[2] );
+	pFactory->SetPawnQueryCallback(handler);
+	return 0;
+}
+
 ACTIONFACTORYNATIVE(SetCallback)
 	IPluginFunction* pCallback = pContext->GetFunctionById( params[3] );
 	pFactory->SetCallback( (CBaseNPCPluginActionFactory::CallbackType)params[2], pCallback );

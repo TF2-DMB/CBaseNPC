@@ -39,6 +39,14 @@ public:
 class NextBotCombatCharacter;
 class CBaseNPCPluginActionFactory;
 class CBaseNPCIntention;
+enum QueryResultType;
+
+class IBaseNPCComponent
+{
+public:
+	virtual void OnPawnEvent(const char* eventName, cell_t eventData);
+	virtual QueryResultType OnPawnQuery(INextBot* me, const char* queryName, cell_t data) const;
+};
 
 class CBaseNPC_Entity : public NextBotCombatCharacter
 {
@@ -55,10 +63,15 @@ public:
 		CBaseNPC_Body* m_pBody;
 		char m_type[64];
 
+		INextBot* GetBot() const { return GetEntity()->MyNextBotPointer(); }
+
 		void Hook_Spawn(void);
 		IIntention* Hook_GetIntentionInterface(void) const;
 		ILocomotion* Hook_GetLocomotionInterface(void) const;
 		IBody* Hook_GetBodyInterface(void) const;
+
+		void SendPawnEvent(const char* eventName, cell_t eventData);
+		QueryResultType SendPawnQuery(const char* queryName, cell_t data) const;
 	};
 
 	CBaseNPC_Entity::CBaseNPC* GetNPC(void);

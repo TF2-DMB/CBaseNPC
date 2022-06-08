@@ -43,6 +43,8 @@ void ScoutNextBot_OnPluginStart()
 		.DefineInputFunc("Explode", InputFuncValueType_Void, ScoutNextBot_InputExplode)
 		.DefineInputFunc("Say", InputFuncValueType_String, ScoutNextBot_InputSay)
 		.DefineInputFunc("SayNumber", InputFuncValueType_Integer, ScoutNextBot_InputSayNumber)
+		.DefineInputFunc("SendPawnEvent", InputFuncValueType_Void, InputSendPawnEvent)
+		.DefineInputFunc("SendPawnQuery", InputFuncValueType_Void, InputSendPawnQuery)
 	.EndDataMapDesc();
 
 	EntityFactory.Install();
@@ -220,4 +222,27 @@ static void ScoutNextBot_InputSay(int ent, int activator, int caller, const char
 static void ScoutNextBot_InputSayNumber(int ent, int activator, int caller, int value)
 {
 	PrintToChatAll("The Scout #%d: Number %d!", ent, value);
+}
+
+static void InputSendPawnEvent(int ent, int activator, int caller)
+{
+	CBaseNPC npc = TheNPCs.FindNPCByEntIndex(ent);
+	if (npc != INVALID_NPC)
+	{
+		DataPack dp = new DataPack();
+		dp.WriteString("Hello world!");
+		npc.SendPawnEvent("TestPawnEvent", dp);
+		delete dp;
+	}
+}
+
+static void InputSendPawnQuery(int ent, int activator, int caller)
+{
+	CBaseNPC npc = TheNPCs.FindNPCByEntIndex(ent);
+	if (npc != INVALID_NPC)
+	{
+		QueryResultType result = npc.SendPawnQuery("IsBaiting");
+		
+		PrintToChatAll("%0.2f: IsBaiting? %s", GetGameTime(), result == ANSWER_YES ? "Yes" : "No");
+	}
 }

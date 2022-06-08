@@ -26,7 +26,7 @@ public:
 		return m_iIndex;
 	};
 
-	CBaseEntityHack* GetEntity()
+	CBaseEntityHack* GetEntity() const
 	{
 		return (CBaseEntityHack*)m_hEntity.Get();
 	};

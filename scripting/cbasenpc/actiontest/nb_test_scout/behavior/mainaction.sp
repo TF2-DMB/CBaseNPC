@@ -17,6 +17,7 @@ void ScoutMainAction_Init()
 	ActionFactory.SetCallback( NextBotActionCallbackType_OnEnd, ScoutMainAction_OnEnd );
 	ActionFactory.SetEventCallback( EventResponderType_OnInjured, ScoutMainAction_OnInjured );
 	ActionFactory.SetEventCallback( EventResponderType_OnKilled, ScoutMainAction_OnKilled );
+	ActionFactory.SetPawnEventCallback(OnPawnEvent);
 }
 
 static void ScoutMainAction_OnStart( NextBotAction action, int actor, NextBotAction prevAction )
@@ -129,4 +130,21 @@ static int ScoutMainAction_OnKilled(NextBotAction action,
 	deathAction.SetData("m_iDamageType", damagetype);
 
 	return action.TryChangeTo( deathAction, RESULT_CRITICAL );
+}
+
+static void OnPawnEvent(NextBotAction action, int actor, const char[] eventName, any eventData)
+{
+	if (strcmp(eventName, "TestPawnEvent") == 0)
+	{
+		DataPack dp = view_as<DataPack>(eventData);
+		dp.Reset();
+
+		char str[256];
+		dp.ReadString(str, sizeof(str));
+
+		char actionName[64];
+		action.GetName(actionName, sizeof(actionName));
+
+		PrintToChatAll("%0.2f: %s received pawn event %s (%s)\n", GetGameTime(), actionName, eventName, str);
+	}
 }

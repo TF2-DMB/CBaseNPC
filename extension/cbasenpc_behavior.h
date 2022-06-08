@@ -16,10 +16,8 @@ extern HandleType_t g_BaseNPCPluginActionFactoryHandle;
 
 extern CBaseNPCPluginActionFactories* g_pBaseNPCPluginActionFactories;
 
-class CBaseNPCPluginAction : public Action <CBaseNPC_Entity>
+class CBaseNPCPluginAction : public Action <CBaseNPC_Entity>, public IBaseNPCComponent
 {
-public:
-	
 private:
 	ActionResult< CBaseNPC_Entity > m_pluginActionResult;
 
@@ -144,9 +142,24 @@ public:
 	virtual EventDesiredResult< CBaseNPC_Entity > OnTerritoryLost( CBaseNPC_Entity *me, int territoryID )							override final;
 	virtual EventDesiredResult< CBaseNPC_Entity > OnWin( CBaseNPC_Entity *me )														override final;
 	virtual EventDesiredResult< CBaseNPC_Entity > OnLose( CBaseNPC_Entity *me )														override final;
+
+	// IBaseNPCEventResponder
+	virtual void OnPawnEvent(const char* eventName, cell_t eventData) override final;
+	virtual QueryResultType	OnPawnQuery(INextBot* me, const char* queryName, cell_t data) const override final;
+
+	EventDesiredResult<CBaseNPC_Entity> OnPawnEvent(CBaseNPC_Entity *me, const char *eventName, cell_t eventData);
 };
 
-class CBaseNPCIntention : public IIntention
+class CBaseNPC_Behavior : public Behavior<CBaseNPC_Entity>, public IBaseNPCComponent 
+{
+public:
+	CBaseNPC_Behavior(Action<CBaseNPC_Entity> *initialAction, const char *name = "");
+
+	// IBaseNPCEventResponder
+	virtual QueryResultType	OnPawnQuery(INextBot* me, const char* queryName, cell_t data) const override final;
+};
+
+class CBaseNPCIntention : public IIntention, public IBaseNPCComponent
 {
 public:
 	CBaseNPCPluginActionFactory* m_pInitialActionFactory;
@@ -159,6 +172,9 @@ public:
 
 	void InitBehavior();
 	void DestroyBehavior();
+
+	// IBaseNPCEventResponder
+	virtual QueryResultType	OnPawnQuery(INextBot* me, const char* queryName, cell_t data) const override final;
 
 private:
 	Behavior< CBaseNPC_Entity > * m_pBehavior;
@@ -270,6 +286,8 @@ private:
 
 	CUtlVector< Action< CBaseNPC_Entity >* > m_Actions;
 
+	IPluginFunction* m_PawnEventCallback;
+	IPluginFunction* m_PawnQueryCallback;
 public:
 	Handle_t m_Handle;
 
@@ -283,6 +301,11 @@ public:
 
 	const char* GetName() const { return m_iActionName.c_str(); }
 	void SetName( const char* name ) { m_iActionName = name; }
+
+	IPluginFunction* GetPawnEventCallback() { return m_PawnEventCallback; }
+	void SetPawnEventCallback( IPluginFunction* callback ) { m_PawnEventCallback = callback; }
+	IPluginFunction* GetPawnQueryCallback() { return m_PawnQueryCallback; }
+	void SetPawnQueryCallback( IPluginFunction* callback ) { m_PawnQueryCallback = callback; }
 
 	IPluginFunction* GetCallback(CallbackType cbType);
 	void SetCallback(CallbackType cbType, IPluginFunction* pCallback);
