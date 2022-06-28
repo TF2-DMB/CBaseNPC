@@ -11,6 +11,7 @@
 
 #include "idatamapcontainer.h"
 #include "helpers.h"
+#include "toolsnextbot.h"
 
 class CBaseEntity;
 class CPluginEntityFactory;
@@ -102,6 +103,7 @@ extern CPluginEntityFactories* g_pPluginEntityFactories;
 
 struct plugin_factory_nextbot
 {
+	ToolsNextBot m_bot;
 };
 
 class CPluginEntityFactory : public IEntityFactory, public IEntityDataMapContainer
@@ -124,7 +126,7 @@ public:
 
 	// IEntityFactory
 	virtual IServerNetworkable* Create(const char*) override final;
-	virtual size_t GetEntitySize() override final { return GetBaseEntitySize() + GetDataDescSize() + (m_bAttachNextbot) ? sizeof(plugin_factory_nextbot) : 0; };
+	virtual size_t GetEntitySize() override final { return GetBaseEntitySize() + GetDataDescSize() + ((m_bAttachNextbot) ? sizeof(plugin_factory_nextbot) : 0); };
 	virtual void Destroy(IServerNetworkable*) override final;
 
 private:

@@ -11,6 +11,7 @@ project.sources = [
   'idatamapcontainer.cpp',
   'pluginentityfactory.cpp',
   'toolsnav_mesh.cpp',
+  'toolsnextbot.cpp',
   'CDetour/detours.cpp',
   'asm/asm.c',
   'helpers.cpp',
