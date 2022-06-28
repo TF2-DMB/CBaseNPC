@@ -89,6 +89,13 @@ public:
 	virtual void DisplayDebugText(const char *text) const = 0;
 	void DebugConColorMsg( NextBotDebugType debugType, const Color &color, const char *fmt, va_list arglist );
 	void ResetDebugHistory( );
+	void DebugConColorMsg( NextBotDebugType debugType, const Color &color, const char *fmt, ... )
+	{ 
+		va_list argptr;
+		va_start(argptr, fmt);
+		DebugConColorMsg( debugType, color, fmt, argptr); 
+		va_end(argptr);
+	}
 
 	enum
 	{
