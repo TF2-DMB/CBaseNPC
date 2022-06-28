@@ -431,11 +431,12 @@ CPluginEntityFactory::CPluginEntityFactory( IPlugin* plugin, const char* classna
 	m_iClassname(classname),
 	m_pPlugin(plugin),
 	m_pPostConstructor(postConstructor),
-	m_pOnRemove(onRemove)
+	m_pOnRemove(onRemove),
+	m_bInstalled(false),
+	m_bAttachNextbot(false),
+	m_pBaseNPCInitialActionFactory(nullptr)
 {
 	m_Derive.m_DeriveFrom = DERIVETYPE_NONE;
-	m_pBaseNPCInitialActionFactory = nullptr;
-	m_bInstalled = false;
 
 	m_Handle = handlesys->CreateHandle( g_pPluginEntityFactories->GetFactoryType(), this, plugin->GetIdentity(), myself->GetIdentity(), nullptr );
 

@@ -24,6 +24,12 @@ public:
 	void CollisionAABBToWorldAABB( const Vector &entityMins, const Vector &entityMaxs, Vector *pWorldMins, Vector *pWorldMaxs ) const;
 	void WorldSpaceAABB( Vector *pWorldMins, Vector *pWorldMaxs ) const;
 
+	const Vector& WorldToCollisionSpace(const Vector &in, Vector *pResult) const;
+	const Vector& CollisionToWorldSpace(const Vector &in, Vector *pResult) const;
+
+	void CalcNearestPoint(const Vector &vecWorldPt, Vector *pVecNearestWorldPt) const;
+	float CalcDistanceFromPoint(const Vector &vecWorldPt) const;
+
 	CBaseEntity *m_pOuter;
 
 	Vector m_vecMinsPreScaled;
@@ -62,5 +68,32 @@ inline void CCollisionPropertyHack::WorldSpaceAABB( Vector *pWorldMins, Vector *
 {
 	CollisionAABBToWorldAABB( m_vecMins, m_vecMaxs, pWorldMins, pWorldMaxs );
 }
+
+inline const Vector &CCollisionPropertyHack::WorldToCollisionSpace(const Vector &in, Vector *pResult) const
+{
+	if (!IsBoundsDefinedInEntitySpace() || (GetCollisionAngles() == vec3_angle))
+	{
+		VectorSubtract(in, GetCollisionOrigin(), *pResult);
+	}
+	else
+	{
+		VectorITransform(in, CollisionToWorldTransform(), *pResult);
+	}
+	return *pResult;
+}
+
+inline const Vector &CCollisionPropertyHack::CollisionToWorldSpace(const Vector &in, Vector *pResult) const 
+{
+	if (!IsBoundsDefinedInEntitySpace() || (GetCollisionAngles() == vec3_angle))
+	{
+		VectorAdd(in, GetCollisionOrigin(), *pResult);
+	}
+	else
+	{
+		VectorTransform(in, CollisionToWorldTransform(), *pResult);
+	}
+	return *pResult;
+}
+
 
 #endif

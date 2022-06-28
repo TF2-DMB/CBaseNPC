@@ -6,14 +6,16 @@
 #include "NextBotKnownEntity.h"
 #include "NextBotEventResponderInterface.h"
 #include "NextBotDebug.h"
+#include "NextBotBodyInterface.h"
+#include "NextBotIntentionInterface.h"
 #include "sourcesdk/tracefilter_simple.h"
+#include "sourcesdk/basecombatcharacter.h"
 #include <enginecallback.h>
 #include <util_shared.h>
 
 class INextBotComponent;
 class IIntention;
 class ILocomotion;
-class IBody;
 class IVision;
 class PathFollower;
 class Path;
@@ -34,59 +36,59 @@ public:
 class INextBot : public INextBotEventResponder
 {
 public:
-	INextBot() {}
-	virtual ~INextBot() = 0;
+	INextBot();
+	virtual ~INextBot();
 
-	virtual void Reset() = 0;
-	virtual void Update() = 0;
-	virtual void Upkeep() = 0;
+	virtual void Reset();
+	virtual void Update();
+	virtual void Upkeep();
 	
-	virtual bool IsRemovedOnReset() const = 0;
+	virtual bool IsRemovedOnReset() const { return true; }
 	
 	virtual CBaseCombatCharacterHack* GetEntity() const = 0;
-	virtual NextBotCombatCharacter *GetNextBotCombatCharacter() const = 0;
+	virtual NextBotCombatCharacter *GetNextBotCombatCharacter() const { return nullptr; };
 	
 	virtual ILocomotion *GetLocomotionInterface() const = 0;
-	virtual IBody *GetBodyInterface() const = 0;
-	virtual IIntention *GetIntentionInterface() const = 0;
+	virtual IBody *GetBodyInterface() const;
+	virtual IIntention *GetIntentionInterface() const;
 	virtual IVision *GetVisionInterface() const = 0;
 	
-	virtual bool SetPosition(const Vector& pos) = 0;
-	virtual Vector& GetPosition() const = 0;
+	virtual bool SetPosition(const Vector& pos);
+	virtual const Vector& GetPosition() const;
 	
-	virtual bool IsEnemy(const CBaseEntityHack* ent) const = 0;
-	virtual bool IsFriend(const CBaseEntityHack* ent) const = 0;
-	virtual bool IsSelf(const CBaseEntityHack* ent) const = 0;
+	virtual bool IsEnemy(const CBaseEntityHack* ent) const;
+	virtual bool IsFriend(const CBaseEntityHack* ent) const;
+	virtual bool IsSelf(const CBaseEntityHack* ent) const;
 	
-	virtual bool IsAbleToClimbOnto(const CBaseEntityHack* ent) const = 0;
-	virtual bool IsAbleToBreak(const CBaseEntityHack* ent) const = 0;
-	virtual bool IsAbleToBlockMovementOf(const INextBot *nextbot) const = 0;
+	virtual bool IsAbleToClimbOnto(const CBaseEntityHack* ent) const;
+	virtual bool IsAbleToBreak(const CBaseEntityHack* ent) const;
+	virtual bool IsAbleToBlockMovementOf(const INextBot *nextbot) const { return true; }
 	
-	virtual bool ShouldTouch(const CBaseEntityHack* ent) const = 0;
+	virtual bool ShouldTouch(const CBaseEntityHack* ent) const { return true; }
 	
-	virtual bool IsImmobile() const = 0;
-	virtual float GetImmobileDuration() const = 0;
-	virtual void ClearImmobileStatus() = 0;
-	virtual float GetImmobileSpeedThreshold() const = 0;
+	virtual bool IsImmobile() const;
+	virtual float GetImmobileDuration() const;
+	virtual void ClearImmobileStatus();
+	virtual float GetImmobileSpeedThreshold() const;
 	
-	virtual PathFollower *GetCurrentPath() const = 0;
-	virtual void SetCurrentPath(const PathFollower *follower) = 0;
-	virtual void NotifyPathDestruction(const PathFollower *follower) = 0;
+	virtual const PathFollower *GetCurrentPath() const;
+	virtual void SetCurrentPath(const PathFollower *follower);
+	virtual void NotifyPathDestruction(const PathFollower *follower);
 	
-	virtual bool IsRangeLessThan(CBaseEntityHack*ent, float dist) const = 0;
-	virtual bool IsRangeLessThan(const Vector& vec, float dist) const = 0;
-	virtual bool IsRangeGreaterThan(CBaseEntityHack*ent, float dist) const = 0;
-	virtual bool IsRangeGreaterThan(const Vector& vec, float dist) const = 0;
+	virtual bool IsRangeLessThan(CBaseEntityHack*ent, float dist) const;
+	virtual bool IsRangeLessThan(const Vector& vec, float dist) const;
+	virtual bool IsRangeGreaterThan(CBaseEntityHack*ent, float dist) const;
+	virtual bool IsRangeGreaterThan(const Vector& vec, float dist) const;
 	
-	virtual float GetRangeTo(CBaseEntityHack *ent) const = 0;
-	virtual float GetRangeTo(const Vector& vec) const = 0;
-	virtual float GetRangeSquaredTo(CBaseEntityHack*ent) const = 0;
-	virtual float GetRangeSquaredTo(const Vector& vec) const = 0;
+	virtual float GetRangeTo(CBaseEntityHack *ent) const;
+	virtual float GetRangeTo(const Vector& vec) const;
+	virtual float GetRangeSquaredTo(CBaseEntityHack*ent) const;
+	virtual float GetRangeSquaredTo(const Vector& vec) const;
 	
-	virtual bool IsDebugging(unsigned int type) const = 0;
+	virtual bool IsDebugging(unsigned int type) const;
 	virtual const char *GetDebugIdentifier() const;
-	virtual bool IsDebugFilterMatch(const char *filter) const = 0;
-	virtual void DisplayDebugText(const char *text) const = 0;
+	virtual bool IsDebugFilterMatch(const char *filter) const;
+	virtual void DisplayDebugText(const char *text) const;
 	void DebugConColorMsg( NextBotDebugType debugType, const Color &color, const char *fmt, va_list arglist );
 	void ResetDebugHistory( );
 	void DebugConColorMsg( NextBotDebugType debugType, const Color &color, const char *fmt, ... )
@@ -116,7 +118,7 @@ public:
 	void UpdateImmobileStatus() {}
 	
 	INextBotComponent *m_componentList;              // +0x04
-	PathFollower *m_CurrentPath;                     // +0x08
+	const PathFollower *m_CurrentPath;               // +0x08
 	int m_iManagerIndex;                             // +0x0c
 	bool m_bScheduledForNextTick;                    // +0x10
 	int m_iLastUpdateTick;                           // +0x14
@@ -125,11 +127,88 @@ public:
 	Vector m_vecLastPosition;                        // +0x20
 	CountdownTimer m_ctImmobileCheck;                // +0x2c
 	IntervalTimer m_itImmobileEpoch;                 // +0x38
-	ILocomotion *m_LocoInterface;                    // +0x3c
-	IBody *m_BodyInterface;                          // +0x40
-	IIntention *m_IntentionInterface;                // +0x44
+	mutable ILocomotion *m_LocoInterface;            // +0x3c
+	mutable IBody *m_BodyInterface;                  // +0x40
+	mutable IIntention *m_IntentionInterface;        // +0x44
 	IVision *m_VisionInterface;                      // +0x48
 	CUtlVector<NextBotDebugLineType *> m_debugHistory; // +0x4c
 };
+
+inline const PathFollower *INextBot::GetCurrentPath( void ) const
+{
+	return m_CurrentPath;
+}
+
+inline void INextBot::SetCurrentPath( const PathFollower *path )
+{
+	m_CurrentPath = path;
+}
+
+inline void INextBot::NotifyPathDestruction( const PathFollower *path )
+{
+	if ( m_CurrentPath == path )
+		m_CurrentPath = nullptr;
+}
+
+/*inline ILocomotion *INextBot::GetLocomotionInterface( void ) const
+{
+	if ( m_LocoInterface == nullptr )
+	{
+		m_LocoInterface = new ILocomotion( const_cast< INextBot * >( this ) );
+	}
+
+	return m_LocoInterface;
+}*/
+
+inline IBody *INextBot::GetBodyInterface( void ) const
+{
+	if ( m_BodyInterface == nullptr )
+	{
+		m_BodyInterface = new IBody( const_cast< INextBot * >( this ) );
+	}
+
+	return m_BodyInterface;
+}
+
+inline IIntention *INextBot::GetIntentionInterface( void ) const
+{
+	if ( m_IntentionInterface == nullptr )
+	{
+		m_IntentionInterface = new IIntention( const_cast< INextBot * >( this ) );
+	}
+
+	return m_IntentionInterface;
+}
+
+/*inline IVision *INextBot::GetVisionInterface( void ) const
+{
+	if ( m_VisionInterface == nullptr )
+	{
+		m_VisionInterface = new IVision( const_cast< INextBot * >( this ) );
+	}
+
+	return m_VisionInterface;
+}*/
+
+inline bool INextBot::IsImmobile( void ) const
+{
+	return m_itImmobileEpoch.HasStarted();
+}
+
+inline float INextBot::GetImmobileDuration( void ) const
+{
+	return m_itImmobileEpoch.GetElapsedTime();
+}
+
+inline void INextBot::ClearImmobileStatus( void )
+{
+	m_itImmobileEpoch.Invalidate();
+	m_vecLastPosition = GetEntity()->GetAbsOrigin();
+}
+
+inline float INextBot::GetImmobileSpeedThreshold( void ) const
+{
+	return 30.0f;
+}
 
 #endif

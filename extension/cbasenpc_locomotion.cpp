@@ -129,7 +129,7 @@ void CBaseNPC_Locomotion::V_Update()
 	if (IsStuck())
 	{
 		INextBot* bot = GetBot();
-		PathFollower* path = bot->GetCurrentPath();
+		const PathFollower* path = bot->GetCurrentPath();
 		if (path && GetStuckDuration() > 1.0f)
 		{
 			const Path::Segment* seg = path->GetCurrentGoal();

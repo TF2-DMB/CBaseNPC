@@ -100,6 +100,10 @@ private:
 
 extern CPluginEntityFactories* g_pPluginEntityFactories;
 
+struct plugin_factory_nextbot
+{
+};
+
 class CPluginEntityFactory : public IEntityFactory, public IEntityDataMapContainer
 {    
 public:
@@ -108,6 +112,7 @@ public:
 	IPluginFunction *m_pPostConstructor;
 	IPluginFunction *m_pOnRemove;
 	bool m_bInstalled;
+	bool m_bAttachNextbot;
 
 	Handle_t m_Handle;
 
@@ -119,7 +124,7 @@ public:
 
 	// IEntityFactory
 	virtual IServerNetworkable* Create(const char*) override final;
-	virtual size_t GetEntitySize() override final { return GetBaseEntitySize() + GetDataDescSize(); };
+	virtual size_t GetEntitySize() override final { return GetBaseEntitySize() + GetDataDescSize() + (m_bAttachNextbot) ? sizeof(plugin_factory_nextbot) : 0; };
 	virtual void Destroy(IServerNetworkable*) override final;
 
 private:
