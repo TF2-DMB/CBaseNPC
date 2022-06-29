@@ -1,6 +1,7 @@
 #include "toolsnextbot.h"
 
-ToolsNextBot::ToolsNextBot() :
-	m_IntentionInterface(this, nullptr)
+ToolsNextBot::ToolsNextBot(CBaseCombatCharacterHack* link, CBaseNPCPluginActionFactory* factory) :
+	m_linkedEntity(link),
+	m_IntentionInterface(this, factory)
 {
 }

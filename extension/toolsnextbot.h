@@ -7,7 +7,8 @@
 
 class ToolsNextBot : public INextBot
 {
-	ToolsNextBot();
+public:
+	ToolsNextBot(CBaseCombatCharacterHack* link, CBaseNPCPluginActionFactory* factory);
 
 	virtual CBaseCombatCharacterHack* GetEntity() const override { return m_linkedEntity; }
 	virtual NextBotCombatCharacter* GetNextBotCombatCharacter() const override { return nullptr; };

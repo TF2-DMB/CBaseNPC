@@ -2,6 +2,7 @@
 #define CPLUGINENTITYFACTORY_H
 
 #include <vector>
+#include <memory>
 
 #include <itoolentity.h>
 #include <tier0/platform.h>
@@ -32,16 +33,18 @@ public:
 	CBaseEntity* pEntity = nullptr;
 	CPluginEntityFactory* pFactory = nullptr;
 	datamap_t* m_pDataMap = nullptr;
+	ToolsNextBot* pNextBot = nullptr;
 
 	void Hook(bool bHookDestructor = true);
-	void Unhook();
 
-	PluginFactoryEntityRecord_t() : pEntity( nullptr ) { }
 	PluginFactoryEntityRecord_t( CBaseEntity* pEnt ) : pEntity(pEnt) { }
+	~PluginFactoryEntityRecord_t();
+
+	INextBot* Hook_MyNextBotPointer();
 
 private:
 	bool m_bHooked = false;
-	std::vector<int> * m_pHookIds = nullptr;
+	std::vector<int> m_pHookIds;
 };
 
 class CPluginEntityFactories : public IPluginsListener,
@@ -96,15 +99,10 @@ private:
 
 	size_t m_BaseClassSizes[ FACTORYBASECLASS_MAX ];
 	CUtlVector< CPluginEntityFactory* > m_Factories;
-	CUtlMap< cell_t, PluginFactoryEntityRecord_t > m_Records;
+	std::map<cell_t, std::unique_ptr<PluginFactoryEntityRecord_t>> m_Records;
 };
 
 extern CPluginEntityFactories* g_pPluginEntityFactories;
-
-struct plugin_factory_nextbot
-{
-	ToolsNextBot m_bot;
-};
 
 class CPluginEntityFactory : public IEntityFactory, public IEntityDataMapContainer
 {    
@@ -126,7 +124,7 @@ public:
 
 	// IEntityFactory
 	virtual IServerNetworkable* Create(const char*) override final;
-	virtual size_t GetEntitySize() override final { return GetBaseEntitySize() + GetDataDescSize() + ((m_bAttachNextbot) ? sizeof(plugin_factory_nextbot) : 0); };
+	virtual size_t GetEntitySize() override final { return GetBaseEntitySize() + GetDataDescSize(); };
 	virtual void Destroy(IServerNetworkable*) override final;
 
 private:
@@ -187,6 +185,8 @@ public:
 	CBaseNPCPluginActionFactory* GetBaseNPCInitialActionFactory() const { return m_pBaseNPCInitialActionFactory; }
 	void SetBaseNPCInitialActionFactory( CBaseNPCPluginActionFactory* pFactory ) { m_pBaseNPCInitialActionFactory = pFactory; }
 
+	bool ShouldAttachNextbot() { return m_bAttachNextbot; }
+	void AttachNextbot() { m_bAttachNextbot = true; }
 protected:
 	bool m_bIsAbstract;
 

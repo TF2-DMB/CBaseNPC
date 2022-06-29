@@ -9,6 +9,8 @@
 SH_DECL_MANUALHOOK0(FactoryEntity_GetDataDescMap, 0, 0, 0, datamap_t* );
 SH_DECL_MANUALHOOK0_void(FactoryEntity_UpdateOnRemove, 0, 0, 0 );
 
+SH_DECL_MANUALHOOK0(EntityRecord_MyNextBotPointer, 0, 0, 0, INextBot* );
+
 #ifdef __linux__
 SH_DECL_MANUALHOOK0_void(FactoryEntity_Dtor, 1, 0, 0);
 #else
@@ -102,21 +104,21 @@ public:
 
 CPluginEntityFactories::CPluginEntityFactories()
 {
-	SetDefLessFunc( m_Records );
 }
 
-PluginFactoryEntityRecord_t* CPluginEntityFactories::FindRecord( CBaseEntity* pEntity, bool create )
+PluginFactoryEntityRecord_t* CPluginEntityFactories::FindRecord(CBaseEntity* pEntity, bool create)
 {
 	if (!pEntity)
+	{
 		return nullptr;
+	}
 	
 	cell_t key = (cell_t)pEntity;
-	unsigned short index = m_Records.Find( key );
-	if ( !m_Records.IsValidIndex(index) )
+	if (m_Records.find(key) == m_Records.end())
 	{
 		if (create)
 		{
-			index = m_Records.Insert(key, PluginFactoryEntityRecord_t( pEntity ));
+			m_Records.emplace(key, std::make_unique<PluginFactoryEntityRecord_t>(pEntity));
 		}
 		else
 		{
@@ -124,23 +126,27 @@ PluginFactoryEntityRecord_t* CPluginEntityFactories::FindRecord( CBaseEntity* pE
 		}
 	}
 
-	return &m_Records[index];
+	return m_Records[key].get();
 }
 
-void CPluginEntityFactories::RemoveRecord( CBaseEntity* pEntity )
+void CPluginEntityFactories::RemoveRecord(CBaseEntity* pEntity)
 {
 	if (!pEntity)
+	{
 		return;
-	
+	}
+
 	cell_t key = (cell_t)pEntity;
-	m_Records.Remove( key );
+	m_Records.erase(key);
 }
 
-CPluginEntityFactory* CPluginEntityFactories::GetFactory( CBaseEntity* pEntity )
+CPluginEntityFactory* CPluginEntityFactories::GetFactory(CBaseEntity* pEntity)
 {
-	PluginFactoryEntityRecord_t* pEntityRecord = FindRecord( pEntity );
+	PluginFactoryEntityRecord_t* pEntityRecord = FindRecord(pEntity);
 	if (!pEntityRecord)
+	{
 		return nullptr;
+	}
 
 	return pEntityRecord->pFactory;
 }
@@ -203,6 +209,7 @@ void CPluginEntityFactories::SDK_OnAllLoaded()
 {
 	SH_MANUALHOOK_RECONFIGURE(FactoryEntity_GetDataDescMap, CBaseEntityHack::offset_GetDataDescMap, 0, 0);
 	SH_MANUALHOOK_RECONFIGURE(FactoryEntity_UpdateOnRemove, CBaseEntityHack::offset_UpdateOnRemove, 0, 0);
+	SH_MANUALHOOK_RECONFIGURE(EntityRecord_MyNextBotPointer, CBaseEntityHack::offset_MyNextBotPointer, 0, 0);
 }
 
 void CPluginEntityFactories::OnCoreMapEnd()
@@ -389,36 +396,44 @@ void CPluginEntityFactories::Hook_EntityDestructor( unsigned int flags )
 
 void PluginFactoryEntityRecord_t::Hook(bool bHookDestructor)
 {
-	if ( m_bHooked ) return;
+	if (m_bHooked)
+	{
+		return;
+	}
 	m_bHooked = true;
 
-	if ( !m_pHookIds )
-		m_pHookIds = new std::vector<int>;
-
-	m_pHookIds->push_back( SH_ADD_MANUALHOOK(FactoryEntity_GetDataDescMap, pEntity, SH_MEMBER(g_pPluginEntityFactories, &CPluginEntityFactories::Hook_GetDataDescMap), false) );
-	m_pHookIds->push_back( SH_ADD_MANUALHOOK(FactoryEntity_UpdateOnRemove, pEntity, SH_MEMBER(g_pPluginEntityFactories, &CPluginEntityFactories::Hook_UpdateOnRemove), false) );
+	m_pHookIds.push_back( SH_ADD_MANUALHOOK(FactoryEntity_GetDataDescMap, pEntity, SH_MEMBER(g_pPluginEntityFactories, &CPluginEntityFactories::Hook_GetDataDescMap), false) );
+	m_pHookIds.push_back( SH_ADD_MANUALHOOK(FactoryEntity_UpdateOnRemove, pEntity, SH_MEMBER(g_pPluginEntityFactories, &CPluginEntityFactories::Hook_UpdateOnRemove), false) );
 
 	if (bHookDestructor)
 	{
-		m_pHookIds->push_back( SH_ADD_MANUALHOOK(FactoryEntity_Dtor, pEntity, SH_MEMBER(g_pPluginEntityFactories, &CPluginEntityFactories::Hook_EntityDestructor), false) );
+		m_pHookIds.push_back(SH_ADD_MANUALHOOK(FactoryEntity_Dtor, pEntity, SH_MEMBER(g_pPluginEntityFactories, &CPluginEntityFactories::Hook_EntityDestructor), false));
+	}
+
+	if (pNextBot)
+	{
+		m_pHookIds.push_back(SH_ADD_MANUALHOOK(EntityRecord_MyNextBotPointer, pEntity, SH_MEMBER(this, &PluginFactoryEntityRecord_t::Hook_MyNextBotPointer), false));
 	}
 }
 
-void PluginFactoryEntityRecord_t::Unhook()
+PluginFactoryEntityRecord_t::~PluginFactoryEntityRecord_t()
 {
-	if ( !m_bHooked ) return;
+	if (!m_bHooked)
+	{
+		return;
+	}
+
 	m_bHooked = false;
 	
-	if ( m_pHookIds )
+	for (auto it = m_pHookIds.begin(); it != m_pHookIds.end(); it++)
 	{
-		for (auto it = m_pHookIds->begin(); it != m_pHookIds->end(); it++)
-		{
-			SH_REMOVE_HOOK_ID((*it));
-		}
-
-		delete m_pHookIds;
-		m_pHookIds = nullptr;
+		SH_REMOVE_HOOK_ID((*it));
 	}
+}
+
+INextBot* PluginFactoryEntityRecord_t::Hook_MyNextBotPointer()
+{
+	RETURN_META_VALUE(MRES_SUPERCEDE, pNextBot);
 }
 
 CPluginEntityFactory* CPluginEntityFactory::ToPluginEntityFactory( IEntityFactory* pFactory )
@@ -521,18 +536,18 @@ void CPluginEntityFactory::OnDestroy( CBaseEntity* pEntity )
 	PluginFactoryEntityRecord_t * pEntityRecord = g_pPluginEntityFactories->FindRecord( pEntity );
 	if ( pEntityRecord->pFactory == this )
 	{
-		pEntityRecord->Unhook();
 		g_pPluginEntityFactories->RemoveRecord( pEntity );
 	}
 }
 
-void CPluginEntityFactories::GetEntitiesOfFactory( CPluginEntityFactory* pFactory, CUtlVector< CBaseEntity* > &vector )
+void CPluginEntityFactories::GetEntitiesOfFactory(CPluginEntityFactory* pFactory, CUtlVector< CBaseEntity* > &vector)
 {
-	FOR_EACH_MAP( m_Records, i )
+	for (auto it = m_Records.begin(); it != m_Records.end(); it++)
 	{
-		PluginFactoryEntityRecord_t *entityRecord = &m_Records[i];
-		if ( entityRecord->pFactory == pFactory )
-			vector.AddToTail( entityRecord->pEntity );
+		if (it->second->pFactory == pFactory)
+		{
+			vector.AddToTail(it->second->pEntity);
+		}
 	}
 }
 
@@ -808,6 +823,22 @@ IServerNetworkable* CPluginEntityFactory::RecursiveCreate(const char* classname,
 		if (bIsInstantiating)
 		{
 			pEntityRecord->pFactory = pCreatingFactory;
+			// If requested, attach a INextBot interface. The entity must be nextbotless and deriving from CBaseCombatCharacter
+			if (pCreatingFactory->ShouldAttachNextbot() && pEnt->MyCombatCharacterPointer() && !pEnt->MyNextBotPointer())
+			{
+				CBaseNPCPluginActionFactory* pInitialActionFactory = nullptr;
+				CPluginEntityFactory* pFactory = pCreatingFactory;
+				while (pFactory)
+				{
+					if (pFactory->GetBaseNPCInitialActionFactory())
+					{
+						pInitialActionFactory = pFactory->GetBaseNPCInitialActionFactory();
+						break;
+					}
+					pFactory = ToPluginEntityFactory( pFactory->GetBaseFactory() );
+				}
+				pEntityRecord->pNextBot = new ToolsNextBot(pEnt->MyCombatCharacterPointer(), pInitialActionFactory);
+			}
 		}
 
 		datamap_t * pDataMap = GetDataDescMap();

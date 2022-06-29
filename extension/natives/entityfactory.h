@@ -240,6 +240,11 @@ PLUGINENTITYFACTORYNATIVE(GetClassname)
 	return 0;
 }
 
+PLUGINENTITYFACTORYNATIVE(AttachNextbot)
+	pFactory->AttachNextbot();
+	return 0;
+}
+
 PLUGINENTITYFACTORYDATAMAPNATIVE(BeginDataMapDesc)
 
 	char* dataClassName;

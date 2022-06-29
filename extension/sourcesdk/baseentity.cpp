@@ -141,6 +141,12 @@ bool CBaseEntityHack::Init(SourceMod::IGameConfig* config, char* error, size_t m
 		return false;
 	}
 
+	if (!config->GetOffset("CBaseEntity::MyNextBotPointer", &CBaseEntityHack::offset_MyNextBotPointer))
+	{
+		snprintf(error, maxlength, "Failed to retrieve CBaseEntity::MyNextBotPointer offset!");
+		return false;
+	}
+
 	// Any entity that inherits CBaseEntity is good
 	BEGIN_VAR("trigger_stun");
 	OFFSETVAR_DATA(CBaseEntity, m_pfnThink);
