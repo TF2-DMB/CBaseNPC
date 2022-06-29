@@ -39,6 +39,9 @@ public:
 	INextBot();
 	virtual ~INextBot();
 
+	virtual INextBotEventResponder* FirstContainedResponder( void ) const;
+	virtual INextBotEventResponder* NextContainedResponder( INextBotEventResponder *current ) const;
+
 	virtual void Reset();
 	virtual void Update();
 	virtual void Upkeep();
@@ -89,6 +92,7 @@ public:
 	virtual const char *GetDebugIdentifier() const;
 	virtual bool IsDebugFilterMatch(const char *filter) const;
 	virtual void DisplayDebugText(const char *text) const;
+
 	void DebugConColorMsg( NextBotDebugType debugType, const Color &color, const char *fmt, va_list arglist );
 	void ResetDebugHistory( );
 	void DebugConColorMsg( NextBotDebugType debugType, const Color &color, const char *fmt, ... )
@@ -209,6 +213,16 @@ inline void INextBot::ClearImmobileStatus( void )
 inline float INextBot::GetImmobileSpeedThreshold( void ) const
 {
 	return 30.0f;
+}
+
+inline INextBotEventResponder *INextBot::FirstContainedResponder(void) const
+{
+	return m_componentList;
+}
+
+inline INextBotEventResponder *INextBot::NextContainedResponder(INextBotEventResponder *current) const
+{
+	return static_cast<INextBotComponent *>(current)->m_nextComponent;
 }
 
 #endif
