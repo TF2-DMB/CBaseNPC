@@ -823,20 +823,26 @@ IServerNetworkable* CPluginEntityFactory::RecursiveCreate(const char* classname,
 		if (bIsInstantiating)
 		{
 			pEntityRecord->pFactory = pCreatingFactory;
-			// If requested, attach a INextBot interface. The entity must be nextbotless and deriving from CBaseCombatCharacter
-			if (pCreatingFactory->ShouldAttachNextbot() && pEnt->MyCombatCharacterPointer() && !pEnt->MyNextBotPointer())
+
+			bool createNextBot = false;
+			CBaseNPCPluginActionFactory* pInitialActionFactory = nullptr;
+			CPluginEntityFactory* pFactory = pCreatingFactory;
+			while (pFactory)
 			{
-				CBaseNPCPluginActionFactory* pInitialActionFactory = nullptr;
-				CPluginEntityFactory* pFactory = pCreatingFactory;
-				while (pFactory)
+				if (!pInitialActionFactory && pFactory->GetBaseNPCInitialActionFactory())
 				{
-					if (pFactory->GetBaseNPCInitialActionFactory())
-					{
-						pInitialActionFactory = pFactory->GetBaseNPCInitialActionFactory();
-						break;
-					}
-					pFactory = ToPluginEntityFactory( pFactory->GetBaseFactory() );
+					pInitialActionFactory = pFactory->GetBaseNPCInitialActionFactory();
 				}
+				if (!createNextBot)
+				{
+					createNextBot |= pFactory->ShouldAttachNextbot();
+				}
+				pFactory = ToPluginEntityFactory( pFactory->GetBaseFactory() );
+			}
+
+			// If requested, attach a INextBot interface. The entity must be nextbotless and deriving from CBaseCombatCharacter
+			if (createNextBot && pEnt->MyCombatCharacterPointer() && !pEnt->MyNextBotPointer())
+			{
 				pEntityRecord->pNextBot = new ToolsNextBot(pEnt->MyCombatCharacterPointer(), pInitialActionFactory);
 			}
 		}
