@@ -708,6 +708,8 @@ const sp_nativeinfo_t g_NativesInfo[] =
 	NATIVENAMEEX(CEntityFactory, CPluginEntityFactory, GetNumInstalledFactories)
 	NATIVENAMEEX(CEntityFactory, CPluginEntityFactory, GetInstalledFactories)
 
+	NATIVENAMEEX(CEntityFactory, CPluginEntityFactory, AttachNextBot)
+
 	NATIVENAMEEX(CEntityFactory, CPluginEntityFactory, BeginDataMapDesc)
 	NATIVENAMEEX(CEntityFactory, CPluginEntityFactory, DefineIntField)
 	NATIVENAMEEX(CEntityFactory, CPluginEntityFactory, DefineFloatField)

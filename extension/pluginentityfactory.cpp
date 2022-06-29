@@ -835,7 +835,7 @@ IServerNetworkable* CPluginEntityFactory::RecursiveCreate(const char* classname,
 				}
 				if (!createNextBot)
 				{
-					createNextBot |= pFactory->ShouldAttachNextbot();
+					createNextBot |= pFactory->ShouldAttachNextBot();
 				}
 				pFactory = ToPluginEntityFactory( pFactory->GetBaseFactory() );
 			}

@@ -185,8 +185,8 @@ public:
 	CBaseNPCPluginActionFactory* GetBaseNPCInitialActionFactory() const { return m_pBaseNPCInitialActionFactory; }
 	void SetBaseNPCInitialActionFactory( CBaseNPCPluginActionFactory* pFactory ) { m_pBaseNPCInitialActionFactory = pFactory; }
 
-	bool ShouldAttachNextbot() { return m_bAttachNextbot; }
-	void AttachNextbot() { m_bAttachNextbot = true; }
+	bool ShouldAttachNextBot() { return m_bAttachNextbot; }
+	void AttachNextBot() { m_bAttachNextbot = true; }
 protected:
 	bool m_bIsAbstract;
 

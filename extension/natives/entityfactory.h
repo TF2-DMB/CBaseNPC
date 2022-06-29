@@ -240,8 +240,8 @@ PLUGINENTITYFACTORYNATIVE(GetClassname)
 	return 0;
 }
 
-PLUGINENTITYFACTORYNATIVE(AttachNextbot)
-	pFactory->AttachNextbot();
+PLUGINENTITYFACTORYNATIVE(AttachNextBot)
+	pFactory->AttachNextBot();
 	return 0;
 }
 
