@@ -30,17 +30,20 @@ enum PluginEntityFactoryBaseClass_t
 class PluginFactoryEntityRecord_t
 {
 public:
-	CBaseEntity* pEntity = nullptr;
+	CBaseEntityHack* pEntity = nullptr;
 	CPluginEntityFactory* pFactory = nullptr;
 	datamap_t* m_pDataMap = nullptr;
-	ToolsNextBot* pNextBot = nullptr;
+	ToolsNextBot* m_pNextBot = nullptr;
+	CBaseNPCPluginActionFactory* m_pInitialActionFactory = nullptr;
+	CBaseNPCIntention* m_pIntentionInterface = nullptr;
 
 	void Hook(bool bHookDestructor = true);
 
-	PluginFactoryEntityRecord_t( CBaseEntity* pEnt ) : pEntity(pEnt) { }
+	PluginFactoryEntityRecord_t( CBaseEntityHack* pEnt ) : pEntity(pEnt) { }
 	~PluginFactoryEntityRecord_t();
 
 	INextBot* Hook_MyNextBotPointer();
+	IIntention* Hook_GetIntentionInterface();
 
 private:
 	bool m_bHooked = false;

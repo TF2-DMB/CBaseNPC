@@ -1,4 +1,3 @@
-
 #include "pluginentityfactory.h"
 #include "entityfactorydictionary.h"
 #include "cbasenpc_internal.h"
@@ -10,6 +9,7 @@ SH_DECL_MANUALHOOK0(FactoryEntity_GetDataDescMap, 0, 0, 0, datamap_t* );
 SH_DECL_MANUALHOOK0_void(FactoryEntity_UpdateOnRemove, 0, 0, 0 );
 
 SH_DECL_MANUALHOOK0(EntityRecord_MyNextBotPointer, 0, 0, 0, INextBot* );
+SH_DECL_EXTERN0(INextBot, GetIntentionInterface, const, 0, IIntention* );
 
 #ifdef __linux__
 SH_DECL_MANUALHOOK0_void(FactoryEntity_Dtor, 1, 0, 0);
@@ -118,7 +118,7 @@ PluginFactoryEntityRecord_t* CPluginEntityFactories::FindRecord(CBaseEntity* pEn
 	{
 		if (create)
 		{
-			m_Records.emplace(key, std::make_unique<PluginFactoryEntityRecord_t>(pEntity));
+			m_Records.emplace(key, std::make_unique<PluginFactoryEntityRecord_t>((CBaseEntityHack*)pEntity));
 		}
 		else
 		{
@@ -410,9 +410,21 @@ void PluginFactoryEntityRecord_t::Hook(bool bHookDestructor)
 		m_pHookIds.push_back(SH_ADD_MANUALHOOK(FactoryEntity_Dtor, pEntity, SH_MEMBER(g_pPluginEntityFactories, &CPluginEntityFactories::Hook_EntityDestructor), false));
 	}
 
-	if (pNextBot)
+	INextBot* bot = nullptr;
+	if (m_pNextBot)
 	{
+		bot = m_pNextBot;
 		m_pHookIds.push_back(SH_ADD_MANUALHOOK(EntityRecord_MyNextBotPointer, pEntity, SH_MEMBER(this, &PluginFactoryEntityRecord_t::Hook_MyNextBotPointer), false));
+	}
+	else
+	{
+		bot = pEntity->MyNextBotPointer();
+	}
+
+	if (m_pIntentionInterface && bot)
+	{
+		m_pIntentionInterface = new CBaseNPCIntention(bot, m_pInitialActionFactory);
+		m_pHookIds.push_back(SH_ADD_HOOK(INextBot, GetIntentionInterface, bot, SH_MEMBER(this, &PluginFactoryEntityRecord_t::Hook_GetIntentionInterface), false));
 	}
 }
 
@@ -429,11 +441,26 @@ PluginFactoryEntityRecord_t::~PluginFactoryEntityRecord_t()
 	{
 		SH_REMOVE_HOOK_ID((*it));
 	}
+
+	if (m_pNextBot)
+	{
+		delete m_pNextBot;
+	}
+
+	if (m_pIntentionInterface)
+	{
+		delete m_pIntentionInterface;
+	}
 }
 
 INextBot* PluginFactoryEntityRecord_t::Hook_MyNextBotPointer()
 {
-	RETURN_META_VALUE(MRES_SUPERCEDE, pNextBot);
+	RETURN_META_VALUE(MRES_SUPERCEDE, m_pNextBot);
+}
+
+IIntention* PluginFactoryEntityRecord_t::Hook_GetIntentionInterface()
+{
+	RETURN_META_VALUE(MRES_SUPERCEDE, m_pIntentionInterface);
 }
 
 CPluginEntityFactory* CPluginEntityFactory::ToPluginEntityFactory( IEntityFactory* pFactory )
@@ -843,7 +870,12 @@ IServerNetworkable* CPluginEntityFactory::RecursiveCreate(const char* classname,
 			// If requested, attach a INextBot interface. The entity must be nextbotless and deriving from CBaseCombatCharacter
 			if (createNextBot && pEnt->MyCombatCharacterPointer() && !pEnt->MyNextBotPointer())
 			{
-				pEntityRecord->pNextBot = new ToolsNextBot(pEnt->MyCombatCharacterPointer(), pInitialActionFactory);
+				pEntityRecord->m_pNextBot = new ToolsNextBot(pEnt->MyCombatCharacterPointer());
+			}
+
+			if (pEntityRecord->m_pNextBot || pEnt->MyNextBotPointer())
+			{
+				pEntityRecord->m_pInitialActionFactory = pInitialActionFactory;
 			}
 		}
 
