@@ -17,7 +17,7 @@ enum NextBotDebugType
 	DEBUG_ERRORS     = (1 << 8),
 };
 
-methodmap C
+methodmap INextBotEventResponder
 {
 	public native INextBotEventResponder FirstContainedResponder();
 	public native INextBotEventResponder NextContainedResponder(INextBotEventResponder prev);
