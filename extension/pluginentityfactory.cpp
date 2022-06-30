@@ -173,7 +173,7 @@ CPluginEntityFactory* CPluginEntityFactories::GetFactoryFromHandle( Handle_t han
 
 bool CPluginEntityFactories::Init( IGameConfig* config, char* error, size_t maxlength )
 {
-	CEntityFactoryDictionaryHack* factoryDictionary = (CEntityFactoryDictionaryHack*)servertools->GetEntityFactoryDictionary();
+	CEntityFactoryDictionaryHack* factoryDictionary = EntityFactoryDictionaryHack();
 	{
 		IEntityFactory* factory = nullptr;
 
@@ -219,7 +219,7 @@ bool CPluginEntityFactories::Init( IGameConfig* config, char* error, size_t maxl
 
 IServerNetworkable* CPluginEntityFactories::Hook_Create(const char* classname)
 {
-	auto factory = this->FindFactory()
+	auto factory = this->FindFactory(classname);
 	if (factory)
 	{
 		RETURN_META_VALUE(MRES_SUPERCEDE, factory->Create(classname));
@@ -272,8 +272,7 @@ IEntityFactory* CPluginEntityFactories::FindGameFactory(const char* classname)
 
 void CPluginEntityFactories::InstallPluginFactory(const char* classname, CPluginEntityFactory* factory)
 {
-	auto itPluginFactory = m_pluginFactories.find(classname);
-	if (itPluginFactory == m_pluginFactories.end())
+	if (m_pluginFactories.find(classname) == m_pluginFactories.end())
 	{
 		m_pluginFactories.emplace(classname, factory);
 	}
@@ -290,7 +289,7 @@ void CPluginEntityFactories::RemovePluginFactory(CPluginEntityFactory* factory)
 	}
 }
 
-IEntityFactory* CPluginEntityFactories::FindFactory(const char* classname);
+IEntityFactory* CPluginEntityFactories::FindFactory(const char* classname)
 {
 	auto itPluginFactory = m_pluginFactories.find(classname);
 	if (itPluginFactory != m_pluginFactories.end())
@@ -304,6 +303,25 @@ IEntityFactory* CPluginEntityFactories::FindFactory(const char* classname);
 		return itGameFactory->second;
 	}
 	return nullptr;
+}
+
+void CPluginEntityFactories::InstallGameFactory(const char* classname, IEntityFactory* factory)
+{
+	if (m_gameFactories.find(classname) == m_gameFactories.end())
+	{
+		m_gameFactories.emplace(classname, factory);
+	}
+}
+
+void CPluginEntityFactories::RemoveGameFactory(IEntityFactory* factory)
+{
+	for (auto it = m_gameFactories.begin(); it != m_gameFactories.end(); it++)
+	{
+		if (it->second == factory)
+		{
+			m_gameFactories.erase(it);
+		}
+	}
 }
 
 void CPluginEntityFactories::SDK_OnAllLoaded()

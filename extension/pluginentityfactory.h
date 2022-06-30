@@ -108,6 +108,11 @@ public:
 	IEntityFactory*       FindFactory(const char* classname);
 
 private:
+	friend class CustomFactory;
+	void InstallGameFactory(const char* classname, IEntityFactory* factory);
+	void RemoveGameFactory(IEntityFactory* factory);
+
+private:
 	HandleType_t m_FactoryType;
 	IForward * m_fwdInstalledFactory;
 	IForward * m_fwdUninstalledFactory;

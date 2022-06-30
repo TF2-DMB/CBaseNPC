@@ -4,7 +4,6 @@
 
 #include "helpers.h"
 #include "pluginentityfactory.h"
-#include "entityfactorydictionary.h"
 #include "cbasenpc_behavior.h"
 
 #define ENTINDEX_TO_CBASEENTITY(ref, buffer) \
@@ -134,9 +133,11 @@ PLUGINENTITYFACTORYNATIVE(DeriveFromClass)
 	char* classname;
 	pContext->LocalToString(params[2], &classname);
 
-	IEntityFactory* pDeriveFromFactory = EntityFactoryDictionaryHack()->FindFactory(classname);
+	IEntityFactory* pDeriveFromFactory = g_pPluginEntityFactories->FindFactory(classname);
 	if (!pDeriveFromFactory)
+	{
 		return pContext->ThrowNativeError("Cannot derive from uninstalled entity factory %s", classname);
+	}
 	
 	pFactory->DeriveFromClass(classname);
 
@@ -194,15 +195,21 @@ PLUGINENTITYFACTORYNATIVE(Install)
 	{
 		const char* classname = pFactory->m_iClassname.c_str();
 
-		if (EntityFactoryDictionaryHack()->FindFactory(classname))
+		if (g_pPluginEntityFactories->FindPluginFactory(classname) != nullptr)
+		{
 			return pContext->ThrowNativeError("Entity factory already exists with the same classname");
+		}
 	}
 
 	if (pFactory->DoesNotDerive())
+	{
 		return pContext->ThrowNativeError("Entity factory must derive from an existing class or classname");
+	}
 
 	if (!pFactory->Install())
+	{
 		return pContext->ThrowNativeError("Failed to install; make sure base factory is installed first");
+	}
 	
 	return 0;
 }
