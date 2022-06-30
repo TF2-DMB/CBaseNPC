@@ -95,6 +95,18 @@ public:
 	void Hook_EntityDestructor( unsigned int flags );
 #endif
 
+	// Entity dictionary
+	IServerNetworkable* Hook_Create(const char* classname);
+	void                Hook_Destroy(const char* classname, IServerNetworkable* pNetworkable);
+	const char*         Hook_GetCannonicalName(const char* classname);
+
+
+	CPluginEntityFactory* FindPluginFactory(const char* classname);
+	IEntityFactory*       FindGameFactory(const char* classname);
+	void                  InstallPluginFactory(const char* classname, CPluginEntityFactory* factory);
+	void                  RemovePluginFactory(CPluginEntityFactory* factory);
+	IEntityFactory*       FindFactory(const char* classname);
+
 private:
 	HandleType_t m_FactoryType;
 	IForward * m_fwdInstalledFactory;
@@ -103,6 +115,9 @@ private:
 	size_t m_BaseClassSizes[ FACTORYBASECLASS_MAX ];
 	CUtlVector< CPluginEntityFactory* > m_Factories;
 	std::map<cell_t, std::unique_ptr<PluginFactoryEntityRecord_t>> m_Records;
+	std::map<std::string, IEntityFactory*> m_gameFactories;
+	std::map<std::string, CPluginEntityFactory*> m_pluginFactories;
+	std::vector<int> m_hookIds;
 };
 
 extern CPluginEntityFactories* g_pPluginEntityFactories;

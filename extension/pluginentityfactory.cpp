@@ -11,6 +11,10 @@ SH_DECL_MANUALHOOK0_void(FactoryEntity_UpdateOnRemove, 0, 0, 0 );
 SH_DECL_MANUALHOOK0(EntityRecord_MyNextBotPointer, 0, 0, 0, INextBot* );
 SH_DECL_EXTERN0(INextBot, GetIntentionInterface, const, 0, IIntention* );
 
+SH_DECL_HOOK1(IEntityFactoryDictionary, Create, SH_NOATTRIB, 0, IServerNetworkable*, const char*);
+SH_DECL_HOOK2_void(IEntityFactoryDictionary, Destroy, SH_NOATTRIB, 0, const char*, IServerNetworkable*);
+SH_DECL_HOOK1(IEntityFactoryDictionary, GetCannonicalName, SH_NOATTRIB, 0, const char*, const char*);
+
 #ifdef __linux__
 SH_DECL_MANUALHOOK0_void(FactoryEntity_Dtor, 1, 0, 0);
 #else
@@ -169,7 +173,7 @@ CPluginEntityFactory* CPluginEntityFactories::GetFactoryFromHandle( Handle_t han
 
 bool CPluginEntityFactories::Init( IGameConfig* config, char* error, size_t maxlength )
 {
-	IEntityFactoryDictionary* factoryDictionary = servertools->GetEntityFactoryDictionary();
+	CEntityFactoryDictionaryHack* factoryDictionary = (CEntityFactoryDictionaryHack*)servertools->GetEntityFactoryDictionary();
 	{
 		IEntityFactory* factory = nullptr;
 
@@ -186,6 +190,14 @@ bool CPluginEntityFactories::Init( IGameConfig* config, char* error, size_t maxl
 		}
 
 		m_BaseClassSizes[ FACTORYBASECLASS_BASEENTITY ] = entitySize;
+
+		for (unsigned int max = factoryDictionary->m_Factories.Count(), i = 0; i < max; i++)
+		{
+			m_gameFactories.emplace(factoryDictionary->m_Factories.GetElementName(i), factoryDictionary->m_Factories.Element(i));
+		}
+		m_hookIds.push_back(SH_ADD_HOOK(IEntityFactoryDictionary, Create, factoryDictionary, SH_MEMBER(this, &CPluginEntityFactories::Hook_Create), false));
+		m_hookIds.push_back(SH_ADD_HOOK(IEntityFactoryDictionary, Destroy, factoryDictionary, SH_MEMBER(this, &CPluginEntityFactories::Hook_Destroy), false));
+		m_hookIds.push_back(SH_ADD_HOOK(IEntityFactoryDictionary, GetCannonicalName, factoryDictionary, SH_MEMBER(this, &CPluginEntityFactories::Hook_GetCannonicalName), false));
 	}
 
 	m_FactoryType = g_PluginEntityFactoryHandle = handlesys->CreateType( "PluginEntityFactory", this, 0, nullptr, nullptr, myself->GetIdentity(), nullptr );
@@ -203,6 +215,95 @@ bool CPluginEntityFactories::Init( IGameConfig* config, char* error, size_t maxl
 	g_EntityMemAllocHook.Init();
 
 	return true;
+}
+
+IServerNetworkable* CPluginEntityFactories::Hook_Create(const char* classname)
+{
+	auto factory = this->FindFactory()
+	if (factory)
+	{
+		RETURN_META_VALUE(MRES_SUPERCEDE, factory->Create(classname));
+	}
+	RETURN_META_VALUE(MRES_SUPERCEDE, nullptr);
+}
+
+void CPluginEntityFactories::Hook_Destroy(const char* classname, IServerNetworkable* pNetworkable)
+{
+	auto itPluginFactory = m_pluginFactories.find(classname);
+	if (itPluginFactory != m_pluginFactories.end())
+	{
+		itPluginFactory->second->Destroy(pNetworkable);
+		RETURN_META(MRES_SUPERCEDE);
+	}
+
+	auto itGameFactory = m_gameFactories.find(classname);
+	if (itGameFactory != m_gameFactories.end())
+	{
+		itGameFactory->second->Destroy(pNetworkable);
+		RETURN_META(MRES_SUPERCEDE);
+	}
+	RETURN_META(MRES_SUPERCEDE);
+}
+
+const char* CPluginEntityFactories::Hook_GetCannonicalName(const char* classname)
+{
+	RETURN_META_VALUE(MRES_SUPERCEDE, classname);
+}
+
+CPluginEntityFactory* CPluginEntityFactories::FindPluginFactory(const char* classname)
+{
+	auto itPluginFactory = m_pluginFactories.find(classname);
+	if (itPluginFactory != m_pluginFactories.end())
+	{
+		return itPluginFactory->second;
+	}
+	return nullptr;
+}
+
+IEntityFactory* CPluginEntityFactories::FindGameFactory(const char* classname)
+{
+	auto itGameFactory = m_gameFactories.find(classname);
+	if (itGameFactory != m_gameFactories.end())
+	{
+		return itGameFactory->second;
+	}
+	return nullptr;
+}
+
+void CPluginEntityFactories::InstallPluginFactory(const char* classname, CPluginEntityFactory* factory)
+{
+	auto itPluginFactory = m_pluginFactories.find(classname);
+	if (itPluginFactory == m_pluginFactories.end())
+	{
+		m_pluginFactories.emplace(classname, factory);
+	}
+}
+
+void CPluginEntityFactories::RemovePluginFactory(CPluginEntityFactory* factory)
+{
+	for (auto it = m_pluginFactories.begin(); it != m_pluginFactories.end(); it++)
+	{
+		if (it->second == factory)
+		{
+			m_pluginFactories.erase(it);
+		}
+	}
+}
+
+IEntityFactory* CPluginEntityFactories::FindFactory(const char* classname);
+{
+	auto itPluginFactory = m_pluginFactories.find(classname);
+	if (itPluginFactory != m_pluginFactories.end())
+	{
+		return itPluginFactory->second;
+	}
+
+	auto itGameFactory = m_gameFactories.find(classname);
+	if (itGameFactory != m_gameFactories.end())
+	{
+		return itGameFactory->second;
+	}
+	return nullptr;
 }
 
 void CPluginEntityFactories::SDK_OnAllLoaded()
@@ -586,31 +687,33 @@ void CPluginEntityFactory::GetEntities( CUtlVector< CBaseEntity* > &vector )
 bool CPluginEntityFactory::Install()
 {
 	if (m_bInstalled)
+	{
 		return true;
+	}
 
 	IEntityFactory *pBaseFactory = FindBaseFactory();
 	if (!pBaseFactory && IsBaseFactoryRequired())
+	{
 		return false;
+	}
 
 	const char* classname = m_iClassname.c_str();
 
 	if (!IsAbstract())
 	{
-		CEntityFactoryDictionaryHack* pFactoryDict = EntityFactoryDictionaryHack();
-		if (pFactoryDict->FindFactory(classname))
+		if (g_pPluginEntityFactories->FindPluginFactory(classname) != nullptr)
+		{
 			return false;
+		}
 		
-		// DO NOT USE IEntityFactoryDictionary::InstallFactory()!
-		// It's a virtual function, which means memory allocation is handled by server.dll, not by this extension.
-		// If you use it anyway and you try to uninstall, it will result in heap corruption error. (at least on Windows)
-		pFactoryDict->m_Factories.Insert( classname, this );
+		g_pPluginEntityFactories->InstallPluginFactory(classname, this);
 	}
 
 	SetBaseFactory(pBaseFactory);
 
 	m_bInstalled = true;
 
-	g_pPluginEntityFactories->OnFactoryInstall( this );
+	g_pPluginEntityFactories->OnFactoryInstall(this);
 
 	g_pSM->LogMessage(myself, "Installed %s entity factory", classname);
 
@@ -626,24 +729,7 @@ void CPluginEntityFactory::Uninstall()
 
 	if (!IsAbstract())
 	{
-		bool removed = false;
-
-		CEntityFactoryDictionaryHack* pFactoryDict = EntityFactoryDictionaryHack();
-
-		FOR_EACH_DICT( pFactoryDict->m_Factories, i )
-		{
-			if (pFactoryDict->m_Factories[i] == this)
-			{
-				removed = true;
-				pFactoryDict->m_Factories.RemoveAt(i);
-				break;
-			}
-		}
-
-		if ( !removed )
-		{
-			g_pSM->LogError( myself, "WARNING! Uninstalling non-abstract factory %s, but was not found in the dictionary!", classname );
-		}
+		g_pPluginEntityFactories->RemovePluginFactory(this);
 	}
 
 	// Uninstall children, or factories that derive from this factory.
@@ -689,7 +775,15 @@ IEntityFactory* CPluginEntityFactory::FindBaseFactory() const
 		case DERIVETYPE_CBASENPC:
 			return g_pBaseNPCFactory;
 		case DERIVETYPE_CLASSNAME:
-			return servertools->GetEntityFactoryDictionary()->FindFactory(m_Derive.m_iBaseClassname.c_str());
+		{
+			IEntityFactory* factory = g_pPluginEntityFactories->FindFactory(m_Derive.m_iBaseClassname.c_str());
+			if (factory == this)
+			{
+				// Shouldn't happen, but just in case
+				factory = g_pPluginEntityFactories->FindGameFactory(m_Derive.m_iBaseClassname.c_str());
+			}
+			return factory;
+		}
 		case DERIVETYPE_HANDLE:
 		{
 			CPluginEntityFactory* pFactory = g_pPluginEntityFactories->GetFactoryFromHandle( m_Derive.m_BaseFactoryHandle );
@@ -906,7 +1000,9 @@ bool CPluginEntityFactory::BeginDataDesc(const char* dataClassName)
 {
 	IEntityFactory *pBaseFactory = FindBaseFactory();
 	if (!pBaseFactory && IsBaseFactoryRequired())
+	{
 		return false;
+	}
 
 	// Don't use GetBaseEntitySize() if base factory is required because 
 	// the base factory hasn't been set yet. The base factory is only set when
