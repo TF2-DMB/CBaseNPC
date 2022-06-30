@@ -588,34 +588,16 @@ bool IDataMapContainer::GetObjectDataEntity( void* obj, const char* prop, CBaseE
 		}
 		case FIELD_EDICT:
 		{
-			edict_t *pEdict = nullptr;
-
-			if (data)
+			edict_t *pEdict = *(edict_t **)((uint8_t *)obj + offset);
+			if (pEdict && !pEdict->IsFree())
 			{
-				IServerNetworkable *pNetworkable = ((IServerUnknown *)data)->GetNetworkable();
-				if (!pNetworkable)
-				{
-					if (error)
-					{
-						snprintf(error, maxlen, "Entity does not have a valid edict");
-					}
-					
-					return false;
-				}
-
-				pEdict = pNetworkable->GetEdict();
-				if (!pEdict || pEdict->IsFree())
-				{
-					if (error)
-					{
-						snprintf(error, maxlen, "Entity does not have a valid edict");
-					}
-
-					return false;
-				}
+				*data = gamehelpers->ReferenceToEntity(gamehelpers->IndexOfEdict(pEdict));
+			}
+			else
+			{
+				*data = nullptr;
 			}
 
-			*(edict_t **) ((uint8_t *)obj + offset) = pEdict;
 			return true;
 		}
 	}
@@ -673,6 +655,34 @@ bool IDataMapContainer::SetObjectDataEntity( void* obj, const char* prop, CBaseE
 		}
 		case FIELD_EDICT:
 		{
+			edict_t *pEdict = nullptr;
+
+			if (data)
+			{
+				IServerNetworkable *pNetworkable = ((IServerUnknown *)data)->GetNetworkable();
+				if (!pNetworkable)
+				{
+					if (error)
+					{
+						snprintf(error, maxlen, "Entity does not have a valid edict");
+					}
+					
+					return false;
+				}
+
+				pEdict = pNetworkable->GetEdict();
+				if (!pEdict || pEdict->IsFree())
+				{
+					if (error)
+					{
+						snprintf(error, maxlen, "Entity does not have a valid edict");
+					}
+
+					return false;
+				}
+			}
+
+			*(edict_t **)((uint8_t *)obj + offset) = pEdict;
 			return true;
 		}
 	}
