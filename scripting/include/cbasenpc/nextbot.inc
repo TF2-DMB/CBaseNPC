@@ -21,6 +21,59 @@ methodmap INextBotEventResponder
 {
 	public native INextBotEventResponder FirstContainedResponder();
 	public native INextBotEventResponder NextContainedResponder(INextBotEventResponder prev);
+
+	public native void OnLeaveGround(CBaseEntity ground);
+	public native void OnLandOnGround(CBaseEntity ground);
+
+	public native void OnMoveToSuccess(const Path path);
+	public native void OnMoveToFailure(const Path path, MoveToFailureType reason);
+	public native void OnStuck();
+	public native void OnUnStuck();
+
+	public native void OnPostureChanged();
+
+	public native void OnAnimationActivityComplete(int activity);
+	public native void OnAnimationActivityInterrupted(int activity);
+	//public native void OnAnimationEvent
+
+	public native void OnIgnite();
+	//public native void OnInjured
+	//public native void OnKilled
+	//public native void OnOtherKilled
+
+	public native void OnSight(CBaseEntity subject);
+	public native void OnLostSight(CBaseEntity subject);
+	
+	//public native void OnSound
+	//public native void OnSpokeConcept
+	public native void OnWeaponFired(CBaseCombatCharacter whoFired, CBaseEntity weapon);
+
+	public native void OnNavAreaChanged(CNavArea newArea, CNavArea oldArea);
+
+	public native void OnModelChanged();
+
+	public native void OnPickUp(CBaseEntity item, CBaseCombatCharacter giver);
+	public native void OnDrop(CBaseEntity item);
+	public native void OnActorEmoted(CBaseCombatCharacter emoter, int emote);
+
+	public native void OnCommandAttack(CBaseEntity victim);
+	public native void OnCommandApproach(const float pos[3], float range = 0.0);
+	public native void OnCommandApproachEntity(CBaseEntity goal);
+	public native void OnCommandRetreat(CBaseEntity threat, float range = 0.0);
+	public native void OnCommandPause(float duration = 0.0);
+	public native void OnCommandResume();
+
+	public native void OnCommandString(const char[] command);
+
+	public native void OnShoved(CBaseEntity pusher);
+	public native void OnBlinded(CBaseEntity blinder);
+
+	public native void OnTerritoryContested(int territoryID);
+	public native void OnTerritoryCaptured(int territoryID);
+	public native void OnTerritoryLost(int territoryID);
+
+	public native void OnWin();
+	public native void OnLose();
 };
 
 typedef TraceFilterActors = function bool(int iEntityCollide, int contentsMask, int desiredcollisiongroup);
