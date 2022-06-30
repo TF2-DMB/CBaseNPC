@@ -124,6 +124,13 @@ ACTIONFACTORYNATIVE(DefineColorField)
 	return params[1];
 }
 
+ACTIONFACTORYNATIVE(DefineEntityField)
+	char* fieldName;
+	pContext->LocalToString(params[2], &fieldName);
+	pFactory->DefineField(fieldName, FIELD_EHANDLE, params[3], 0, nullptr, 0);
+	return params[1];
+}
+
 ACTIONFACTORYNATIVE(EndDataMapDesc)
 	pFactory->EndDataDesc();
 	return 0;
@@ -288,6 +295,37 @@ ACTIONDATANATIVE(SetDataString)
 	if (!pFactory->SetObjectDataString( pData, prop, data, element, error, sizeof(error)))
 	{
 		return pContext->ThrowNativeError( error );
+	}
+
+	return 0;
+}
+
+ACTIONDATANATIVE(GetDataEnt)
+	int element = params[3];
+	CBaseEntity* value = nullptr;
+
+	if (!pFactory->GetObjectDataEntity(pData, prop, &value, element, error, sizeof(error)))
+	{
+		return pContext->ThrowNativeError(error);
+	}
+
+	return gamehelpers->EntityToBCompatRef(value);
+}
+
+ACTIONDATANATIVE(SetDataEnt)
+	cell_t entIndex = params[3];
+	int element = params[4];
+
+	CBaseEntity* value = gamehelpers->ReferenceToEntity(entIndex);
+
+	if (!value && entIndex != -1)
+	{
+		return pContext->ThrowNativeError("Entity %d (%d) is invalid", gamehelpers->ReferenceToIndex(entIndex), entIndex);
+	}
+
+	if (!pFactory->SetObjectDataEntity(pData, prop, value, element, error, sizeof(error)))
+	{
+		return pContext->ThrowNativeError(error);
 	}
 
 	return 0;

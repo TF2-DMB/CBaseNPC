@@ -468,6 +468,30 @@ methodmap NextBotAction < INextBotEventResponder
 	}
 
 	/**
+	 * Retrieves an entity index from the Action's custom data.
+	 * 
+	 * This is synonymous with GetEntPropEnt().
+	 *
+	 * @param sPropName     Property name
+	 * @param element       Element # (starting from 0) if property is an array.
+	 * @return              Value at the given property offset.
+	 * @error               Invalid property or offset out of reasonable bounds.
+	 */
+	public native int GetDataEnt(const char[] sPropName, int element=0);
+
+	/**
+	 * Sets an entity index in the Action's custom data.
+	 * 
+	 * This is synonymous with SetEntPropEnt().
+	 *
+	 * @param sPropName     Property name
+	 * @param value         Entity index to set
+	 * @param element       Element # (starting from 0) if property is an array.
+	 * @error               Invalid property or offset out of reasonable bounds.
+	 */
+	public native void SetDataEnt(const char[] sPropName, int value, int element=0);
+
+	/**
 	 * Whether or not the Action is suspended.
 	 */
 	property bool IsSuspended
@@ -751,6 +775,17 @@ methodmap NextBotActionFactory < Handle
 	 * @error                Invalid handle.
 	 */
 	public native NextBotActionFactory DefineColorField(const char[] sFieldName, int iNumElements=1);
+
+	/**
+	 * Defines an entity property on the Action.
+	 * 
+	 * @param sFieldName      Property name
+	 * @param iNumElements    Number of elements. If > 1, will declare the field
+	 *                        as an array.
+	 * @return                The NextBotActionFactory to chain calls
+	 * @error                 Invalid handle.
+	 */
+	public native NextBotActionFactory DefineEntityField(const char[] sFieldName, int iNumElements=1);
 
 	/**
 	 * Finishes the datamap definition.

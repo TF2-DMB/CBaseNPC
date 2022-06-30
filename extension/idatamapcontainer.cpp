@@ -533,6 +533,158 @@ bool IDataMapContainer::SetObjectDataString( void* obj, const char* prop, const 
 	return false;
 }
 
+bool IDataMapContainer::GetObjectDataEntity( void* obj, const char* prop, CBaseEntity** data, int element, char* error, size_t maxlen )
+{
+	sm_datatable_info_t info;
+	if (!FindDataMapInfo(prop, &info, error, maxlen))
+	{
+		return false;
+	}
+
+	int offset;
+	if (!GetDataOffset(info, offset, element, error, maxlen))
+	{
+		return false;
+	}
+
+	switch (info.prop->fieldType)
+	{
+		case FIELD_EHANDLE:
+		case FIELD_CUSTOM:
+		{
+			CBaseHandle* hndl;
+
+			if (info.prop->fieldType == FIELD_EHANDLE)
+			{
+				hndl = (CBaseHandle *)((uint8_t *)obj + offset);
+			}
+			else if (info.prop->fieldType == FIELD_CUSTOM && (info.prop->flags & FTYPEDESC_OUTPUT) == FTYPEDESC_OUTPUT)
+			{
+				auto *pVariant = (variant_t *)((intptr_t)obj + offset);
+				hndl = &pVariant->eVal;
+			}
+			else
+			{
+				break;
+			}
+			 
+			CBaseEntity* pHandleEntity = gamehelpers->ReferenceToEntity(hndl->GetEntryIndex());
+
+			if (pHandleEntity && *hndl == reinterpret_cast<IHandleEntity *>(pHandleEntity)->GetRefEHandle())
+			{
+				*data = pHandleEntity;
+			}
+			else
+			{
+				*data = nullptr;
+			}
+
+			return true;
+		}
+		case FIELD_CLASSPTR:
+		{
+			*data = *(CBaseEntity **)((uint8_t *)obj + offset);
+			return true;
+		}
+		case FIELD_EDICT:
+		{
+			edict_t *pEdict = nullptr;
+
+			if (data)
+			{
+				IServerNetworkable *pNetworkable = ((IServerUnknown *)data)->GetNetworkable();
+				if (!pNetworkable)
+				{
+					if (error)
+					{
+						snprintf(error, maxlen, "Entity does not have a valid edict");
+					}
+					
+					return false;
+				}
+
+				pEdict = pNetworkable->GetEdict();
+				if (!pEdict || pEdict->IsFree())
+				{
+					if (error)
+					{
+						snprintf(error, maxlen, "Entity does not have a valid edict");
+					}
+
+					return false;
+				}
+			}
+
+			*(edict_t **) ((uint8_t *)obj + offset) = pEdict;
+			return true;
+		}
+	}
+
+	if (error)
+	{
+		snprintf(error, maxlen, "Data field %s is not an entity nor edict (%d)", prop, info.prop->fieldType);
+	}
+
+	return false;
+}
+
+bool IDataMapContainer::SetObjectDataEntity( void* obj, const char* prop, CBaseEntity* data, int element, char* error, size_t maxlen )
+{
+	sm_datatable_info_t info;
+	if (!FindDataMapInfo(prop, &info, error, maxlen))
+	{
+		return false;
+	}
+
+	int offset;
+	if (!GetDataOffset(info, offset, element, error, maxlen))
+	{
+		return false;
+	}
+
+	switch (info.prop->fieldType)
+	{
+		case FIELD_EHANDLE:
+		case FIELD_CUSTOM:
+		{
+			CBaseHandle* hndl;
+
+			if (info.prop->fieldType == FIELD_EHANDLE)
+			{
+				hndl = (CBaseHandle *)((uint8_t *)obj + offset);
+			}
+			else if (info.prop->fieldType == FIELD_CUSTOM && (info.prop->flags & FTYPEDESC_OUTPUT) == FTYPEDESC_OUTPUT)
+			{
+				auto *pVariant = (variant_t *)((intptr_t)obj + offset);
+				hndl = &pVariant->eVal;
+			}
+			else
+			{
+				break;
+			}
+
+			hndl->Set((IHandleEntity *)data);
+			return true;
+		}
+		case FIELD_CLASSPTR:
+		{
+			*(CBaseEntity **)((uint8_t *)obj + offset) = data;
+			return true;
+		}
+		case FIELD_EDICT:
+		{
+			return true;
+		}
+	}
+
+	if (error)
+	{
+		snprintf(error, maxlen, "Data field %s is not an entity nor edict (%d)", prop, info.prop->fieldType);
+	}
+
+	return false;
+}
+
 SourceHook::CPageAlloc g_InputFuncAlloc;
 
 IEntityDataMapInputFuncDelegate::IEntityDataMapInputFuncDelegate()

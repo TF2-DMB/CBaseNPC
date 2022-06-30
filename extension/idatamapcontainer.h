@@ -101,6 +101,14 @@ public:
 	// This class's datamap is used to calculate offsets.
 	virtual bool SetObjectDataString( void* obj, const char* prop, const char* data, int element=0, char* error=nullptr, size_t maxlen=0 );
 
+	// Gets the entity stored at the handle/pointer/output (variant_t)/edict within the provided object.
+	// This class's datamap is used to calculate offsets.
+	virtual bool GetObjectDataEntity( void* obj, const char* prop, CBaseEntity** data, int element=0, char* error=nullptr, size_t maxlen=0 );
+
+	// Sets the entity stored at the handle/pointer/output (variant_t)/edict within the provided object.
+	// This class's datamap is used to calculate offsets.
+	virtual bool SetObjectDataEntity( void* obj, const char* prop, CBaseEntity* data, int element=0, char* error=nullptr, size_t maxlen=0 );
+
 protected:
 	// Destroys a type description object allocated by this class.
 	virtual void DestroyDataTypeDescriptor(typedescription_t *desc) const;
