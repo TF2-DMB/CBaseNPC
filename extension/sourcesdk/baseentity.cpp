@@ -8,6 +8,7 @@
 
 int CBaseEntityHack::offset_UpdateOnRemove = 0;
 int CBaseEntityHack::offset_GetDataDescMap = 0;
+int CBaseEntityHack::offset_MyNextBotPointer = 0;
 
 MCall<void, bool> CBaseEntityHack::CBaseEntity_Ctor;
 VCall<void, const char*> CBaseEntityHack::vPostConstructor;
