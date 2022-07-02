@@ -563,14 +563,14 @@ PluginFactoryEntityRecord_t::~PluginFactoryEntityRecord_t()
 		SH_REMOVE_HOOK_ID((*it));
 	}
 
-	if (m_pNextBot)
-	{
-		delete m_pNextBot;
-	}
-
 	if (m_pIntentionInterface)
 	{
 		delete m_pIntentionInterface;
+	}
+
+	if (m_pNextBot)
+	{
+		delete m_pNextBot;
 	}
 }
 
