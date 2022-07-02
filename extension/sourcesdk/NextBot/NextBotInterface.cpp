@@ -7,7 +7,11 @@
 
 ConVar* NextBotDebugHistory = nullptr;
 
-INextBot::INextBot(void) : m_debugHistory(MAX_NEXTBOT_DEBUG_HISTORY, 0)
+INextBot::INextBot(void) : m_LocoInterface(nullptr),
+	m_BodyInterface(nullptr),
+	m_IntentionInterface(nullptr),
+	m_VisionInterface(nullptr),
+	m_debugHistory(MAX_NEXTBOT_DEBUG_HISTORY, 0)
 {
 	m_iLastUpdateTick = -999;
 	m_iManagerIndex = -1;
