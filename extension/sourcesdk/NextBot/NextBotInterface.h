@@ -117,6 +117,7 @@ public:
 	
 	friend class INextBotComponent;
 	void RegisterComponent(INextBotComponent *component);
+	void UnregisterComponent(INextBotComponent *component);
 	
 public:
 	void UpdateImmobileStatus() {}

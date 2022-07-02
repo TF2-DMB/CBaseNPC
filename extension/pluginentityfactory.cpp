@@ -540,8 +540,18 @@ void PluginFactoryEntityRecord_t::Hook(bool bHookDestructor)
 		bot = pEntity->MyNextBotPointer();
 	}
 
-	if (m_pIntentionInterface && bot)
+	if (m_pInitialActionFactory && bot)
 	{
+		IIntention* pOldIntention = bot->GetIntentionInterface();
+		if (pOldIntention)
+		{
+			// Remove the old intention interface from the component list so it no longer
+			// gets any updates. Do not destroy it as the INextBot most likely already has 
+			// its own methods of destroying it anyways.
+
+			bot->UnregisterComponent(pOldIntention);
+		}
+
 		m_pIntentionInterface = new CBaseNPCIntention(bot, m_pInitialActionFactory);
 		m_pHookIds.push_back(SH_ADD_HOOK(INextBot, GetIntentionInterface, bot, SH_MEMBER(this, &PluginFactoryEntityRecord_t::Hook_GetIntentionInterface), false));
 	}

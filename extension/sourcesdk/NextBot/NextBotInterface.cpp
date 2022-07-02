@@ -102,6 +102,31 @@ void INextBot::RegisterComponent(INextBotComponent *comp)
 	m_componentList = comp;
 }
 
+void INextBot::UnregisterComponent(INextBotComponent *_comp)
+{
+	// Iterate the component list because we need the pointer to the previous
+	// component so as to not break the list.
+
+	for (INextBotComponent* comp = m_componentList, *prevComp = nullptr; comp; prevComp = comp, comp = comp->m_nextComponent)
+	{
+		if (comp == _comp)
+		{
+			INextBotComponent* nextComp = comp->m_nextComponent;
+
+			if (prevComp)
+			{
+				prevComp->m_nextComponent = nextComp;
+			}
+			else
+			{
+				m_componentList = nextComp;
+			}
+
+			break;
+		}
+	}
+}
+
 const char *INextBot::GetDebugIdentifier( void ) const
 {
 	const int nameSize = 256;
