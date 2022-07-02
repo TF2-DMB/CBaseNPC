@@ -48,12 +48,24 @@ EVENTRESPONDERNATIVE(OnLandOnGround)
 // TO-DO: OnContact
 
 EVENTRESPONDERNATIVE(OnMoveToSuccess)
-	pResponder->OnMoveToSuccess((Path*)params[2]);
+	Path* path = (Path*)params[2];
+	if (!path)
+	{
+		return pContext->ThrowNativeError("Path is NULL");
+	}
+
+	pResponder->OnMoveToSuccess(path);
 	return 0;
 }
 
 EVENTRESPONDERNATIVE(OnMoveToFailure)
-	pResponder->OnMoveToFailure((Path*)params[2], (MoveToFailureType)params[3]);
+	Path* path = (Path*)params[2];
+	if (!path)
+	{
+		return pContext->ThrowNativeError("Path is NULL");
+	}
+
+	pResponder->OnMoveToFailure(path, (MoveToFailureType)params[3]);
 	return 0;
 }
 
