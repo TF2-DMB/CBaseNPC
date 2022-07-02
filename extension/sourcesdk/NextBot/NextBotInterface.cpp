@@ -333,7 +333,8 @@ bool INextBot::IsDebugFilterMatch(const char *name) const
 	{
 		return true;
 	}
-	return false;*/
+	*/
+	return false;
 }
 
 void INextBot::DisplayDebugText(const char *text) const
