@@ -46,17 +46,15 @@ public:
 	class CBaseNPC : public CExtNPC
 	{
 	public:
-		CBaseNPC(NextBotCombatCharacter* ent, CBaseNPCPluginActionFactory* initialActionFactory=nullptr);
+		CBaseNPC(NextBotCombatCharacter* ent);
 		~CBaseNPC();
 
 		std::vector<int> m_hookids;
-		CBaseNPCIntention* m_pIntention;
 		CBaseNPC_Locomotion* m_pMover;
 		CBaseNPC_Body* m_pBody;
 		char m_type[64];
 
 		void Hook_Spawn(void);
-		IIntention* Hook_GetIntentionInterface(void) const;
 		ILocomotion* Hook_GetLocomotionInterface(void) const;
 		IBody* Hook_GetBodyInterface(void) const;
 	};
@@ -89,17 +87,12 @@ public:
 
 class CBaseNPCFactory : public CustomFactory
 {
-private:
-	CBaseNPCPluginActionFactory* m_pInitialActionFactory;
-
 public:
 	CBaseNPCFactory();
 	virtual ~CBaseNPCFactory();
 	virtual size_t GetEntitySize() override final;
 	virtual void Create_Extra(CBaseEntityHack* ent) override final;
 	virtual void Create_PostConstructor(CBaseEntityHack* ent) override final;
-
-	void SetInitialActionFactory(CBaseNPCPluginActionFactory* pFactory) { m_pInitialActionFactory = pFactory; };
 };
 
 extern CBaseNPCFactory* g_pBaseNPCFactory;

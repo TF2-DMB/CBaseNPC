@@ -229,18 +229,10 @@ IServerNetworkable* CPluginEntityFactories::Hook_Create(const char* classname)
 
 void CPluginEntityFactories::Hook_Destroy(const char* classname, IServerNetworkable* pNetworkable)
 {
-	auto itPluginFactory = m_pluginFactories.find(classname);
-	if (itPluginFactory != m_pluginFactories.end())
+	auto factory = this->FindFactory(classname);
+	if (factory)
 	{
-		itPluginFactory->second->Destroy(pNetworkable);
-		RETURN_META(MRES_SUPERCEDE);
-	}
-
-	auto itGameFactory = m_gameFactories.find(classname);
-	if (itGameFactory != m_gameFactories.end())
-	{
-		itGameFactory->second->Destroy(pNetworkable);
-		RETURN_META(MRES_SUPERCEDE);
+		RETURN_META_VALUE(MRES_SUPERCEDE, factory->Destroy(pNetworkable));
 	}
 	RETURN_META(MRES_SUPERCEDE);
 }
@@ -911,23 +903,7 @@ IServerNetworkable* CPluginEntityFactory::RecursiveCreate(const char* classname,
 				// Do not hook destructor manually. Instead, we'll let CBaseNPC tell us when it's destroyed
 				// before performing cleanup so that any plugin callbacks/actions can run their own cleanup
 				// code first before removing our hooks.
-
 				bHookDestructor = false;
-
-				// Start from creating factory to base to find the initial action factory.
-				CBaseNPCPluginActionFactory* pInitialActionFactory = nullptr;
-				CPluginEntityFactory* pFactory = pCreatingFactory;
-				while (pFactory)
-				{
-					if ( pFactory->GetBaseNPCInitialActionFactory() )
-					{
-						pInitialActionFactory = pFactory->GetBaseNPCInitialActionFactory();
-						break;
-					}
-					pFactory = ToPluginEntityFactory( pFactory->GetBaseFactory() );
-				}
-
-				g_pBaseNPCFactory->SetInitialActionFactory( pInitialActionFactory );
 			}
 
 			g_EntityMemAllocHook.StartWatching(pBaseFactory->GetEntitySize(), entitySize);
