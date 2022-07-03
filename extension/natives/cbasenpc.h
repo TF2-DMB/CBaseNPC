@@ -78,7 +78,7 @@ CBASENPCNATIVE(GetVision)
 }
 
 CBASENPCNATIVE(GetIntention)
-	return (cell_t)npc->m_pIntention;
+	return (cell_t)npc->GetEntity()->MyNextBotPointer()->GetIntentionInterface();
 }
 
 CBASENPCNATIVE(SetType)

@@ -109,6 +109,8 @@ public:
 
 	static int offset_GetDataDescMap;
 
+	static int offset_MyNextBotPointer;
+
 	static VCall<void> vUpdateOnRemove;
 	void UpdateOnRemove(void);
 

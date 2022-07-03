@@ -44,7 +44,6 @@ MCall<void> CBaseNPC_Entity::mOriginalUpdateOnRemove;
 CBaseNPCFactory::CBaseNPCFactory()
 : CustomFactory("base_npc", &NextBotCombatCharacter::NextBotCombatCharacter_Ctor)
 {
-	m_pInitialActionFactory = nullptr;
 }
 
 CBaseNPCFactory::~CBaseNPCFactory()
@@ -68,8 +67,7 @@ void CBaseNPCFactory::Create_Extra(CBaseEntityHack* ent)
 		CBaseNPC_Entity::mOriginalUpdateOnRemove.Init(original);
 	}
 	vtable_replace(ent, CBaseNPC_Entity::vtable);
-	new (((CBaseNPC_Entity*)ent)->GetNPC()) CBaseNPC_Entity::CBaseNPC((NextBotCombatCharacter*)ent, m_pInitialActionFactory);
-	SetInitialActionFactory(nullptr);
+	new (((CBaseNPC_Entity*)ent)->GetNPC()) CBaseNPC_Entity::CBaseNPC((NextBotCombatCharacter*)ent);
 }
 
 void CBaseNPCFactory::Create_PostConstructor(CBaseEntityHack* ent)
@@ -82,14 +80,12 @@ size_t CBaseNPCFactory::GetEntitySize()
 	return sizeof(CBaseNPC_Entity::CBaseNPC) + NextBotCombatCharacter::size_of;
 }
 
-CBaseNPC_Entity::CBaseNPC::CBaseNPC(NextBotCombatCharacter* ent, CBaseNPCPluginActionFactory* initialActionFactory) : CExtNPC()
+CBaseNPC_Entity::CBaseNPC::CBaseNPC(NextBotCombatCharacter* ent) : CExtNPC()
 {
 	INextBot* bot = ent->MyNextBotPointer();
-	m_pIntention = new CBaseNPCIntention(bot, initialActionFactory);
 	m_pMover = CBaseNPC_Locomotion::New(bot);
 	m_pBody = new CBaseNPC_Body(bot);
 	m_type[0] = '\0';
-	m_hookids.push_back(SH_ADD_HOOK(INextBot, GetIntentionInterface, bot, SH_MEMBER(this, &CBaseNPC_Entity::CBaseNPC::Hook_GetIntentionInterface), false));
 	m_hookids.push_back(SH_ADD_HOOK(INextBot, GetLocomotionInterface, bot, SH_MEMBER(this, &CBaseNPC_Entity::CBaseNPC::Hook_GetLocomotionInterface), false));
 	m_hookids.push_back(SH_ADD_HOOK(INextBot, GetBodyInterface, bot, SH_MEMBER(this, &CBaseNPC_Entity::CBaseNPC::Hook_GetBodyInterface), false));
 	m_hookids.push_back(SH_ADD_MANUALHOOK(CBaseNPC_Dtor, ent, SH_MEMBER((CBaseNPC_Entity*)ent, &CBaseNPC_Entity::Hook_Destructor), false));
@@ -99,7 +95,6 @@ CBaseNPC_Entity::CBaseNPC::~CBaseNPC()
 {
 	m_pMover->Destroy();
 
-	delete m_pIntention;
 	delete m_pMover;
 	delete m_pBody;
 
@@ -107,11 +102,6 @@ CBaseNPC_Entity::CBaseNPC::~CBaseNPC()
 	{
 		SH_REMOVE_HOOK_ID((*it));
 	}
-}
-
-IIntention* CBaseNPC_Entity::CBaseNPC::Hook_GetIntentionInterface(void) const
-{
-	RETURN_META_VALUE(MRES_SUPERCEDE, m_pIntention);
 }
 
 ILocomotion* CBaseNPC_Entity::CBaseNPC::Hook_GetLocomotionInterface(void) const

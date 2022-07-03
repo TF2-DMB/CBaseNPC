@@ -1,15 +1,17 @@
 #include "customfactory.h"
 #include "entityfactorydictionary.h"
 
+#include "pluginentityfactory.h"
+
 CustomFactory::CustomFactory(const char* classname, MCall<void>* entConstructor) : constructor(nullptr)
 {
-	EntityFactoryDictionaryHack()->m_Factories.Insert( classname, this );
+	g_pPluginEntityFactories->InstallGameFactory(classname, this);
 	this->constructor = entConstructor;
 }
 
 CustomFactory::~CustomFactory()
 {
-    EntityFactoryDictionaryHack()->UninstallFactory(this);
+	g_pPluginEntityFactories->RemoveGameFactory(this);
 }
 
 IServerNetworkable* CustomFactory::Create(const char* classname)

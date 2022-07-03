@@ -16,12 +16,12 @@ extern HandleType_t g_BaseNPCPluginActionFactoryHandle;
 
 extern CBaseNPCPluginActionFactories* g_pBaseNPCPluginActionFactories;
 
-class CBaseNPCPluginAction : public Action <CBaseNPC_Entity>
+class CBaseNPCPluginAction : public Action <INextBot>
 {
 public:
 	
 private:
-	ActionResult< CBaseNPC_Entity > m_pluginActionResult;
+	ActionResult< INextBot > m_pluginActionResult;
 
 	/**
 	 * Stores event result states.
@@ -39,8 +39,8 @@ private:
 	 * OnSuspend(), OnResume(), and OnEnd() are all atomic; these callbacks
 	 * will never execute within each other.
 	 */ 
-	SourceHook::CStack<EventDesiredResult< CBaseNPC_Entity >> m_eventResultStack;
-	EventDesiredResult< CBaseNPC_Entity > m_pluginEventResult;
+	SourceHook::CStack<EventDesiredResult< INextBot >> m_eventResultStack;
+	EventDesiredResult< INextBot > m_pluginEventResult;
 
 	void * m_pData;
 
@@ -60,8 +60,8 @@ public:
 
 	void ResetPluginActionResult();
 	void PluginContinue();
-	void PluginChangeTo( Action< CBaseNPC_Entity > *action, const char *reason );
-	void PluginSuspendFor( Action< CBaseNPC_Entity > *action, const char *reason );
+	void PluginChangeTo( Action< INextBot > *action, const char *reason );
+	void PluginSuspendFor( Action< INextBot > *action, const char *reason );
 	void PluginDone( const char *reason );
 
 	bool IsInActionCallback()
@@ -74,12 +74,12 @@ public:
 		return m_eventResultStack.size() > 0;
 	}
 
-	virtual ActionResult< CBaseNPC_Entity > OnStart( CBaseNPC_Entity *me, Action< CBaseNPC_Entity > *prevAction ) override final;
-	virtual ActionResult< CBaseNPC_Entity > Update( CBaseNPC_Entity *me, float interval ) override final;
-	virtual void OnEnd( CBaseNPC_Entity *me, Action< CBaseNPC_Entity > *nextAction ) override final;
-	virtual ActionResult< CBaseNPC_Entity > OnSuspend( CBaseNPC_Entity *me, Action< CBaseNPC_Entity > *interruptingAction ) override final;
-	virtual ActionResult< CBaseNPC_Entity > OnResume( CBaseNPC_Entity *me, Action< CBaseNPC_Entity > *interruptingAction ) override final;
-	virtual Action< CBaseNPC_Entity > * InitialContainedAction( CBaseNPC_Entity *me ) override final;
+	virtual ActionResult< INextBot > OnStart( INextBot *me, Action< INextBot > *prevAction ) override final;
+	virtual ActionResult< INextBot > Update( INextBot *me, float interval ) override final;
+	virtual void OnEnd( INextBot *me, Action< INextBot > *nextAction ) override final;
+	virtual ActionResult< INextBot > OnSuspend( INextBot *me, Action< INextBot > *interruptingAction ) override final;
+	virtual ActionResult< INextBot > OnResume( INextBot *me, Action< INextBot > *interruptingAction ) override final;
+	virtual Action< INextBot > * InitialContainedAction( INextBot *me ) override final;
 	virtual bool IsAbleToBlockMovementOf( const INextBot *botInMotion ) const override final;
 
 	virtual QueryResultType			ShouldPickUp( const INextBot *me, CBaseEntity *item ) const override final;
@@ -98,52 +98,52 @@ public:
 
 	void ResetPluginEventResult();
 	void PluginTryContinue( EventResultPriorityType priority );
-	void PluginTryChangeTo( Action< CBaseNPC_Entity > *action, EventResultPriorityType priority, const char *reason );
-	void PluginTrySuspendFor( Action< CBaseNPC_Entity > *action, EventResultPriorityType priority, const char *reason );
+	void PluginTryChangeTo( Action< INextBot > *action, EventResultPriorityType priority, const char *reason );
+	void PluginTrySuspendFor( Action< INextBot > *action, EventResultPriorityType priority, const char *reason );
 	void PluginTryDone( EventResultPriorityType priority, const char *reason );
 	void PluginTryToSustain( EventResultPriorityType priority, const char *reason );
 
-	virtual EventDesiredResult< CBaseNPC_Entity > OnLeaveGround( CBaseNPC_Entity *me, CBaseEntity *ground )							override final;
-	virtual EventDesiredResult< CBaseNPC_Entity > OnLandOnGround( CBaseNPC_Entity *me, CBaseEntity *ground )						override final;
-	virtual EventDesiredResult< CBaseNPC_Entity > OnContact( CBaseNPC_Entity *me, CBaseEntity *other, CGameTrace *result = NULL )	override final;
-	virtual EventDesiredResult< CBaseNPC_Entity > OnMoveToSuccess( CBaseNPC_Entity *me, const Path *path )							override final;
-	virtual EventDesiredResult< CBaseNPC_Entity > OnMoveToFailure( CBaseNPC_Entity *me, const Path *path, MoveToFailureType reason ) override final;
-	virtual EventDesiredResult< CBaseNPC_Entity > OnStuck( CBaseNPC_Entity *me )													override final;
-	virtual EventDesiredResult< CBaseNPC_Entity > OnUnStuck( CBaseNPC_Entity *me )													override final;
-	virtual EventDesiredResult< CBaseNPC_Entity > OnPostureChanged( CBaseNPC_Entity *me )											override final;
-	virtual EventDesiredResult< CBaseNPC_Entity > OnAnimationActivityComplete( CBaseNPC_Entity *me, int activity )					override final;
-	virtual EventDesiredResult< CBaseNPC_Entity > OnAnimationActivityInterrupted( CBaseNPC_Entity *me, int activity )				override final;
-	virtual EventDesiredResult< CBaseNPC_Entity > OnAnimationEvent( CBaseNPC_Entity *me, animevent_t *event )						override final;
-	virtual EventDesiredResult< CBaseNPC_Entity > OnIgnite( CBaseNPC_Entity *me )													override final;
-	virtual EventDesiredResult< CBaseNPC_Entity > OnInjured( CBaseNPC_Entity *me, const CTakeDamageInfo &info )						override final;
-	virtual EventDesiredResult< CBaseNPC_Entity > OnKilled( CBaseNPC_Entity *me, const CTakeDamageInfo &info )						override final;
-	virtual EventDesiredResult< CBaseNPC_Entity > OnOtherKilled( CBaseNPC_Entity *me, CBaseCombatCharacterHack *victim, const CTakeDamageInfo &info )	override final;
-	virtual EventDesiredResult< CBaseNPC_Entity > OnSight( CBaseNPC_Entity *me, CBaseEntity *subject )								override final;
-	virtual EventDesiredResult< CBaseNPC_Entity > OnLostSight( CBaseNPC_Entity *me, CBaseEntity *subject )							override final;
-	virtual EventDesiredResult< CBaseNPC_Entity > OnSound( CBaseNPC_Entity *me, CBaseEntity *source, const Vector &pos, KeyValues *keys )	override final;
-	virtual EventDesiredResult< CBaseNPC_Entity > OnSpokeConcept( CBaseNPC_Entity *me, CBaseCombatCharacterHack *who, AIConcept_t concept, AI_Response *response )	override final;
-	virtual EventDesiredResult< CBaseNPC_Entity > OnWeaponFired( CBaseNPC_Entity *me, CBaseCombatCharacterHack *whoFired, CBaseEntity *weapon )	override final;
-	virtual EventDesiredResult< CBaseNPC_Entity > OnNavAreaChanged( CBaseNPC_Entity *me, CNavArea *newArea, CNavArea *oldArea )		override final;
-	virtual EventDesiredResult< CBaseNPC_Entity > OnModelChanged( CBaseNPC_Entity *me )												override final;
-	virtual EventDesiredResult< CBaseNPC_Entity > OnPickUp( CBaseNPC_Entity *me, CBaseEntity *item, CBaseCombatCharacterHack *giver )	override final;
-	virtual EventDesiredResult< CBaseNPC_Entity > OnDrop( CBaseNPC_Entity *me, CBaseEntity *item )									override final;
-	virtual EventDesiredResult< CBaseNPC_Entity > OnActorEmoted( CBaseNPC_Entity *me, CBaseCombatCharacterHack *emoter, int emote )			override final;
+	virtual EventDesiredResult< INextBot > OnLeaveGround( INextBot *me, CBaseEntity *ground )							override final;
+	virtual EventDesiredResult< INextBot > OnLandOnGround( INextBot *me, CBaseEntity *ground )						override final;
+	virtual EventDesiredResult< INextBot > OnContact( INextBot *me, CBaseEntity *other, CGameTrace *result = NULL )	override final;
+	virtual EventDesiredResult< INextBot > OnMoveToSuccess( INextBot *me, const Path *path )							override final;
+	virtual EventDesiredResult< INextBot > OnMoveToFailure( INextBot *me, const Path *path, MoveToFailureType reason ) override final;
+	virtual EventDesiredResult< INextBot > OnStuck( INextBot *me )													override final;
+	virtual EventDesiredResult< INextBot > OnUnStuck( INextBot *me )													override final;
+	virtual EventDesiredResult< INextBot > OnPostureChanged( INextBot *me )											override final;
+	virtual EventDesiredResult< INextBot > OnAnimationActivityComplete( INextBot *me, int activity )					override final;
+	virtual EventDesiredResult< INextBot > OnAnimationActivityInterrupted( INextBot *me, int activity )				override final;
+	virtual EventDesiredResult< INextBot > OnAnimationEvent( INextBot *me, animevent_t *event )						override final;
+	virtual EventDesiredResult< INextBot > OnIgnite( INextBot *me )													override final;
+	virtual EventDesiredResult< INextBot > OnInjured( INextBot *me, const CTakeDamageInfo &info )						override final;
+	virtual EventDesiredResult< INextBot > OnKilled( INextBot *me, const CTakeDamageInfo &info )						override final;
+	virtual EventDesiredResult< INextBot > OnOtherKilled( INextBot *me, CBaseCombatCharacterHack *victim, const CTakeDamageInfo &info )	override final;
+	virtual EventDesiredResult< INextBot > OnSight( INextBot *me, CBaseEntity *subject )								override final;
+	virtual EventDesiredResult< INextBot > OnLostSight( INextBot *me, CBaseEntity *subject )							override final;
+	virtual EventDesiredResult< INextBot > OnSound( INextBot *me, CBaseEntity *source, const Vector &pos, KeyValues *keys )	override final;
+	virtual EventDesiredResult< INextBot > OnSpokeConcept( INextBot *me, CBaseCombatCharacterHack *who, AIConcept_t concept, AI_Response *response )	override final;
+	virtual EventDesiredResult< INextBot > OnWeaponFired( INextBot *me, CBaseCombatCharacterHack *whoFired, CBaseEntity *weapon )	override final;
+	virtual EventDesiredResult< INextBot > OnNavAreaChanged( INextBot *me, CNavArea *newArea, CNavArea *oldArea )		override final;
+	virtual EventDesiredResult< INextBot > OnModelChanged( INextBot *me )												override final;
+	virtual EventDesiredResult< INextBot > OnPickUp( INextBot *me, CBaseEntity *item, CBaseCombatCharacterHack *giver )	override final;
+	virtual EventDesiredResult< INextBot > OnDrop( INextBot *me, CBaseEntity *item )									override final;
+	virtual EventDesiredResult< INextBot > OnActorEmoted( INextBot *me, CBaseCombatCharacterHack *emoter, int emote )			override final;
 
-	virtual EventDesiredResult< CBaseNPC_Entity > OnCommandAttack( CBaseNPC_Entity *me, CBaseEntity *victim )						override final;
-	virtual EventDesiredResult< CBaseNPC_Entity > OnCommandApproach( CBaseNPC_Entity *me, const Vector &pos, float range )			override final;
-	virtual EventDesiredResult< CBaseNPC_Entity > OnCommandApproach( CBaseNPC_Entity *me, CBaseEntity *goal )						override final;
-	virtual EventDesiredResult< CBaseNPC_Entity > OnCommandRetreat( CBaseNPC_Entity *me, CBaseEntity *threat, float range )			override final;
-	virtual EventDesiredResult< CBaseNPC_Entity > OnCommandPause( CBaseNPC_Entity *me, float duration )								override final;
-	virtual EventDesiredResult< CBaseNPC_Entity > OnCommandResume( CBaseNPC_Entity *me )											override final;
-	virtual EventDesiredResult< CBaseNPC_Entity > OnCommandString( CBaseNPC_Entity *me, const char *command )						override final;
+	virtual EventDesiredResult< INextBot > OnCommandAttack( INextBot *me, CBaseEntity *victim )						override final;
+	virtual EventDesiredResult< INextBot > OnCommandApproach( INextBot *me, const Vector &pos, float range )			override final;
+	virtual EventDesiredResult< INextBot > OnCommandApproach( INextBot *me, CBaseEntity *goal )						override final;
+	virtual EventDesiredResult< INextBot > OnCommandRetreat( INextBot *me, CBaseEntity *threat, float range )			override final;
+	virtual EventDesiredResult< INextBot > OnCommandPause( INextBot *me, float duration )								override final;
+	virtual EventDesiredResult< INextBot > OnCommandResume( INextBot *me )											override final;
+	virtual EventDesiredResult< INextBot > OnCommandString( INextBot *me, const char *command )						override final;
 
-	virtual EventDesiredResult< CBaseNPC_Entity > OnShoved( CBaseNPC_Entity *me, CBaseEntity *pusher )								override final;
-	virtual EventDesiredResult< CBaseNPC_Entity > OnBlinded( CBaseNPC_Entity *me, CBaseEntity *blinder )							override final;
-	virtual EventDesiredResult< CBaseNPC_Entity > OnTerritoryContested( CBaseNPC_Entity *me, int territoryID )						override final;
-	virtual EventDesiredResult< CBaseNPC_Entity > OnTerritoryCaptured( CBaseNPC_Entity *me, int territoryID )						override final;
-	virtual EventDesiredResult< CBaseNPC_Entity > OnTerritoryLost( CBaseNPC_Entity *me, int territoryID )							override final;
-	virtual EventDesiredResult< CBaseNPC_Entity > OnWin( CBaseNPC_Entity *me )														override final;
-	virtual EventDesiredResult< CBaseNPC_Entity > OnLose( CBaseNPC_Entity *me )														override final;
+	virtual EventDesiredResult< INextBot > OnShoved( INextBot *me, CBaseEntity *pusher )								override final;
+	virtual EventDesiredResult< INextBot > OnBlinded( INextBot *me, CBaseEntity *blinder )							override final;
+	virtual EventDesiredResult< INextBot > OnTerritoryContested( INextBot *me, int territoryID )						override final;
+	virtual EventDesiredResult< INextBot > OnTerritoryCaptured( INextBot *me, int territoryID )						override final;
+	virtual EventDesiredResult< INextBot > OnTerritoryLost( INextBot *me, int territoryID )							override final;
+	virtual EventDesiredResult< INextBot > OnWin( INextBot *me )														override final;
+	virtual EventDesiredResult< INextBot > OnLose( INextBot *me )														override final;
 };
 
 class CBaseNPCIntention : public IIntention
@@ -161,7 +161,7 @@ public:
 	void DestroyBehavior();
 
 private:
-	Behavior< CBaseNPC_Entity > * m_pBehavior;
+	Behavior< INextBot > * m_pBehavior;
 };
 
 class CBaseNPCPluginActionFactories : public IHandleTypeDispatch
@@ -268,7 +268,7 @@ private:
 
 	std::string m_iActionName;
 
-	CUtlVector< Action< CBaseNPC_Entity >* > m_Actions;
+	CUtlVector< Action< INextBot >* > m_Actions;
 
 public:
 	Handle_t m_Handle;
@@ -291,10 +291,10 @@ public:
 	IPluginFunction* GetEventCallback(EventResponderCallbackType cbType);
     void SetEventCallback(EventResponderCallbackType cbType, IPluginFunction* pCallback);
 
-	Action <CBaseNPC_Entity>* Create();
-	void OnActionCreated( Action <CBaseNPC_Entity>* pAction );
-	void OnActionRemoved( Action <CBaseNPC_Entity>* pAction );
-	void OnCreateInitialAction( Action <CBaseNPC_Entity>* pAction );
+	Action <INextBot>* Create();
+	void OnActionCreated( Action <INextBot>* pAction );
+	void OnActionRemoved( Action <INextBot>* pAction );
+	void OnCreateInitialAction( Action <INextBot>* pAction );
 };
 
 #endif

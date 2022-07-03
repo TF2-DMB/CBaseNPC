@@ -218,6 +218,15 @@ methodmap CEntityFactory < Handle
 	 */
 	public static native int GetInstalledFactories(CEntityFactory[] array, int arraySize);
 
+	/**
+	 * Attach a simple INextBot interface to the entity. This will allow the use of SetInitialActionFactory.
+	 * Note: No NextBot interface will be attached, if the entity already has a NextBot interface
+	 * or doesn't derive from the class CBaseCombatCharacter.
+	 * 
+	 * @error                Invalid handle.
+	 */
+	public native void AttachNextBot();
+
 	// Datamap
 
 	/**
