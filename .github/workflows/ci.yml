@@ -32,7 +32,7 @@ jobs:
       # we will have to deal with the special case of our custom tf2 + AM's sdks
       SDKS: '["tf2"]'
       MMSOURCE_VERSION: '1.10'
-      SOURCEMOD_VERSION: '1.10'
+      SOURCEMOD_VERSION: '1.11'
       CACHE_PATH: ${{ github.workspace }}/cache
     steps:
           
