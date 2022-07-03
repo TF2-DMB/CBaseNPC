@@ -158,7 +158,7 @@ ACTIONNATIVE(GetFullName)
 }
 
 ACTIONNATIVE(ActorGet)
-	return gamehelpers->EntityToBCompatRef( pAction->GetActor() );
+	return gamehelpers->EntityToBCompatRef( pAction->GetActor()->GetEntity() );
 }
 
 ACTIONNATIVE(ParentGet)

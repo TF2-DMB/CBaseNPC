@@ -4,7 +4,7 @@
 
 #define CBPUSHCELL(cell) pCallback->PushCell((cell_t)(cell));
 #define CBPUSHFLOAT(fl) pCallback->PushCell(sp_ftoc(fl));
-#define CBPUSHENTITY(ent) CBPUSHCELL(gamehelpers->EntityToBCompatRef((CBaseEntity*)(ent)))
+#define CBPUSHENTITY(ent) CBPUSHCELL(gamehelpers->EntityToBCompatRef(ent))
 #define CBPUSHSTRING(str) pCallback->PushString(str);
 #define CBPUSHVECTOR(vec) \
 	{ \
@@ -14,12 +14,12 @@
 	}
 
 #define BEGINACTIONCALLBACKEX(funcName, typeName, ...) \
-ActionResult< CBaseNPC_Entity > CBaseNPCPluginAction:: funcName (CBaseNPC_Entity* me, ##__VA_ARGS__) { \
+ActionResult< INextBot > CBaseNPCPluginAction:: funcName (INextBot* me, ##__VA_ARGS__) { \
 	m_bInActionCallback = true; \
 	ResetPluginActionResult(); \
 	IPluginFunction* pCallback = m_pFactory->GetCallback( CBaseNPCPluginActionFactory::CallbackType::typeName ); \
 	if (pCallback && pCallback->IsRunnable()) { \
-		pCallback->PushCell((cell_t)this); pCallback->PushCell(gamehelpers->EntityToBCompatRef(me));
+		pCallback->PushCell((cell_t)this); pCallback->PushCell(gamehelpers->EntityToBCompatRef(me->GetEntity()));
 
 #define BEGINACTIONCALLBACK(funcName, ...) BEGINACTIONCALLBACKEX(funcName, funcName, ##__VA_ARGS__)
 
@@ -44,13 +44,13 @@ QueryResultType CBaseNPCPluginAction:: funcName ( const INextBot *me, ##__VA_ARG
 }
 
 #define BEGINEVENTCALLBACKEX(funcName, typeName, ...) \
-EventDesiredResult< CBaseNPC_Entity > CBaseNPCPluginAction:: funcName (CBaseNPC_Entity* me, ##__VA_ARGS__) {	\
+EventDesiredResult< INextBot > CBaseNPCPluginAction:: funcName (INextBot* me, ##__VA_ARGS__) {	\
 	m_eventResultStack.push( m_pluginEventResult ); \
 	ResetPluginEventResult(); \
 	IPluginFunction* pCallback = m_pFactory->GetEventCallback( CBaseNPCPluginActionFactory::EventResponderCallbackType::typeName ); \
 	if (pCallback && pCallback->IsRunnable()) { \
 		pCallback->PushCell((cell_t)this); \
-		pCallback->PushCell(gamehelpers->EntityToBCompatRef(me));
+		pCallback->PushCell(gamehelpers->EntityToBCompatRef(me->GetEntity()));
 
 #define BEGINEVENTCALLBACK(funcName, ...) BEGINEVENTCALLBACKEX(funcName, funcName, ##__VA_ARGS__)
 
@@ -63,7 +63,7 @@ EventDesiredResult< CBaseNPC_Entity > CBaseNPCPluginAction:: funcName (CBaseNPC_
 #define ENDEVENTCALLBACK() \
 		pCallback->Execute(nullptr); \
 	}	\
-	EventDesiredResult< CBaseNPC_Entity > result = m_pluginEventResult; \
+	EventDesiredResult< INextBot > result = m_pluginEventResult; \
 	m_pluginEventResult = m_eventResultStack.front(); \
 	m_eventResultStack.pop(); \
 	return result; \
@@ -71,7 +71,7 @@ EventDesiredResult< CBaseNPC_Entity > CBaseNPCPluginAction:: funcName (CBaseNPC_
 
 #define ENDEVENTCALLBACK_NOEXECUTE() \
 	}	\
-	EventDesiredResult< CBaseNPC_Entity > result = m_pluginEventResult; \
+	EventDesiredResult< INextBot > result = m_pluginEventResult; \
 	m_pluginEventResult = m_eventResultStack.front(); \
 	m_eventResultStack.pop(); \
 	return result; \
@@ -93,7 +93,7 @@ HandleType_t g_BaseNPCPluginActionFactoryHandle;
 CBaseNPCPluginActionFactories* g_pBaseNPCPluginActionFactories = new CBaseNPCPluginActionFactories();
 
 CBaseNPCPluginAction::CBaseNPCPluginAction(CBaseNPCPluginActionFactory* pFactory) : 
-	Action< CBaseNPC_Entity >(),
+	Action< INextBot >(),
 	m_pFactory(pFactory)
 {
 	size_t dataSize = pFactory->GetActionDataSize();
@@ -137,12 +137,12 @@ void CBaseNPCPluginAction::PluginContinue()
 	m_pluginActionResult = Continue();
 }
 
-void CBaseNPCPluginAction::PluginChangeTo( Action< CBaseNPC_Entity > *action, const char *reason )
+void CBaseNPCPluginAction::PluginChangeTo( Action< INextBot > *action, const char *reason )
 {
 	m_pluginActionResult = ChangeTo(action, reason);
 }
 
-void CBaseNPCPluginAction::PluginSuspendFor( Action< CBaseNPC_Entity > *action, const char *reason )
+void CBaseNPCPluginAction::PluginSuspendFor( Action< INextBot > *action, const char *reason )
 {
 	m_pluginActionResult = SuspendFor(action, reason);
 }
@@ -165,12 +165,12 @@ void CBaseNPCPluginAction::PluginTryContinue( EventResultPriorityType priority )
 	m_pluginEventResult = TryContinue(priority); 
 }
 
-void CBaseNPCPluginAction::PluginTryChangeTo( Action< CBaseNPC_Entity > *action, EventResultPriorityType priority, const char *reason ) 
+void CBaseNPCPluginAction::PluginTryChangeTo( Action< INextBot > *action, EventResultPriorityType priority, const char *reason ) 
 { 
 	m_pluginEventResult = TryChangeTo(action, priority, reason); 
 }
 
-void CBaseNPCPluginAction::PluginTrySuspendFor( Action< CBaseNPC_Entity > *action, EventResultPriorityType priority, const char *reason ) 
+void CBaseNPCPluginAction::PluginTrySuspendFor( Action< INextBot > *action, EventResultPriorityType priority, const char *reason ) 
 { 
 	m_pluginEventResult = TrySuspendFor(action, priority, reason); 
 }
@@ -187,7 +187,7 @@ void CBaseNPCPluginAction::PluginTryToSustain( EventResultPriorityType priority,
 
 // Actions
 
-BEGINACTIONCALLBACK(OnStart, Action< CBaseNPC_Entity > *prevAction)
+BEGINACTIONCALLBACK(OnStart, Action< INextBot > *prevAction)
 	CBPUSHCELL(prevAction)
 ENDACTIONCALLBACK()
 
@@ -195,28 +195,28 @@ BEGINACTIONCALLBACK(Update, float interval)
 	CBPUSHFLOAT(interval)
 ENDACTIONCALLBACK()
 
-BEGINACTIONCALLBACK(OnSuspend, Action< CBaseNPC_Entity > *interruptingAction)
+BEGINACTIONCALLBACK(OnSuspend, Action< INextBot > *interruptingAction)
 	CBPUSHCELL(interruptingAction)
 ENDACTIONCALLBACK()
 
-BEGINACTIONCALLBACK(OnResume, Action< CBaseNPC_Entity > *interruptingAction)
+BEGINACTIONCALLBACK(OnResume, Action< INextBot > *interruptingAction)
 	CBPUSHCELL(interruptingAction)
 ENDACTIONCALLBACK()
 
-void CBaseNPCPluginAction::OnEnd( CBaseNPC_Entity * me, Action< CBaseNPC_Entity > *nextAction )
+void CBaseNPCPluginAction::OnEnd( INextBot * me, Action< INextBot > *nextAction )
 {
 	IPluginFunction* pCallback = m_pFactory->GetCallback( CBaseNPCPluginActionFactory::CallbackType::OnEnd );
 	if (pCallback && pCallback->IsRunnable()) 
 	{
 		CBPUSHCELL(this)
-		CBPUSHENTITY(me)
+		CBPUSHENTITY(me->GetEntity())
 		CBPUSHCELL(nextAction)
 
 		pCallback->Execute(nullptr);
 	}
 }
 
-Action< CBaseNPC_Entity >* CBaseNPCPluginAction::InitialContainedAction( CBaseNPC_Entity * me )
+Action< INextBot >* CBaseNPCPluginAction::InitialContainedAction( INextBot * me )
 {
 	cell_t result = 0;
 
@@ -224,17 +224,17 @@ Action< CBaseNPC_Entity >* CBaseNPCPluginAction::InitialContainedAction( CBaseNP
 	if (pCallback && pCallback->IsRunnable()) 
 	{
 		CBPUSHCELL(this)
-		CBPUSHENTITY(me)
+		CBPUSHENTITY(me->GetEntity())
 
 		pCallback->Execute(&result);
 	}
 
-	return (Action< CBaseNPC_Entity >*)result;
+	return (Action< INextBot >*)result;
 }
 
 bool CBaseNPCPluginAction::IsAbleToBlockMovementOf( const INextBot *botInMotion ) const
 {
-	cell_t result = Action< CBaseNPC_Entity >::IsAbleToBlockMovementOf( botInMotion );
+	cell_t result = Action< INextBot >::IsAbleToBlockMovementOf( botInMotion );
 
 	IPluginFunction* pCallback = m_pFactory->GetCallback( CBaseNPCPluginActionFactory::CallbackType::IsAbleToBlockMovementOf );
 	if (pCallback && pCallback->IsRunnable()) 
@@ -282,7 +282,7 @@ Vector CBaseNPCPluginAction::SelectTargetPoint( const INextBot *me, const CBaseC
 
 		CBPUSHCELL(this)
 		CBPUSHCELL(me)
-		CBPUSHENTITY(subject)
+		CBPUSHENTITY((CBaseCombatCharacterHack*)subject)
 		pCallback->PushArray(buffer, 3, SM_PARAM_COPYBACK);
 		pCallback->Execute(nullptr);
 
@@ -310,7 +310,7 @@ const CKnownEntity * CBaseNPCPluginAction::SelectMoreDangerousThreat( const INex
 	{
 		CBPUSHCELL(this)
 		CBPUSHCELL(me)
-		CBPUSHENTITY(subject)
+		CBPUSHENTITY((CBaseCombatCharacterHack*)subject)
 		CBPUSHCELL(threat1)
 		CBPUSHCELL(threat2)
 		pCallback->Execute(&result);
@@ -366,7 +366,7 @@ BEGINEVENTCALLBACK(OnAnimationEvent, animevent_t *event)
 	EVENTPUSHFLOAT(event->cycle)
 	EVENTPUSHFLOAT(event->eventtime)
 	EVENTPUSHCELL(event->type)
-	EVENTPUSHENTITY(event->pSource)
+	EVENTPUSHENTITY((CBaseAnimatingHack*)event->pSource)
 ENDEVENTCALLBACK()
 
 BEGINEVENTCALLBACK(OnIgnite)
@@ -525,8 +525,6 @@ ENDEVENTCALLBACK()
 CBaseNPCIntention::CBaseNPCIntention( INextBot * bot, CBaseNPCPluginActionFactory* initialActionFactory ) 
 	: IIntention( bot ), m_pInitialActionFactory(initialActionFactory)
 {
-	CBaseNPC_Entity* me = (CBaseNPC_Entity*)bot->GetEntity();
-
 	m_pBehavior = nullptr;
 
 	InitBehavior();
@@ -547,9 +545,9 @@ void CBaseNPCIntention::InitBehavior()
 {
 	if (m_pInitialActionFactory)
 	{
-		Action< CBaseNPC_Entity > * pAction = m_pInitialActionFactory->Create();
+		Action< INextBot > * pAction = m_pInitialActionFactory->Create();
 		m_pInitialActionFactory->OnCreateInitialAction( pAction );
-		m_pBehavior = new Behavior< CBaseNPC_Entity >( pAction );
+		m_pBehavior = new Behavior< INextBot >( pAction );
 	}
 	else 
 	{
@@ -568,11 +566,9 @@ void CBaseNPCIntention::DestroyBehavior()
 
 void CBaseNPCIntention::Update()
 {
-	CBaseNPC_Entity* me = reinterpret_cast<CBaseNPC_Entity*>(GetBot()->GetEntity());
-
 	if (m_pBehavior)
 	{
-		m_pBehavior->Update( me, GetUpdateInterval() );
+		m_pBehavior->Update( GetBot(), GetUpdateInterval() );
 	}
 }
 
@@ -660,13 +656,13 @@ CBaseNPCPluginActionFactory::~CBaseNPCPluginActionFactory()
 		std::set< CBaseNPCIntention* > intentions;
 		for ( int i = 0; i < m_Actions.Count(); i++ )
 		{
-			Action< CBaseNPC_Entity > *pAction = m_Actions[i];
+			Action< INextBot > *pAction = m_Actions[i];
 			if (!pAction) continue;
 
-			CBaseNPC_Entity* pActor = pAction->GetActor();
+			INextBot* pActor = pAction->GetActor();
 			if (!pActor) continue;
 
-			CBaseNPCIntention* pIntention = pActor->GetNPC()->m_pIntention;
+			CBaseNPCIntention* pIntention = (CBaseNPCIntention*)pActor->GetIntentionInterface(); // DANGER
 			if (!pIntention) continue;
 
 			intentions.insert(pIntention);
@@ -732,7 +728,7 @@ void CBaseNPCPluginActionFactory::SetEventCallback(EventResponderCallbackType ev
 	m_EventCallbacks.Insert(eventType, pCallback);
 }
 
-Action <CBaseNPC_Entity>* CBaseNPCPluginActionFactory::Create()
+Action <INextBot>* CBaseNPCPluginActionFactory::Create()
 {
 	if (m_bDestroying)
 		return nullptr;
@@ -744,17 +740,17 @@ Action <CBaseNPC_Entity>* CBaseNPCPluginActionFactory::Create()
 	return action;
 }
 
-void CBaseNPCPluginActionFactory::OnActionCreated(Action <CBaseNPC_Entity>* pAction)
+void CBaseNPCPluginActionFactory::OnActionCreated(Action <INextBot>* pAction)
 {
 	m_Actions.AddToTail(pAction);
 }
 
-void CBaseNPCPluginActionFactory::OnActionRemoved(Action <CBaseNPC_Entity>* pAction)
+void CBaseNPCPluginActionFactory::OnActionRemoved(Action <INextBot>* pAction)
 {
 	m_Actions.FindAndRemove(pAction);
 }
 
-void CBaseNPCPluginActionFactory::OnCreateInitialAction(Action <CBaseNPC_Entity>* pAction)
+void CBaseNPCPluginActionFactory::OnCreateInitialAction(Action <INextBot>* pAction)
 {
 	IPluginFunction * pCallback = GetCallback( CreateInitialAction );
 	if (pCallback && pCallback->IsRunnable())

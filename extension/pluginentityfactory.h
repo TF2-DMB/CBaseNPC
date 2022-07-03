@@ -2,6 +2,7 @@
 #define CPLUGINENTITYFACTORY_H
 
 #include <vector>
+#include <memory>
 
 #include <itoolentity.h>
 #include <tier0/platform.h>
@@ -11,6 +12,7 @@
 
 #include "idatamapcontainer.h"
 #include "helpers.h"
+#include "toolsnextbot.h"
 
 class CBaseEntity;
 class CPluginEntityFactory;
@@ -28,19 +30,24 @@ enum PluginEntityFactoryBaseClass_t
 class PluginFactoryEntityRecord_t
 {
 public:
-	CBaseEntity* pEntity = nullptr;
+	CBaseEntityHack* pEntity = nullptr;
 	CPluginEntityFactory* pFactory = nullptr;
 	datamap_t* m_pDataMap = nullptr;
+	ToolsNextBot* m_pNextBot = nullptr;
+	CBaseNPCPluginActionFactory* m_pInitialActionFactory = nullptr;
+	CBaseNPCIntention* m_pIntentionInterface = nullptr;
 
 	void Hook(bool bHookDestructor = true);
-	void Unhook();
 
-	PluginFactoryEntityRecord_t() : pEntity( nullptr ) { }
-	PluginFactoryEntityRecord_t( CBaseEntity* pEnt ) : pEntity(pEnt) { }
+	PluginFactoryEntityRecord_t( CBaseEntityHack* pEnt ) : pEntity(pEnt) { }
+	~PluginFactoryEntityRecord_t();
+
+	INextBot* Hook_MyNextBotPointer();
+	IIntention* Hook_GetIntentionInterface();
 
 private:
 	bool m_bHooked = false;
-	std::vector<int> * m_pHookIds = nullptr;
+	std::vector<int> m_pHookIds;
 };
 
 class CPluginEntityFactories : public IPluginsListener,
@@ -88,6 +95,23 @@ public:
 	void Hook_EntityDestructor( unsigned int flags );
 #endif
 
+	// Entity dictionary
+	IServerNetworkable* Hook_Create(const char* classname);
+	void                Hook_Destroy(const char* classname, IServerNetworkable* pNetworkable);
+	const char*         Hook_GetCannonicalName(const char* classname);
+
+
+	CPluginEntityFactory* FindPluginFactory(const char* classname);
+	IEntityFactory*       FindGameFactory(const char* classname);
+	void                  InstallPluginFactory(const char* classname, CPluginEntityFactory* factory);
+	void                  RemovePluginFactory(CPluginEntityFactory* factory);
+	IEntityFactory*       FindFactory(const char* classname);
+
+private:
+	friend class CustomFactory;
+	void InstallGameFactory(const char* classname, IEntityFactory* factory);
+	void RemoveGameFactory(IEntityFactory* factory);
+
 private:
 	HandleType_t m_FactoryType;
 	IForward * m_fwdInstalledFactory;
@@ -95,7 +119,10 @@ private:
 
 	size_t m_BaseClassSizes[ FACTORYBASECLASS_MAX ];
 	CUtlVector< CPluginEntityFactory* > m_Factories;
-	CUtlMap< cell_t, PluginFactoryEntityRecord_t > m_Records;
+	std::map<cell_t, std::unique_ptr<PluginFactoryEntityRecord_t>> m_Records;
+	std::map<std::string, IEntityFactory*> m_gameFactories;
+	std::map<std::string, CPluginEntityFactory*> m_pluginFactories;
+	std::vector<int> m_hookIds;
 };
 
 extern CPluginEntityFactories* g_pPluginEntityFactories;
@@ -108,6 +135,7 @@ public:
 	IPluginFunction *m_pPostConstructor;
 	IPluginFunction *m_pOnRemove;
 	bool m_bInstalled;
+	bool m_bAttachNextbot;
 
 	Handle_t m_Handle;
 
@@ -180,6 +208,8 @@ public:
 	CBaseNPCPluginActionFactory* GetBaseNPCInitialActionFactory() const { return m_pBaseNPCInitialActionFactory; }
 	void SetBaseNPCInitialActionFactory( CBaseNPCPluginActionFactory* pFactory ) { m_pBaseNPCInitialActionFactory = pFactory; }
 
+	bool ShouldAttachNextBot() { return m_bAttachNextbot; }
+	void AttachNextBot() { m_bAttachNextbot = true; }
 protected:
 	bool m_bIsAbstract;
 

@@ -8,6 +8,7 @@
 
 int CBaseEntityHack::offset_UpdateOnRemove = 0;
 int CBaseEntityHack::offset_GetDataDescMap = 0;
+int CBaseEntityHack::offset_MyNextBotPointer = 0;
 
 MCall<void, bool> CBaseEntityHack::CBaseEntity_Ctor;
 VCall<void, const char*> CBaseEntityHack::vPostConstructor;
@@ -138,6 +139,12 @@ bool CBaseEntityHack::Init(SourceMod::IGameConfig* config, char* error, size_t m
 	if (!config->GetOffset("CBaseEntity::UpdateOnRemove", &CBaseEntityHack::offset_UpdateOnRemove))
 	{
 		snprintf(error, maxlength, "Failed to retrieve CBaseEntity::UpdateOnRemove offset!");
+		return false;
+	}
+
+	if (!config->GetOffset("CBaseEntity::MyNextBotPointer", &CBaseEntityHack::offset_MyNextBotPointer))
+	{
+		snprintf(error, maxlength, "Failed to retrieve CBaseEntity::MyNextBotPointer offset!");
 		return false;
 	}
 
