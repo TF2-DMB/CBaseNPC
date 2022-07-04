@@ -272,11 +272,16 @@ void CPluginEntityFactories::InstallPluginFactory(const char* classname, CPlugin
 
 void CPluginEntityFactories::RemovePluginFactory(CPluginEntityFactory* factory)
 {
-	for (auto it = m_pluginFactories.begin(); it != m_pluginFactories.end(); it++)
+	auto it = m_pluginFactories.begin();
+	while (it != m_pluginFactories.end())
 	{
 		if (it->second == factory)
 		{
-			m_pluginFactories.erase(it);
+			it = m_pluginFactories.erase(it);
+		}
+		else
+		{
+			it++;
 		}
 	}
 }
@@ -307,11 +312,16 @@ void CPluginEntityFactories::InstallGameFactory(const char* classname, IEntityFa
 
 void CPluginEntityFactories::RemoveGameFactory(IEntityFactory* factory)
 {
-	for (auto it = m_gameFactories.begin(); it != m_gameFactories.end(); it++)
+	auto it = m_gameFactories.begin();
+	while (it != m_gameFactories.end())
 	{
 		if (it->second == factory)
 		{
-			m_gameFactories.erase(it);
+			it = m_gameFactories.erase(it);
+		}
+		else
+		{
+			it++;
 		}
 	}
 }
