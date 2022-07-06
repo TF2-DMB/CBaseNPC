@@ -7,6 +7,7 @@ void ScoutLaughAction_Init()
 	ActionFactory.BeginDataMapDesc()
 		.DefineIntField("m_iLayerSequence")
 		.DefineFloatField("m_flFinishTime")
+		.DefineEntityField("m_hLaughAtEntity")
 	.EndDataMapDesc();
 	ActionFactory.SetCallback( NextBotActionCallbackType_OnStart, ScoutLaughAction_OnStart );
 	ActionFactory.SetCallback( NextBotActionCallbackType_Update, ScoutLaughAction_Update );
@@ -38,6 +39,12 @@ static int ScoutLaughAction_OnStart( NextBotAction action, int actor, NextBotAct
 		return action.Done();
 	}
 
+	int target = GetEntPropEnt(actor, Prop_Data, "m_Target");
+	if (IsValidEdict(target))
+	{
+		action.SetDataEnt("m_hLaughAtEntity", target);
+	}
+
 	EmitSoundToAll("vo/scout_laughlong02.mp3", actor, SNDCHAN_VOICE, SNDLEVEL_SCREAMING);
 
 	anim.SetLayerCycle(layer, 0.0);
@@ -54,6 +61,17 @@ static int ScoutLaughAction_Update( NextBotAction action, int actor, float inter
 	if (GetGameTime() >= flFinishTime)
 	{
 		return action.Done();
+	}
+
+	int laughAtEntity = action.GetDataEnt("m_hLaughAtEntity");
+	if (IsValidEdict(laughAtEntity))
+	{
+		INextBot bot = CBaseCombatCharacter(actor).MyNextBotPointer();
+
+		float laughPos[3];
+		CBaseEntity(laughAtEntity).GetAbsOrigin(laughPos);
+
+		bot.GetLocomotionInterface().FaceTowards(laughPos);
 	}
 
 	return action.Continue();

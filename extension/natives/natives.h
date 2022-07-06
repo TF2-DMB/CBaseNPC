@@ -781,6 +781,8 @@ const sp_nativeinfo_t g_NativesInfo[] =
 	NATIVENAME(NextBotAction, SetDataVector)
 	NATIVENAME(NextBotAction, GetDataString)
 	NATIVENAME(NextBotAction, SetDataString)
+	NATIVENAME(NextBotAction, GetDataEnt)
+	NATIVENAME(NextBotAction, SetDataEnt)
 
 	NATIVENAMEGET(NextBotAction, IsSuspended)
 
@@ -808,6 +810,7 @@ const sp_nativeinfo_t g_NativesInfo[] =
 	NATIVENAME(NextBotActionFactory, DefineVectorField)
 	NATIVENAME(NextBotActionFactory, DefineStringField)
 	NATIVENAME(NextBotActionFactory, DefineColorField)
+	NATIVENAME(NextBotActionFactory, DefineEntityField)
 	NATIVENAME(NextBotActionFactory, EndDataMapDesc)
 
 	{ "ConcatTransforms", &Util_ConcatTransforms },
