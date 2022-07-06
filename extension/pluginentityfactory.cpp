@@ -559,10 +559,11 @@ void PluginFactoryEntityRecord_t::Hook(bool bHookDestructor)
 	}
 }
 
-void PluginFactoryEntityRecord_t::DestroyNextBotInterfaces()
+PluginFactoryEntityRecord_t::~PluginFactoryEntityRecord_t()
 {
 	if (m_pIntentionInterface)
 	{
+		// Ensure that the interface performs cleanup plugin callbacks first.
 		delete m_pIntentionInterface;
 	}
 
@@ -570,10 +571,7 @@ void PluginFactoryEntityRecord_t::DestroyNextBotInterfaces()
 	{
 		delete m_pNextBot;
 	}
-}
 
-PluginFactoryEntityRecord_t::~PluginFactoryEntityRecord_t()
-{
 	if (m_bHooked)
 	{
 		m_bHooked = false;
@@ -684,27 +682,20 @@ void CPluginEntityFactory::OnRemove(CBaseEntity* pEntity)
 
 void CPluginEntityFactory::OnDestroy( CBaseEntity* pEntity )
 {
-	PluginFactoryEntityRecord_t * pEntityRecord = g_pPluginEntityFactories->FindRecord( pEntity );
-	if (pEntityRecord->pFactory == this)
-	{
-		// Delete the NextBot interfaces first. Actions in the intention interface
-		// may be dependent on the factory's datamap, so ensure that the interface
-		// performs plugin callbacks first before detaching the datamap.
-
-		pEntityRecord->DestroyNextBotInterfaces();
-	}
-
-	DestroyUserEntityData(pEntity);
-
 	CPluginEntityFactory* pBasePluginFactory = ToPluginEntityFactory( GetBaseFactory() );
 	if (pBasePluginFactory)
 	{
 		pBasePluginFactory->OnDestroy( pEntity );
 	}
 
-	if ( pEntityRecord->pFactory == this )
+	if (g_pPluginEntityFactories->GetFactory(pEntity) == this)
 	{
 		g_pPluginEntityFactories->RemoveRecord( pEntity );
+
+		for (CPluginEntityFactory* pFactory = this; pFactory; pFactory = ToPluginEntityFactory(pFactory->GetBaseFactory()))
+		{
+			pFactory->DestroyUserEntityData(pEntity);
+		}
 	}
 }
 

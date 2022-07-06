@@ -38,7 +38,6 @@ public:
 	CBaseNPCIntention* m_pIntentionInterface = nullptr;
 
 	void Hook(bool bHookDestructor = true);
-	void DestroyNextBotInterfaces();
 
 	PluginFactoryEntityRecord_t( CBaseEntityHack* pEnt ) : pEntity(pEnt) { }
 	~PluginFactoryEntityRecord_t();
