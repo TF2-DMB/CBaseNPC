@@ -272,11 +272,16 @@ void CPluginEntityFactories::InstallPluginFactory(const char* classname, CPlugin
 
 void CPluginEntityFactories::RemovePluginFactory(CPluginEntityFactory* factory)
 {
-	for (auto it = m_pluginFactories.begin(); it != m_pluginFactories.end(); it++)
+	auto it = m_pluginFactories.begin();
+	while (it != m_pluginFactories.end())
 	{
 		if (it->second == factory)
 		{
-			m_pluginFactories.erase(it);
+			it = m_pluginFactories.erase(it);
+		}
+		else
+		{
+			it++;
 		}
 	}
 }
@@ -307,11 +312,16 @@ void CPluginEntityFactories::InstallGameFactory(const char* classname, IEntityFa
 
 void CPluginEntityFactories::RemoveGameFactory(IEntityFactory* factory)
 {
-	for (auto it = m_gameFactories.begin(); it != m_gameFactories.end(); it++)
+	auto it = m_gameFactories.begin();
+	while (it != m_gameFactories.end())
 	{
 		if (it->second == factory)
 		{
-			m_gameFactories.erase(it);
+			it = m_gameFactories.erase(it);
+		}
+		else
+		{
+			it++;
 		}
 	}
 }
@@ -551,26 +561,25 @@ void PluginFactoryEntityRecord_t::Hook(bool bHookDestructor)
 
 PluginFactoryEntityRecord_t::~PluginFactoryEntityRecord_t()
 {
-	if (!m_bHooked)
-	{
-		return;
-	}
-
-	m_bHooked = false;
-	
-	for (auto it = m_pHookIds.begin(); it != m_pHookIds.end(); it++)
-	{
-		SH_REMOVE_HOOK_ID((*it));
-	}
-
 	if (m_pIntentionInterface)
 	{
+		// Ensure that the interface performs cleanup plugin callbacks first.
 		delete m_pIntentionInterface;
 	}
 
 	if (m_pNextBot)
 	{
 		delete m_pNextBot;
+	}
+
+	if (m_bHooked)
+	{
+		m_bHooked = false;
+
+		for (auto it = m_pHookIds.begin(); it != m_pHookIds.end(); it++)
+		{
+			SH_REMOVE_HOOK_ID((*it));
+		}
 	}
 }
 
@@ -673,18 +682,20 @@ void CPluginEntityFactory::OnRemove(CBaseEntity* pEntity)
 
 void CPluginEntityFactory::OnDestroy( CBaseEntity* pEntity )
 {
-	DestroyUserEntityData(pEntity);
-
 	CPluginEntityFactory* pBasePluginFactory = ToPluginEntityFactory( GetBaseFactory() );
 	if (pBasePluginFactory)
 	{
 		pBasePluginFactory->OnDestroy( pEntity );
 	}
 
-	PluginFactoryEntityRecord_t * pEntityRecord = g_pPluginEntityFactories->FindRecord( pEntity );
-	if ( pEntityRecord->pFactory == this )
+	if (g_pPluginEntityFactories->GetFactory(pEntity) == this)
 	{
 		g_pPluginEntityFactories->RemoveRecord( pEntity );
+
+		for (CPluginEntityFactory* pFactory = this; pFactory; pFactory = ToPluginEntityFactory(pFactory->GetBaseFactory()))
+		{
+			pFactory->DestroyUserEntityData(pEntity);
+		}
 	}
 }
 
