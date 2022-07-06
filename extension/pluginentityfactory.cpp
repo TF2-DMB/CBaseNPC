@@ -561,26 +561,25 @@ void PluginFactoryEntityRecord_t::Hook(bool bHookDestructor)
 
 PluginFactoryEntityRecord_t::~PluginFactoryEntityRecord_t()
 {
-	if (!m_bHooked)
-	{
-		return;
-	}
-
-	m_bHooked = false;
-	
-	for (auto it = m_pHookIds.begin(); it != m_pHookIds.end(); it++)
-	{
-		SH_REMOVE_HOOK_ID((*it));
-	}
-
 	if (m_pIntentionInterface)
 	{
+		// Ensure that the interface performs cleanup plugin callbacks first.
 		delete m_pIntentionInterface;
 	}
 
 	if (m_pNextBot)
 	{
 		delete m_pNextBot;
+	}
+
+	if (m_bHooked)
+	{
+		m_bHooked = false;
+
+		for (auto it = m_pHookIds.begin(); it != m_pHookIds.end(); it++)
+		{
+			SH_REMOVE_HOOK_ID((*it));
+		}
 	}
 }
 
@@ -683,18 +682,20 @@ void CPluginEntityFactory::OnRemove(CBaseEntity* pEntity)
 
 void CPluginEntityFactory::OnDestroy( CBaseEntity* pEntity )
 {
-	DestroyUserEntityData(pEntity);
-
 	CPluginEntityFactory* pBasePluginFactory = ToPluginEntityFactory( GetBaseFactory() );
 	if (pBasePluginFactory)
 	{
 		pBasePluginFactory->OnDestroy( pEntity );
 	}
 
-	PluginFactoryEntityRecord_t * pEntityRecord = g_pPluginEntityFactories->FindRecord( pEntity );
-	if ( pEntityRecord->pFactory == this )
+	if (g_pPluginEntityFactories->GetFactory(pEntity) == this)
 	{
 		g_pPluginEntityFactories->RemoveRecord( pEntity );
+
+		for (CPluginEntityFactory* pFactory = this; pFactory; pFactory = ToPluginEntityFactory(pFactory->GetBaseFactory()))
+		{
+			pFactory->DestroyUserEntityData(pEntity);
+		}
 	}
 }
 
