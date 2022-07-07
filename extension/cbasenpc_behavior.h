@@ -160,11 +160,9 @@ public:
 	void InitBehavior();
 	void DestroyBehavior();
 
-	bool IsUpdating() const { return m_bInUpdate; };
 
 private:
 	Behavior< INextBot > * m_pBehavior;
-	bool m_bInUpdate;
 };
 
 class CBaseNPCPluginActionFactories : public IHandleTypeDispatch
