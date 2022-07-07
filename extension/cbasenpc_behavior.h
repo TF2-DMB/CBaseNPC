@@ -160,6 +160,7 @@ public:
 	void InitBehavior();
 	void DestroyBehavior();
 
+
 private:
 	Behavior< INextBot > * m_pBehavior;
 };

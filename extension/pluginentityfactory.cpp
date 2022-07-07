@@ -467,24 +467,6 @@ void CPluginEntityFactories::NotifyEntityDestruction( CBaseEntity* pEntity )
 	}
 }
 
-datamap_t* CPluginEntityFactories::Hook_GetDataDescMap()
-{
-	CBaseEntity *pEntity = META_IFACEPTR(CBaseEntity);
-	if (!pEntity) RETURN_META_VALUE(MRES_IGNORED, nullptr);
-
-	PluginFactoryEntityRecord_t* pEntityRecord = FindRecord(pEntity);
-	if (!pEntityRecord)
-		RETURN_META_VALUE(MRES_IGNORED, nullptr);
-
-	datamap_t* pDataMap = pEntityRecord->m_pDataMap;
-	if (pDataMap)
-	{
-		RETURN_META_VALUE(MRES_SUPERCEDE, pDataMap);
-	}
-	
-	RETURN_META_VALUE(MRES_IGNORED, nullptr);
-}
-
 void CPluginEntityFactories::Hook_UpdateOnRemove()
 {
 	CBaseEntity *pEntity = META_IFACEPTR(CBaseEntity);
@@ -523,7 +505,7 @@ void PluginFactoryEntityRecord_t::Hook(bool bHookDestructor)
 	}
 	m_bHooked = true;
 
-	m_pHookIds.push_back( SH_ADD_MANUALHOOK(FactoryEntity_GetDataDescMap, pEntity, SH_MEMBER(g_pPluginEntityFactories, &CPluginEntityFactories::Hook_GetDataDescMap), false) );
+	m_pHookIds.push_back( SH_ADD_MANUALHOOK(FactoryEntity_GetDataDescMap, pEntity, SH_MEMBER(this, &PluginFactoryEntityRecord_t::Hook_GetDataDescMap), false) );
 	m_pHookIds.push_back( SH_ADD_MANUALHOOK(FactoryEntity_UpdateOnRemove, pEntity, SH_MEMBER(g_pPluginEntityFactories, &CPluginEntityFactories::Hook_UpdateOnRemove), false) );
 
 	if (bHookDestructor)
@@ -581,6 +563,22 @@ PluginFactoryEntityRecord_t::~PluginFactoryEntityRecord_t()
 			SH_REMOVE_HOOK_ID((*it));
 		}
 	}
+}
+
+datamap_t* PluginFactoryEntityRecord_t::Hook_GetDataDescMap()
+{
+	CBaseEntity *pEntity = META_IFACEPTR(CBaseEntity);
+	if (!pEntity)
+	{
+		RETURN_META_VALUE(MRES_IGNORED, nullptr);
+	}
+
+	if (m_pDataMap)
+	{
+		RETURN_META_VALUE(MRES_SUPERCEDE, m_pDataMap);
+	}
+	
+	RETURN_META_VALUE(MRES_IGNORED, nullptr);
 }
 
 INextBot* PluginFactoryEntityRecord_t::Hook_MyNextBotPointer()
