@@ -42,6 +42,7 @@ public:
 	PluginFactoryEntityRecord_t( CBaseEntityHack* pEnt ) : pEntity(pEnt) { }
 	~PluginFactoryEntityRecord_t();
 
+	datamap_t* Hook_GetDataDescMap();
 	INextBot* Hook_MyNextBotPointer();
 	IIntention* Hook_GetIntentionInterface();
 
@@ -87,7 +88,6 @@ public:
 
 	void NotifyEntityDestruction( CBaseEntity* pEntity );
 
-	datamap_t* Hook_GetDataDescMap();
 	void Hook_UpdateOnRemove();
 #ifdef __linux__
 	void Hook_EntityDestructor( void );

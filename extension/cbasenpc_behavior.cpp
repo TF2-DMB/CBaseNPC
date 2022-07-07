@@ -543,8 +543,6 @@ void CBaseNPCIntention::Reset()
 
 void CBaseNPCIntention::InitBehavior()
 {
-	m_bInUpdate = false;
-
 	if (m_pInitialActionFactory)
 	{
 		Action< INextBot > * pAction = m_pInitialActionFactory->Create();
@@ -564,30 +562,13 @@ void CBaseNPCIntention::DestroyBehavior()
 
 	delete m_pBehavior;
 	m_pBehavior = nullptr;
-	m_bInUpdate = false;
 }
 
 void CBaseNPCIntention::Update()
 {
 	if (m_pBehavior)
 	{
-		// The Behavior object should not be destructed in the middle of an Update() call.
-		// Doing so will lead to undefined behavior especially when a plugin action calls
-		// RemoveEntity(). However, it's completely fine to remove it before or after the
-		// update.
-
-		m_bInUpdate = true;
-
 		m_pBehavior->Update( GetBot(), GetUpdateInterval() );
-
-		m_bInUpdate = false;
-
-		CBaseCombatCharacterHack* pEntity = GetBot()->GetEntity();
-		if (pEntity->GetFlags() & FL_KILLME)
-		{
-			// RemoveEntity() was called, destroy the Behavior.
-			DestroyBehavior();
-		}
 	}
 }
 
