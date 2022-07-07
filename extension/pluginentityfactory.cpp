@@ -678,6 +678,22 @@ void CPluginEntityFactory::OnRemove(CBaseEntity* pEntity)
 	{
 		pBasePluginFactory->OnRemove(pEntity);
 	}
+
+	PluginFactoryEntityRecord_t *pRecord = g_pPluginEntityFactories->FindRecord(pEntity);
+	if (pRecord->pFactory == this)
+	{
+		CBaseNPCIntention* pIntention = pRecord->m_pIntentionInterface;
+
+		if (pIntention && !pIntention->IsUpdating())
+		{
+			// Do not destroy the behavior while it's in the middle of plugin
+			// callbacks. Destruction will happen after the behavior finishes updating.
+
+			// See CBaseNPCIntention::Update() for more info.
+
+			pIntention->DestroyBehavior();
+		}
+	}
 }
 
 void CPluginEntityFactory::OnDestroy( CBaseEntity* pEntity )
