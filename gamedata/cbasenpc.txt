@@ -45,6 +45,16 @@
 				"linux"		"73"
 				"windows"	"72"
 			}
+			"CBaseEntity::Touch"
+			{
+				"linux"		"100"
+				"windows"	"99"
+			}
+			"CBaseEntity::PhysicsSimulate"
+			{
+				"linux"		"105"
+				"windows"	"104"
+			}
 			"CBaseEntity::UpdateOnRemove"
 			{
 				"linux"		"109"
@@ -89,10 +99,35 @@
 				"linux"		"213"
 				"windows"	"212"
 			}
+			"CBaseCombatCharacter::Weapon_Equip"
+			{
+				"linux"		"266"
+				"windows"	"265"
+			}
+			"CBaseCombatCharacter::Weapon_Drop"
+			{
+				"linux"		"268"
+				"windows"	"267"
+			}
+			"CBaseCombatCharacter::OnTakeDamage_Alive"
+			{
+				"linux"		"277"
+				"windows"	"276"
+			}
+			"CBaseCombatCharacter::OnTakeDamage_Dying"
+			{
+				"linux"		"278"
+				"windows"	"277"
+			}
 			"CBaseCombatCharacter::GetLastKnownArea"
 			{
 				"linux"		"320"
 				"windows"	"319"
+			}
+			"CBaseCombatCharacter::OnNavAreaChanged"
+			{
+				"linux"		"321"
+				"windows"	"320"
 			}
 			"CBaseCombatCharacter::UpdateLastKnownArea"
 			{
