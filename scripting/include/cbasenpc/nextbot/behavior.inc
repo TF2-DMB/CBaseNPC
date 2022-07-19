@@ -147,7 +147,7 @@ typeset ActionEventResponderCallback
 	function void (NextBotAction action, int actor, int event, const char[] options, float cycle, float eventtime, int eventtype);
 	function void (NextBotAction action, CBaseCombatCharacter actor, int event, const char[] options, float cycle, float eventtime, int eventtype);
 
-	function int (NextBotAction action, int actor, int event, const char[] options, float cycle, float eventtime, int eventtype, CBaseAnimating eventSourceEntity);
+	function int (NextBotAction action, int actor, int event, const char[] options, float cycle, float eventtime, int eventtype, int eventSourceEntity);
 	function int (NextBotAction action, CBaseCombatCharacter actor, int event, const char[] options, float cycle, float eventtime, int eventtype, CBaseAnimating eventSourceEntity);
 
 	function void (NextBotAction action, int actor, int event, const char[] options, float cycle, float eventtime, int eventtype, int eventSourceEntity);
