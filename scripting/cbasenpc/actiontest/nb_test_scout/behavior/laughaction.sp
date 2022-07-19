@@ -1,75 +1,120 @@
 
 static NextBotActionFactory ActionFactory;
 
-void ScoutLaughAction_Init()
+methodmap TestScoutBotLaughAction < NextBotAction
 {
-	ActionFactory = new NextBotActionFactory("ScoutLaughAction");
-	ActionFactory.BeginDataMapDesc()
-		.DefineIntField("m_iLayerSequence")
-		.DefineFloatField("m_flFinishTime")
-		.DefineEntityField("m_hLaughAtEntity")
-	.EndDataMapDesc();
-	ActionFactory.SetCallback( NextBotActionCallbackType_OnStart, ScoutLaughAction_OnStart );
-	ActionFactory.SetCallback( NextBotActionCallbackType_Update, ScoutLaughAction_Update );
-	ActionFactory.SetCallback( NextBotActionCallbackType_OnEnd, ScoutLaughAction_OnEnd );
-	ActionFactory.SetCallback( NextBotActionCallbackType_OnSuspend, ScoutLaughAction_OnSuspend );
-	ActionFactory.SetEventCallback( EventResponderType_OnInjured, ScoutLaughAction_OnInjured );
+	public static void Initialize()
+	{
+		ActionFactory = new NextBotActionFactory("ScoutLaughAction");
+		ActionFactory.BeginDataMapDesc()
+			.DefineIntField("m_iLayerSequence")
+			.DefineFloatField("m_flFinishTime")
+			.DefineEntityField("m_hLaughAtEntity")
+		.EndDataMapDesc();
+		ActionFactory.SetCallback( NextBotActionCallbackType_OnStart, OnStart );
+		ActionFactory.SetCallback( NextBotActionCallbackType_Update, Update );
+		ActionFactory.SetCallback( NextBotActionCallbackType_OnEnd, OnEnd );
+		ActionFactory.SetCallback( NextBotActionCallbackType_OnSuspend, OnSuspend );
+		ActionFactory.SetEventCallback( EventResponderType_OnInjured, OnInjured );
+	}
+
+	property int m_iLayerSequence
+	{
+		public get()
+		{
+			return this.GetData("m_iLayerSequence");
+		}
+
+		public set(int value)
+		{
+			this.SetData("m_iLayerSequence", value);
+		}
+	}
+
+	property float m_flFinishTime
+	{
+		public get()
+		{
+			return this.GetDataFloat("m_flFinishTime");
+		}
+
+		public set(float value)
+		{
+			this.SetDataFloat("m_flFinishTime", value);
+		}
+	}
+
+	property CBaseEntity m_hLaughAtEntity
+	{
+		public get()
+		{
+			return CBaseEntity(this.GetDataEnt("m_hLaughAtEntity"));
+		}
+
+		public set(CBaseEntity value)
+		{
+			this.SetDataEnt("m_hLaughAtEntity", value.index);
+		}
+	}
+
+	public TestScoutBotLaughAction()
+	{
+		TestScoutBotLaughAction action = view_as<TestScoutBotLaughAction>(ActionFactory.Create());
+
+		action.m_iLayerSequence = -1;
+
+		return action;
+	}
 }
 
-NextBotAction ScoutLaughAction_Create()
+static int OnStart(TestScoutBotLaughAction action, TestScoutBot actor, NextBotAction prevAction)
 {
-	return ActionFactory.Create();
-}
-
-static int ScoutLaughAction_OnStart( NextBotAction action, int actor, NextBotAction prevAction )
-{
-	CBaseCombatCharacter anim = CBaseCombatCharacter(actor);
-	int sequence = anim.LookupSequence( "taunt_laugh" );
+	int sequence = actor.LookupSequence( "taunt_laugh" );
 
 	if (sequence == -1)
-		return action.Done();
-	
-	float duration = anim.SequenceDuration(sequence);
-	action.SetDataFloat("m_flFinishTime", GetGameTime() + duration);
-
-	int layer = anim.AddLayeredSequence(sequence, 1);
-	if (!anim.IsValidLayer(layer))
 	{
-		action.SetData("m_iLayerSequence", -1);
 		return action.Done();
 	}
 
-	int target = GetEntPropEnt(actor, Prop_Data, "m_Target");
-	if (IsValidEdict(target))
+	float duration = actor.SequenceDuration(sequence);
+	action.m_flFinishTime = GetGameTime() + duration;
+
+	int layer = actor.AddLayeredSequence(sequence, 1);
+	if (!actor.IsValidLayer(layer))
 	{
-		action.SetDataEnt("m_hLaughAtEntity", target);
+		return action.Done();
 	}
 
-	EmitSoundToAll("vo/scout_laughlong02.mp3", actor, SNDCHAN_VOICE, SNDLEVEL_SCREAMING);
+	CBaseEntity target = actor.m_Target;
+	if (target.IsValid())
+	{
+		action.m_hLaughAtEntity = target;
+	}
 
-	anim.SetLayerCycle(layer, 0.0);
-	anim.SetLayerPlaybackRate(layer, 1.0);
+	EmitSoundToAll("vo/scout_laughlong02.mp3", actor.index, SNDCHAN_VOICE, SNDLEVEL_SCREAMING);
 
-	action.SetData("m_iLayerSequence", layer);
-	
+	actor.SetLayerCycle(layer, 0.0);
+	actor.SetLayerPlaybackRate(layer, 1.0);
+
+	action.m_iLayerSequence = layer;
+
 	return action.Continue();
 }
 
-static int ScoutLaughAction_Update( NextBotAction action, int actor, float interval )
+static int Update(TestScoutBotLaughAction action, TestScoutBot actor, float interval)
 {
-	float flFinishTime = action.GetDataFloat("m_flFinishTime");
-	if (GetGameTime() >= flFinishTime)
+	if (GetGameTime() >= action.m_flFinishTime)
 	{
 		return action.Done();
 	}
 
-	int laughAtEntity = action.GetDataEnt("m_hLaughAtEntity");
-	if (IsValidEdict(laughAtEntity))
+	CBaseEntity laughAtEntity = action.m_hLaughAtEntity;
+	if (laughAtEntity.IsValid())
 	{
-		INextBot bot = CBaseCombatCharacter(actor).MyNextBotPointer();
+		INextBot bot = actor.MyNextBotPointer();
 
 		float laughPos[3];
-		CBaseEntity(laughAtEntity).GetAbsOrigin(laughPos);
+		laughAtEntity.GetAbsOrigin(laughPos);
 
 		bot.GetLocomotionInterface().FaceTowards(laughPos);
 	}
@@ -77,32 +122,30 @@ static int ScoutLaughAction_Update( NextBotAction action, int actor, float inter
 	return action.Continue();
 }
 
-static void ScoutLaughAction_OnEnd( NextBotAction action, int actor, NextBotAction nextAction )
+static void OnEnd(TestScoutBotLaughAction action, TestScoutBot actor, NextBotAction nextAction)
 {
-	CBaseCombatCharacter anim = CBaseCombatCharacter(actor);
-
-	int layer = action.GetData("m_iLayerSequence");
+	int layer = action.m_iLayerSequence;
 	if (layer != -1)
 	{
-		anim.RemoveLayer(layer);
+		actor.RemoveLayer(layer);
 	}
 }
 
-static int ScoutLaughAction_OnSuspend( NextBotAction action, int actor, NextBotAction interruptingAction )
+static int OnSuspend(TestScoutBotLaughAction action, TestScoutBot actor, NextBotAction interruptingAction)
 {
 	// This is supposed to be a short action and we don't need to go back to it when we're done.
 	return action.Done();
 }
 
-static int ScoutLaughAction_OnInjured(NextBotAction action, 
-	int actor, 
-	int attacker, 
-	int inflictor, 
+static int OnInjured(TestScoutBotLaughAction action, 
+	TestScoutBot actor, 
+	CBaseEntity attacker, 
+	CBaseEntity inflictor, 
 	float damage, 
 	int damagetype, 
-	int weapon, 
+	CBaseEntity weapon, 
 	const float damageForce[3],
-	const float damagePosition[3], int damageCustom )
+	const float damagePosition[3], int damageCustom)
 {
 	return action.TryContinue();
 }

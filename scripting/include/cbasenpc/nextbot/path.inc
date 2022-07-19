@@ -41,6 +41,7 @@ typeset PathFollowerCostFunctor
 	 * @return             Cost to move from `fromArea` to `area`
 	 */
 	function float(INextBot bot, CNavArea area, CNavArea fromArea, CNavLadder ladder, int elevator, float length);
+	function float(INextBot bot, CNavArea area, CNavArea fromArea, CNavLadder ladder, CBaseEntity elevator, float length);
 };
 
 /**
@@ -189,7 +190,7 @@ enum SeekType
 
 typeset PathComputeCallback
 {
-	function void (Path path, bool bSuccess, any data);
+	function void (Path path, bool success, any data);
 };
 
 methodmap Path

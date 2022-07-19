@@ -7,49 +7,78 @@ static char g_sStartSounds[][] = {
 	"vo/taunts/scout/scout_taunt_flip_int_07.mp3",
 };
 
-void ScoutBaitAction_Init()
+methodmap TestScoutBotBaitAction < NextBotAction
 {
-	ActionFactory = new NextBotActionFactory("ScoutBaitAction");
-	ActionFactory.BeginDataMapDesc()
-		.DefineFloatField("m_flNextSoundTime")
-		.DefineFloatField("m_flFinishTime")
-	.EndDataMapDesc();
-	ActionFactory.SetCallback( NextBotActionCallbackType_OnStart, ScoutBaitAction_OnStart );
-	ActionFactory.SetCallback( NextBotActionCallbackType_Update, ScoutBaitAction_Update );
-	ActionFactory.SetCallback( NextBotActionCallbackType_OnEnd, ScoutBaitAction_OnEnd );
-	ActionFactory.SetCallback( NextBotActionCallbackType_OnSuspend, ScoutBaitAction_OnSuspend );
-	ActionFactory.SetEventCallback( EventResponderType_OnInjured, ScoutBaitAction_OnInjured );
+	public static void Initialize()
+	{
+		ActionFactory = new NextBotActionFactory("ScoutBaitAction");
+		ActionFactory.BeginDataMapDesc()
+			.DefineFloatField("m_flNextSoundTime")
+			.DefineFloatField("m_flFinishTime")
+			.EndDataMapDesc();
+		ActionFactory.SetCallback(NextBotActionCallbackType_OnStart, OnStart);
+		ActionFactory.SetCallback(NextBotActionCallbackType_Update, Update);
+		ActionFactory.SetCallback(NextBotActionCallbackType_OnEnd, OnEnd);
+		ActionFactory.SetCallback(NextBotActionCallbackType_OnSuspend, OnSuspend);
+		ActionFactory.SetEventCallback(EventResponderType_OnInjured, OnInjured);
+	}
+
+	public TestScoutBotBaitAction()
+	{
+		return view_as<TestScoutBotBaitAction>(ActionFactory.Create());
+	}
+
+	property float m_flNextSoundTime
+	{
+		public get()
+		{
+			return this.GetDataFloat("m_flNextSoundTime");
+		}
+
+		public set(float value)
+		{
+			this.SetDataFloat("m_flNextSoundTime", value);
+		}
+	}
+	
+	property float m_flFinishTime
+	{
+		public get()
+		{
+			return this.GetDataFloat("m_flFinishTime");
+		}
+
+		public set(float value)
+		{
+			this.SetDataFloat("m_flFinishTime", value);
+		}
+	}
 }
 
-NextBotAction ScoutBaitAction_Create()
-{
-	return ActionFactory.Create();
-}
-
-static int ScoutBaitAction_OnStart( NextBotAction action, int actor, NextBotAction prevAction )
+static int OnStart(TestScoutBotBaitAction action, TestScoutBot actor, NextBotAction prevAction)
 {
 	for (int i = 0; i < sizeof(g_sStartSounds); i++)
 	{
-		PrecacheSound( g_sStartSounds[i] );
+		PrecacheSound(g_sStartSounds[i]);
 	}
 
-	CBaseCombatCharacter anim = CBaseCombatCharacter(actor);
-	int sequence = anim.LookupSequence( "taunt_flip_start" );
-
+	int sequence = actor.LookupSequence("taunt_flip_start");
 	if (sequence == -1)
+	{
 		return action.Done();
-	
-	anim.ResetSequence(sequence);
-	SetEntPropFloat( actor, Prop_Data, "m_flCycle", 0.0 );
-	SetEntProp( actor, Prop_Data, "m_bSequenceLoops", false );
+	}
 
-	action.SetDataFloat("m_flNextSoundTime", GetGameTime());
-	action.SetDataFloat("m_flFinishTime", GetGameTime() + 15.0);
+	actor.ResetSequence(sequence);
+	actor.SetPropFloat(Prop_Data, "m_flCycle", 0.0);
+	actor.SetProp(Prop_Data, "m_bSequenceLoops", false);
+
+	action.m_flNextSoundTime = GetGameTime();
+	action.m_flFinishTime = GetGameTime() + 15.0;
 
 	return action.Continue();
 }
 
-static void ScoutBaitAction_MakeSound( NextBotAction action )
+static void MakeSound(TestScoutBotBaitAction action)
 {
 	int actor = action.Actor;
 	int randomSound = GetRandomInt(0, sizeof(g_sStartSounds) - 1);
@@ -57,70 +86,70 @@ static void ScoutBaitAction_MakeSound( NextBotAction action )
 	EmitSoundToAll(g_sStartSounds[randomSound], actor, SNDCHAN_VOICE, SNDLEVEL_SCREAMING);
 }
 
-static int ScoutBaitAction_Update( NextBotAction action, int actor, float interval )
+static int Update(TestScoutBotBaitAction action, TestScoutBot actor, float interval)
 {
-	float flFinishTime = action.GetDataFloat("m_flFinishTime");
-	if (GetGameTime() >= flFinishTime)
+	float finishTime = action.GetDataFloat("m_flFinishTime");
+	if (GetGameTime() >= finishTime)
 	{
-		return action.Done( "Bored of waiting" );
+		return action.Done("Bored of waiting");
 	}
 
-	int target = GetEntPropEnt(actor, Prop_Data, "m_Target");
-	if (!IsValidEntity(target))
+	CBaseEntity target = CBaseEntity(actor.GetPropEnt(Prop_Data, "m_Target"));
+	if (!target.IsValid())
 	{
-		return action.Done( "No target to bait!" );
+		return action.Done("No target to bait!");
 	}
 
 	float vecPos[3]; float vecTargetPos[3];
-	GetEntPropVector( actor, Prop_Data, "m_vecAbsOrigin", vecPos );
-	GetEntPropVector( target, Prop_Data, "m_vecAbsOrigin", vecTargetPos );
+	actor.GetAbsOrigin(vecPos);
+	target.GetAbsOrigin(vecTargetPos);
 
 	float dist = GetVectorDistance(vecPos, vecTargetPos);
 	if (dist > 450.0)
 	{
-		return action.Done( "Target is too far away" );
+		return action.Done("Target is too far away");
 	}
 
-	if ( dist < 128.0 )
+	if (dist < 128.0)
 	{
-		if (target > 0 && target <= MaxClients && ( TF2_IsPlayerInCondition( target, TFCond_Taunting ) ))
+		if (target.index > 0 && target.index <= MaxClients && (TF2_IsPlayerInCondition(target.index, TFCond_Taunting)))
 		{
-			return action.ChangeTo( ScoutLaughAction_Create(), "I baited the target! Haha!" );
+			return action.ChangeTo(TestScoutBotLaughAction(), "I baited the target! Haha!");
 		}
 	}
 
-	if (GetGameTime() >= action.GetDataFloat("m_flNextSoundTime"))
+	if (GetGameTime() >= action.m_flNextSoundTime)
 	{
-		action.SetDataFloat("m_flNextSoundTime", GetGameTime() + 4.0);
-		ScoutBaitAction_MakeSound( action );
+		action.m_flNextSoundTime = GetGameTime() + 4.0;
+		MakeSound(action);
 	}
 
-	float flCycle = GetEntPropFloat(actor, Prop_Send, "m_flCycle");
-	if ((flCycle + interval) >= 1.0)
+	float cycle = actor.GetPropFloat(Prop_Send, "m_flCycle");
+	if ((cycle + interval) >= 1.0)
 	{
-		SetEntPropFloat(actor, Prop_Send, "m_flCycle", 0.25);
+		actor.SetPropFloat(Prop_Send, "m_flCycle", 0.25);
 	}
 
 	return action.Continue();
 }
 
-static void ScoutBaitAction_OnEnd( NextBotAction action, int actor, NextBotAction nextAction )
+static void OnEnd(TestScoutBotBaitAction action, TestScoutBot actor, NextBotAction nextAction)
 {
 }
 
-static int ScoutBaitAction_OnSuspend( NextBotAction action, int actor, NextBotAction interruptingAction )
+static int OnSuspend(TestScoutBotBaitAction action, TestScoutBot actor, NextBotAction interruptingAction)
 {
 	// This is supposed to be a short action and we don't need to go back to it when we're done.
 	return action.Done();
 }
 
-static int ScoutBaitAction_OnInjured(NextBotAction action, 
-	int actor, 
-	int attacker, 
-	int inflictor, 
+static int OnInjured(TestScoutBotBaitAction action, 
+	TestScoutBot actor, 
+	CBaseEntity attacker, 
+	CBaseEntity inflictor, 
 	float damage, 
 	int damagetype, 
-	int weapon, 
+	CBaseEntity weapon, 
 	const float damageForce[3],
 	const float damagePosition[3], int damageCustom )
 {

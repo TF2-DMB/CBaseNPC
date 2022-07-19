@@ -10,5 +10,5 @@
 
 public void OnPluginStart()
 {
-	ScoutNextBot_OnPluginStart();
+	TestScoutBot.Initialize();
 }

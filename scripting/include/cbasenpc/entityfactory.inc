@@ -5,24 +5,31 @@ typeset InputFuncCallback
 {
 	// Void
 	function void (int entity, int activator, int caller);
+	function void (CBaseEntity entity, CBaseEntity activator, CBaseEntity caller);
 
 	// Integer
 	function void (int entity, int activator, int caller, int value);
+	function void (CBaseEntity entity, CBaseEntity activator, CBaseEntity caller, int value);
 
 	// Float
 	function void (int entity, int activator, int caller, float value);
+	function void (CBaseEntity entity, CBaseEntity activator, CBaseEntity caller, float value);
 
 	// Color32
 	function void (int entity, int activator, int caller, const int value[4]);
+	function void (CBaseEntity entity, CBaseEntity activator, CBaseEntity caller, const int value[4]);
 
 	// Vector
 	function void (int entity, int activator, int caller, const float value[3]);
+	function void (CBaseEntity entity, CBaseEntity activator, CBaseEntity caller, const float value[3]);
 
 	// String
 	function void (int entity, int activator, int caller, const char[] value);
+	function void (CBaseEntity entity, CBaseEntity activator, CBaseEntity caller, const char[] value);
 
 	// Integer/Float/Unknown
 	function void (int entity, int activator, int caller, any value);
+	function void (CBaseEntity entity, CBaseEntity activator, CBaseEntity caller, any value);
 }
 
 enum InputFuncValueType
@@ -40,11 +47,13 @@ enum InputFuncValueType
 typeset CEntityFactoryPostConstructor
 {
 	function void (int entity);
+	function void (CBaseEntity entity);
 }
 
 typeset CEntityFactoryOnRemoveCallback
 {
 	function void (int entity);
+	function void (CBaseEntity entity);
 }
 
 methodmap CEntityFactory < Handle
