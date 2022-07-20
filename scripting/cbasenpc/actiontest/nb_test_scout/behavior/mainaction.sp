@@ -1,46 +1,66 @@
 
 static NextBotActionFactory ActionFactory;
 
-NextBotActionFactory ScoutMainAction_GetFactory()
+methodmap TestScoutBotMainAction < NextBotAction
 {
-	return ActionFactory;
+	public static void Initialize()
+	{
+		ActionFactory = new NextBotActionFactory("ScoutMainAction");
+		ActionFactory.BeginDataMapDesc()
+			.DefineIntField("m_PathFollower")
+			.EndDataMapDesc();
+		ActionFactory.SetCallback(NextBotActionCallbackType_OnStart, OnStart);
+		ActionFactory.SetCallback(NextBotActionCallbackType_Update, Update);
+		ActionFactory.SetCallback(NextBotActionCallbackType_OnEnd, OnEnd);
+		ActionFactory.SetEventCallback(EventResponderType_OnInjured, OnInjured);
+		ActionFactory.SetEventCallback(EventResponderType_OnKilled, OnKilled);
+	}
+
+	public static NextBotActionFactory GetFactory()
+	{
+		return ActionFactory;
+	}
+
+	public TestScoutBotMainAction()
+	{
+		return view_as<TestScoutBotMainAction>(ActionFactory.Create());
+	}
+
+	property ChasePath m_PathFollower
+	{
+		public get()
+		{
+			return view_as<ChasePath>(this.GetData("m_PathFollower"));
+		}
+
+		public set(ChasePath value)
+		{
+			this.SetData("m_PathFollower", value);
+		}
+	}
 }
 
-void ScoutMainAction_Init()
+static void OnStart(TestScoutBotMainAction action, TestScoutBot actor, NextBotAction prevAction)
 {
-	ActionFactory = new NextBotActionFactory("ScoutMainAction");
-	ActionFactory.BeginDataMapDesc()
-		.DefineIntField("m_PathFollower")
-	.EndDataMapDesc();
-	ActionFactory.SetCallback( NextBotActionCallbackType_OnStart, ScoutMainAction_OnStart );
-	ActionFactory.SetCallback( NextBotActionCallbackType_Update, ScoutMainAction_Update );
-	ActionFactory.SetCallback( NextBotActionCallbackType_OnEnd, ScoutMainAction_OnEnd );
-	ActionFactory.SetEventCallback( EventResponderType_OnInjured, ScoutMainAction_OnInjured );
-	ActionFactory.SetEventCallback( EventResponderType_OnKilled, ScoutMainAction_OnKilled );
+	action.m_PathFollower = ChasePath(LEAD_SUBJECT, _, Path_FilterIgnoreActors, Path_FilterOnlyActors);
 }
 
-static void ScoutMainAction_OnStart( NextBotAction action, int actor, NextBotAction prevAction )
-{
-	action.SetData( "m_PathFollower", ChasePath(LEAD_SUBJECT, _, Path_FilterIgnoreActors, Path_FilterOnlyActors) );
-}
-
-static int ScoutMainAction_Update( NextBotAction action, int actor, float interval )
+static int Update(TestScoutBotMainAction action, TestScoutBot actor, float interval)
 {
 	float vecPos[3];
-	GetEntPropVector(actor, Prop_Data, "m_vecAbsOrigin", vecPos);
+	actor.GetAbsOrigin(vecPos);
 
-	CBaseNPC pNPC = TheNPCs.FindNPCByEntIndex(actor);
+	CBaseNPC pNPC = TheNPCs.FindNPCByEntIndex(actor.index);
 	NextBotGroundLocomotion loco = pNPC.GetLocomotion();
 	INextBot bot = pNPC.GetBot();
-	CBaseCombatCharacter pCC = CBaseCombatCharacter(actor);
 
-	bool onGround = !!(pCC.GetFlags() & FL_ONGROUND);
+	bool onGround = !!(actor.GetFlags() & FL_ONGROUND);
 
-	int target = GetEntPropEnt(actor, Prop_Data, "m_Target");
-	if (IsValidEntity(target))
+	CBaseEntity target = actor.m_Target;
+	if (target.IsValid())
 	{
 		float vecTargetPos[3];
-		GetEntPropVector(target, Prop_Data, "m_vecAbsOrigin", vecTargetPos);
+		target.GetAbsOrigin(vecTargetPos);
 
 		float dist = GetVectorDistance(vecTargetPos, vecPos);
 
@@ -51,82 +71,84 @@ static int ScoutMainAction_Update( NextBotAction action, int actor, float interv
 			ChasePath path = action.GetData("m_PathFollower");
 			if (path)
 			{
-				path.Update(bot, target);
 				loco.Run();
+				path.Update(bot, target.index);
 			}
 		}
 		else if (onGround)
 		{
-			return action.SuspendFor( ScoutBaitAction_Create() );
+			return action.SuspendFor(TestScoutBotBaitAction());
 		}
 	}
 
 	float speed = loco.GetGroundSpeed();
 
-	int sequence = GetEntProp(actor, Prop_Send, "m_nSequence");
+	int sequence = actor.GetProp(Prop_Send, "m_nSequence");
 
 	if (speed < 0.01)
 	{
-		int idleSequence = GetEntProp(actor, Prop_Data, "m_idleSequence");
+		int idleSequence = actor.GetProp(Prop_Data, "m_idleSequence");
 		if (idleSequence != -1 && sequence != idleSequence)
 		{
-			pCC.ResetSequence(idleSequence);
+			actor.ResetSequence(idleSequence);
 		}
 	}
 	else
 	{
-		int runSequence = GetEntProp(actor, Prop_Data, "m_runSequence");
-		int airSequence = GetEntProp(actor, Prop_Data, "m_airSequence");
+		int runSequence = actor.GetProp(Prop_Data, "m_runSequence");
+		int airSequence = actor.GetProp(Prop_Data, "m_airSequence");
 
 		if (!onGround)
 		{
 			if (airSequence != -1 && sequence != airSequence)
-				pCC.ResetSequence(airSequence);
+			{
+				actor.ResetSequence(airSequence);
+			}
 		}
 		else
 		{			
 			if (runSequence != -1 && sequence != runSequence)
-				pCC.ResetSequence(runSequence);
+			{
+				actor.ResetSequence(runSequence);
+			}
 		}
 	}
 
 	return action.Continue();
 }
 
-static void ScoutMainAction_OnEnd(NextBotAction action, int actor, NextBotAction nextAction)
+static void OnEnd(TestScoutBotMainAction action, TestScoutBot actor, NextBotAction nextAction)
 {
-	ChasePath path = action.GetData("m_PathFollower");
+	ChasePath path = action.m_PathFollower;
 	if (path)
 	{
+		actor.MyNextBotPointer().NotifyPathDestruction(path);
 		path.Destroy();
 	}
 }
 
-static int ScoutMainAction_OnInjured(NextBotAction action, 
-	int actor, 
-	int attacker, 
-	int inflictor, 
+static int OnInjured(TestScoutBotMainAction action, 
+	TestScoutBot actor, 
+	CBaseEntity attacker, 
+	CBaseEntity inflictor, 
 	float damage, 
 	int damagetype, 
-	int weapon, 
+	CBaseEntity weapon, 
 	const float damageForce[3],
-	const float damagePosition[3], int damageCustom )
+	const float damagePosition[3], int damageCustom)
 {
 	return action.TryContinue();
 }
 
-static int ScoutMainAction_OnKilled(NextBotAction action, 
-	int actor, 
-	int attacker, 
-	int inflictor, 
+static int OnKilled(TestScoutBotMainAction action, 
+	TestScoutBot actor, 
+	CBaseEntity attacker, 
+	CBaseEntity inflictor, 
 	float damage, 
 	int damagetype, 
-	int weapon, 
+	CBaseEntity weapon, 
 	const float damageForce[3],
-	const float damagePosition[3], int damageCustom )
+	const float damagePosition[3], int damageCustom)
 {
-	NextBotAction deathAction = ScoutDeathAction_Create();
-	deathAction.SetData("m_iDamageType", damagetype);
-
-	return action.TryChangeTo( deathAction, RESULT_CRITICAL );
+	return action.TryChangeTo(TestScoutBotDeathAction(damagetype), RESULT_CRITICAL);
 }

@@ -1,59 +1,89 @@
 
 static NextBotActionFactory ActionFactory;
 
-void ScoutDeathAction_Init()
+methodmap TestScoutBotDeathAction < NextBotAction
 {
-	ActionFactory = new NextBotActionFactory("ScoutDeathAction");
-	ActionFactory.BeginDataMapDesc()
-		.DefineIntField("m_iDamageType")
-		.DefineFloatField("m_flDieTime")
-	.EndDataMapDesc();
-	ActionFactory.SetCallback( NextBotActionCallbackType_OnStart, ScoutDeathAction_OnStart );
-	ActionFactory.SetCallback( NextBotActionCallbackType_Update, ScoutDeathAction_Update );
+	public static void Initialize()
+	{
+		ActionFactory = new NextBotActionFactory("ScoutDeathAction");
+		ActionFactory.BeginDataMapDesc()
+			.DefineIntField("m_iDamageType")
+			.DefineFloatField("m_flDieTime")
+		.EndDataMapDesc();
+		ActionFactory.SetCallback( NextBotActionCallbackType_OnStart, OnStart );
+		ActionFactory.SetCallback( NextBotActionCallbackType_Update, Update );
+	}
+
+	property int m_iDamageType
+	{
+		public get()
+		{
+			return this.GetData("m_iDamageType");
+		}
+
+		public set(int value)
+		{
+			this.SetData("m_iDamageType", value);
+		}
+	}
+
+	property float m_flDieTime
+	{
+		public get()
+		{
+			return this.GetDataFloat("m_flDieTime");
+		}
+
+		public set(float value)
+		{
+			this.SetDataFloat("m_flDieTime", value);
+		}
+	}
+
+	public TestScoutBotDeathAction(int damageType)
+	{
+		TestScoutBotDeathAction action = view_as<TestScoutBotDeathAction>(ActionFactory.Create());
+
+		action.m_iDamageType = damageType;
+
+		return action;
+	}
 }
 
-NextBotAction ScoutDeathAction_Create()
+static int OnStart(TestScoutBotDeathAction action, TestScoutBot actor, NextBotAction prevAction)
 {
-	return ActionFactory.Create();
-}
+	EmitSoundToAll("vo/scout_paincrticialdeath01.mp3", actor.index, SNDCHAN_VOICE, SNDLEVEL_SCREAMING);
 
-static int ScoutDeathAction_OnStart( NextBotAction action, int actor, NextBotAction prevAction )
-{
-	EmitSoundToAll("vo/scout_paincrticialdeath01.mp3", actor, SNDCHAN_VOICE, SNDLEVEL_SCREAMING);
-
-	CBaseCombatCharacter anim = CBaseCombatCharacter(actor);
 	int sequence = -1;
 
-	if ((GetEntityFlags(actor) & FL_ONGROUND))
+	if ((actor.GetFlags() & FL_ONGROUND))
 	{
-		int damageType = action.GetData("m_iDamageType");
-		if (damageType & DMG_PLASMA)
+		if (action.m_iDamageType & DMG_PLASMA)
 		{
-			sequence = anim.LookupSequence("primary_death_burning");
+			sequence = actor.LookupSequence("primary_death_burning");
 		}
 	}
 	
 	if (sequence == -1)
 	{
-		AcceptEntityInput(actor, "BecomeRagdoll");
+		actor.AcceptInput("BecomeRagdoll");
 		return action.Done();
 	}
 
-	action.SetDataFloat("m_flDieTime", GetGameTime() + anim.SequenceDuration(sequence));
+	action.m_flDieTime = GetGameTime() + actor.SequenceDuration(sequence);
 
 	// Play animation
-	anim.ResetSequence( sequence );
-	SetEntPropFloat( actor, Prop_Data, "m_flCycle", 0.0 );
+	actor.ResetSequence(sequence);
+	actor.SetPropFloat(Prop_Data, "m_flCycle", 0.0);
 
 	return action.Continue();
 }
 
-static int ScoutDeathAction_Update( NextBotAction action, int actor, float interval )
+static int Update(TestScoutBotDeathAction action, TestScoutBot actor, float interval)
 {
-	float flDieTime = action.GetDataFloat("m_flDieTime");
-	if (GetGameTime() >= flDieTime)
+	if (GetGameTime() >= action.m_flDieTime)
 	{
-		AcceptEntityInput(actor, "BecomeRagdoll");
+		actor.AcceptInput("BecomeRagdoll");
 		return action.Done();
 	}
 

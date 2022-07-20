@@ -148,6 +148,7 @@ typeset NavPathCostFunctor
 	 * @return             Cost to move from `fromArea` to `area`
 	 */
 	function float(CNavArea area, CNavArea fromArea, CNavLadder ladder, int elevator, float length);
+	function float(CNavArea area, CNavArea fromArea, CNavLadder ladder, CBaseEntity elevator, float length);
 };
 
 enum CNavMesh 
