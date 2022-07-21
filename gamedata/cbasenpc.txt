@@ -25,10 +25,15 @@
 				"linux"		"66"
 				"windows"	"65"
 			}
-			"CBaseCombatCharacter::EventKilled"
+			"CBaseEntity::Event_Killed"
 			{
 				"linux"		"67"
 				"windows"	"66"
+			}
+			"CBaseEntity::Spawn"
+			{
+				"linux"		"23"
+				"windows"	"22"
 			}
 			"CBaseEntity::PostConstructor"
 			{

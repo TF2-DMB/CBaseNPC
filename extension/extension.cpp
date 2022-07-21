@@ -34,6 +34,7 @@ extern ConVar* NextBotDebugHistory;
 extern ConVar* NextBotPathDrawIncrement;
 extern ConVar* NextBotPathSegmentInfluenceRadius;
 extern ConVar* NextBotPlayerStop;
+extern ConVar* NextBotStop;
 extern ConVar* nav_solid_props;
 extern ConVar* nb_update_framelimit;
 extern ConVar* nb_update_maxslide;
@@ -90,7 +91,7 @@ bool CBaseNPCExt::SDK_OnLoad(char *error, size_t maxlength, bool late)
 	g_pBaseNPCFactory = new CBaseNPCFactory;
 	
 	int iOffset = 0;
-	GETGAMEDATAOFFSET("CBaseCombatCharacter::EventKilled", iOffset);
+	GETGAMEDATAOFFSET("CBaseEntity::Event_Killed", iOffset);
 	SH_MANUALHOOK_RECONFIGURE(MEvent_Killed, iOffset, 0, 0);
 	
 	CREATEHANDLETYPE(SurroundingAreasCollector);
@@ -130,6 +131,7 @@ bool CBaseNPCExt::SDK_OnMetamodLoad(ISmmAPI *ismm, char *error, size_t maxlen, b
 	NextBotPathDrawIncrement = g_pCVar->FindVar("nb_path_draw_inc");
 	NextBotPathSegmentInfluenceRadius = g_pCVar->FindVar("nb_path_segment_influence_radius");
 	NextBotPlayerStop = g_pCVar->FindVar("nb_player_stop");
+	NextBotStop = g_pCVar->FindVar("nb_stop");
 	nav_solid_props = g_pCVar->FindVar("nav_solid_props");
 	nb_update_framelimit = g_pCVar->FindVar("nb_update_framelimit");
 	nb_update_maxslide = g_pCVar->FindVar("nb_update_maxslide");

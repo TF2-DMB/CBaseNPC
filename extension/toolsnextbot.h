@@ -28,11 +28,14 @@ class ToolsNextBotPlayer : public ToolsNextBot
 {
 public:
 	ToolsNextBotPlayer(CBaseCombatCharacterHack* link);
+	virtual ~ToolsNextBotPlayer();
 
 // INextbot
 	virtual void Update() override;
 
 // Source events propagation
+	void Hook_Spawn(void);
+	void Hook_PhysicsSimulate(void);
 	int  Hook_OnTakeDamage_Alive(const CTakeDamageInfo& info);
 	int  Hook_OnTakeDamage_Dying(const CTakeDamageInfo& info);
 	void Hook_Event_Killed(const CTakeDamageInfo& info);
@@ -43,7 +46,7 @@ public:
 	void Hook_Weapon_Drop(CBaseEntityHack* weapon, const Vector* target, const Vector* velocity);
 
 // Our interface
-	virtual bool IsDormantWhenDead(void) const;
+	bool IsDormantWhenDead(void) const;
 
 protected:
 	IntervalTimer m_burningTimer;
