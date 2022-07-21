@@ -24,6 +24,7 @@ VCall<INextBot*> CBaseEntityHack::vMyNextBotPointer;
 MCall<void, int> CBaseEntityHack::mInvalidatePhysicsRecursive;
 VCall<const Vector&> CBaseEntityHack::vWorldSpaceCenter;
 VCall<int, const CTakeDamageInfo&> CBaseEntityHack::vOnTakeDamage;
+VCall<bool> CBaseEntityHack::vIsAlive;
 MCall<void> CBaseEntityHack::mCalcAbsolutePosition;
 
 #ifndef __linux__
@@ -42,6 +43,8 @@ DETOUR_DECL_MEMBER1(SimThink_EntityChanged, void, CBaseEntity*, ent)
 #else
 FCall<void, CBaseEntity*> SimThink_EntityChanged;
 #endif
+
+FCall<const trace_t&> fGetTouchTrace;
 
 float k_flMaxEntityEulerAngle = 360.0 * 1000.0f;
 float k_flMaxEntityPosCoord = MAX_COORD_FLOAT;
@@ -116,6 +119,9 @@ bool CBaseEntityHack::Init(SourceMod::IGameConfig* config, char* error, size_t m
 		vWorldSpaceCenter.Init(config, "CBaseEntity::WorldSpaceCenter");
 		vEyeAngles.Init(config, "CBaseEntity::EyeAngles");
 		vOnTakeDamage.Init(configSDKHooks, "OnTakeDamage");
+		vIsAlive.Init(config, "CBaseEntity::IsAlive");
+		fGetTouchTrace.Init(config, "CBaseEntity::GetTouchTrace");
+
 		// This function also doesn't warrant its own file, as it only ever used by CBaseEntity
 		SimThink_EntityChanged.Init(config, "SimThink_EntityChanged");
 #ifndef __linux__
@@ -199,6 +205,11 @@ bool CBaseEntityHack::Init(SourceMod::IGameConfig* config, char* error, size_t m
 	return true;
 }
 
+const trace_t& CBaseEntityHack::GetTouchTrace(void)
+{
+	return fGetTouchTrace();
+}
+
 void CBaseEntityHack::DispatchUpdateTransmitState(void)
 {
 	// Admittedly a far fetched hack BUT IServerEntity::SetModelIndex is only implemented
@@ -276,6 +287,11 @@ const Vector& CBaseEntityHack::WorldSpaceCenter(void)
 int CBaseEntityHack::OnTakeDamage(const CTakeDamageInfo& info)
 {
 	return vOnTakeDamage(this, info);
+}
+
+bool CBaseEntityHack::IsAlive()
+{
+	return vIsAlive(this);
 }
 
 const QAngle& CBaseEntityHack::EyeAngles(void)

@@ -33,6 +33,7 @@ ConVar* g_cvDeveloper = nullptr;
 extern ConVar* NextBotDebugHistory;
 extern ConVar* NextBotPathDrawIncrement;
 extern ConVar* NextBotPathSegmentInfluenceRadius;
+extern ConVar* NextBotPlayerStop;
 extern ConVar* nav_solid_props;
 
 HandleType_t g_KeyValueType;
@@ -130,6 +131,7 @@ bool CBaseNPCExt::SDK_OnMetamodLoad(ISmmAPI *ismm, char *error, size_t maxlen, b
 	NextBotDebugHistory = g_pCVar->FindVar("nb_debug_history");
 	NextBotPathDrawIncrement = g_pCVar->FindVar("nb_path_draw_inc");
 	NextBotPathSegmentInfluenceRadius = g_pCVar->FindVar("nb_path_segment_influence_radius");
+	NextBotPlayerStop = g_pCVar->FindVar("nb_player_stop");
 	nav_solid_props = g_pCVar->FindVar("nav_solid_props");
 
 	g_pSharedChangeInfo = engine->GetSharedEdictChangeInfo();

@@ -27,15 +27,23 @@ class ToolsNextBotPlayer : public ToolsNextBot
 public:
 	ToolsNextBotPlayer(CBaseCombatCharacterHack* link);
 
-	virtual int Hook_OnTakeDamage_Alive(const CTakeDamageInfo& info);
-	virtual int Hook_OnTakeDamage_Dying(const CTakeDamageInfo& info);
-	virtual void Hook_Event_Killed(const CTakeDamageInfo& info);
-	virtual void Hook_HandleAnimEvent(animevent_t* event);
-	virtual void Hook_OnNavAreaChanged(CNavArea* enteredArea, CNavArea* leftArea);
-	virtual void Hook_Touch(CBaseEntityHack* other);
-	virtual void Hook_Weapon_Equip(CBaseEntityHack* weapon);
-	virtual	void Hook_Weapon_Drop(CBaseEntityHack* weapon, const Vector* target, const Vector* velocity);
+// INextbot
+	virtual void Update() override;
+
+// Source events propagation
+	int  Hook_OnTakeDamage_Alive(const CTakeDamageInfo& info);
+	int  Hook_OnTakeDamage_Dying(const CTakeDamageInfo& info);
+	void Hook_Event_Killed(const CTakeDamageInfo& info);
+	void Hook_HandleAnimEvent(animevent_t* event);
+	void Hook_OnNavAreaChanged(CNavArea* enteredArea, CNavArea* leftArea);
+	void Hook_Touch(CBaseEntityHack* other);
+	void Hook_Weapon_Equip(CBaseEntityHack* weapon);
+	void Hook_Weapon_Drop(CBaseEntityHack* weapon, const Vector* target, const Vector* velocity);
+
+// Our interface
+	virtual bool IsDormantWhenDead(void) const;
 
 protected:
+	IntervalTimer m_burningTimer;
 	std::vector<int> m_hooks;
 };

@@ -1,28 +1,64 @@
 #include "toolsnextbot.h"
 
+ConVar* NextBotPlayerStop = nullptr;
+
 ToolsNextBot::ToolsNextBot(CBaseCombatCharacterHack* link) :
 	INextBot(),
 	m_linkedEntity(link)
 {
 }
 
+ToolsNextBotPlayer::ToolsNextBotPlayer(CBaseCombatCharacterHack* link) :
+	ToolsNextBot(link)
+{
+	m_burningTimer.Invalidate();
+}
+
+void ToolsNextBotPlayer::Update()
+{
+	if ((GetEntity()->IsAlive() || !IsDormantWhenDead()) && !NextBotPlayerStop->GetBool())
+	{
+		ToolsNextBot::Update();	
+	}
+}
+
 int ToolsNextBotPlayer::Hook_OnTakeDamage_Alive(const CTakeDamageInfo& info)
 {
+	if (info.GetDamageType() & DMG_BURN)
+	{
+		if (!m_burningTimer.HasStarted() || m_burningTimer.IsGreaterThen(1.0f))
+		{
+			OnIgnite();
+			m_burningTimer.Start();
+		}
+	}
+
+	OnInjured(info);
 	RETURN_META_VALUE(MRES_IGNORED, 0);
 }
 
 int ToolsNextBotPlayer::Hook_OnTakeDamage_Dying(const CTakeDamageInfo& info)
 {
+	if (info.GetDamageType() & DMG_BURN)
+	{
+		if (!m_burningTimer.HasStarted() || m_burningTimer.IsGreaterThen(1.0f))
+		{
+			OnIgnite();
+			m_burningTimer.Start();
+		}
+	}
+
+	OnInjured(info);
 	RETURN_META_VALUE(MRES_IGNORED, 0);
 }
 
-void ToolsNextBotPlayer::Hook_Event_Killed( const CTakeDamageInfo& info)
+void ToolsNextBotPlayer::Hook_Event_Killed(const CTakeDamageInfo& info)
 {
 	OnKilled(info);
 	RETURN_META(MRES_IGNORED);
 }
 
-void ToolsNextBotPlayer::Hook_HandleAnimEvent(animevent_t* event )
+void ToolsNextBotPlayer::Hook_HandleAnimEvent(animevent_t* event)
 {
 	OnAnimationEvent(event);
 	RETURN_META(MRES_IGNORED);
@@ -57,4 +93,9 @@ void ToolsNextBotPlayer::Hook_Weapon_Drop(CBaseEntityHack* weapon, const Vector*
 {
 	OnDrop(weapon);
 	RETURN_META(MRES_IGNORED);
+}
+
+bool ToolsNextBotPlayer::IsDormantWhenDead(void) const
+{
+	return true;
 }

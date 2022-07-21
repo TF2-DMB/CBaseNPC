@@ -102,6 +102,8 @@ class CBaseEntityHack : public CBaseEntity
 public:
 	static bool Init(SourceMod::IGameConfig* config, char* error, size_t maxlength);
 
+	static const trace_t& GetTouchTrace(void);
+
 	static MCall<void, bool> CBaseEntity_Ctor;
 
 	static VCall<void, const char*> vPostConstructor;
@@ -150,6 +152,9 @@ public:
 
 	static VCall<int, const CTakeDamageInfo&> vOnTakeDamage;
 	int OnTakeDamage(const CTakeDamageInfo& info);
+
+	static VCall<bool> vIsAlive;
+	bool IsAlive(void);
 
 	//static MCall<void, const Vector&> mSetAbsVelocity;
 	//void SetAbsVelocity(const Vector&);
