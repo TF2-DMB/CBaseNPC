@@ -68,20 +68,28 @@ typeset ActionEventResponderCallback
 	// OnDrop (item = ground)
 	// OnCommandApproachEntity (goal = ground)
 	function int (NextBotAction action, int actor, int ground);
+	function int (NextBotAction action, CBaseCombatCharacter actor, CBaseEntity ground);
 	function void (NextBotAction action, int actor, int ground);
+	function void (NextBotAction action, CBaseCombatCharacter actor, CBaseEntity ground);
 	
 	// OnContact
-	// result is a CGameTrace structure
+	// result is a CGameTrace* structure
 	function int (NextBotAction action, int actor, int other, Address result);
+	function int (NextBotAction action, CBaseCombatCharacter actor, CBaseEntity other, Address result);
 	function void (NextBotAction action, int actor, int other, Address result);
+	function void (NextBotAction action, CBaseCombatCharacter actor, CBaseEntity other, Address result);
 
 	// OnMoveToSuccess
 	function int (NextBotAction action, int actor, Path path);
+	function int (NextBotAction action, CBaseCombatCharacter actor, Path path);
 	function void (NextBotAction action, int actor, Path path);
+	function void (NextBotAction action, CBaseCombatCharacter actor, Path path);
 
 	// OnMoveToFailure
 	function int (NextBotAction action, int actor, Path path, MoveToFailureType reason);
+	function int (NextBotAction action, CBaseCombatCharacter actor, Path path, MoveToFailureType reason);
 	function void (NextBotAction action, int actor, Path path, MoveToFailureType reason);
+	function void (NextBotAction action, CBaseCombatCharacter actor, Path path, MoveToFailureType reason);
 
 	// OnStuck
 	// OnUnStuck
@@ -92,12 +100,16 @@ typeset ActionEventResponderCallback
 	// OnWin
 	// OnLose
 	function int (NextBotAction action, int actor);
+	function int (NextBotAction action, CBaseCombatCharacter actor);
 	function void (NextBotAction action, int actor);
+	function void (NextBotAction action, CBaseCombatCharacter actor);
 
 	// OnAnimationActivityComplete
 	// OnAnimationActivityInterrupted
 	function int (NextBotAction action, int actor, Activity activity);
+	function int (NextBotAction action, CBaseCombatCharacter actor, Activity activity);
 	function void (NextBotAction action, int actor, Activity activity);
+	function void (NextBotAction action, CBaseCombatCharacter actor, Activity activity);
 
 	// OnCommandAttack
 	// OnShoved (pusher = victim)
@@ -106,71 +118,142 @@ typeset ActionEventResponderCallback
 	// OnTerritoryCaptured (territoryID = victim)
 	// OnTerritoryLost (territoryID = victim)
 	function int (NextBotAction action, int actor, int victim);
+	function int (NextBotAction action, CBaseCombatCharacter actor, CBaseEntity victim);
 	function void (NextBotAction action, int actor, int victim);
+	function void (NextBotAction action, CBaseCombatCharacter actor, CBaseEntity victim);
 
 	// OnAnimationEvent
 	function int (NextBotAction action, int actor, int event);
+	function int (NextBotAction action, CBaseCombatCharacter actor, int event);
+
 	function void (NextBotAction action, int actor, int event);
+	function void (NextBotAction action, CBaseCombatCharacter actor, int event);
+
 	function int (NextBotAction action, int actor, int event, const char[] options);
+	function int (NextBotAction action, CBaseCombatCharacter actor, int event, const char[] options);
+
 	function void (NextBotAction action, int actor, int event, const char[] options);
+	function void (NextBotAction action, CBaseCombatCharacter actor, int event, const char[] options);
+
 	function int (NextBotAction action, int actor, int event, const char[] options, float cycle, float eventtime);
+	function int (NextBotAction action, CBaseCombatCharacter actor, int event, const char[] options, float cycle, float eventtime);
+
 	function void (NextBotAction action, int actor, int event, const char[] options, float cycle, float eventtime);
+	function void (NextBotAction action, CBaseCombatCharacter actor, int event, const char[] options, float cycle, float eventtime);
+
 	function int (NextBotAction action, int actor, int event, const char[] options, float cycle, float eventtime, int eventtype);
+	function int (NextBotAction action, CBaseCombatCharacter actor, int event, const char[] options, float cycle, float eventtime, int eventtype);
+
 	function void (NextBotAction action, int actor, int event, const char[] options, float cycle, float eventtime, int eventtype);
+	function void (NextBotAction action, CBaseCombatCharacter actor, int event, const char[] options, float cycle, float eventtime, int eventtype);
+
 	function int (NextBotAction action, int actor, int event, const char[] options, float cycle, float eventtime, int eventtype, int eventSourceEntity);
+	function int (NextBotAction action, CBaseCombatCharacter actor, int event, const char[] options, float cycle, float eventtime, int eventtype, CBaseAnimating eventSourceEntity);
+
 	function void (NextBotAction action, int actor, int event, const char[] options, float cycle, float eventtime, int eventtype, int eventSourceEntity);
+	function void (NextBotAction action, CBaseCombatCharacter actor, int event, const char[] options, float cycle, float eventtime, int eventtype, CBaseAnimating eventSourceEntity);
 
 	// OnInjured
 	// OnKilled
 	function int (NextBotAction action, int actor, int attacker, int inflictor, float damage, int damagetype);
+	function int (NextBotAction action, CBaseCombatCharacter actor, CBaseEntity attacker, CBaseEntity inflictor, float damage, int damagetype);
+
 	function void (NextBotAction action, int actor, int attacker, int inflictor, float damage, int damagetype);
+	function void (NextBotAction action, CBaseCombatCharacter actor, CBaseEntity attacker, CBaseEntity inflictor, float damage, int damagetype);
+
 	function int (NextBotAction action, int actor, int attacker, int inflictor, float damage, int damagetype, int weapon, const float damageForce[3], const float damagePosition[3]);
+	function int (NextBotAction action, CBaseCombatCharacter actor, CBaseEntity attacker, CBaseEntity inflictor, float damage, int damagetype, CBaseEntity weapon, const float damageForce[3], const float damagePosition[3]);
+
 	function void (NextBotAction action, int actor, int attacker, int inflictor, float damage, int damagetype, int weapon, const float damageForce[3], const float damagePosition[3]);
+	function void (NextBotAction action, CBaseCombatCharacter actor, CBaseEntity attacker, CBaseEntity inflictor, float damage, int damagetype, CBaseEntity weapon, const float damageForce[3], const float damagePosition[3]);
+
 	function int (NextBotAction action, int actor, int attacker, int inflictor, float damage, int damagetype, int weapon, const float damageForce[3], const float damagePosition[3], int damagecustom);
+	function int (NextBotAction action, CBaseCombatCharacter actor, CBaseEntity attacker, CBaseEntity inflictor, float damage, int damagetype, CBaseEntity weapon, const float damageForce[3], const float damagePosition[3], int damagecustom);
+
 	function void (NextBotAction action, int actor, int attacker, int inflictor, float damage, int damagetype, int weapon, const float damageForce[3], const float damagePosition[3], int damagecustom);
+	function void (NextBotAction action, CBaseCombatCharacter actor, CBaseEntity attacker, CBaseEntity inflictor, float damage, int damagetype, CBaseEntity weapon, const float damageForce[3], const float damagePosition[3], int damagecustom);
 
 	// OnOtherKilled
 	function int (NextBotAction action, int actor, int victim, int attacker, int inflictor, float damage, int damagetype);
+	function int (NextBotAction action, CBaseCombatCharacter actor, CBaseCombatCharacter victim, CBaseEntity attacker, CBaseEntity inflictor, float damage, int damagetype);
+
 	function void (NextBotAction action, int actor, int victim, int attacker, int inflictor, float damage, int damagetype);
+	function void (NextBotAction action, CBaseCombatCharacter actor, CBaseCombatCharacter victim, CBaseEntity attacker, CBaseEntity inflictor, float damage, int damagetype);
+
 	function int (NextBotAction action, int actor, int victim, int attacker, int inflictor, float damage, int damagetype, int weapon, const float damageForce[3], const float damagePosition[3]);
+	function int (NextBotAction action, CBaseCombatCharacter actor, CBaseCombatCharacter victim, CBaseEntity attacker, CBaseEntity inflictor, float damage, int damagetype, CBaseEntity weapon, const float damageForce[3], const float damagePosition[3]);
+
 	function void (NextBotAction action, int actor, int victim, int attacker, int inflictor, float damage, int damagetype, int weapon, const float damageForce[3], const float damagePosition[3]);
+	function void (NextBotAction action, CBaseCombatCharacter actor, CBaseCombatCharacter victim, CBaseEntity attacker, CBaseEntity inflictor, float damage, int damagetype, CBaseEntity weapon, const float damageForce[3], const float damagePosition[3]);
+
 	function int (NextBotAction action, int actor, int victim, int attacker, int inflictor, float damage, int damagetype, int weapon, const float damageForce[3], const float damagePosition[3], int damagecustom);
+	function int (NextBotAction action, CBaseCombatCharacter actor, CBaseCombatCharacter victim, CBaseEntity attacker, CBaseEntity inflictor, float damage, int damagetype, CBaseEntity weapon, const float damageForce[3], const float damagePosition[3], int damagecustom);
+
 	function void (NextBotAction action, int actor, int victim, int attacker, int inflictor, float damage, int damagetype, int weapon, const float damageForce[3], const float damagePosition[3], int damagecustom);
+	function void (NextBotAction action, CBaseCombatCharacter actor, CBaseCombatCharacter victim, CBaseEntity attacker, CBaseEntity inflictor, float damage, int damagetype, CBaseEntity weapon, const float damageForce[3], const float damagePosition[3], int damagecustom);
 
 	// OnSound
 	function int (NextBotAction action, int actor, int sourceEntity, const float pos[3], KeyValues keys);
+	function int (NextBotAction action, CBaseCombatCharacter actor, CBaseEntity sourceEntity, const float pos[3], KeyValues keys);
+
 	function void (NextBotAction action, int actor, int sourceEntity, const float pos[3], KeyValues keys);
+	function void (NextBotAction action, CBaseCombatCharacter actor, CBaseEntity sourceEntity, const float pos[3], KeyValues keys);
 
 	// OnSpokeConcept
 	// response is AI_Response*
 	function int (NextBotAction action, int actor, int who, const char[] concept, Address response);
+	function int (NextBotAction action, CBaseCombatCharacter actor, CBaseCombatCharacter who, const char[] concept, Address response);
+
 	function void (NextBotAction action, int actor, int who, const char[] concept, Address response);
+	function void (NextBotAction action, CBaseCombatCharacter actor, CBaseCombatCharacter who, const char[] concept, Address response);
 
 	// OnWeaponFired
-	// OnPickUp (item = whoFired, giver = weapon)
-	// OnActorEmoted (emoter = whoFired, emote = weapon)
 	function int (NextBotAction action, int actor, int whoFired, int weapon);
+	function int (NextBotAction action, CBaseCombatCharacter actor, CBaseCombatCharacter whoFired, CBaseEntity weapon);
+
 	function void (NextBotAction action, int actor, int whoFired, int weapon);
+	function void (NextBotAction action, CBaseCombatCharacter actor, CBaseCombatCharacter whoFired, CBaseEntity weapon);
+
+	// OnPickUp
+	function int (NextBotAction action, CBaseCombatCharacter actor, CBaseEntity item, CBaseCombatCharacter giver);
+
+	// OnActorEmoted
+	function int (NextBotAction action, CBaseCombatCharacter actor, CBaseCombatCharacter emoter, int emote);
 
 	// OnNavAreaChanged
 	function int (NextBotAction action, int actor, CNavArea newArea, CNavArea oldArea);
+	function int (NextBotAction action, CBaseCombatCharacter actor, CNavArea newArea, CNavArea oldArea);
+
 	function void (NextBotAction action, int actor, CNavArea newArea, CNavArea oldArea);
+	function void (NextBotAction action, CBaseCombatCharacter actor, CNavArea newArea, CNavArea oldArea);
 
 	// OnCommandApproach
 	function int (NextBotAction action, int actor, const float pos[3], float range);
+	function int (NextBotAction action, CBaseCombatCharacter actor, const float pos[3], float range);
+
 	function void (NextBotAction action, int actor, const float pos[3], float range);
+	function void (NextBotAction action, CBaseCombatCharacter actor, const float pos[3], float range);
 
 	// OnCommandRetreat
 	function int (NextBotAction action, int actor, int threat, float range);
+	function int (NextBotAction action, CBaseCombatCharacter actor, CBaseEntity threat, float range);
+
 	function void (NextBotAction action, int actor, int threat, float range);
+	function void (NextBotAction action, CBaseCombatCharacter actor, CBaseEntity threat, float range);
 
 	// OnCommandPause
 	function int (NextBotAction action, int actor, float duration);
+	function int (NextBotAction action, CBaseCombatCharacter actor, float duration);
+
 	function void (NextBotAction action, int actor, float duration);
+	function void (NextBotAction action, CBaseCombatCharacter actor, float duration);
 
 	// OnCommandString
 	function int (NextBotAction action, int actor, const char[] command);
+	function int (NextBotAction action, CBaseCombatCharacter actor, const char[] command);
+
 	function void (NextBotAction action, int actor, const char[] command);
+	function void (NextBotAction action, CBaseCombatCharacter actor, const char[] command);
 }
 
 enum QueryResultType
@@ -196,22 +279,31 @@ enum ContextualQueryType
 typeset NextBotActionCallback
 {
 	function void (NextBotAction action, int actor);
+	function void (NextBotAction action, CBaseCombatCharacter actor);
 
 	// OnStart
 	// OnSuspend (interruptingAction = priorAction)
 	// OnResume (interruptingAction = priorAction)
 	function int (NextBotAction action, int actor, NextBotAction priorAction);
+	function int (NextBotAction action, CBaseCombatCharacter actor, NextBotAction priorAction);
+
 	function void (NextBotAction action, int actor, NextBotAction priorAction);
+	function void (NextBotAction action, CBaseCombatCharacter actor, NextBotAction priorAction);
 
 	// Update
 	function int (NextBotAction action, int actor, float interval);
+	function int (NextBotAction action, CBaseCombatCharacter actor, float interval);
+
 	function void (NextBotAction action, int actor, float interval);
+	function void (NextBotAction action, CBaseCombatCharacter actor, float interval);
 
 	// OnEnd
 	function void (NextBotAction action, int actor, NextBotAction nextAction);
+	function void (NextBotAction action, CBaseCombatCharacter actor, NextBotAction nextAction);
 
 	// InitialContainedAction
 	function NextBotAction (NextBotAction action, int actor);
+	function NextBotAction (NextBotAction action, CBaseCombatCharacter actor);
 
 	// CreateInitialAction
 	function void (NextBotAction action);
@@ -615,6 +707,7 @@ typeset ActionContextualQueryCallback
 	// ShouldPickup
 	// IsHindrance
 	function QueryResultType (NextBotAction action, INextBot bot, int item);
+	function QueryResultType (NextBotAction action, INextBot bot, CBaseEntity item);
 
 	// ShouldHurry
 	// ShouldRetreat
@@ -626,13 +719,15 @@ typeset ActionContextualQueryCallback
 	// SelectTargetPoint
 	// Leave pos unmodified for no response
 	function void (NextBotAction action, INextBot bot, int subject, float pos[3]);
+	function void (NextBotAction action, INextBot bot, CBaseCombatCharacter subject, float pos[3]);
 
 	// IsPositionAllowed
 	function QueryResultType (NextBotAction action, INextBot bot, const float pos[3]);
 
 	// SelectMoreDangerousThreat
 	// Return NULL_KNOWN_ENTITY for no response
-	function CKnownEntity (NextBotAction action, INextBot bot, int botEntity, CKnownEntity threat1, CKnownEntity threat2); 
+	function CKnownEntity (NextBotAction action, INextBot bot, int subject, CKnownEntity threat1, CKnownEntity threat2); 
+	function CKnownEntity (NextBotAction action, INextBot bot, CBaseCombatCharacter subject, CKnownEntity threat1, CKnownEntity threat2); 
 }
 
 enum NextBotActionCallbackType

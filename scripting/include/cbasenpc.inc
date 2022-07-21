@@ -161,9 +161,11 @@ typeset LocomotionCallback
 
 	// ShouldCollideWith
 	function bool (CBaseNPC_Locomotion loco, int other);
+	function bool (CBaseNPC_Locomotion loco, CBaseEntity other);
 
 	// IsEntityTraversable
-	function bool (CBaseNPC_Locomotion loco, int other, TraverseWhenType when);
+	function bool (CBaseNPC_Locomotion loco, int obstacle, TraverseWhenType when);
+	function bool (CBaseNPC_Locomotion loco, CBaseEntity obstacle, TraverseWhenType when);
 };
 
 methodmap CBaseNPC_Locomotion < NextBotGroundLocomotion
