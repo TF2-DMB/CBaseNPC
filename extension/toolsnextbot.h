@@ -2,7 +2,7 @@
 
 #include "sourcesdk/basecombatcharacter.h"
 #include "sourcesdk/NextBot/NextBotInterface.h"
-
+#include "sourcesdk/NextBot/NextBotManager.h"
 #include "cbasenpc_behavior.h"
 
 #include <vector>
@@ -10,6 +10,8 @@
 class ToolsNextBot : public INextBot
 {
 public:
+	static bool Init(SourceMod::IGameConfig* config, char* error, size_t maxlength);
+
 	ToolsNextBot(CBaseCombatCharacterHack* link);
 
 	virtual CBaseCombatCharacterHack* GetEntity() const override { return m_linkedEntity; }

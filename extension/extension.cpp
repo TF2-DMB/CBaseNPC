@@ -35,6 +35,8 @@ extern ConVar* NextBotPathDrawIncrement;
 extern ConVar* NextBotPathSegmentInfluenceRadius;
 extern ConVar* NextBotPlayerStop;
 extern ConVar* nav_solid_props;
+extern ConVar* nb_update_framelimit;
+extern ConVar* nb_update_maxslide;
 
 HandleType_t g_KeyValueType;
 
@@ -66,10 +68,6 @@ bool CBaseNPCExt::SDK_OnLoad(char *error, size_t maxlength, bool late)
 		|| !CNavMesh::Init(g_pGameConf, error, maxlength)
 		|| !CBaseCombatCharacterHack::Init(g_pGameConf, error, maxlength)
 		|| !CTraceFilterSimpleHack::Init(g_pGameConf, error, maxlength)
-		|| !INextBotComponent::Init(g_pGameConf, error, maxlength)
-		|| !ILocomotion::Init(g_pGameConf, error, maxlength)
-		|| !NextBotCombatCharacter::Init(g_pGameConf, error, maxlength)
-		|| !NextBotGroundLocomotion::Init(g_pGameConf, error, maxlength)
 		|| !CTFGameRules::Init(g_pGameConf, error, maxlength)
 		|| !CBaseEntityOutputHack::Init(g_pGameConf, error, maxlength)
 		|| !CBaseNPC_Locomotion::Init(g_pGameConf, error, maxlength)
@@ -133,6 +131,8 @@ bool CBaseNPCExt::SDK_OnMetamodLoad(ISmmAPI *ismm, char *error, size_t maxlen, b
 	NextBotPathSegmentInfluenceRadius = g_pCVar->FindVar("nb_path_segment_influence_radius");
 	NextBotPlayerStop = g_pCVar->FindVar("nb_player_stop");
 	nav_solid_props = g_pCVar->FindVar("nav_solid_props");
+	nb_update_framelimit = g_pCVar->FindVar("nb_update_framelimit");
+	nb_update_maxslide = g_pCVar->FindVar("nb_update_maxslide");
 
 	g_pSharedChangeInfo = engine->GetSharedEdictChangeInfo();
 	gpGlobals = ismm->GetCGlobals();

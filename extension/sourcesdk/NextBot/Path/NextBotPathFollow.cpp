@@ -4,6 +4,7 @@
 //========= Copyright Valve Corporation, All rights reserved. ============//
 #include "sourcesdk/nav_mesh.h"
 #include "NextBotPathFollow.h"
+#include "NextBotManager.h"
 #include <cmath>
 
 #include "NextBotLocomotionInterface.h"
@@ -69,8 +70,8 @@ public:
 PathFollower::~PathFollower()
 {
 	// allow bots to detach pointer to me
-	CDetachPath detach( this );
-	//TheNextBots().ForEachBot( detach );
+	CDetachPath detach(this);
+	TheNextBots().ForEachBot(detach);
 }
 
 

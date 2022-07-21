@@ -152,6 +152,12 @@
 		}
 		"Signatures"
 		{
+			"TheNextBots"
+			{
+				"library"		"server"
+				"windows"		"\xA1\x2A\x2A\x2A\x2A\x85\xC0\x75\x2A\x8B\x0D\x2A\x2A\x2A\x2A\xF6\xC1\x01"
+				"linux"			"@_Z11TheNextBotsv"
+			}
 			"CTFGameRules::ApplyOnDamageModifyRules"
 			{
 				"library"		"server"

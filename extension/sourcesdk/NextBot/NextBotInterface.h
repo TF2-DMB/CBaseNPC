@@ -121,6 +121,15 @@ public:
 	
 public:
 	void UpdateImmobileStatus() {}
+
+	bool BeginUpdate(void);
+	void EndUpdate(void);
+
+	int GetBotId() const;
+	void FlagForUpdate(bool b = true);
+	bool IsFlaggedForUpdate();
+	int GetTickLastUpdate() const;
+	void SetTickLastUpdate(int tick);
 	
 	INextBotComponent *m_componentList;              // +0x04
 	const PathFollower *m_CurrentPath;               // +0x08
@@ -138,6 +147,31 @@ public:
 	IVision *m_VisionInterface;                      // +0x48
 	CUtlVector<NextBotDebugLineType *> m_debugHistory; // +0x4c
 };
+
+inline int INextBot::GetBotId() const
+{
+	return m_iManagerIndex;
+}
+
+inline void INextBot::FlagForUpdate(bool b)
+{
+	m_bScheduledForNextTick = b;
+}
+
+inline bool INextBot::IsFlaggedForUpdate()
+{
+	return m_bScheduledForNextTick;
+}
+
+inline int INextBot::GetTickLastUpdate() const
+{
+	return m_iLastUpdateTick;
+}
+
+inline void INextBot::SetTickLastUpdate( int tick )
+{
+	m_iLastUpdateTick = tick;
+}
 
 inline const PathFollower *INextBot::GetCurrentPath( void ) const
 {

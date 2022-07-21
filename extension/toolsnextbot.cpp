@@ -2,6 +2,15 @@
 
 ConVar* NextBotPlayerStop = nullptr;
 
+bool ToolsNextBot::Init(SourceMod::IGameConfig* config, char* error, size_t maxlength)
+{
+	return (NextBotManager::Init(config, error, maxlength)
+		&& INextBotComponent::Init(config, error, maxlength)
+		&& ILocomotion::Init(config, error, maxlength)
+		&& NextBotCombatCharacter::Init(config, error, maxlength)
+		&& NextBotGroundLocomotion::Init(config, error, maxlength));
+}
+
 ToolsNextBot::ToolsNextBot(CBaseCombatCharacterHack* link) :
 	INextBot(),
 	m_linkedEntity(link)
