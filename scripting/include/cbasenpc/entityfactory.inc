@@ -56,6 +56,12 @@ typeset CEntityFactoryOnRemoveCallback
 	function void (CBaseEntity entity);
 }
 
+enum CEntityFactory_INextBot
+{
+	FACTORY_NEXTBOT = 1,
+	FACTORY_NEXTBOT_PLAYER = 2
+}
+
 methodmap CEntityFactory < Handle
 {
 	/**
@@ -234,7 +240,7 @@ methodmap CEntityFactory < Handle
 	 * 
 	 * @error                Invalid handle.
 	 */
-	public native void AttachNextBot();
+	public native void AttachNextBot(CEntityFactory_INextBot type = FACTORY_NEXTBOT);
 
 	// Datamap
 

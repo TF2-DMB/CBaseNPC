@@ -72,6 +72,7 @@ bool CBaseNPCExt::SDK_OnLoad(char *error, size_t maxlength, bool late)
 		|| !CTFGameRules::Init(g_pGameConf, error, maxlength)
 		|| !CBaseEntityOutputHack::Init(g_pGameConf, error, maxlength)
 		|| !CBaseNPC_Locomotion::Init(g_pGameConf, error, maxlength)
+		|| !ToolsNextBot::Init(g_pGameConf, error, maxlength)
 		)
 	{
 		return false;

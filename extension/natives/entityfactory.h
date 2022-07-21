@@ -248,7 +248,8 @@ PLUGINENTITYFACTORYNATIVE(GetClassname)
 }
 
 PLUGINENTITYFACTORYNATIVE(AttachNextBot)
-	pFactory->AttachNextBot();
+	// TO-DO: 2.0.0
+	pFactory->AttachNextBot((params[0] >= 2) ? (CEntityFactory_INextBot)params[2] : FACTORY_NEXTBOT);
 	return 0;
 }
 
