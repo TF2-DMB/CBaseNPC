@@ -20,20 +20,14 @@
 				"linux"		"29"
 				"windows"	"32"
 			}
+			"g_EntityListPool"
+			{
+				"windows"	"17"
+			}
 			"CNavMesh::m_isLoaded"
 			{
 				"linux"		"52"
 				"windows"	"52"
-			}
-			"CBaseEntity::IsAlive"
-			{
-				"linux"		"66"
-				"windows"	"65"
-			}
-			"CBaseEntity::Event_Killed"
-			{
-				"linux"		"67"
-				"windows"	"66"
 			}
 			"CBaseEntity::Spawn"
 			{
@@ -50,6 +44,16 @@
 				"linux"		"51"
 				"windows"	"50"
 			}
+			"CBaseEntity::IsAlive"
+			{
+				"linux"		"66"
+				"windows"	"65"
+			}
+			"CBaseEntity::Event_Killed"
+			{
+				"linux"		"67"
+				"windows"	"66"
+			}
 			"CBaseEntity::MyCombatCharacterPointer"
 			{
 				"linux"		"72"
@@ -62,13 +66,13 @@
 			}
 			"CBaseEntity::Touch"
 			{
-				"linux"		"100"
-				"windows"	"99"
+				"linux"		"103"
+				"windows"	"102"
 			}
 			"CBaseEntity::PhysicsSimulate"
 			{
-				"linux"		"105"
-				"windows"	"104"
+				"linux"		"108"
+				"windows"	"107"
 			}
 			"CBaseEntity::UpdateOnRemove"
 			{
@@ -89,10 +93,6 @@
 			{
 				"linux"		"153"
 				"windows"	"152"
-			}
-			"g_EntityListPool"
-			{
-				"windows"	"17"
 			}
 			"CBaseAnimating::StudioFrameAdvance"
 			{
@@ -116,23 +116,23 @@
 			}
 			"CBaseCombatCharacter::Weapon_Equip"
 			{
-				"linux"		"266"
-				"windows"	"265"
+				"linux"		"269"
+				"windows"	"268"
 			}
 			"CBaseCombatCharacter::Weapon_Drop"
 			{
-				"linux"		"268"
-				"windows"	"267"
+				"linux"		"271"
+				"windows"	"270"
 			}
 			"CBaseCombatCharacter::OnTakeDamage_Alive"
 			{
-				"linux"		"277"
-				"windows"	"276"
+				"linux"		"280"
+				"windows"	"279"
 			}
 			"CBaseCombatCharacter::OnTakeDamage_Dying"
 			{
-				"linux"		"278"
-				"windows"	"277"
+				"linux"		"281"
+				"windows"	"280"
 			}
 			"CBaseCombatCharacter::GetLastKnownArea"
 			{
@@ -141,8 +141,8 @@
 			}
 			"CBaseCombatCharacter::OnNavAreaChanged"
 			{
-				"linux"		"321"
-				"windows"	"320"
+				"linux"		"324"
+				"windows"	"323"
 			}
 			"CBaseCombatCharacter::UpdateLastKnownArea"
 			{
