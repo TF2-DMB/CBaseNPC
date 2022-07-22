@@ -84,6 +84,11 @@ void ToolsNextBotPlayer::Update()
 	}
 }
 
+bool ToolsNextBotPlayer::IsRemovedOnReset() const
+{
+	return false;
+}
+
 void ToolsNextBotPlayer::Hook_Spawn(void)
 {
 	m_burningTimer.Invalidate();
