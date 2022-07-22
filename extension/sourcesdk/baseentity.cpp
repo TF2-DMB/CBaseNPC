@@ -82,6 +82,8 @@ DEFINEVAR(CBaseEntityHack, m_iTeamNum);
 DEFINEVAR(CBaseEntityHack, m_hGroundEntity);
 DEFINEVAR(CBaseEntityHack, m_ModelName);
 
+trace_t* g_pTouchTrace;
+
 bool CBaseEntityHack::Init(SourceMod::IGameConfig* config, char* error, size_t maxlength)
 {
 	// Some function signatures & offsets can be fetched from Sourcemod, yay!
@@ -120,7 +122,6 @@ bool CBaseEntityHack::Init(SourceMod::IGameConfig* config, char* error, size_t m
 		vEyeAngles.Init(config, "CBaseEntity::EyeAngles");
 		vOnTakeDamage.Init(configSDKHooks, "OnTakeDamage");
 		vIsAlive.Init(config, "CBaseEntity::IsAlive");
-		fGetTouchTrace.Init(config, "CBaseEntity::GetTouchTrace");
 
 		// This function also doesn't warrant its own file, as it only ever used by CBaseEntity
 		SimThink_EntityChanged.Init(config, "SimThink_EntityChanged");
@@ -151,6 +152,24 @@ bool CBaseEntityHack::Init(SourceMod::IGameConfig* config, char* error, size_t m
 	if (!config->GetOffset("CBaseEntity::MyNextBotPointer", &CBaseEntityHack::offset_MyNextBotPointer))
 	{
 		snprintf(error, maxlength, "Failed to retrieve CBaseEntity::MyNextBotPointer offset!");
+		return false;
+	}
+
+	uint8_t* addr = nullptr;
+	if (config->GetMemSig("CBaseEntity::PhysicsMarkEntitiesAsTouching", (void**)&addr) && addr)
+	{
+		int offset;
+		if (!config->GetOffset("g_TouchTrace", &offset) || !offset)
+		{
+			snprintf(error, maxlength, "Couldn't find offset for g_TouchTrace ptr!");
+			return false;
+		}
+		
+		g_pTouchTrace = *reinterpret_cast<trace_t**>(addr + offset);
+	}
+	else
+	{
+		snprintf(error, maxlength, "Failed to retrieve g_TouchTrace!");
 		return false;
 	}
 
@@ -207,7 +226,7 @@ bool CBaseEntityHack::Init(SourceMod::IGameConfig* config, char* error, size_t m
 
 const trace_t& CBaseEntityHack::GetTouchTrace(void)
 {
-	return fGetTouchTrace();
+	return *g_pTouchTrace;
 }
 
 void CBaseEntityHack::DispatchUpdateTransmitState(void)

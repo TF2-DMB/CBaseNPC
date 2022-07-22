@@ -13,7 +13,6 @@ public:
 	static bool Init(SourceMod::IGameConfig* config, char* error, size_t maxlength);
 
 	ToolsNextBot(CBaseCombatCharacterHack* link);
-	virtual ~ToolsNextBot();
 
 	virtual CBaseCombatCharacterHack* GetEntity() const override { return m_linkedEntity; }
 	virtual NextBotCombatCharacter* GetNextBotCombatCharacter() const override { return nullptr; };
