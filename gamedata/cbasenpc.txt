@@ -238,6 +238,8 @@
 				"windows"		"\x55\x8B\xEC\x83\xEC\x14\x53\x56\x8B\xF1\x57\x8D\x2A\x2A\xC7\x06"
 				"linux"			"@_ZN11CBaseEntityC1Eb"
 			}
+			// Find "add 0x%p: %s-%s (%d-%d) [%d in play, %d max]\n" to find CBaseEntity::PhysicsMarkEntityAsTouched
+			// jump to the function calling this one, there can be only one and it's CBaseEntity::PhysicsMarkEntitiesAsTouching
 			"CBaseEntity::PhysicsMarkEntitiesAsTouching"
 			{
 				"library"		"server"

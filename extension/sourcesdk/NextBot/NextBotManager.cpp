@@ -5,9 +5,9 @@ ConVar* nb_update_maxslide = nullptr;
 
 FCall<NextBotManager&> TheNextBots;
 
-static int g_nRun;
-static int g_nSlid;
-static int g_nBlockedSlides;
+//static int g_nRun;
+//static int g_nSlid;
+//static int g_nBlockedSlides;
 
 bool NextBotManager::Init(SourceMod::IGameConfig* config, char* error, size_t maxlength)
 {
@@ -56,7 +56,7 @@ bool NextBotManager::ShouldUpdate(INextBot* bot)
 	{
 		if (frameLimit == 0.0 || sumFrameTime < nb_update_framelimit->GetFloat() * 2.0)
 		{
-			g_nBlockedSlides++;
+			//g_nBlockedSlides++;
 			return true;
 		}
 	}

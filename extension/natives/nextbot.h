@@ -4,15 +4,34 @@
 #pragma once
 
 #include "NextBotInterface.h"
+#include "toolsnextbot.h"
 #include "helpers.h"
 
 #define NEXTBOTNATIVE(name) \
 	cell_t INextBot_##name(IPluginContext *pContext, const cell_t *params) \
 	{ \
-		INextBot *pNextBot = (INextBot *)(params[1]); \
+		INextBot* pNextBot = (INextBot*)(params[1]); \
 		if(!pNextBot) \
 		{ \
 			return pContext->ThrowNativeError("Invalid INextBot %x", params[1]); \
+		} \
+
+#define TNEXTBOTNATIVE(name) \
+	cell_t ToolsNextBot_##name(IPluginContext *pContext, const cell_t *params) \
+	{ \
+		ToolsNextBot* pNextBot = (ToolsNextBot*)(params[1]); \
+		if(!pNextBot) \
+		{ \
+			return pContext->ThrowNativeError("Invalid ToolsNextBot %x", params[1]); \
+		} \
+
+#define TNEXTBOTPLAYER(name) \
+	cell_t ToolsNextBotPlayer_##name(IPluginContext *pContext, const cell_t *params) \
+	{ \
+		ToolsNextBotPlayer* pNextBot = (ToolsNextBotPlayer*)(params[1]); \
+		if(!pNextBot) \
+		{ \
+			return pContext->ThrowNativeError("Invalid ToolsNextBotPlayer %x", params[1]); \
 		} \
 
 
@@ -267,6 +286,35 @@ NEXTBOTNATIVE(DisplayDebugText)
 	pContext->LocalToString(params[2], &name);
 	pNextBot->DisplayDebugText(name);
 	return 0;
+}
+
+cell_t ToolsNextBot_ToolsNextBot(IPluginContext *pContext, const cell_t *params) \
+{
+	CBaseCombatCharacterHack* entity = (CBaseCombatCharacterHack*)(params[1]);
+	if (!entity)
+	{
+		return pContext->ThrowNativeError("Invalid entity address %x", params[1]);
+	}
+	return (cell_t)new ToolsNextBot(entity);
+}
+
+cell_t ToolsNextBotPlayer_ToolsNextBotPlayer(IPluginContext *pContext, const cell_t *params) \
+{
+	CBaseCombatCharacterHack* entity = (CBaseCombatCharacterHack*)(params[1]);
+	if (!entity)
+	{
+		return pContext->ThrowNativeError("Invalid entity address %x", params[1]);
+	}
+	return (cell_t)new ToolsNextBotPlayer(entity);
+}
+
+TNEXTBOTPLAYER(IsDormantWhenDeadSet)
+	pNextBot->SetIsDormantWhenDead(params[2] == 1);
+	return 0;
+}
+
+TNEXTBOTPLAYER(IsDormantWhenDeadGet)
+	return pNextBot->IsDormantWhenDead();
 }
 
 #endif

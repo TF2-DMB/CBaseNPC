@@ -13,30 +13,19 @@ SH_DECL_MANUALHOOK1_void(ToolsNextBot_Touch, 0, 0, 0, CBaseEntityHack*);
 SH_DECL_MANUALHOOK1_void(ToolsNextBot_Weapon_Equip, 0, 0, 0, CBaseEntityHack*);
 SH_DECL_MANUALHOOK3_void(ToolsNextBot_Weapon_Drop, 0, 0, 0, CBaseEntityHack*, const Vector*, const Vector*);
 
-#define RECONFIGURE(name, sh) \
-	if (config->GetOffset(name, &offset)) \
-	{ \
-		SH_MANUALHOOK_RECONFIGURE(sh, offset, 0, 0); \
-	} \
-	else \
-	{ \
-		snprintf(error, maxlength, "Couldn't find " name " offset!"); \
-		return false; \
-	}
-
 bool ToolsNextBot::Init(SourceMod::IGameConfig* config, char* error, size_t maxlength)
 {
 	int offset;
-	RECONFIGURE("CBaseEntity::Spawn", ToolsNextBot_Spawn)
-	RECONFIGURE("CBaseEntity::PhysicsSimulate", ToolsNextBot_PhysicsSimulate)
-	RECONFIGURE("CBaseCombatCharacter::OnTakeDamage_Alive", ToolsNextBot_OnTakeDamage_Alive)
-	RECONFIGURE("CBaseCombatCharacter::OnTakeDamage_Dying", ToolsNextBot_OnTakeDamage_Dying)
-	RECONFIGURE("CBaseEntity::Event_Killed", ToolsNextBot_Event_Killed)
-	RECONFIGURE("CBaseAnimating::HandleAnimEvent", ToolsNextBot_HandleAnimEvent)
-	RECONFIGURE("CBaseCombatCharacter::OnNavAreaChanged", ToolsNextBot_OnNavAreaChanged)
-	RECONFIGURE("CBaseEntity::Touch", ToolsNextBot_Touch)
-	RECONFIGURE("CBaseCombatCharacter::Weapon_Equip", ToolsNextBot_Weapon_Equip)
-	RECONFIGURE("CBaseCombatCharacter::Weapon_Drop", ToolsNextBot_Weapon_Drop)
+	SH_MANUALHOOk_RECONFIGURE_CONFIG("CBaseEntity::Spawn", ToolsNextBot_Spawn)
+	SH_MANUALHOOk_RECONFIGURE_CONFIG("CBaseEntity::PhysicsSimulate", ToolsNextBot_PhysicsSimulate)
+	SH_MANUALHOOk_RECONFIGURE_CONFIG("CBaseCombatCharacter::OnTakeDamage_Alive", ToolsNextBot_OnTakeDamage_Alive)
+	SH_MANUALHOOk_RECONFIGURE_CONFIG("CBaseCombatCharacter::OnTakeDamage_Dying", ToolsNextBot_OnTakeDamage_Dying)
+	SH_MANUALHOOk_RECONFIGURE_CONFIG("CBaseEntity::Event_Killed", ToolsNextBot_Event_Killed)
+	SH_MANUALHOOk_RECONFIGURE_CONFIG("CBaseAnimating::HandleAnimEvent", ToolsNextBot_HandleAnimEvent)
+	SH_MANUALHOOk_RECONFIGURE_CONFIG("CBaseCombatCharacter::OnNavAreaChanged", ToolsNextBot_OnNavAreaChanged)
+	SH_MANUALHOOk_RECONFIGURE_CONFIG("CBaseEntity::Touch", ToolsNextBot_Touch)
+	SH_MANUALHOOk_RECONFIGURE_CONFIG("CBaseCombatCharacter::Weapon_Equip", ToolsNextBot_Weapon_Equip)
+	SH_MANUALHOOk_RECONFIGURE_CONFIG("CBaseCombatCharacter::Weapon_Drop", ToolsNextBot_Weapon_Drop)
 
 	return (NextBotManager::Init(config, error, maxlength)
 		&& INextBotComponent::Init(config, error, maxlength)
@@ -52,7 +41,8 @@ ToolsNextBot::ToolsNextBot(CBaseCombatCharacterHack* link) :
 }
 
 ToolsNextBotPlayer::ToolsNextBotPlayer(CBaseCombatCharacterHack* link) :
-	ToolsNextBot(link)
+	ToolsNextBot(link),
+	m_isDormantWhenDead(true)
 {
 	m_burningTimer.Invalidate();
 
@@ -87,6 +77,11 @@ void ToolsNextBotPlayer::Update()
 bool ToolsNextBotPlayer::IsRemovedOnReset() const
 {
 	return false;
+}
+
+bool ToolsNextBotPlayer::IsDormantWhenDead(void) const
+{
+	return m_isDormantWhenDead;
 }
 
 void ToolsNextBotPlayer::Hook_Spawn(void)
@@ -190,9 +185,4 @@ void ToolsNextBotPlayer::Hook_Weapon_Drop(CBaseEntityHack* weapon, const Vector*
 {
 	OnDrop(weapon);
 	RETURN_META(MRES_IGNORED);
-}
-
-bool ToolsNextBotPlayer::IsDormantWhenDead(void) const
-{
-	return true;
 }

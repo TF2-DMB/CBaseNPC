@@ -127,22 +127,15 @@ private:
 
 extern CPluginEntityFactories* g_pPluginEntityFactories;
 
-enum CEntityFactory_INextBot // Must match its inc equivalent
-{
-	FACTORY_NEXTBOT_NONE = 0,
-	FACTORY_NEXTBOT = 1,
-	FACTORY_NEXTBOT_PLAYER = 2
-};
-
 class CPluginEntityFactory : public IEntityFactory, public IEntityDataMapContainer
 {    
 public:
 	std::string m_iClassname;
 	IPlugin* m_pPlugin;
-	IPluginFunction *m_pPostConstructor;
-	IPluginFunction *m_pOnRemove;
+	IPluginFunction* m_pPostConstructor;
+	IPluginFunction* m_pOnRemove;
 	bool m_bInstalled;
-	CEntityFactory_INextBot m_attachNextbot;
+	IPluginFunction* m_attachNextbot;
 
 	Handle_t m_Handle;
 
@@ -215,9 +208,9 @@ public:
 	CBaseNPCPluginActionFactory* GetBaseNPCInitialActionFactory() const { return m_pBaseNPCInitialActionFactory; }
 	void SetBaseNPCInitialActionFactory( CBaseNPCPluginActionFactory* pFactory ) { m_pBaseNPCInitialActionFactory = pFactory; }
 
-	bool ShouldAttachNextBot() { return m_attachNextbot != FACTORY_NEXTBOT_NONE; }
-	void AttachNextBot(CEntityFactory_INextBot factory) { m_attachNextbot = factory; }
-	CEntityFactory_INextBot GetNextBotType() { return m_attachNextbot; }
+	bool ShouldAttachNextBot() { return m_attachNextbot != nullptr; }
+	void AttachNextBot(IPluginFunction* factory) { m_attachNextbot = factory; }
+	IPluginFunction* GetNextBotFactory() { return m_attachNextbot; }
 protected:
 	bool m_bIsAbstract;
 

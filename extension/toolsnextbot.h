@@ -47,8 +47,10 @@ public:
 
 // Our interface
 	bool IsDormantWhenDead(void) const;
+	void SetIsDormantWhenDead(bool value) { m_isDormantWhenDead = value; }
 
 protected:
 	IntervalTimer m_burningTimer;
+	bool m_isDormantWhenDead;
 	std::vector<int> m_hooks;
 };
