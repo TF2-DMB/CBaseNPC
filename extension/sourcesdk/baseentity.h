@@ -102,6 +102,8 @@ class CBaseEntityHack : public CBaseEntity
 public:
 	static bool Init(SourceMod::IGameConfig* config, char* error, size_t maxlength);
 
+	static const trace_t& GetTouchTrace(void);
+
 	static MCall<void, bool> CBaseEntity_Ctor;
 
 	static VCall<void, const char*> vPostConstructor;
@@ -151,6 +153,9 @@ public:
 	static VCall<int, const CTakeDamageInfo&> vOnTakeDamage;
 	int OnTakeDamage(const CTakeDamageInfo& info);
 
+	static VCall<bool> vIsAlive;
+	bool IsAlive(void);
+
 	//static MCall<void, const Vector&> mSetAbsVelocity;
 	//void SetAbsVelocity(const Vector&);
 
@@ -189,6 +194,7 @@ public:
 	string_t GetModelName(void) const;
 	void	SetModelName(string_t name);
 
+	char GetLifeState(void) const;
 	char GetTakeDamage(void) const;
 
 	int		GetHealth() const;
@@ -433,6 +439,11 @@ inline void CBaseEntityHack::SetModelName(string_t name)
 inline string_t CBaseEntityHack::GetModelName(void) const
 {
 	return *m_ModelName();
+}
+
+inline char CBaseEntityHack::GetLifeState(void) const
+{
+	return *m_lifeState();
 }
 
 inline char CBaseEntityHack::GetTakeDamage(void) const

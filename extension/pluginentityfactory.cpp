@@ -603,7 +603,7 @@ CPluginEntityFactory::CPluginEntityFactory( IPlugin* plugin, const char* classna
 	m_pPostConstructor(postConstructor),
 	m_pOnRemove(onRemove),
 	m_bInstalled(false),
-	m_bAttachNextbot(false),
+	m_attachNextbot(nullptr),
 	m_pBaseNPCInitialActionFactory(nullptr)
 {
 	m_Derive.m_DeriveFrom = DERIVETYPE_NONE;
@@ -958,7 +958,7 @@ IServerNetworkable* CPluginEntityFactory::RecursiveCreate(const char* classname,
 		{
 			pEntityRecord->pFactory = pCreatingFactory;
 
-			bool createNextBot = false;
+			IPluginFunction* nextBotFactory = nullptr;
 			CBaseNPCPluginActionFactory* pInitialActionFactory = nullptr;
 			CPluginEntityFactory* pFactory = pCreatingFactory;
 			while (pFactory)
@@ -967,17 +967,30 @@ IServerNetworkable* CPluginEntityFactory::RecursiveCreate(const char* classname,
 				{
 					pInitialActionFactory = pFactory->GetBaseNPCInitialActionFactory();
 				}
-				if (!createNextBot)
+				if (!nextBotFactory)
 				{
-					createNextBot |= pFactory->ShouldAttachNextBot();
+					nextBotFactory = pFactory->GetNextBotFactory();
 				}
 				pFactory = ToPluginEntityFactory( pFactory->GetBaseFactory() );
 			}
 
 			// If requested, attach a INextBot interface. The entity must be nextbotless and deriving from CBaseCombatCharacter
-			if (createNextBot && pEnt->MyCombatCharacterPointer() && !pEnt->MyNextBotPointer())
+			if (nextBotFactory && pEnt->MyCombatCharacterPointer() && !pEnt->MyNextBotPointer())
 			{
-				pEntityRecord->m_pNextBot = new ToolsNextBot(pEnt->MyCombatCharacterPointer());
+				INextBot* createdBot = nullptr;
+				if (nextBotFactory != (IPluginFunction*)0x1)
+				{
+					if (nextBotFactory->IsRunnable())
+					{
+						nextBotFactory->PushCell((cell_t)pEnt);
+						nextBotFactory->Execute((cell_t*)&createdBot);
+					}
+				}
+				else
+				{
+					createdBot = new ToolsNextBot(pEnt->MyCombatCharacterPointer());
+				}
+				pEntityRecord->m_pNextBot = createdBot;
 			}
 
 			if (pEntityRecord->m_pNextBot || pEnt->MyNextBotPointer())

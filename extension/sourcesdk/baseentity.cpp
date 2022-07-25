@@ -24,6 +24,7 @@ VCall<INextBot*> CBaseEntityHack::vMyNextBotPointer;
 MCall<void, int> CBaseEntityHack::mInvalidatePhysicsRecursive;
 VCall<const Vector&> CBaseEntityHack::vWorldSpaceCenter;
 VCall<int, const CTakeDamageInfo&> CBaseEntityHack::vOnTakeDamage;
+VCall<bool> CBaseEntityHack::vIsAlive;
 MCall<void> CBaseEntityHack::mCalcAbsolutePosition;
 
 #ifndef __linux__
@@ -42,6 +43,8 @@ DETOUR_DECL_MEMBER1(SimThink_EntityChanged, void, CBaseEntity*, ent)
 #else
 FCall<void, CBaseEntity*> SimThink_EntityChanged;
 #endif
+
+FCall<const trace_t&> fGetTouchTrace;
 
 float k_flMaxEntityEulerAngle = 360.0 * 1000.0f;
 float k_flMaxEntityPosCoord = MAX_COORD_FLOAT;
@@ -78,6 +81,8 @@ DEFINEVAR(CBaseEntityHack, m_rgflCoordinateFrame);
 DEFINEVAR(CBaseEntityHack, m_iTeamNum);
 DEFINEVAR(CBaseEntityHack, m_hGroundEntity);
 DEFINEVAR(CBaseEntityHack, m_ModelName);
+
+trace_t* g_pTouchTrace;
 
 bool CBaseEntityHack::Init(SourceMod::IGameConfig* config, char* error, size_t maxlength)
 {
@@ -116,6 +121,8 @@ bool CBaseEntityHack::Init(SourceMod::IGameConfig* config, char* error, size_t m
 		vWorldSpaceCenter.Init(config, "CBaseEntity::WorldSpaceCenter");
 		vEyeAngles.Init(config, "CBaseEntity::EyeAngles");
 		vOnTakeDamage.Init(configSDKHooks, "OnTakeDamage");
+		vIsAlive.Init(config, "CBaseEntity::IsAlive");
+
 		// This function also doesn't warrant its own file, as it only ever used by CBaseEntity
 		SimThink_EntityChanged.Init(config, "SimThink_EntityChanged");
 #ifndef __linux__
@@ -145,6 +152,24 @@ bool CBaseEntityHack::Init(SourceMod::IGameConfig* config, char* error, size_t m
 	if (!config->GetOffset("CBaseEntity::MyNextBotPointer", &CBaseEntityHack::offset_MyNextBotPointer))
 	{
 		snprintf(error, maxlength, "Failed to retrieve CBaseEntity::MyNextBotPointer offset!");
+		return false;
+	}
+
+	uint8_t* addr = nullptr;
+	if (config->GetMemSig("CBaseEntity::PhysicsMarkEntitiesAsTouching", (void**)&addr) && addr)
+	{
+		int offset;
+		if (!config->GetOffset("g_TouchTrace", &offset) || !offset)
+		{
+			snprintf(error, maxlength, "Couldn't find offset for g_TouchTrace ptr!");
+			return false;
+		}
+		
+		g_pTouchTrace = *reinterpret_cast<trace_t**>(addr + offset);
+	}
+	else
+	{
+		snprintf(error, maxlength, "Failed to retrieve g_TouchTrace!");
 		return false;
 	}
 
@@ -197,6 +222,11 @@ bool CBaseEntityHack::Init(SourceMod::IGameConfig* config, char* error, size_t m
 #endif
 
 	return true;
+}
+
+const trace_t& CBaseEntityHack::GetTouchTrace(void)
+{
+	return *g_pTouchTrace;
 }
 
 void CBaseEntityHack::DispatchUpdateTransmitState(void)
@@ -276,6 +306,11 @@ const Vector& CBaseEntityHack::WorldSpaceCenter(void)
 int CBaseEntityHack::OnTakeDamage(const CTakeDamageInfo& info)
 {
 	return vOnTakeDamage(this, info);
+}
+
+bool CBaseEntityHack::IsAlive()
+{
+	return vIsAlive(this);
 }
 
 const QAngle& CBaseEntityHack::EyeAngles(void)

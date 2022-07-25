@@ -248,7 +248,9 @@ PLUGINENTITYFACTORYNATIVE(GetClassname)
 }
 
 PLUGINENTITYFACTORYNATIVE(AttachNextBot)
-	pFactory->AttachNextBot();
+	// TO-DO: 2.0.0
+	bool old = ((params[0] < 2) || pContext->GetFunctionById(params[2]) == nullptr);
+	pFactory->AttachNextBot((old) ? (IPluginFunction*)0x1 : pContext->GetFunctionById(params[2]));
 	return 0;
 }
 

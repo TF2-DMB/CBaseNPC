@@ -41,12 +41,12 @@ const INextBot NULL_NEXT_BOT = view_as<INextBot>(0);
 const Segment NULL_PATH_SEGMENT = view_as<Segment>(0);
 
 #include <cbasenpc/nav>
-#include <cbasenpc/entityfactory>
 #include <cbasenpc/baseentity>
 #include <cbasenpc/baseanimating>
 #include <cbasenpc/baseanimatingoverlay>
 #include <cbasenpc/basecombatcharacter>
 #include <cbasenpc/nextbot>
+#include <cbasenpc/entityfactory>
 
 methodmap CExtNPC __nullable__
 {

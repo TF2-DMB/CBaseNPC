@@ -1,6 +1,8 @@
 #include "sourcesdk/NextBot/NextBotComponentInterface.h"
 #include "sourcesdk/NextBot/NextBotInterface.h"
 
+ConVar* NextBotStop = nullptr;
+
 VCall<void> INextBotComponent::vUpdate;
 
 bool INextBotComponent::Init(SourceMod::IGameConfig* config, char* error, size_t maxlength)

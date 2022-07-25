@@ -33,7 +33,7 @@ public:
 	CBaseEntityHack* pEntity = nullptr;
 	CPluginEntityFactory* pFactory = nullptr;
 	datamap_t* m_pDataMap = nullptr;
-	ToolsNextBot* m_pNextBot = nullptr;
+	INextBot* m_pNextBot = nullptr;
 	CBaseNPCPluginActionFactory* m_pInitialActionFactory = nullptr;
 	CBaseNPCIntention* m_pIntentionInterface = nullptr;
 
@@ -132,10 +132,10 @@ class CPluginEntityFactory : public IEntityFactory, public IEntityDataMapContain
 public:
 	std::string m_iClassname;
 	IPlugin* m_pPlugin;
-	IPluginFunction *m_pPostConstructor;
-	IPluginFunction *m_pOnRemove;
+	IPluginFunction* m_pPostConstructor;
+	IPluginFunction* m_pOnRemove;
 	bool m_bInstalled;
-	bool m_bAttachNextbot;
+	IPluginFunction* m_attachNextbot;
 
 	Handle_t m_Handle;
 
@@ -208,8 +208,9 @@ public:
 	CBaseNPCPluginActionFactory* GetBaseNPCInitialActionFactory() const { return m_pBaseNPCInitialActionFactory; }
 	void SetBaseNPCInitialActionFactory( CBaseNPCPluginActionFactory* pFactory ) { m_pBaseNPCInitialActionFactory = pFactory; }
 
-	bool ShouldAttachNextBot() { return m_bAttachNextbot; }
-	void AttachNextBot() { m_bAttachNextbot = true; }
+	bool ShouldAttachNextBot() { return m_attachNextbot != nullptr; }
+	void AttachNextBot(IPluginFunction* factory) { m_attachNextbot = factory; }
+	IPluginFunction* GetNextBotFactory() { return m_attachNextbot; }
 protected:
 	bool m_bIsAbstract;
 

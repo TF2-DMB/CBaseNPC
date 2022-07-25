@@ -397,6 +397,54 @@ methodmap INextBot < INextBotEventResponder
 	public native void DisplayDebugText(const char[] name);
 };
 
+/**
+ * Extension's basic NextBot interface
+ */
+methodmap ToolsNextBot < INextBot
+{
+	/**
+	 * Creates and attaches a ToolsNextBot interface, to the given entity.
+	 *
+	 * @param entity     Entity address
+	 * @return           The created NextBot interface
+	 */
+	public native ToolsNextBot(Address entity);
+}
+
+stock INextBot ToolsNextBot_Factory(Address entity)
+{
+	return ToolsNextBot(entity);
+}
+
+/**
+ * Extension's basic NextBotPlayer interface
+ */
+methodmap ToolsNextBotPlayer < ToolsNextBot
+{
+	/**
+	 * Creates and attaches a ToolsNextBotPlayer interface, to the given entity.
+	 *
+	 * @param entity     Entity address
+	 * @return           The created NextBot interface
+	 */
+	public native ToolsNextBotPlayer(Address entity);
+
+	/*
+	 * Defines whether or not the nextbot interface should update when
+	 * its attached entity is dead. Default is true.
+	*/
+	property bool IsDormantWhenDead
+	{
+		public native set(bool value);
+		public native get();
+	}
+}
+
+stock INextBot ToolsNextBotPlayer_Factory(Address entity)
+{
+	return ToolsNextBotPlayer(entity);
+}
+
 #include <cbasenpc/nextbot/knownentity>
 #include <cbasenpc/nextbot/vision>
 #include <cbasenpc/nextbot/intention>

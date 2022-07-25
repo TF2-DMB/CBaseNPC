@@ -1,5 +1,6 @@
 #include "NextBotInterface.h"
 #include "NextBotComponentInterface.h"
+#include "NextBotManager.h"
 #include "sourcesdk/baseentity.h"
 #include "sourcesdk/basecombatcharacter.h"
 
@@ -24,8 +25,7 @@ INextBot::INextBot(void) : m_LocoInterface(nullptr),
 
 	m_CurrentPath = nullptr;
 
-	// TO-DO: Fix
-	//m_iManagerIndex = TheNextBots().Register( this );
+	m_iManagerIndex = TheNextBots().Register(this);
 }
 
 
@@ -34,8 +34,7 @@ INextBot::~INextBot()
 {
 	ResetDebugHistory();
 
-	// TO-DO: Fix
-	//TheNextBots().UnRegister(this);
+	TheNextBots().UnRegister(this);
 
 	if (m_IntentionInterface)
 		delete m_IntentionInterface;
@@ -48,6 +47,21 @@ INextBot::~INextBot()
 
 	/*if (m_VisionInterface)
 		delete m_VisionInterface;*/
+}
+
+bool INextBot::BeginUpdate()
+{
+	if (TheNextBots().ShouldUpdate(this))
+	{
+		TheNextBots().NotifyBeginUpdate(this);
+		return true;
+	}
+	return false;
+}
+
+void INextBot::EndUpdate(void)
+{
+	TheNextBots().NotifyEndUpdate(this);
 }
 
 void INextBot::Reset(void)

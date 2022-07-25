@@ -15,15 +15,25 @@
 				"linux"		"1058"
 				"windows"	"819"
 			}
+			// Locate CBaseEntity::PhysicsMarkEntitiesAsTouching, first dword is g_TouchTrace
+			"g_TouchTrace"
+			{
+				"linux"		"29"
+				"windows"	"32"
+			}
+			"g_EntityListPool"
+			{
+				"windows"	"17"
+			}
 			"CNavMesh::m_isLoaded"
 			{
 				"linux"		"52"
 				"windows"	"52"
 			}
-			"CBaseCombatCharacter::EventKilled"
+			"CBaseEntity::Spawn"
 			{
-				"linux"		"67"
-				"windows"	"66"
+				"linux"		"23"
+				"windows"	"22"
 			}
 			"CBaseEntity::PostConstructor"
 			{
@@ -35,6 +45,16 @@
 				"linux"		"51"
 				"windows"	"50"
 			}
+			"CBaseEntity::IsAlive"
+			{
+				"linux"		"66"
+				"windows"	"65"
+			}
+			"CBaseEntity::Event_Killed"
+			{
+				"linux"		"67"
+				"windows"	"66"
+			}
 			"CBaseEntity::MyCombatCharacterPointer"
 			{
 				"linux"		"72"
@@ -44,6 +64,16 @@
 			{
 				"linux"		"73"
 				"windows"	"72"
+			}
+			"CBaseEntity::Touch"
+			{
+				"linux"		"103"
+				"windows"	"102"
+			}
+			"CBaseEntity::PhysicsSimulate"
+			{
+				"linux"		"108"
+				"windows"	"107"
 			}
 			"CBaseEntity::UpdateOnRemove"
 			{
@@ -65,10 +95,6 @@
 				"linux"		"153"
 				"windows"	"152"
 			}
-			"g_EntityListPool"
-			{
-				"windows"	"17"
-			}
 			"CBaseAnimating::StudioFrameAdvance"
 			{
 				"linux"		"198"
@@ -89,10 +115,35 @@
 				"linux"		"213"
 				"windows"	"212"
 			}
+			"CBaseCombatCharacter::Weapon_Equip"
+			{
+				"linux"		"269"
+				"windows"	"268"
+			}
+			"CBaseCombatCharacter::Weapon_Drop"
+			{
+				"linux"		"271"
+				"windows"	"270"
+			}
+			"CBaseCombatCharacter::OnTakeDamage_Alive"
+			{
+				"linux"		"280"
+				"windows"	"279"
+			}
+			"CBaseCombatCharacter::OnTakeDamage_Dying"
+			{
+				"linux"		"281"
+				"windows"	"280"
+			}
 			"CBaseCombatCharacter::GetLastKnownArea"
 			{
 				"linux"		"320"
 				"windows"	"319"
+			}
+			"CBaseCombatCharacter::OnNavAreaChanged"
+			{
+				"linux"		"324"
+				"windows"	"323"
 			}
 			"CBaseCombatCharacter::UpdateLastKnownArea"
 			{
@@ -112,6 +163,12 @@
 		}
 		"Signatures"
 		{
+			"TheNextBots"
+			{
+				"library"		"server"
+				"windows"		"\xA1\x2A\x2A\x2A\x2A\x85\xC0\x75\x2A\x8B\x0D\x2A\x2A\x2A\x2A\xF6\xC1\x01"
+				"linux"			"@_Z11TheNextBotsv"
+			}
 			"CTFGameRules::ApplyOnDamageModifyRules"
 			{
 				"library"		"server"
@@ -181,6 +238,14 @@
 				"library"		"server"
 				"windows"		"\x55\x8B\xEC\x83\xEC\x14\x53\x56\x8B\xF1\x57\x8D\x2A\x2A\xC7\x06"
 				"linux"			"@_ZN11CBaseEntityC1Eb"
+			}
+			// Find "add 0x%p: %s-%s (%d-%d) [%d in play, %d max]\n" to find CBaseEntity::PhysicsMarkEntityAsTouched
+			// jump to the function calling this one, there can be only one and it's CBaseEntity::PhysicsMarkEntitiesAsTouching
+			"CBaseEntity::PhysicsMarkEntitiesAsTouching"
+			{
+				"library"		"server"
+				"windows"		"\x55\x8B\xEC\x56\x8B\x75\x0C\x57\x8B\xF9\xB9\x2A\x2A\x2A\x2A\x56\xE8\x2A\x2A\x2A\x2A\xF3\x0F\x10\x46\x38\x8B\xCF\xF3\x0F\x11\x05\x2A\x2A\x2A\x2A\x8B\x46\x3C\xA3\x2A\x2A\x2A\x2A\x8B\x46\x40\xA3\x2A\x2A\x2A\x2A\x8B\x46\x44\xA3\x2A\x2A\x2A\x2A\x66\x8B\x46\x48\x66\xA3\x2A\x2A\x2A\x2A\x8B\x46\x4C\xA3\x2A\x2A\x2A\x2A\x8B\x46\x50\x8B\x75\x08\x56\xA3\x2A\x2A\x2A\x2A\xE8\x2A\x2A\x2A\x2A"
+				"linux"			"@_ZN11CBaseEntity29PhysicsMarkEntitiesAsTouchingEPS_R10CGameTrace"
 			}
 			"CBaseEntity::CalcAbsolutePosition"
 			{

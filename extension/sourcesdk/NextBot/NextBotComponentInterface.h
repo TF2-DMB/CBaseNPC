@@ -9,6 +9,8 @@ class Path;
 class CGameTrace;
 class CTakeDamageInfo;
 
+extern ConVar* NextBotStop;
+
 class INextBotReply
 {
 public:

@@ -56,6 +56,11 @@ typeset CEntityFactoryOnRemoveCallback
 	function void (CBaseEntity entity);
 }
 
+typeset CEntityFactoryNextBot
+{
+	function INextBot (Address link);
+};
+
 methodmap CEntityFactory < Handle
 {
 	/**
@@ -228,13 +233,13 @@ methodmap CEntityFactory < Handle
 	public static native int GetInstalledFactories(CEntityFactory[] array, int arraySize);
 
 	/**
-	 * Attach a simple INextBot interface to the entity. This will allow the use of SetInitialActionFactory.
-	 * Note: No NextBot interface will be attached, if the entity already has a NextBot interface
+	 * Attaches a NextBot factory to the entity factory.
+	 * Note: No NextBot interface will be created, if the entity already has a NextBot interface
 	 * or doesn't derive from the class CBaseCombatCharacter.
 	 * 
 	 * @error                Invalid handle.
 	 */
-	public native void AttachNextBot();
+	public native void AttachNextBot(CEntityFactoryNextBot factory = INVALID_FUNCTION);
 
 	// Datamap
 

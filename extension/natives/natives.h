@@ -568,6 +568,11 @@ const sp_nativeinfo_t g_NativesInfo[] =
 	NATIVENAME(INextBot, GetDebugIdentifier)
 	NATIVENAME(INextBot, IsDebugFilterMatch)
 	NATIVENAME(INextBot, DisplayDebugText)
+
+	NATIVENAME(ToolsNextBot, ToolsNextBot)
+
+	NATIVENAME(ToolsNextBotPlayer, ToolsNextBotPlayer)
+	NATIVENAMEGETSET(ToolsNextBotPlayer, IsDormantWhenDead)
 	
 	NATIVENAMEGET(Segment, area)
 	NATIVENAMEGET(Segment, how)

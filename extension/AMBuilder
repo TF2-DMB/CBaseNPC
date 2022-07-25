@@ -25,6 +25,7 @@ project.sources = [
   'sourcesdk/NextBot/NextBotInterface.cpp',
   'sourcesdk/NextBot/NextBotIntentionInterface.cpp',
   'sourcesdk/NextBot/NextBotLocomotionInterface.cpp',
+  'sourcesdk/NextBot/NextBotManager.cpp',
   'sourcesdk/nav_area.cpp',
   'sourcesdk/nav_mesh.cpp',
   'sourcesdk/entityfactorydictionary.cpp',
