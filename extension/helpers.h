@@ -80,7 +80,7 @@
 		return pContext->ThrowNativeError("Invalid Handle %x (error %i: %s)", hnd, chnderr, HandleErrorToString(chnderr)); \
 	} \
 
-#define SH_MANUALHOOk_RECONFIGURE_CONFIG(name, sh) \
+#define SH_MANUALHOOK_RECONFIGURE_CONFIG(name, sh) \
 	if (config->GetOffset(name, &offset)) \
 	{ \
 		SH_MANUALHOOK_RECONFIGURE(sh, offset, 0, 0); \
