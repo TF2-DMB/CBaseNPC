@@ -15,6 +15,7 @@
 				"linux"		"1058"
 				"windows"	"819"
 			}
+			// Locate CBaseEntity::PhysicsMarkEntitiesAsTouching, first dword is g_TouchTrace
 			"g_TouchTrace"
 			{
 				"linux"		"29"
