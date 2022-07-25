@@ -408,10 +408,10 @@ methodmap ToolsNextBot < INextBot
 	 * @param entity     Entity address
 	 * @return           The created NextBot interface
 	 */
-	public static native ToolsNextBot ToolsNextBot(Address entity);
+	public native ToolsNextBot(Address entity);
 }
 
-stock ToolsNextBot ToolsNextBot_Factory(Address entity)
+stock INextBot ToolsNextBot_Factory(Address entity)
 {
 	return ToolsNextBot(entity);
 }
@@ -427,7 +427,7 @@ methodmap ToolsNextBotPlayer < ToolsNextBot
 	 * @param entity     Entity address
 	 * @return           The created NextBot interface
 	 */
-	public static native ToolsNextBotPlayer ToolsNextBotPlayer(Address entity);
+	public native ToolsNextBotPlayer(Address entity);
 
 	/*
 	 * Defines whether or not the nextbot interface should update when
@@ -440,7 +440,7 @@ methodmap ToolsNextBotPlayer < ToolsNextBot
 	}
 }
 
-stock ToolsNextBotPlayer ToolsNextBotPlayer_Factory(Address entity)
+stock INextBot ToolsNextBotPlayer_Factory(Address entity)
 {
 	return ToolsNextBotPlayer(entity);
 }

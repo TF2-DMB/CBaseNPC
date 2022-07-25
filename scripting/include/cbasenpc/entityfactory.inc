@@ -61,19 +61,6 @@ typeset CEntityFactoryNextBot
 	function INextBot (Address link);
 };
 
-/**
- * Function to be used with CEntityFactory.AttachNextBot
- *
- * @param link          Address of the linked CBaseEntity
- * @return              The created ToolsNextBotPlayer
- */
-native INextBot _ToolsNextBotPlayer_Factory(Address link);
-
-stock INextBot ToolsNextBotPlayer_Factory(Address link)
-{
-	return _ToolsNextBotPlayer_Factory(link);
-}
-
 methodmap CEntityFactory < Handle
 {
 	/**
