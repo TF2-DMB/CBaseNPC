@@ -747,10 +747,7 @@ methodmap CBaseEntity
 	 * @return              True on success, false otherwise.
 	 * @error               Invalid entity index or lack of mod support.
 	 */
-	public bool KeyValueInt(const char[] keyName, int value)
-	{
-		return DispatchKeyValueInt(this.index, keyName, value);
-	}
+	public native bool KeyValueInt(const char[] keyName, int value);
 
 	/**
 	 * Alias of DispatchKeyValueFloat().

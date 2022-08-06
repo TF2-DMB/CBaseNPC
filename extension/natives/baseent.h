@@ -302,4 +302,14 @@ CBASEENTNATIVE(IsCombatCharacter)
 	return ent->MyCombatCharacterPointer() ? true : false;
 }
 
+CBASEENTNATIVE(KeyValueInt)
+	char *key;
+	pContext->LocalToString(params[2], &key);
+
+	char value[16];
+	snprintf(value, sizeof(value), "%d", params[3]);
+
+	return (servertools->SetKeyValue(ent, key, value) ? 1 : 0);
+}
+
 #endif // NATIVE_CBASEENT_H_
