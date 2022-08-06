@@ -740,6 +740,19 @@ methodmap CBaseEntity
 	}
 
 	/**
+	 * Alias of DispatchKeyValueInt().
+	 * 
+	 * @param keyName       Name of the key.
+	 * @param value         Integer value.
+	 * @return              True on success, false otherwise.
+	 * @error               Invalid entity index or lack of mod support.
+	 */
+	public bool KeyValueInt(const char[] keyName, int value)
+	{
+		return DispatchKeyValueInt(this.index, keyName, value);
+	}
+
+	/**
 	 * Alias of DispatchKeyValueFloat().
 	 *
 	 * @param keyName       Name of the key.
@@ -907,6 +920,24 @@ methodmap CBaseEntity
 	public void SetMoveType(MoveType val)
 	{
 		SetEntityMoveType(this.index, val);
+	}
+
+	/**
+	 * Alias of EntityCollisionRulesChanged().
+	 */
+	public void CollisionRulesChanged()
+	{
+		EntityCollisionRulesChanged(this.index);
+	}
+
+	/**
+	 * Alias of SetEntityOwner().
+	 * 
+	 * @param owner    The owner entity index, can be invalid.
+	 */
+	public void SetOwnerEntity(int owner=INVALID_ENT_REFERENCE)
+	{
+		SetEntityOwner(this.index, owner);
 	}
 }
 
