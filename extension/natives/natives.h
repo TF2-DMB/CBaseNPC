@@ -204,7 +204,10 @@ const sp_nativeinfo_t g_NativesInfo[] =
 	NATIVENAME(CBaseEntity, GetBaseAnimating)
 	NATIVENAME(CBaseEntity, MyCombatCharacterPointer)
 	NATIVENAME(CBaseEntity, IsCombatCharacter)
+	NATIVENAME(CBaseEntity, KeyValue)
 	NATIVENAME(CBaseEntity, KeyValueInt)
+	NATIVENAME(CBaseEntity, KeyValueFloat)
+	NATIVENAME(CBaseEntity, KeyValueVector)
 
 	// Base Animating
 	NATIVENAME(CBaseAnimating, iHandleAnimEvent)

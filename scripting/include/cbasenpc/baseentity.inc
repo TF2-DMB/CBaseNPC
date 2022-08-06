@@ -734,10 +734,7 @@ methodmap CBaseEntity
 	 * @return              True on success, false otherwise.
 	 * @error               Invalid entity, or no mod support.
 	 */
-	public bool KeyValue(const char[] keyName, const char[] value)
-	{
-		return DispatchKeyValue(this.index, keyName, value);
-	}
+	public native bool KeyValue(const char[] keyName, const char[] value);
 
 	/**
 	 * Alias of DispatchKeyValueInt().
@@ -757,10 +754,7 @@ methodmap CBaseEntity
 	 * @return              True on success, false otherwise.
 	 * @error               Invalid entity, or no mod support.
 	 */
-	public bool KeyValueFloat(const char[] keyName, float value)
-	{
-		return DispatchKeyValueFloat(this.index, keyName, value);
-	}
+	public native bool KeyValueFloat(const char[] keyName, float value);
 
 	/**
 	 * Alias of DispatchKeyValueVector().
@@ -770,10 +764,7 @@ methodmap CBaseEntity
 	 * @return              True on success, false otherwise.
 	 * @error               Invalid entity, or no mod support.
 	 */
-	public bool KeyValueVector(const char[] keyName, const float value[3])
-	{
-		return DispatchKeyValueVector(this.index, keyName, value);
-	}
+	public native bool KeyValueVector(const char[] keyName, const float value[3]);
 
 	/**
 	 * Alias of AcceptEntityInput().

@@ -302,6 +302,16 @@ CBASEENTNATIVE(IsCombatCharacter)
 	return ent->MyCombatCharacterPointer() ? true : false;
 }
 
+CBASEENTNATIVE(KeyValue)
+	char *key;
+	pContext->LocalToString(params[2], &key);
+
+	char *value;
+	pContext->LocalToString(params[3], &value);
+
+	return (servertools->SetKeyValue(ent, key, value) ? 1 : 0);
+}
+
 CBASEENTNATIVE(KeyValueInt)
 	char *key;
 	pContext->LocalToString(params[2], &key);
@@ -310,6 +320,27 @@ CBASEENTNATIVE(KeyValueInt)
 	snprintf(value, sizeof(value), "%d", params[3]);
 
 	return (servertools->SetKeyValue(ent, key, value) ? 1 : 0);
+}
+
+CBASEENTNATIVE(KeyValueFloat)
+	char *key;
+	pContext->LocalToString(params[2], &key);
+	
+	float value = sp_ctof(params[3]);
+
+	return (servertools->SetKeyValue(ent, key, value) ? 1 : 0);
+}
+
+CBASEENTNATIVE(KeyValueVector)
+	char *key;
+	pContext->LocalToString(params[2], &key);
+	
+	Vector v;
+	cell_t *vecAddr;
+	pContext->LocalToPhysAddr(params[3], &vecAddr);
+	PawnVectorToVector(vecAddr, &v);
+
+	return (servertools->SetKeyValue(ent, key, v) ? 1 : 0);
 }
 
 #endif // NATIVE_CBASEENT_H_
