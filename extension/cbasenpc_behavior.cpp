@@ -395,6 +395,7 @@ BEGINEVENTCALLBACK(OnKilled, const CTakeDamageInfo &info)
 ENDEVENTCALLBACK()
 
 BEGINEVENTCALLBACK(OnOtherKilled, CBaseCombatCharacterHack *victim, const CTakeDamageInfo &info)
+	EVENTPUSHENTITY(victim)
 	EVENTPUSHENTITY(info.GetAttacker())
 	EVENTPUSHENTITY(info.GetInflictor())
 	EVENTPUSHFLOAT(info.GetDamage())
