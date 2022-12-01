@@ -37,6 +37,8 @@ public:
 	virtual void Update(void) = 0;
 	virtual void Upkeep(void) { };
 	virtual INextBot *GetBot(void) const  { return m_bot; }
+	class CUnknown;
+	virtual CUnknown *GetScriptDesc(void) const { return nullptr; }
 
 	inline bool ComputeUpdateInterval(void);
 	inline float GetUpdateInterval(void);
