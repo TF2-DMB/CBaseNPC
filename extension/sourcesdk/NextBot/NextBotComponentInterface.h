@@ -58,7 +58,7 @@ private:
 	INextBotComponent *m_nextComponent;
 
 #if SOURCE_ENGINE == SE_TF2
-	void *m_scriptInstance;
+	std::int32_t m_scriptInstance;
 #endif
 
 public:
