@@ -51,6 +51,7 @@ private:
 	
 	INextBot *m_bot;
 	INextBotComponent *m_nextComponent;
+	void *m_scriptInstance;
 
 public:
 	static VCall<void> vUpdate;
