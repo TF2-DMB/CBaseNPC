@@ -33,7 +33,12 @@ public:
 	INextBotComponent(INextBot *bot);
 	virtual ~INextBotComponent() { };
 
-	virtual void Reset(void) { m_lastUpdateTime = 0; m_curInterval = TICK_INTERVAL; }
+	virtual void Reset(void) 
+	{ 
+		m_lastUpdateTime = 0.0;
+		m_curInterval = TICK_INTERVAL;
+	}
+
 	virtual void Update(void) = 0;
 	virtual void Upkeep(void) { };
 	virtual INextBot *GetBot(void) const  { return m_bot; }
@@ -51,7 +56,10 @@ private:
 	
 	INextBot *m_bot;
 	INextBotComponent *m_nextComponent;
+
+#if SOURCE_ENGINE == SE_TF2
 	void *m_scriptInstance;
+#endif
 
 public:
 	static VCall<void> vUpdate;
