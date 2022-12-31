@@ -277,32 +277,42 @@ CBASENPCLOCONATIVE(CallBaseFunction)
 		{
 			cell_t* goalAddr;
 			cell_t* forwardAddr;
+			cell_t* entityAddr;
 			pContext->LocalToPhysAddr(params[2], &goalAddr);
 			pContext->LocalToPhysAddr(params[3], &forwardAddr);
-			CBaseEntity* pEntity = gamehelpers->ReferenceToEntity(params[4]);
+			pContext->LocalToPhysAddr(params[4], &entityAddr);
+			CBaseEntity* entity = gamehelpers->ReferenceToEntity(*entityAddr);
 
 			Vector vecGoal;
 			Vector vecForward;
 			PawnVectorToVector(goalAddr, &vecGoal);
 			PawnVectorToVector(forwardAddr, &vecForward);
 
-			result = loco->DefaultClimbUpToLedge(vecGoal, vecForward, pEntity);
+			result = loco->DefaultClimbUpToLedge(vecGoal, vecForward, entity);
 			break;
 		}
 
 		case CBaseNPC_Locomotion::CallbackType_ShouldCollideWith:
 		{
-			CBaseEntity* pOther = gamehelpers->ReferenceToEntity(params[2]);
-			result = loco->DefaultShouldCollideWith(pOther);
+			cell_t *colliderAddr;
+			pContext->LocalToPhysAddr(params[2], &colliderAddr);
+
+			CBaseEntity* collider = gamehelpers->ReferenceToEntity(*colliderAddr);
+			result = loco->DefaultShouldCollideWith(collider);
 			break;
 		}
 
 		case CBaseNPC_Locomotion::CallbackType_IsEntityTraversable:
 		{
-			CBaseEntity* pOther = gamehelpers->ReferenceToEntity(params[2]);
-			ILocomotion::TraverseWhenType when = (ILocomotion::TraverseWhenType)params[3];
+			cell_t *obstacleAddr;
+			cell_t *whenAddr;
+			pContext->LocalToPhysAddr(params[2], &obstacleAddr);
+			pContext->LocalToPhysAddr(params[3], &whenAddr);
 
-			result = loco->DefaultIsEntityTraversable(pOther, when);
+			CBaseEntity* obstacle = gamehelpers->ReferenceToEntity(*obstacleAddr);
+			ILocomotion::TraverseWhenType when = (ILocomotion::TraverseWhenType)(*whenAddr);
+
+			result = loco->DefaultIsEntityTraversable(obstacle, when);
 			break;
 		}
 	}
