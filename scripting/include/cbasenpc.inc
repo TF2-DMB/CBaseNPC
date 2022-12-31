@@ -173,7 +173,8 @@ typeset LocomotionCallback
 methodmap CBaseNPC_Locomotion < NextBotGroundLocomotion
 {
 	/**
-	 * Sets a callback function on the locomotion.
+	 * Sets a callback function on the locomotion. This is used to override some
+	 * functions on the locomotion.
 	 * 
 	 * @param callbackType     Type of callback
 	 * @param callback         Callback function
@@ -183,11 +184,24 @@ methodmap CBaseNPC_Locomotion < NextBotGroundLocomotion
 
 	/**
 	 * Calls the base function of the current callback. This can only be used
-	 * within a callback function.
+	 * within a callback function. Calling this will call the original
+	 * function that the callback is trying to override.
 	 * 
-	 * @param any     Function arguments
+	 * You do not need to pass in the locomotion pointer again. Parameters
+	 * must be passed in the same order as calling the overridden function.
+	 * For example,
+	 * 
+	 *   bool LocomotionIsEntityTraversable(CBaseNPC_Locomotion loco, CBaseEntity obstacle, TraverseWhenType when)
+	 *   {
+	 *       // Custom code logic goes here
+	 * 
+	 *       return loco.CallBaseFunction(obstacle, when);
+	 *   }
+	 * 
+	 * @param ...     Variable number of function parameters
 	 * @return        Function return
-	 * @error         Locomotion is invalid or used outside of a callback function
+	 * @error         Locomotion is invalid, used outside of a callback function, too few parameters
+	 *                passed, or an entity parameter is invalid
 	 */
 	public native any CallBaseFunction(any ...);
 };

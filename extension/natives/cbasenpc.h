@@ -231,13 +231,14 @@ CBASENPCLOCONATIVE(SetCallback)
 CBASENPCLOCONATIVE(CallBaseFunction)
 	if (!loco->IsInCallback())
 	{
-		pContext->ThrowNativeError("CallBaseFunction() can only be used within a callback");
+		pContext->ReportError("CallBaseFunction() can only be used within a callback");
 		return 0;
 	}
 
 	CBaseNPC_Locomotion::CallbackType cbType = loco->GetCurrentCallbackType();
 
 	cell_t result = 0;
+	cell_t expectedParams = 0;
 
 	switch (cbType)
 	{
@@ -251,6 +252,14 @@ CBASENPCLOCONATIVE(CallBaseFunction)
 		
 		case CBaseNPC_Locomotion::CallbackType_JumpAcrossGap:
 		{
+			expectedParams = 3;
+
+			if (params[0] < expectedParams)
+			{
+				pContext->ReportError("Not enough parameters (expected %d, got %d)", expectedParams - 1, params[0] - 1);
+				return 0;
+			}
+
 			cell_t* goalAddr;
 			cell_t* forwardAddr;
 			pContext->LocalToPhysAddr(params[2], &goalAddr);
@@ -275,6 +284,14 @@ CBASENPCLOCONATIVE(CallBaseFunction)
 		
 		case CBaseNPC_Locomotion::CallbackType_ClimbUpToLedge:
 		{
+			expectedParams = 4;
+
+			if (params[0] < expectedParams)
+			{
+				pContext->ReportError("Not enough parameters (expected %d, got %d)", expectedParams - 1, params[0] - 1);
+				return 0;
+			}
+
 			cell_t* goalAddr;
 			cell_t* forwardAddr;
 			cell_t* entityAddr;
@@ -294,22 +311,52 @@ CBASENPCLOCONATIVE(CallBaseFunction)
 
 		case CBaseNPC_Locomotion::CallbackType_ShouldCollideWith:
 		{
+			expectedParams = 2;
+
+			if (params[0] < expectedParams)
+			{
+				pContext->ReportError("Not enough parameters (expected %d, got %d)", expectedParams - 1, params[0] - 1);
+				return 0;
+			}
+
 			cell_t *colliderAddr;
 			pContext->LocalToPhysAddr(params[2], &colliderAddr);
 
 			CBaseEntity* collider = gamehelpers->ReferenceToEntity(*colliderAddr);
+
+			if (!collider)
+			{
+				pContext->ReportError("Invalid entity index/reference %d", *colliderAddr);
+				return 0;
+			}
+
 			result = loco->DefaultShouldCollideWith(collider);
 			break;
 		}
 
 		case CBaseNPC_Locomotion::CallbackType_IsEntityTraversable:
 		{
+			expectedParams = 3;
+
+			if (params[0] < expectedParams)
+			{
+				pContext->ReportError("Not enough parameters (expected %d, got %d)", expectedParams - 1, params[0] - 1);
+				return 0;
+			}
+
 			cell_t *obstacleAddr;
 			cell_t *whenAddr;
 			pContext->LocalToPhysAddr(params[2], &obstacleAddr);
 			pContext->LocalToPhysAddr(params[3], &whenAddr);
 
 			CBaseEntity* obstacle = gamehelpers->ReferenceToEntity(*obstacleAddr);
+
+			if (!obstacle)
+			{
+				pContext->ReportError("Invalid entity index/reference %d", *obstacleAddr);
+				return 0;
+			}
+
 			ILocomotion::TraverseWhenType when = (ILocomotion::TraverseWhenType)(*whenAddr);
 
 			result = loco->DefaultIsEntityTraversable(obstacle, when);
