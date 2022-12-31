@@ -1,4 +1,6 @@
-#if !defined _CBASENPC_ENTITYFACTORY_INC_
+#if defined _CBASENPC_ENTITYFACTORY_INC_
+ #endinput
+#endif
 #define _CBASENPC_ENTITYFACTORY_INC_
 
 typeset InputFuncCallback
@@ -418,5 +420,3 @@ forward void CEntityFactory_OnInstalled(const char[] classname, CEntityFactory f
  * @param factory       Factory that was uninstalled
  */
 forward void CEntityFactory_OnUninstalled(const char[] classname, CEntityFactory factory);
-
-#endif

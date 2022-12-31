@@ -1,4 +1,6 @@
-#if !defined _CBASENPC_EXTENSION_INC_
+#if defined _CBASENPC_EXTENSION_INC_
+ #endinput
+#endif
 #define _CBASENPC_EXTENSION_INC_
 
 #include <sdktools>
@@ -40,13 +42,13 @@ const NextBotAction NULL_ACTION = view_as<NextBotAction>(0);
 const INextBot NULL_NEXT_BOT = view_as<INextBot>(0);
 const Segment NULL_PATH_SEGMENT = view_as<Segment>(0);
 
-#include <cbasenpc/nav>
-#include <cbasenpc/baseentity>
-#include <cbasenpc/baseanimating>
-#include <cbasenpc/baseanimatingoverlay>
-#include <cbasenpc/basecombatcharacter>
-#include <cbasenpc/nextbot>
-#include <cbasenpc/entityfactory>
+#include "cbasenpc/nav.inc"
+#include "cbasenpc/baseentity.inc"
+#include "cbasenpc/baseanimating.inc"
+#include "cbasenpc/baseanimatingoverlay.inc"
+#include "cbasenpc/basecombatcharacter.inc"
+#include "cbasenpc/nextbot.inc"
+#include "cbasenpc/entityfactory.inc"
 
 methodmap CExtNPC __nullable__
 {
@@ -216,5 +218,3 @@ public Extension __ext_cbasenpc =
 	required = 0,
 #endif
 };
-
-#endif

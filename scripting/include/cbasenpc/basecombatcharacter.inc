@@ -1,4 +1,6 @@
-#if !defined _CBASENPC_BASECOMBATCHARACTER_INC
+#if defined _CBASENPC_BASECOMBATCHARACTER_INC
+ #endinput
+#endif
 #define _CBASENPC_BASECOMBATCHARACTER_INC
 
 methodmap CBaseCombatCharacter < CBaseAnimatingOverlay
@@ -24,5 +26,3 @@ methodmap CBaseCombatCharacter < CBaseAnimatingOverlay
 	 */
 	public native CNavArea GetLastKnownArea();
 };
-
-#endif

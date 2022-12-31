@@ -1,7 +1,9 @@
-#if !defined _CBASENPC_TF_NAV_INC_
+#if defined _CBASENPC_TF_NAV_INC_
+ #endinput
+#endif
 #define _CBASENPC_TF_NAV_INC_
 
-#include <cbasenpc/nav>
+#include "../nav.inc"
 
 //Thanks to Pelipoika & Sigsegv
 enum TFNavAttributeType
@@ -47,5 +49,3 @@ methodmap CTFNavArea < CNavArea
 	public native void ClearAttributeTF(TFNavAttributeType bits);
 	public native bool HasAttributeTF(TFNavAttributeType bits);
 };
-
-#endif

@@ -265,7 +265,7 @@ BEGINQUERYCALLBACK(ShouldAttack, const CKnownEntity *them)
 ENDQUERYCALLBACK()
 
 BEGINQUERYCALLBACK(IsHindrance, CBaseEntity* blocker)
-	CBPUSHENTITY(blocker)
+	CBPUSHENTITY(blocker == IS_ANY_HINDRANCE_POSSIBLE ? nullptr : blocker)
 ENDQUERYCALLBACK()
 
 Vector CBaseNPCPluginAction::SelectTargetPoint( const INextBot *me, const CBaseCombatCharacterHack *subject ) const

@@ -1,4 +1,6 @@
-#if !defined _CBASENPC_UTIL_INC_
+#if defined _CBASENPC_UTIL_INC_
+ #endinput
+#endif
 #define _CBASENPC_UTIL_INC_
 
 stock float fmodf(float num, float denom)
@@ -66,5 +68,3 @@ stock float UTIL_Clamp(float f1, float f2, float f3)
 {
 	return (f1 > f3 ? f3 : (f1 < f2 ? f2 : f1));
 }
-
-#endif

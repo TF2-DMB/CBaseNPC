@@ -1,4 +1,6 @@
-#if !defined _CBASENPC_NEXTBOT_PATH_INC_
+#if defined _CBASENPC_NEXTBOT_PATH_INC_
+ #endinput
+#endif
 #define _CBASENPC_NEXTBOT_PATH_INC_
 
 enum SegmentType
@@ -409,6 +411,10 @@ methodmap PathFollower < Path
 	/**
 	 * The entity that is blocking navigation along this path.
 	 *
+	 * @note       This is only set if the bot's IIntention or one of its contained responders
+	 *             returns ANSWER_YES for IsHindrance. If a responder returns ANSWER_YES for
+	 *             IsHindrance(-1) AND IsHindrance(entity), then the hindrance entity will be
+	 *             set to "entity".
 	 * @return     Entity index
 	 */
 	public native int GetHindrance();
@@ -512,5 +518,3 @@ public bool Path_FilterOnlyActors(int entity, int contentsMask, int desiredcolli
 {
 	return ((entity > 0 && entity <= MaxClients) || !!CBaseEntity(entity).MyNextBotPointer());
 }
-
-#endif

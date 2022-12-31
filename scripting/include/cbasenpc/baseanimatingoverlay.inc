@@ -1,4 +1,6 @@
-#if !defined _CBASENPC_BASEANIMATING_OVERLAY_INC_
+#if defined _CBASENPC_BASEANIMATING_OVERLAY_INC_
+ #endinput
+#endif
 #define _CBASENPC_BASEANIMATING_OVERLAY_INC_
 
 #define ANIM_LAYER_ACTIVE		0x0001
@@ -527,5 +529,3 @@ methodmap CBaseAnimatingOverlay < CBaseAnimating
 	}
 
 };
-
-#endif

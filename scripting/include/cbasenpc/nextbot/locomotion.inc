@@ -1,4 +1,6 @@
-#if !defined _CBASENPC_NEXTBOT_LOCOMOTION_INC_
+#if defined _CBASENPC_NEXTBOT_LOCOMOTION_INC_
+ #endinput
+#endif
 #define _CBASENPC_NEXTBOT_LOCOMOTION_INC_
 
 
@@ -452,5 +454,3 @@ methodmap NextBotGroundLocomotion < ILocomotion
 	 */
 	public native float GetMaxYawRate();
 }
-
-#endif
