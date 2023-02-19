@@ -228,6 +228,19 @@ CBASENPCLOCONATIVE(SetCallback)
 	return 0;
 }
 
+inline bool ExpectParamCount(IPluginContext *pContext, const cell_t *params, cell_t expected, bool hasThis)
+{
+	if (params[0] < expected)
+	{
+		pContext->ReportError("Not enough parameters (expected %d, got %d)", 
+			hasThis ? expected - 1 : expected, 
+			hasThis ? params[0] - 1 : params[0]);
+		return false;
+	}
+
+	return true;
+}
+
 CBASENPCLOCONATIVE(CallBaseFunction)
 	if (!loco->IsInCallback())
 	{
@@ -252,11 +265,8 @@ CBASENPCLOCONATIVE(CallBaseFunction)
 		
 		case CBaseNPC_Locomotion::CallbackType_JumpAcrossGap:
 		{
-			expectedParams = 3;
-
-			if (params[0] < expectedParams)
+			if (!ExpectParamCount(pContext, params, 3, true))
 			{
-				pContext->ReportError("Not enough parameters (expected %d, got %d)", expectedParams - 1, params[0] - 1);
 				return 0;
 			}
 
@@ -284,11 +294,8 @@ CBASENPCLOCONATIVE(CallBaseFunction)
 		
 		case CBaseNPC_Locomotion::CallbackType_ClimbUpToLedge:
 		{
-			expectedParams = 4;
-
-			if (params[0] < expectedParams)
+			if (!ExpectParamCount(pContext, params, 4, true))
 			{
-				pContext->ReportError("Not enough parameters (expected %d, got %d)", expectedParams - 1, params[0] - 1);
 				return 0;
 			}
 
@@ -311,11 +318,8 @@ CBASENPCLOCONATIVE(CallBaseFunction)
 
 		case CBaseNPC_Locomotion::CallbackType_ShouldCollideWith:
 		{
-			expectedParams = 2;
-
-			if (params[0] < expectedParams)
+			if (!ExpectParamCount(pContext, params, 2, true))
 			{
-				pContext->ReportError("Not enough parameters (expected %d, got %d)", expectedParams - 1, params[0] - 1);
 				return 0;
 			}
 
@@ -336,11 +340,8 @@ CBASENPCLOCONATIVE(CallBaseFunction)
 
 		case CBaseNPC_Locomotion::CallbackType_IsEntityTraversable:
 		{
-			expectedParams = 3;
-
-			if (params[0] < expectedParams)
+			if (!ExpectParamCount(pContext, params, 3, true))
 			{
-				pContext->ReportError("Not enough parameters (expected %d, got %d)", expectedParams - 1, params[0] - 1);
 				return 0;
 			}
 
