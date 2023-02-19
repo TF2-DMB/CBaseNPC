@@ -415,7 +415,7 @@ bool CBaseNPC_Locomotion::V_IsEntityTraversable(CBaseEntity* pEntity, ILocomotio
 	IPluginFunction* pCallback = GetCallback(CallbackType_IsEntityTraversable);
 	if (pCallback && pCallback->IsRunnable())
 	{
-		cell_t entRef = gamehelpers->EntityToBCompatRef(const_cast<CBaseEntity*>(pEntity));
+		cell_t entRef = gamehelpers->EntityToBCompatRef(pEntity);
 		cell_t _result = 0;
 
 		pCallback->PushCell((cell_t)this);
@@ -465,7 +465,7 @@ bool CBaseNPC_Locomotion::V_ShouldCollideWith(const CBaseEntity* pEntity)
 
 	m_pCallbackTypeStack->pop();
 
-	RETURN_META_VALUE(MRES_SUPERCEDE, result);
+	return result;
 }
 
 float CBaseNPC_Locomotion::V_GetStepHeight()

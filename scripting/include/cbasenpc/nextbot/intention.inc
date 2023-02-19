@@ -1,4 +1,6 @@
-#if !defined _CBASENPC_NEXTBOT_INTENTION_INC_
+#if defined _CBASENPC_NEXTBOT_INTENTION_INC_
+ #endinput
+#endif
 #define _CBASENPC_NEXTBOT_INTENTION_INC_
 
 /**
@@ -73,5 +75,3 @@ methodmap IIntention < INextBotComponent
 	 */
 	public native CKnownEntity SelectMoreDangerousThreat(int subject, CKnownEntity threat1, CKnownEntity threat2);
 };
-
-#endif

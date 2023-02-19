@@ -1,4 +1,6 @@
-#if !defined _CBASENPC_NEXTBOT_VISION_INC_
+#if defined _CBASENPC_NEXTBOT_VISION_INC_
+ #endinput
+#endif
 #define _CBASENPC_NEXTBOT_VISION_INC_
 
 enum FieldOfViewCheckType
@@ -219,5 +221,3 @@ methodmap IVision < INextBotComponent
 	 */
 	public native bool IsLookingAtTarget(int iActor, float cosTolerance = 0.95);
 };
-
-#endif

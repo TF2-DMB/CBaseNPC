@@ -1,4 +1,6 @@
-#if !defined _CBASENPC_NEXTBOT_BEHAVIOUR_INC_
+#if defined _CBASENPC_NEXTBOT_BEHAVIOUR_INC_
+ #endinput
+#endif
 #define _CBASENPC_NEXTBOT_BEHAVIOUR_INC_
 
 enum EventResultPriorityType
@@ -269,7 +271,7 @@ enum ContextualQueryType
 	ContextualQueryType_ShouldHurry,
 	ContextualQueryType_ShouldRetreat,
 	ContextualQueryType_ShouldAttack,
-	ContextualQueryType_IsHindrance,
+	ContextualQueryType_IsHindrance, /* see `PathFollower::GetHindrance()` on how to use this */
 	ContextualQueryType_SelectTargetPoint,
 	ContextualQueryType_IsPositionAllowed,
 	ContextualQueryType_SelectMoreDangerousThreat,
@@ -897,5 +899,3 @@ methodmap NextBotActionFactory < Handle
 	 */
 	public native NextBotAction Create();
 }
-
-#endif

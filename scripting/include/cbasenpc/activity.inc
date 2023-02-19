@@ -1,4 +1,6 @@
-#if !defined _CBASENPC_ACTIVITY_INC_
+#if defined _CBASENPC_ACTIVITY_INC_
+ #endinput
+#endif
 #define _CBASENPC_ACTIVITY_INC_
 
 enum Activity
@@ -2179,5 +2181,3 @@ enum Activity
 	// this is the end of the global activities, private per-monster activities start here.
 	LAST_SHARED_ACTIVITY,
 };
-
-#endif

@@ -1,4 +1,6 @@
-#if !defined _CBASENPC_BASEENTITY_INC_
+#if defined _CBASENPC_BASEENTITY_INC_
+ #endinput
+#endif
 #define _CBASENPC_BASEENTITY_INC_
 
 methodmap CBaseEntity
@@ -909,5 +911,3 @@ methodmap CBaseEntity
 		SetEntityMoveType(this.index, val);
 	}
 }
-
-#endif

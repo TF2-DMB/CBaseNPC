@@ -1,4 +1,6 @@
-#if !defined _CBASENPC_NEXTBOT_LOCOMOTION_INC_
+#if defined _CBASENPC_NEXTBOT_LOCOMOTION_INC_
+ #endinput
+#endif
 #define _CBASENPC_NEXTBOT_LOCOMOTION_INC_
 
 
@@ -358,6 +360,7 @@ methodmap ILocomotion < INextBotComponent
 	 * @param entity     Entity index to check
 	 * @param when       Type to check
 	 * @return           True if traversable, false otherwise
+	 * @error            Locomotion is invalid or entity is invalid
 	 */
 	public native bool IsEntityTraversable(int entity, TraverseWhenType when);
 
@@ -452,5 +455,3 @@ methodmap NextBotGroundLocomotion < ILocomotion
 	 */
 	public native float GetMaxYawRate();
 }
-
-#endif

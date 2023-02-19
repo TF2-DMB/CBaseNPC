@@ -1,7 +1,9 @@
-#if !defined _CBASENPC_BASEANIMATING_INC_
+#if defined _CBASENPC_BASEANIMATING_INC_
+ #endinput
+#endif
 #define _CBASENPC_BASEANIMATING_INC_
 
-#include <cbasenpc/activity>
+#include "activity.inc"
 
 methodmap CBaseAnimating < CBaseEntity
 {
@@ -157,5 +159,3 @@ methodmap CBaseAnimating < CBaseEntity
 	 */
 	public native float GetPoseParameter(int poseParam);
 };
-
-#endif

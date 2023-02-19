@@ -1,7 +1,9 @@
-#if !defined _CBASENPC_MATRIX_INC_
+#if defined _CBASENPC_MATRIX_INC_
+ #endinput
+#endif
 #define _CBASENPC_MATRIX_INC_
 
-#include <cbasenpc/util>
+#include "util.inc"
 
 /**
  * Retrieves a row vector of the matrix.
@@ -446,5 +448,3 @@ stock void MatrixInvertEx( const float matIn[3][4], float matOut[3][4] )
 	MatrixGetRowVector( matOut, 2, rowVec );
 	matOut[2][3] = -GetVectorDotProduct( tmp, rowVec );
 }
-
-#endif

@@ -228,16 +228,30 @@ CBASENPCLOCONATIVE(SetCallback)
 	return 0;
 }
 
+inline bool ExpectParamCount(IPluginContext *pContext, const cell_t *params, cell_t expected, bool hasThis)
+{
+	if (params[0] < expected)
+	{
+		pContext->ReportError("Not enough parameters (expected %d, got %d)", 
+			hasThis ? expected - 1 : expected, 
+			hasThis ? params[0] - 1 : params[0]);
+		return false;
+	}
+
+	return true;
+}
+
 CBASENPCLOCONATIVE(CallBaseFunction)
 	if (!loco->IsInCallback())
 	{
-		pContext->ThrowNativeError("CallBaseFunction() can only be used within a callback");
+		pContext->ReportError("CallBaseFunction() can only be used within a callback");
 		return 0;
 	}
 
 	CBaseNPC_Locomotion::CallbackType cbType = loco->GetCurrentCallbackType();
 
 	cell_t result = 0;
+	cell_t expectedParams = 0;
 
 	switch (cbType)
 	{
@@ -251,6 +265,11 @@ CBASENPCLOCONATIVE(CallBaseFunction)
 		
 		case CBaseNPC_Locomotion::CallbackType_JumpAcrossGap:
 		{
+			if (!ExpectParamCount(pContext, params, 3, true))
+			{
+				return 0;
+			}
+
 			cell_t* goalAddr;
 			cell_t* forwardAddr;
 			pContext->LocalToPhysAddr(params[2], &goalAddr);
@@ -275,34 +294,73 @@ CBASENPCLOCONATIVE(CallBaseFunction)
 		
 		case CBaseNPC_Locomotion::CallbackType_ClimbUpToLedge:
 		{
+			if (!ExpectParamCount(pContext, params, 4, true))
+			{
+				return 0;
+			}
+
 			cell_t* goalAddr;
 			cell_t* forwardAddr;
+			cell_t* entityAddr;
 			pContext->LocalToPhysAddr(params[2], &goalAddr);
 			pContext->LocalToPhysAddr(params[3], &forwardAddr);
-			CBaseEntity* pEntity = gamehelpers->ReferenceToEntity(params[4]);
+			pContext->LocalToPhysAddr(params[4], &entityAddr);
+			CBaseEntity* entity = gamehelpers->ReferenceToEntity(*entityAddr);
 
 			Vector vecGoal;
 			Vector vecForward;
 			PawnVectorToVector(goalAddr, &vecGoal);
 			PawnVectorToVector(forwardAddr, &vecForward);
 
-			result = loco->DefaultClimbUpToLedge(vecGoal, vecForward, pEntity);
+			result = loco->DefaultClimbUpToLedge(vecGoal, vecForward, entity);
 			break;
 		}
 
 		case CBaseNPC_Locomotion::CallbackType_ShouldCollideWith:
 		{
-			CBaseEntity* pOther = gamehelpers->ReferenceToEntity(params[2]);
-			result = loco->DefaultShouldCollideWith(pOther);
+			if (!ExpectParamCount(pContext, params, 2, true))
+			{
+				return 0;
+			}
+
+			cell_t *colliderAddr;
+			pContext->LocalToPhysAddr(params[2], &colliderAddr);
+
+			CBaseEntity* collider = gamehelpers->ReferenceToEntity(*colliderAddr);
+
+			if (!collider)
+			{
+				pContext->ReportError("Invalid entity index/reference %d", *colliderAddr);
+				return 0;
+			}
+
+			result = loco->DefaultShouldCollideWith(collider);
 			break;
 		}
 
 		case CBaseNPC_Locomotion::CallbackType_IsEntityTraversable:
 		{
-			CBaseEntity* pOther = gamehelpers->ReferenceToEntity(params[2]);
-			ILocomotion::TraverseWhenType when = (ILocomotion::TraverseWhenType)params[3];
+			if (!ExpectParamCount(pContext, params, 3, true))
+			{
+				return 0;
+			}
 
-			result = loco->DefaultIsEntityTraversable(pOther, when);
+			cell_t *obstacleAddr;
+			cell_t *whenAddr;
+			pContext->LocalToPhysAddr(params[2], &obstacleAddr);
+			pContext->LocalToPhysAddr(params[3], &whenAddr);
+
+			CBaseEntity* obstacle = gamehelpers->ReferenceToEntity(*obstacleAddr);
+
+			if (!obstacle)
+			{
+				pContext->ReportError("Invalid entity index/reference %d", *obstacleAddr);
+				return 0;
+			}
+
+			ILocomotion::TraverseWhenType when = (ILocomotion::TraverseWhenType)(*whenAddr);
+
+			result = loco->DefaultIsEntityTraversable(obstacle, when);
 			break;
 		}
 	}

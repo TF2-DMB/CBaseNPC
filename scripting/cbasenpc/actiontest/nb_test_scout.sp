@@ -120,6 +120,49 @@ static void OnCreate(TestScoutBot ent)
 	SDKHook(ent.index, SDKHook_SpawnPost, SpawnPost);
 	SDKHook(ent.index, SDKHook_Think, Think);
 	SDKHook(ent.index, SDKHook_OnTakeDamageAlivePost, OnTakeDamageAlivePost);
+
+	CBaseNPC_Locomotion loco = npc.GetLocomotion();
+	loco.SetCallback(LocomotionCallback_ClimbUpToLedge, LocomotionClimbUpToLedge);
+	loco.SetCallback(LocomotionCallback_ShouldCollideWith, LocomotionShouldCollideWith);
+	loco.SetCallback(LocomotionCallback_IsEntityTraversable, LocomotionIsEntityTraversable);
+}
+
+static bool LocomotionClimbUpToLedge(CBaseNPC_Locomotion loco, const float goal[3], const float fwd[3], int entity)
+{
+	float feet[3];
+	loco.GetFeet(feet);
+
+	if (GetVectorDistance(feet, goal) > loco.GetDesiredSpeed())
+	{
+		return false;
+	}
+
+	return loco.CallBaseFunction(goal, fwd, entity);
+}
+
+static bool LocomotionShouldCollideWith(CBaseNPC_Locomotion loco, CBaseEntity other)
+{
+	if (other.index > 0 && other.index <= MaxClients)
+	{
+		return true;
+	}
+
+	if (CEntityFactory.GetFactoryOfEntity(other.index) == EntityFactory)
+	{
+		return true;
+	}
+
+	return loco.CallBaseFunction(other);
+}
+
+static bool LocomotionIsEntityTraversable(CBaseNPC_Locomotion loco, CBaseEntity obstacle, TraverseWhenType when)
+{
+	if (CEntityFactory.GetFactoryOfEntity(obstacle.index) == EntityFactory)
+	{
+		return false;
+	}
+
+	return loco.CallBaseFunction(obstacle, when);
 }
 
 static void OnRemove(TestScoutBot ent)

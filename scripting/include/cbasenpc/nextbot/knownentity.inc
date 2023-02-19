@@ -1,4 +1,6 @@
-#if !defined _CBASENPC_NEXTBOT_KNOWNENTITY_INC_
+#if defined _CBASENPC_NEXTBOT_KNOWNENTITY_INC_
+ #endinput
+#endif
 #define _CBASENPC_NEXTBOT_KNOWNENTITY_INC_
 
 /**
@@ -142,5 +144,3 @@ methodmap CKnownEntity
 	 */
 	public native bool Is(int iEntity);
 };
-
-#endif

@@ -1,4 +1,6 @@
-#if !defined _CBASENPC_NAV_INC_
+#if defined _CBASENPC_NAV_INC_
+ #endinput
+#endif
 #define _CBASENPC_NAV_INC_
 
 enum GetNavAreaFlags_t
@@ -1017,5 +1019,3 @@ public float Path_Cost(CNavArea area, CNavArea fromArea, CNavLadder ladder, int 
 	
 	return cost;
 }
-
-#endif

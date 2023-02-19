@@ -1,4 +1,6 @@
-#if !defined _CBASENPC_NEXTBOT_BODY_INC_
+#if defined _CBASENPC_NEXTBOT_BODY_INC_
+ #endinput
+#endif
 #define _CBASENPC_NEXTBOT_BODY_INC_
 
 enum LookAtPriorityType
@@ -102,5 +104,3 @@ methodmap IBody < INextBotComponent
 	public native int GetSolidMask();
 	public native int GetCollisionGroup();
 };
-
-#endif

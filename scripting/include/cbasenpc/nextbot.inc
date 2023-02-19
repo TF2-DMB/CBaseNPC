@@ -1,4 +1,6 @@
-#if !defined _CBASENPC_NEXTBOT_INC_
+#if defined _CBASENPC_NEXTBOT_INC_
+ #endinput
+#endif
 #define _CBASENPC_NEXTBOT_INC_
 
 enum NextBotDebugType
@@ -445,12 +447,10 @@ stock INextBot ToolsNextBotPlayer_Factory(Address entity)
 	return ToolsNextBotPlayer(entity);
 }
 
-#include <cbasenpc/nextbot/knownentity>
-#include <cbasenpc/nextbot/vision>
-#include <cbasenpc/nextbot/intention>
-#include <cbasenpc/nextbot/locomotion>
-#include <cbasenpc/nextbot/path>
-#include <cbasenpc/nextbot/body>
-#include <cbasenpc/nextbot/behavior>
-
-#endif
+#include "nextbot/knownentity.inc"
+#include "nextbot/vision.inc"
+#include "nextbot/intention.inc"
+#include "nextbot/locomotion.inc"
+#include "nextbot/path.inc"
+#include "nextbot/body.inc"
+#include "nextbot/behavior.inc"
