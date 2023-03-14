@@ -894,6 +894,8 @@ IServerNetworkable* CPluginEntityFactory::RecursiveCreate(const char* classname,
 
 	size_t entitySize = pCreatingFactory->GetEntitySize();
 
+	static MCall<void> ctorCall;
+
 	IEntityFactory *pBaseFactory = GetBaseFactory();
 	if (pBaseFactory)
 	{
@@ -929,7 +931,7 @@ IServerNetworkable* CPluginEntityFactory::RecursiveCreate(const char* classname,
 	{
 		bIsInstantiating = true;
 
-		CBaseEntityHack* pEnt = (CBaseEntityHack*)engine->PvAllocEntPrivateData(entitySize);
+		CBaseEntityHack* pEnt = (CBaseEntityHack*)engine->PvAllocEntPrivateData(entitySize + ((4 - (entitySize % 4)) % 4));
 		CBaseEntityHack::CBaseEntity_Ctor(pEnt, m_Derive.m_bBaseEntityServerOnly);
 		pEnt->PostConstructor(classname);
 		pNet = pEnt->NetworkProp();
@@ -938,8 +940,9 @@ IServerNetworkable* CPluginEntityFactory::RecursiveCreate(const char* classname,
 	{
 		bIsInstantiating = true;
 
-		CBaseEntityHack* pEnt = (CBaseEntityHack*)engine->PvAllocEntPrivateData(entitySize);
-		(pEnt->*(m_Derive.m_pConstructorFunc))();
+		CBaseEntityHack* pEnt = (CBaseEntityHack*)engine->PvAllocEntPrivateData(entitySize + ((4 - (entitySize % 4)) % 4));
+		ctorCall.Init((void*)m_Derive.m_pConstructorFunc);
+		ctorCall(pEnt);
 		pEnt->PostConstructor(classname);
 		pNet = pEnt->NetworkProp();
 	}

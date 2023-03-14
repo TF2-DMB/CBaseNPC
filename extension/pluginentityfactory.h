@@ -172,8 +172,6 @@ protected:
 		DERIVETYPE_MAX
 	};
 
-	typedef void* (CBaseEntity::*RawEntityConstructor)(void);
-
 	struct PluginEntityFactoryDeriveInfo_t
 	{
 		PluginEntityFactoryDeriveType_t m_DeriveFrom;
@@ -182,7 +180,7 @@ protected:
 		{
 			PluginEntityFactoryBaseClass_t m_BaseType;
 			Handle_t m_BaseFactoryHandle;
-			RawEntityConstructor m_pConstructorFunc;
+			uintptr_t m_pConstructorFunc;
 		};
 		
 		std::string m_iBaseClassname;
