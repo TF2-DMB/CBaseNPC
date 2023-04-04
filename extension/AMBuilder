@@ -42,7 +42,7 @@ project.sources = [
   'sourcesdk/basedoor.cpp',
   'sourcesdk/basetoggle.cpp',
   'sourcesdk/funcbrush.cpp',
-  os.path.join(Extension.sm_root, 'public', 'smsdk_ext.cpp')
+  'smsdk_ext.cpp'
 ]
 
 for sdk_name in Extension.sdks:

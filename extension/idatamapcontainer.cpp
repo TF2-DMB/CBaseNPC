@@ -798,12 +798,14 @@ void IEntityDataMapContainer::DestroyDataDesc()
 // https://github.com/alliedmodders/sourcemod/blob/38eecd5ece26b2469560db1822511a7e2685286e/core/HalfLife2.h#L263
 struct CHalfLife2Hack
 {
+#if SM_BUILD_MINOR < 12
 	struct DataMapCachePolicy
 	{
 		static inline bool matches(const char *name, const sm_datatable_info_t &info)
 		{
 			return strcmp(name, info.prop->fieldName) == 0;
 		}
+
 		static inline uint32_t hash(const detail::CharsAndLength &key)
 		{
 			return key.hash();
@@ -811,23 +813,47 @@ struct CHalfLife2Hack
 	};
 
 	typedef NameHashSet<sm_datatable_info_t, DataMapCachePolicy> DataMapCache;
+#else
+	struct DataMapCacheInfo
+	{
+		static inline bool matches(const char *name, const DataMapCacheInfo &info)
+		{
+			return strcmp(name, info.name.c_str()) == 0;
+		}
+
+		static inline uint32_t hash(const detail::CharsAndLength &key)
+		{
+			return key.hash();
+		}
+
+		DataMapCacheInfo()
+			: name(), info{nullptr, 0}
+		{
+		}
+
+		std::string name;
+		sm_datatable_info_t info;
+	};
+
+	typedef NameHashSet<DataMapCacheInfo> DataMapCache;
+
+#endif
 	typedef ke::HashMap<datamap_t *, DataMapCache *, ke::PointerPolicy<datamap_t> > DataTableMap;
 
 	void** vptr;
 	NameHashSet<void *> m_Classes;
 	DataTableMap m_Maps;
-	int m_MsgTextMsg;
-	int m_HinTextMsg;
-	int m_SayTextMsg;
-	int m_VGUIMenu;
 };
 
 void IEntityDataMapContainer::DestroyDataDescMap()
 {
 	if (!m_pDataMap)
+	{
 		return;
+	}
 
 	// HACK: Force gamehelpers (CHalfLife2 *) to delete the cache of our datamap if it exists.
+#if SMINTERFACE_GAMEHELPERS_VERSION < 12
 	CHalfLife2Hack* pHL2 = reinterpret_cast<CHalfLife2Hack*>(gamehelpers);
 	auto result = pHL2->m_Maps.find( m_pDataMap );
 	if (result.found())
@@ -837,6 +863,9 @@ void IEntityDataMapContainer::DestroyDataDescMap()
 
 		pHL2->m_Maps.remove( result );
 	}
+#else
+	gamehelpers->RemoveDataTableCache(m_pDataMap);
+#endif
 
 	IDataMapContainer::DestroyDataDescMap();
 }
