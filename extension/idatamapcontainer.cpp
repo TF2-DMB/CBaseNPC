@@ -9,6 +9,8 @@
 #include <sm_namehashset.h>
 #include <sh_stack.h>
 
+extern ConVar* sourcemod_version;
+
 IDataMapContainer::IDataMapContainer()
 {
 	m_pDataMap = nullptr;
@@ -796,37 +798,20 @@ void IEntityDataMapContainer::DestroyDataDesc()
 }
 
 // https://github.com/alliedmodders/sourcemod/blob/38eecd5ece26b2469560db1822511a7e2685286e/core/HalfLife2.h#L263
-struct CHalfLife2Hack
+struct CHalfLife2
 {
-#if SM_BUILD_MINOR < 12
-	struct DataMapCachePolicy
+	struct DataMapCacheInfo12
 	{
-		static inline bool matches(const char *name, const sm_datatable_info_t &info)
-		{
-			return strcmp(name, info.prop->fieldName) == 0;
-		}
-
-		static inline uint32_t hash(const detail::CharsAndLength &key)
-		{
-			return key.hash();
-		}
-	};
-
-	typedef NameHashSet<sm_datatable_info_t, DataMapCachePolicy> DataMapCache;
-#else
-	struct DataMapCacheInfo
-	{
-		static inline bool matches(const char *name, const DataMapCacheInfo &info)
+		static inline bool matches(const char *name, const DataMapCacheInfo12 &info)
 		{
 			return strcmp(name, info.name.c_str()) == 0;
 		}
-
 		static inline uint32_t hash(const detail::CharsAndLength &key)
 		{
 			return key.hash();
 		}
 
-		DataMapCacheInfo()
+		DataMapCacheInfo12()
 			: name(), info{nullptr, 0}
 		{
 		}
@@ -834,11 +819,24 @@ struct CHalfLife2Hack
 		std::string name;
 		sm_datatable_info_t info;
 	};
+	typedef NameHashSet<DataMapCacheInfo12> DataMapCache12;
 
-	typedef NameHashSet<DataMapCacheInfo> DataMapCache;
+	struct DataMapCachePolicy11
+	{
+		static inline bool matches(const char *name, const sm_datatable_info_t &info)
+		{
+			return strcmp(name, info.prop->fieldName) == 0;
+		}
+		static inline uint32_t hash(const detail::CharsAndLength &key)
+		{
+			return key.hash();
+		}
+	};
+	typedef NameHashSet<sm_datatable_info_t, DataMapCachePolicy11> DataMapCache11;
 
-#endif
-	typedef ke::HashMap<datamap_t *, DataMapCache *, ke::PointerPolicy<datamap_t> > DataTableMap;
+	typedef ke::HashMap<datamap_t *, void *, ke::PointerPolicy<datamap_t> > DataTableMap;
+	typedef ke::HashMap<datamap_t *, DataMapCache11 *, ke::PointerPolicy<datamap_t> > DataTableMap11;
+	typedef ke::HashMap<datamap_t *, DataMapCache12 *, ke::PointerPolicy<datamap_t> > DataTableMap12;
 
 	void** vptr;
 	NameHashSet<void *> m_Classes;
@@ -853,20 +851,42 @@ void IEntityDataMapContainer::DestroyDataDescMap()
 	}
 
 	// HACK: Force gamehelpers (CHalfLife2 *) to delete the cache of our datamap if it exists.
-#if SMINTERFACE_GAMEHELPERS_VERSION < 12
-	CHalfLife2Hack* pHL2 = reinterpret_cast<CHalfLife2Hack*>(gamehelpers);
-	auto result = pHL2->m_Maps.find( m_pDataMap );
+	CHalfLife2* pHL2 = reinterpret_cast<CHalfLife2*>(gamehelpers);
+
+	const char* value = sourcemod_version->GetString();
+	if (strncmp("1.12.0.", value, 7) == 0)
+	{
+		int rev = std::atoi(&value[7]);
+		if (rev >= 6998)
+		{
+			auto maps12 = (CHalfLife2::DataTableMap12*)(&(pHL2->m_Maps));
+			auto result = maps12->find( m_pDataMap );
+			if (result.found())
+			{
+				auto cache = result->value;
+				if (cache)	
+				{
+					delete cache;
+				}
+
+				maps12->remove( result );
+			}
+			IDataMapContainer::DestroyDataDescMap();
+			return;
+		}
+	}
+
+	auto maps11 = (CHalfLife2::DataTableMap11*)(&(pHL2->m_Maps));
+	auto result = maps11->find( m_pDataMap );
 	if (result.found())
 	{
-		CHalfLife2Hack::DataMapCache* cache = result->value;
-		if (cache) delete cache;
-
-		pHL2->m_Maps.remove( result );
+		auto cache = result->value;
+		if (cache)	
+		{
+			delete cache;
+		}
+		maps11->remove( result );
 	}
-#else
-	gamehelpers->RemoveDataTableCache(m_pDataMap);
-#endif
-
 	IDataMapContainer::DestroyDataDescMap();
 }
 
