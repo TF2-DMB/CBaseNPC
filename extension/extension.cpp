@@ -25,6 +25,7 @@ IServerTools* servertools = nullptr;
 IMDLCache* mdlcache = nullptr;
 CSharedEdictChangeInfo* g_pSharedChangeInfo = nullptr;
 IStaticPropMgrServer* staticpropmgr = nullptr;
+ConVar* sourcemod_version = nullptr;
 IBaseNPC_Tools* g_pBaseNPCTools = new BaseNPC_Tools_API;
 
 DEFINEHANDLEOBJ(SurroundingAreasCollector, CUtlVector< CNavArea* >);
@@ -118,6 +119,8 @@ bool CBaseNPCExt::SDK_OnMetamodLoad(ISmmAPI *ismm, char *error, size_t maxlen, b
 	GET_V_IFACE_ANY(GetEngineFactory, mdlcache, IMDLCache, MDLCACHE_INTERFACE_VERSION);
 
 	ConVar_Register(0, this);
+
+	sourcemod_version = g_pCVar->FindVar("sourcemod_version");
 
 	g_cvDeveloper = g_pCVar->FindVar("developer");
 
