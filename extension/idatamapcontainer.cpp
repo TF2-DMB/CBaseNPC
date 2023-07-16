@@ -697,6 +697,67 @@ bool IDataMapContainer::SetObjectDataEntity( void* obj, const char* prop, CBaseE
 	return false;
 }
 
+template<>
+bool IDataMapContainer::SetObjectDataEx(void* obj, const char* prop, int data, int element, char* error, size_t maxlen) {
+	return this->SetObjectData(obj, prop, data, element, error, maxlen);
+}
+
+template<>
+bool IDataMapContainer::SetObjectDataEx(void* obj, const char* prop, float data, int element, char* error, size_t maxlen) {
+	return this->SetObjectDataFloat(obj, prop, data, element, error, maxlen);
+}
+
+template<>
+bool IDataMapContainer::SetObjectDataEx(void* obj, const char* prop, float* data, int element, char* error, size_t maxlen) {
+	return this->SetObjectDataVector(obj, prop, data, element, error, maxlen);
+}
+
+template<>
+bool IDataMapContainer::SetObjectDataEx(void* obj, const char* prop, CBaseEntity* data, int element, char* error, size_t maxlen) {
+	return this->SetObjectDataEntity(obj, prop, data, element, error, maxlen);
+}
+
+template<>
+bool IDataMapContainer::SetObjectDataEx(void* obj, const char* prop, char* data, int element, char* error, size_t maxlen) {
+	return this->SetObjectDataString(obj, prop, data, element, error, maxlen);
+}
+
+template<>
+bool IDataMapContainer::SetObjectDataEx(void* obj, const char* prop, const char* data, int element, char* error, size_t maxlen) {
+	return this->SetObjectDataString(obj, prop, data, element, error, maxlen);
+}
+
+template<>
+bool IDataMapContainer::GetObjectDataEx(void* obj, const char* prop, int* data, int element, char* error, size_t maxlen) {
+	return this->GetObjectData(obj, prop, *data, element, error, maxlen);
+}
+
+template<>
+bool IDataMapContainer::GetObjectDataEx(void* obj, const char* prop, float* data, int element, char* error, size_t maxlen) {
+	return this->GetObjectDataFloat(obj, prop, *data, element, error, maxlen);
+}
+
+template<>
+bool IDataMapContainer::GetObjectDataEx(void* obj, const char* prop, float** data, int element, char* error, size_t maxlen) {
+	return this->GetObjectDataVector(obj, prop, *data, element, error, maxlen);
+}
+
+template<>
+bool IDataMapContainer::GetObjectDataEx(void* obj, const char* prop, CBaseEntity** data, int element, char* error, size_t maxlen) {
+	return this->GetObjectDataEntity(obj, prop, data, element, error, maxlen);
+}
+
+template<>
+bool IDataMapContainer::GetObjectDataEx(void* obj, const char* prop, char** data, int element, char* error, size_t maxlen) {
+	*data = new char[256];
+	if (this->GetObjectDataString(obj, prop, *data, 256, element, error, maxlen)) {
+		return true;
+	}
+	delete *data;
+	*data = nullptr;
+	return false;
+}
+
 SourceHook::CPageAlloc g_InputFuncAlloc;
 
 IEntityDataMapInputFuncDelegate::IEntityDataMapInputFuncDelegate()
@@ -932,7 +993,7 @@ void IEntityDataMapContainer::DefineOutput(const char* name, const char* mapname
 {
 	size_t padding = 0;
 	int fieldOffset = GetAlignedOffset( GetDataDescOffset() + m_DataMapDescSizeInBytes, sizeof(int*), &padding );
-	int fieldSizeInBytes = sizeof(CBaseEntityOutputHack);
+	int fieldSizeInBytes = sizeof(CBaseEntityOutput);
 
 	name = name ? strdup(name) : NULL;
 	mapname = mapname ? strdup(mapname) : NULL;
@@ -965,7 +1026,7 @@ void IEntityDataMapContainer::CreateFields(CBaseEntity* pEntity)
 		typedescription_t * pTypeDesc = &m_pDataMap->dataDesc[i];
 		if ( ( pTypeDesc->fieldType == FIELD_CUSTOM ) && ( pTypeDesc->flags & FTYPEDESC_OUTPUT ) )
 		{
-			CBaseEntityOutputHack *pOutput = (CBaseEntityOutputHack *)((uint8_t*)pEntity + pTypeDesc->fieldOffset[0]);
+			CBaseEntityOutput *pOutput = (CBaseEntityOutput *)((uint8_t*)pEntity + pTypeDesc->fieldOffset[0]);
 			pOutput->Init();
 		}
 	}
@@ -981,7 +1042,7 @@ void IEntityDataMapContainer::DestroyFields(CBaseEntity* pEntity)
 		typedescription_t * pTypeDesc = &m_pDataMap->dataDesc[i];
 		if ( ( pTypeDesc->fieldType == FIELD_CUSTOM ) && ( pTypeDesc->flags & FTYPEDESC_OUTPUT ) )
 		{
-			CBaseEntityOutputHack *pOutput = (CBaseEntityOutputHack *)((uint8_t*)pEntity + pTypeDesc->fieldOffset[0]);
+			CBaseEntityOutput *pOutput = (CBaseEntityOutput *)((uint8_t*)pEntity + pTypeDesc->fieldOffset[0]);
 			pOutput->Destroy();
 		}
 	}

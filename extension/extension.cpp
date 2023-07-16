@@ -5,12 +5,17 @@
 #include "helpers.h"
 #include "sourcesdk/nav_mesh.h"
 #include "sourcesdk/tf_gamerules.h"
-#include "natives.h"
+#include "sourcesdk/basetoggle.h"
+#include "sourcesdk/funcbrush.h"
+#include "natives.hpp"
 #include <ihandleentity.h>
 #include "npc_tools_internal.h"
 #include "baseentityoutput.h"
 #include "pluginentityfactory.h"
 #include "cbasenpc_behavior.h"
+
+class CTakeDamageInfoHack;
+SH_DECL_MANUALEXTERN1_void(MEvent_Killed, CTakeDamageInfoHack &);
 
 CGlobalVars* gpGlobals = nullptr;
 IGameConfig* g_pGameConf = nullptr;
@@ -27,10 +32,18 @@ CSharedEdictChangeInfo* g_pSharedChangeInfo = nullptr;
 IStaticPropMgrServer* staticpropmgr = nullptr;
 ConVar* sourcemod_version = nullptr;
 IBaseNPC_Tools* g_pBaseNPCTools = new BaseNPC_Tools_API;
+std::vector<sp_nativeinfo_t> gNatives;
 
 DEFINEHANDLEOBJ(SurroundingAreasCollector, CUtlVector< CNavArea* >);
 
 ConVar* g_cvDeveloper = nullptr;
+extern ConVar* NextBotSpeedLookAheadRange;
+extern ConVar* NextBotGoalLookAheadRange;
+extern ConVar* NextBotLadderAlignRange;
+extern ConVar* NextBotAllowAvoiding;
+extern ConVar* NextBotAllowClimbing;
+extern ConVar* NextBotAllowGapJumping;
+extern ConVar* NextBotDebugClimbing;
 extern ConVar* NextBotDebugHistory;
 extern ConVar* NextBotPathDrawIncrement;
 extern ConVar* NextBotPathSegmentInfluenceRadius;
@@ -46,9 +59,7 @@ CBaseNPCExt g_CBaseNPCExt;
 SMEXT_LINK(&g_CBaseNPCExt);
 
 IForward *g_pForwardEventKilled = nullptr;
-
-bool (CTraceFilterSimpleHack:: *CTraceFilterSimpleHack::func_ShouldHitEntity)(IHandleEntity *pHandleEntity, int contentsMask) = nullptr;
-
+bool (ToolsTraceFilterSimple:: *ToolsTraceFilterSimple::func_ShouldHitEntity)(IHandleEntity *pHandleEntity, int contentsMask) = nullptr;
 CUtlMap<int32_t, int32_t> g_EntitiesHooks;
 
 bool CBaseNPCExt::SDK_OnLoad(char *error, size_t maxlength, bool late)
@@ -62,16 +73,16 @@ bool CBaseNPCExt::SDK_OnLoad(char *error, size_t maxlength, bool late)
 
 	CDetourManager::Init(g_pSM->GetScriptingEngine(), g_pGameConf);
 
-	if (!CBaseEntityHack::Init(g_pGameConf, error, maxlength)
-		|| !CBaseAnimatingHack::Init(g_pGameConf, error, maxlength)
-		|| !CBaseAnimatingOverlayHack::Init(g_pGameConf, error, maxlength)
-		|| !CFuncBrushHack::Init(g_pGameConf, error, maxlength)
-		|| !CBaseToggleHack::Init(g_pGameConf, error, maxlength)
+	if (!CBaseEntity::Init(g_pGameConf, error, maxlength)
+		|| !CBaseAnimating::Init(g_pGameConf, error, maxlength)
+		|| !CBaseAnimatingOverlay::Init(g_pGameConf, error, maxlength)
+		|| !CFuncBrush::Init(g_pGameConf, error, maxlength)
+		|| !CBaseToggle::Init(g_pGameConf, error, maxlength)
 		|| !CNavMesh::Init(g_pGameConf, error, maxlength)
-		|| !CBaseCombatCharacterHack::Init(g_pGameConf, error, maxlength)
-		|| !CTraceFilterSimpleHack::Init(g_pGameConf, error, maxlength)
+		|| !CBaseCombatCharacter::Init(g_pGameConf, error, maxlength)
+		|| !ToolsTraceFilterSimple::Init(g_pGameConf, error, maxlength)
 		|| !CTFGameRules::Init(g_pGameConf, error, maxlength)
-		|| !CBaseEntityOutputHack::Init(g_pGameConf, error, maxlength)
+		|| !CBaseEntityOutput::Init(g_pGameConf, error, maxlength)
 		|| !CBaseNPC_Locomotion::Init(g_pGameConf, error, maxlength)
 		|| !ToolsNextBot::Init(g_pGameConf, error, maxlength)
 		)
@@ -101,9 +112,15 @@ bool CBaseNPCExt::SDK_OnLoad(char *error, size_t maxlength, bool late)
 	sharesys->AddDependency(myself, "bintools.ext", true, true);
 	sharesys->AddDependency(myself, "sdktools.ext", true, true);
 	sharesys->AddDependency(myself, "sdkhooks.ext", true, true);
-	sharesys->AddNatives(myself, g_NativesInfo);
 	sharesys->RegisterLibrary(myself, "cbasenpc");
 	sharesys->AddInterface(myself, g_pBaseNPCTools);
+	
+	gNatives.reserve(1000);
+	natives::setup(gNatives);
+	gNatives.push_back({nullptr, nullptr});
+	sharesys->AddNatives(myself, gNatives.data());
+
+	g_pSM->LogMessage(myself, "Registered %d natives.", gNatives.size() - 1);
 
 	SetDefLessFunc(g_EntitiesHooks);
 	return true;

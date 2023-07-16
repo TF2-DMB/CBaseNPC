@@ -16,7 +16,7 @@ CustomFactory::~CustomFactory()
 
 IServerNetworkable* CustomFactory::Create(const char* classname)
 {
-	CBaseEntityHack* pEnt = (CBaseEntityHack*)engine->PvAllocEntPrivateData(this->GetEntitySize());
+	CBaseEntity* pEnt = (CBaseEntity*)engine->PvAllocEntPrivateData(this->GetEntitySize());
 	this->constructor->operator()(pEnt);
 	this->Create_Extra(pEnt);
     pEnt->PostConstructor(classname);

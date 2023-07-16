@@ -5,7 +5,7 @@
 CUtlMemoryPool * g_pEntityListPool = nullptr;
 ISaveRestoreOps *eventFuncs = nullptr;
 
-bool CBaseEntityOutputHack::Init(SourceMod::IGameConfig* config, char* error, size_t maxlength)
+bool CBaseEntityOutput::Init(SourceMod::IGameConfig* config, char* error, size_t maxlength)
 {
 	SourceMod::IGameConfig* configCore;
 	if (!gameconfs->LoadGameConfigFile("core.games", &configCore, error, maxlength))
@@ -71,7 +71,7 @@ bool CBaseEntityOutputHack::Init(SourceMod::IGameConfig* config, char* error, si
     return true;
 }
 
-void CBaseEntityOutputHack::Init()
+void CBaseEntityOutput::Init()
 {
 	m_ActionList = nullptr;
 
@@ -79,18 +79,18 @@ void CBaseEntityOutputHack::Init()
 	m_Value.iVal = 0;
 }
 
-void CBaseEntityOutputHack::Destroy()
+void CBaseEntityOutput::Destroy()
 {
     DeleteAllElements();
 }
 
-void CBaseEntityOutputHack::DeleteAllElements( void ) 
+void CBaseEntityOutput::DeleteAllElements( void ) 
 {
-	CEventActionHack* pNext = m_ActionList;
+	CEventAction* pNext = m_ActionList;
 	m_ActionList = NULL;
 	while (pNext)
 	{
-		CEventActionHack *strikeThis = pNext;
+		CEventAction* strikeThis = pNext;
 		pNext = pNext->m_pNext;
 
 		// This can be directly called like this because CUtlMemoryPool::Free() 
@@ -100,20 +100,20 @@ void CBaseEntityOutputHack::DeleteAllElements( void )
 	}
 }
 
-int CBaseEntityOutputHack::NumberOfElements( void )
+int CBaseEntityOutput::NumberOfElements( void )
 {
 	int count = 0;
-	for ( CEventActionHack *ev = m_ActionList; ev != NULL; ev = ev->m_pNext )
+	for ( CEventAction *ev = m_ActionList; ev != NULL; ev = ev->m_pNext )
 	{
 		count++;
 	}
 	return count;
 }
 
-float CBaseEntityOutputHack::GetMaxDelay(void)
+float CBaseEntityOutput::GetMaxDelay(void)
 {
 	float flMaxDelay = 0;
-	CEventActionHack *ev = m_ActionList;
+	CEventAction *ev = m_ActionList;
 
 	while (ev != NULL)
 	{

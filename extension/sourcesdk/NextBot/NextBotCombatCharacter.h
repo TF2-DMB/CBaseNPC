@@ -1,9 +1,8 @@
-#ifndef _NEXT_BOT_COMBAT_CHARACTER_INTERFACE_H_
-#define _NEXT_BOT_COMBAT_CHARACTER_INTERFACE_H_
+#pragma once
 
 #include "sourcesdk/basecombatcharacter.h"
 
-class NextBotCombatCharacter : public CBaseCombatCharacterHack
+class NextBotCombatCharacter : public CBaseCombatCharacter
 {
 public:
     static bool Init(SourceMod::IGameConfig* config, char* error, size_t maxlength);
@@ -11,5 +10,3 @@ public:
     static int size_of;
     static int vtable_entries;
 };
-
-#endif

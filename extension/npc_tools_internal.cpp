@@ -94,5 +94,5 @@ CExtNPC* BaseNPC_Tools_API::DeleteNPCByEntIndex(int index)
 
 INextBot* BaseNPC_Tools_API::GetNextBotOfEntity(CBaseEntity* pEntity)
 {
-	return ((CBaseEntityHack *)pEntity)->MyNextBotPointer();
+	return pEntity->MyNextBotPointer();
 }

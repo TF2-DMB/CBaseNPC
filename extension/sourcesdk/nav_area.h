@@ -198,7 +198,7 @@ protected:
 	// --- End critical data --- 
 };
 
-class CBaseCombatCharacterHack;
+class CBaseCombatCharacter;
 class CNavArea : protected CNavAreaCriticalData
 {
 	public:
@@ -209,8 +209,8 @@ class CNavArea : protected CNavAreaCriticalData
 		virtual void OnServerActivate( void ) = 0;						// (EXTEND) invoked when map is initially loaded
 		virtual void OnRoundRestart( void ) = 0;						// (EXTEND) invoked for each area when the round restarts
 		virtual void OnRoundRestartPreEntity( void ) = 0;			// invoked for each area when the round restarts, but before entities are deleted and recreated
-		virtual void OnEnter( CBaseCombatCharacterHack* who, CNavArea *areaJustLeft ) = 0;	// invoked when player enters this area 
-		virtual void OnExit( CBaseCombatCharacterHack* who, CNavArea *areaJustEntered ) = 0; // invoked when player exits this area 
+		virtual void OnEnter( CBaseCombatCharacter* who, CNavArea *areaJustLeft ) = 0;	// invoked when player enters this area 
+		virtual void OnExit( CBaseCombatCharacter* who, CNavArea *areaJustEntered ) = 0; // invoked when player exits this area 
 
 		virtual void OnDestroyNotify( CNavArea *dead ) = 0;				// invoked when given area is going away
 		virtual void OnDestroyNotify( CNavLadder *dead ) = 0;			// invoked when given ladder is going away

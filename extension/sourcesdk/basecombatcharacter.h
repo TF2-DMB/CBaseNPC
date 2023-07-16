@@ -10,10 +10,10 @@
 #include <takedamageinfo.h>
 
 class CNavArea;
-class CBaseCombatCharacterHack : public CBaseAnimatingOverlayHack
+class CBaseCombatCharacter : public CBaseAnimatingOverlay
 {
 public:
-	DECLARE_CLASS_NOBASE(CBaseCombatCharacterHack);
+	DECLARE_CLASS_NOBASE(CBaseCombatCharacter);
 	static bool Init(SourceMod::IGameConfig* config, char* error, size_t maxlength);
 
 	static VCall<void> vUpdateLastKnownArea;

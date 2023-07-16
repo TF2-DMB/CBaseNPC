@@ -4,10 +4,8 @@
 
 extern ConVar* nav_solid_props;
 
-inline bool IsEntityWalkable(CBaseEntity* entityParam, unsigned int flags)
+inline bool IsEntityWalkable(CBaseEntity* entity, unsigned int flags)
 {
-	CBaseEntityHack* entity = static_cast<CBaseEntityHack*>(entityParam);
-
 	if (FClassnameIs(entity, "worldspawn"))
 	{
 		return false;
@@ -24,7 +22,7 @@ inline bool IsEntityWalkable(CBaseEntity* entityParam, unsigned int flags)
 		if (!entity->HasSpawnFlags(SF_DOOR_PTOUCH))
 		{
 			// this door is not opened by touching it, if it is closed, the area is blocked
-			CBaseDoorHack* door = (CBaseDoorHack*)entity;
+			CBaseDoor* door = (CBaseDoor*)entity;
 			return door->GetToggleState() == TS_AT_TOP;
 		}
 		return (flags & WALK_THRU_FUNC_DOORS) ? true : false;
@@ -38,14 +36,14 @@ inline bool IsEntityWalkable(CBaseEntity* entityParam, unsigned int flags)
 	// if we hit a clip brush, ignore it if it is not BRUSHSOLID_ALWAYS
 	if (FClassnameIs(entity, "func_brush"))
 	{
-		CFuncBrushHack *brush = (CFuncBrushHack *)entity;
+		CFuncBrush *brush = (CFuncBrush *)entity;
 		switch (brush->GetSolidity())
 		{
-		case CFuncBrushHack::BRUSHSOLID_ALWAYS:
+		case CFuncBrush::BRUSHSOLID_ALWAYS:
 			return false;
-		case CFuncBrushHack::BRUSHSOLID_NEVER:
+		case CFuncBrush::BRUSHSOLID_NEVER:
 			return true;
-		case CFuncBrushHack::BRUSHSOLID_TOGGLE:
+		case CFuncBrush::BRUSHSOLID_TOGGLE:
 			return (flags & WALK_THRU_TOGGLE_BRUSHES) ? true : false;
 		}
 	}

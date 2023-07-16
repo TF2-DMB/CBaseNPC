@@ -12,21 +12,21 @@ class ToolsNextBot : public INextBot
 public:
 	static bool Init(SourceMod::IGameConfig* config, char* error, size_t maxlength);
 
-	ToolsNextBot(CBaseCombatCharacterHack* link);
+	ToolsNextBot(CBaseCombatCharacter* link);
 
-	virtual CBaseCombatCharacterHack* GetEntity() const override { return m_linkedEntity; }
+	virtual CBaseCombatCharacter* GetEntity() const override { return m_linkedEntity; }
 	virtual NextBotCombatCharacter* GetNextBotCombatCharacter() const override { return nullptr; };
 	virtual ILocomotion *GetLocomotionInterface() const override { return nullptr; };
 	virtual IVision *GetVisionInterface() const override { return nullptr; };
 
 protected:
-	CBaseCombatCharacterHack* m_linkedEntity;
+	CBaseCombatCharacter* m_linkedEntity;
 };
 
 class ToolsNextBotPlayer : public ToolsNextBot
 {
 public:
-	ToolsNextBotPlayer(CBaseCombatCharacterHack* link);
+	ToolsNextBotPlayer(CBaseCombatCharacter* link);
 	virtual ~ToolsNextBotPlayer();
 
 // INextbot
@@ -41,9 +41,9 @@ public:
 	void Hook_Event_Killed(const CTakeDamageInfo& info);
 	void Hook_HandleAnimEvent(animevent_t* event);
 	void Hook_OnNavAreaChanged(CNavArea* enteredArea, CNavArea* leftArea);
-	void Hook_Touch(CBaseEntityHack* other);
-	void Hook_Weapon_Equip(CBaseEntityHack* weapon);
-	void Hook_Weapon_Drop(CBaseEntityHack* weapon, const Vector* target, const Vector* velocity);
+	void Hook_Touch(CBaseEntity* other);
+	void Hook_Weapon_Equip(CBaseEntity* weapon);
+	void Hook_Weapon_Drop(CBaseEntity* weapon, const Vector* target, const Vector* velocity);
 
 // Our interface
 	bool IsDormantWhenDead(void) const;

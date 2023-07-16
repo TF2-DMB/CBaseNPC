@@ -88,11 +88,11 @@ public:
 	virtual QueryResultType			ShouldAttack( const INextBot *me, const CKnownEntity *them ) const override final;
 	virtual QueryResultType			IsHindrance( const INextBot *me, CBaseEntity *blocker ) const override final;
 
-	virtual Vector					SelectTargetPoint( const INextBot *me, const CBaseCombatCharacterHack *subject ) const override final;
+	virtual Vector					SelectTargetPoint( const INextBot *me, const CBaseCombatCharacter* subject ) const override final;
 	virtual QueryResultType IsPositionAllowed( const INextBot *me, const Vector &pos ) const override final;
 
 	virtual const CKnownEntity *	SelectMoreDangerousThreat( const INextBot *me, 
-															   const CBaseCombatCharacterHack *subject,
+															   const CBaseCombatCharacter* subject,
 															   const CKnownEntity *threat1, 
 															   const CKnownEntity *threat2 ) const override final;
 
@@ -117,17 +117,17 @@ public:
 	virtual EventDesiredResult< INextBot > OnIgnite( INextBot *me )													override final;
 	virtual EventDesiredResult< INextBot > OnInjured( INextBot *me, const CTakeDamageInfo &info )						override final;
 	virtual EventDesiredResult< INextBot > OnKilled( INextBot *me, const CTakeDamageInfo &info )						override final;
-	virtual EventDesiredResult< INextBot > OnOtherKilled( INextBot *me, CBaseCombatCharacterHack *victim, const CTakeDamageInfo &info )	override final;
+	virtual EventDesiredResult< INextBot > OnOtherKilled( INextBot *me, CBaseCombatCharacter* victim, const CTakeDamageInfo &info )	override final;
 	virtual EventDesiredResult< INextBot > OnSight( INextBot *me, CBaseEntity *subject )								override final;
 	virtual EventDesiredResult< INextBot > OnLostSight( INextBot *me, CBaseEntity *subject )							override final;
 	virtual EventDesiredResult< INextBot > OnSound( INextBot *me, CBaseEntity *source, const Vector &pos, KeyValues *keys )	override final;
-	virtual EventDesiredResult< INextBot > OnSpokeConcept( INextBot *me, CBaseCombatCharacterHack *who, AIConcept_t concept, AI_Response *response )	override final;
-	virtual EventDesiredResult< INextBot > OnWeaponFired( INextBot *me, CBaseCombatCharacterHack *whoFired, CBaseEntity *weapon )	override final;
+	virtual EventDesiredResult< INextBot > OnSpokeConcept( INextBot *me, CBaseCombatCharacter* who, AIConcept_t concept, AI_Response *response )	override final;
+	virtual EventDesiredResult< INextBot > OnWeaponFired( INextBot *me, CBaseCombatCharacter* whoFired, CBaseEntity *weapon )	override final;
 	virtual EventDesiredResult< INextBot > OnNavAreaChanged( INextBot *me, CNavArea *newArea, CNavArea *oldArea )		override final;
 	virtual EventDesiredResult< INextBot > OnModelChanged( INextBot *me )												override final;
-	virtual EventDesiredResult< INextBot > OnPickUp( INextBot *me, CBaseEntity *item, CBaseCombatCharacterHack *giver )	override final;
+	virtual EventDesiredResult< INextBot > OnPickUp( INextBot *me, CBaseEntity *item, CBaseCombatCharacter* giver )	override final;
 	virtual EventDesiredResult< INextBot > OnDrop( INextBot *me, CBaseEntity *item )									override final;
-	virtual EventDesiredResult< INextBot > OnActorEmoted( INextBot *me, CBaseCombatCharacterHack *emoter, int emote )			override final;
+	virtual EventDesiredResult< INextBot > OnActorEmoted( INextBot *me, CBaseCombatCharacter* emoter, int emote )			override final;
 
 	virtual EventDesiredResult< INextBot > OnCommandAttack( INextBot *me, CBaseEntity *victim )						override final;
 	virtual EventDesiredResult< INextBot > OnCommandApproach( INextBot *me, const Vector &pos, float range )			override final;

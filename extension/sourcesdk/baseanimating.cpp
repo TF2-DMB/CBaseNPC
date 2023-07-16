@@ -9,24 +9,24 @@ FCall<int, CStudioHdr*, const char*> fStudio_LookupSequence;
 FCall<int, const CStudioHdr*, const char*> fStudio_FindAttachment;
 FCall<int, CStudioHdr*, int, int> fStudio_SelectWeightedSequence;
 
-int CBaseAnimatingHack::offset_HandleAnimEvent = 0;
+int CBaseAnimating::offset_HandleAnimEvent = 0;
 
-VCall<void> CBaseAnimatingHack::vStudioFrameAdvance;
-VCall<void, CBaseAnimatingHack*> CBaseAnimatingHack::vDispatchAnimEvents;
-VCall< bool, int, matrix3x4_t& > CBaseAnimatingHack::vGetAttachment;
-MCall<float, CStudioHdr*, int> CBaseAnimatingHack::mSequenceDuration;
-MCall<void, int> CBaseAnimatingHack::mResetSequence;
-MCall<int, CStudioHdr*, const char*> CBaseAnimatingHack::mLookupPoseParameter;
-MCall<float, int> CBaseAnimatingHack::mGetPoseParameter;
-MCall<float, CStudioHdr*, int, float> CBaseAnimatingHack::mSetPoseParameter;
+VCall<void> CBaseAnimating::vStudioFrameAdvance;
+VCall<void, CBaseAnimating*> CBaseAnimating::vDispatchAnimEvents;
+VCall< bool, int, matrix3x4_t& > CBaseAnimating::vGetAttachment;
+MCall<float, CStudioHdr*, int> CBaseAnimating::mSequenceDuration;
+MCall<void, int> CBaseAnimating::mResetSequence;
+MCall<int, CStudioHdr*, const char*> CBaseAnimating::mLookupPoseParameter;
+MCall<float, int> CBaseAnimating::mGetPoseParameter;
+MCall<float, CStudioHdr*, int, float> CBaseAnimating::mSetPoseParameter;
 
 // Members
-DEFINEVAR(CBaseAnimatingHack, m_pStudioHdr);
-DEFINEVAR(CBaseAnimatingHack, m_OnIgnite);
-DEFINEVAR(CBaseAnimatingHack, m_nSequence);
-DEFINEVAR(CBaseAnimatingHack, m_flModelScale);
+DEFINEVAR(CBaseAnimating, m_pStudioHdr);
+DEFINEVAR(CBaseAnimating, m_OnIgnite);
+DEFINEVAR(CBaseAnimating, m_nSequence);
+DEFINEVAR(CBaseAnimating, m_flModelScale);
 
-bool CBaseAnimatingHack::Init(SourceMod::IGameConfig* config, char* error, size_t maxlength)
+bool CBaseAnimating::Init(SourceMod::IGameConfig* config, char* error, size_t maxlength)
 {
 	try
 	{
@@ -51,7 +51,7 @@ bool CBaseAnimatingHack::Init(SourceMod::IGameConfig* config, char* error, size_
 		return false;
 	}
 
-	if (!config->GetOffset("CBaseAnimating::HandleAnimEvent", &CBaseAnimatingHack::offset_HandleAnimEvent))
+	if (!config->GetOffset("CBaseAnimating::HandleAnimEvent", &CBaseAnimating::offset_HandleAnimEvent))
 	{
 		snprintf(error, maxlength, "Failed to retrieve CBaseAnimating::HandleAnimEvent offset!");
 		return false;
@@ -63,7 +63,7 @@ bool CBaseAnimatingHack::Init(SourceMod::IGameConfig* config, char* error, size_
 	OFFSETVAR_SEND(CBaseAnimating, m_nSequence);
 	OFFSETVAR_SEND(CBaseAnimating, m_flModelScale);
 	// m_pStudioHdr is in front of m_OnIgnite
-	VAR_OFFSET_SET(m_pStudioHdr, VAR_OFFSET(m_OnIgnite) + sizeof(COutputEventHack));
+	VAR_OFFSET_SET(m_pStudioHdr, VAR_OFFSET(m_OnIgnite) + sizeof(COutputEvent));
 	END_VAR;
 
 	void* aVal = nullptr;
@@ -86,63 +86,63 @@ bool CBaseAnimatingHack::Init(SourceMod::IGameConfig* config, char* error, size_
 	return true;
 }
 
-void CBaseAnimatingHack::StudioFrameAdvance(void)
+void CBaseAnimating::StudioFrameAdvance(void)
 {
 	vStudioFrameAdvance(this);
 }
 
-void CBaseAnimatingHack::DispatchAnimEvents(CBaseAnimatingHack* other)
+void CBaseAnimating::DispatchAnimEvents(CBaseAnimating* other)
 {
 	vDispatchAnimEvents(this, other);
 }
 
-int CBaseAnimatingHack::LookupSequence(const char* label)
+int CBaseAnimating::LookupSequence(const char* label)
 {
 	return fStudio_LookupSequence(GetModelPtr(), label);
 }
 
-int CBaseAnimatingHack::SelectWeightedSequence(Activity activity)
+int CBaseAnimating::SelectWeightedSequence(Activity activity)
 {
 	return fStudio_SelectWeightedSequence(GetModelPtr(), activity, GetSequence());
 }
 
-int CBaseAnimatingHack::SelectWeightedSequence(Activity activity, int cursequence)
+int CBaseAnimating::SelectWeightedSequence(Activity activity, int cursequence)
 {
 	return fStudio_SelectWeightedSequence(GetModelPtr(), activity, cursequence);
 }
 
-int CBaseAnimatingHack::LookupAttachment(const char* name)
+int CBaseAnimating::LookupAttachment(const char* name)
 {
 	return fStudio_FindAttachment(GetModelPtr(), name) + 1;
 }
 
-float CBaseAnimatingHack::SetPoseParameter(CStudioHdr* studio, const char* name, float value)
+float CBaseAnimating::SetPoseParameter(CStudioHdr* studio, const char* name, float value)
 {
 	int poseParam = LookupPoseParameter(studio, name);
 	return SetPoseParameter(studio, poseParam, value);
 }
 
-float CBaseAnimatingHack::GetPoseParameter(const char* name)
+float CBaseAnimating::GetPoseParameter(const char* name)
 {
 	return GetPoseParameter(LookupPoseParameter(name));
 }
 
-float CBaseAnimatingHack::SequenceDuration(CStudioHdr* studio, int sequence)
+float CBaseAnimating::SequenceDuration(CStudioHdr* studio, int sequence)
 {
 	return mSequenceDuration(this, studio, sequence);
 }
 
-void CBaseAnimatingHack::ResetSequence(int sequence)
+void CBaseAnimating::ResetSequence(int sequence)
 {
 	mResetSequence(this, sequence);
 }
 
-bool CBaseAnimatingHack::GetAttachment(const char *szName, Vector &absOrigin, QAngle &absAngles)
+bool CBaseAnimating::GetAttachment(const char *szName, Vector &absOrigin, QAngle &absAngles)
 {																
 	return GetAttachment(LookupAttachment(szName), absOrigin, absAngles);
 }
 
-bool CBaseAnimatingHack::GetAttachment(int iAttachment, Vector &absOrigin, QAngle &absAngles)
+bool CBaseAnimating::GetAttachment(int iAttachment, Vector &absOrigin, QAngle &absAngles)
 {
 	matrix3x4_t attachmentToWorld;
 
@@ -151,22 +151,22 @@ bool CBaseAnimatingHack::GetAttachment(int iAttachment, Vector &absOrigin, QAngl
 	return bRet;
 }
 
-bool CBaseAnimatingHack::GetAttachment(int iAttachment, matrix3x4_t& attachmentToWorld)
+bool CBaseAnimating::GetAttachment(int iAttachment, matrix3x4_t& attachmentToWorld)
 {
 	return vGetAttachment(this, iAttachment, attachmentToWorld);
 }
 
-int CBaseAnimatingHack::LookupPoseParameter(CStudioHdr* studio, const char* name)
+int CBaseAnimating::LookupPoseParameter(CStudioHdr* studio, const char* name)
 {
 	return mLookupPoseParameter(this, studio, name);
 }
 
-float CBaseAnimatingHack::GetPoseParameter(int parameter)
+float CBaseAnimating::GetPoseParameter(int parameter)
 {
 	return mGetPoseParameter(this, parameter);
 }
 
-float CBaseAnimatingHack::SetPoseParameter(CStudioHdr* studio, int parameter, float val)
+float CBaseAnimating::SetPoseParameter(CStudioHdr* studio, int parameter, float val)
 {
 	return mSetPoseParameter(this, studio, parameter, val);
 }

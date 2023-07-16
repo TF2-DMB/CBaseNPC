@@ -95,7 +95,7 @@ public:
 
 	virtual const Vector &GetStartPosition( void ) const;	// return the position where this path starts
 	virtual const Vector &GetEndPosition( void ) const;		// return the position where this path ends
-	virtual CBaseCombatCharacterHack* GetSubject( void ) const;	// return the actor this path leads to, or NULL if there is no subject
+	virtual CBaseCombatCharacter* GetSubject( void ) const;	// return the actor this path leads to, or NULL if there is no subject
 
 	virtual const Path::Segment *GetCurrentGoal( void ) const;	// return current goal along the path we are trying to reach
 
@@ -157,7 +157,7 @@ public:
 	 * If returns false, path may either be invalid (use IsValid() to check), or valid but 
 	 * doesn't reach all the way to the subject.
 	 */
-	bool Compute(INextBot *bot, CBaseCombatCharacterHack* subject, IPathCost &costFunc, float maxPathLength = 0.0f, bool includeGoalIfPathFails = true)
+	bool Compute(INextBot *bot, CBaseCombatCharacter* subject, IPathCost &costFunc, float maxPathLength = 0.0f, bool includeGoalIfPathFails = true)
 	{
 		VPROF_BUDGET( "Path::Compute(subject)", "NextBot" );
 		Invalidate();
@@ -166,14 +166,14 @@ public:
 		
 		const Vector &start = bot->GetPosition();
 		
-		CNavArea *startArea = bot->GetEntity()->GetLastKnownArea();
+		CNavArea* startArea = bot->GetEntity()->GetLastKnownArea();
 		if ( !startArea )
 		{
 			OnPathChanged( bot, NO_PATH );
 			return false;
 		}
 
-		CNavArea *subjectArea = subject->GetLastKnownArea();
+		CNavArea* subjectArea = subject->GetLastKnownArea();
 		if ( !subjectArea )
 		{
 			OnPathChanged( bot, NO_PATH );
@@ -609,7 +609,7 @@ private:
 	mutable bool m_isCursorDataDirty;
 
 	IntervalTimer m_ageTimer;					// how old is this path?
-	CHandle< CBaseCombatCharacterHack > m_subject;	// the subject this path leads to
+	CHandle< CBaseCombatCharacter > m_subject;	// the subject this path leads to
 
 	/**
 	 * Build a vector of adjacent areas reachable from the given area
@@ -814,7 +814,7 @@ inline const Vector &Path::GetEndPosition( void ) const
 	return ( IsValid() ) ? m_path[ m_segmentCount-1 ].pos : vec3_origin;
 }
 
-inline CBaseCombatCharacterHack *Path::GetSubject( void ) const
+inline CBaseCombatCharacter *Path::GetSubject( void ) const
 {
 	return m_subject;
 }

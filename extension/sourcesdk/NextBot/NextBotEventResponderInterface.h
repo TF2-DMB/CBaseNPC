@@ -13,7 +13,7 @@
 #include <utlvector.h>
 
 class CBaseCombatWeapon;
-class CBaseCombatCharacterHack;
+class CBaseCombatCharacter;
 class Path;
 class CTakeDamageInfo;
 
@@ -53,20 +53,20 @@ public:
 	virtual void OnIgnite(void);
 	virtual void OnInjured(const CTakeDamageInfo&);
 	virtual void OnKilled(const CTakeDamageInfo&);
-	virtual void OnOtherKilled(CBaseCombatCharacterHack*, const CTakeDamageInfo&);
+	virtual void OnOtherKilled(CBaseCombatCharacter*, const CTakeDamageInfo&);
 	
 	virtual void OnSight(CBaseEntity*);
 	virtual void OnLostSight(CBaseEntity*);
 	virtual void OnSound(CBaseEntity*, const Vector&, KeyValues *);
-	virtual void OnSpokeConcept(CBaseCombatCharacterHack*, AIConcept_t, AI_Response *);
-	virtual void OnWeaponFired(CBaseCombatCharacterHack*, CBaseEntity* );
+	virtual void OnSpokeConcept(CBaseCombatCharacter*, AIConcept_t, AI_Response *);
+	virtual void OnWeaponFired(CBaseCombatCharacter*, CBaseEntity* );
 	
 	virtual void OnNavAreaChanged(CNavArea*, CNavArea*);
 	virtual void OnModelChanged(void);
-	virtual void OnPickUp(CBaseEntity*, CBaseCombatCharacterHack*);
+	virtual void OnPickUp(CBaseEntity*, CBaseCombatCharacter*);
 	virtual void OnDrop(CBaseEntity*);
 
-	virtual void OnActorEmoted(CBaseCombatCharacterHack*, int);
+	virtual void OnActorEmoted(CBaseCombatCharacter*, int);
 	
 	virtual void OnCommandAttack(CBaseEntity*);
 	virtual void OnCommandApproach(const Vector&, float);
@@ -199,7 +199,7 @@ inline void INextBotEventResponder::OnKilled(const CTakeDamageInfo& info)
 	}
 }
 
-inline void INextBotEventResponder::OnOtherKilled(CBaseCombatCharacterHack* victim, const CTakeDamageInfo& info)
+inline void INextBotEventResponder::OnOtherKilled(CBaseCombatCharacter* victim, const CTakeDamageInfo& info)
 {
 	for (INextBotEventResponder *it = FirstContainedResponder(); it; it = NextContainedResponder(it))
 	{
@@ -231,7 +231,7 @@ inline void INextBotEventResponder::OnSound(CBaseEntity* source, const Vector& p
 	}
 }
 
-inline void INextBotEventResponder::OnSpokeConcept(CBaseCombatCharacterHack* who, AIConcept_t concept, AI_Response* response)
+inline void INextBotEventResponder::OnSpokeConcept(CBaseCombatCharacter* who, AIConcept_t concept, AI_Response* response)
 {
 	for (INextBotEventResponder *it = FirstContainedResponder(); it; it = NextContainedResponder(it))
 	{
@@ -239,7 +239,7 @@ inline void INextBotEventResponder::OnSpokeConcept(CBaseCombatCharacterHack* who
 	}
 }
 
-inline void INextBotEventResponder::OnWeaponFired(CBaseCombatCharacterHack* whoFired, CBaseEntity* weapon)
+inline void INextBotEventResponder::OnWeaponFired(CBaseCombatCharacter* whoFired, CBaseEntity* weapon)
 {
 	for (INextBotEventResponder *it = FirstContainedResponder(); it; it = NextContainedResponder(it))
 	{
@@ -263,7 +263,7 @@ inline void INextBotEventResponder::OnModelChanged(void)
 	}
 }
 
-inline void INextBotEventResponder::OnPickUp(CBaseEntity* item, CBaseCombatCharacterHack* giver)
+inline void INextBotEventResponder::OnPickUp(CBaseEntity* item, CBaseCombatCharacter* giver)
 {
 	for (INextBotEventResponder *it = FirstContainedResponder(); it; it = NextContainedResponder(it))
 	{
@@ -279,7 +279,7 @@ inline void INextBotEventResponder::OnDrop(CBaseEntity* item)
 	}
 }
 
-inline void INextBotEventResponder::OnActorEmoted(CBaseCombatCharacterHack* ent, int emote)
+inline void INextBotEventResponder::OnActorEmoted(CBaseCombatCharacter* ent, int emote)
 {
 	for (INextBotEventResponder *it = FirstContainedResponder(); it; it = NextContainedResponder(it))
 	{

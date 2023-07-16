@@ -30,19 +30,19 @@ public:
 
 	virtual ~ChasePath() { }
 
-	virtual void Update( INextBot *bot, CBaseEntityHack* subject, IPathCost &cost, Vector *pPredictedSubjectPos = NULL );	// update path to chase target and move bot along path
+	virtual void Update( INextBot *bot, CBaseEntity* subject, IPathCost &cost, Vector *pPredictedSubjectPos = NULL );	// update path to chase target and move bot along path
 
 	virtual float GetLeadRadius( void ) const;			// range where movement leading begins - beyond this just head right for the subject
 	virtual float GetMaxPathLength( void ) const;		// return maximum path length
-	virtual Vector PredictSubjectPosition( INextBot *bot, CBaseEntityHack* subject ) const;	// try to cutoff our chase subject, knowing our relative positions and velocities
-	virtual bool IsRepathNeeded( INextBot *bot, CBaseEntityHack* subject ) const;			// return true if situation has changed enough to warrant recomputing the current path
+	virtual Vector PredictSubjectPosition( INextBot *bot, CBaseEntity* subject ) const;	// try to cutoff our chase subject, knowing our relative positions and velocities
+	virtual bool IsRepathNeeded( INextBot *bot, CBaseEntity* subject ) const;			// return true if situation has changed enough to warrant recomputing the current path
 
 	virtual float GetLifetime( void ) const;			// Return duration this path is valid. Path will become invalid at its earliest opportunity once this duration elapses. Zero = infinite lifetime
 
 	virtual void Invalidate( void );					// (EXTEND) cause the path to become invalid
 
 private:
-	void RefreshPath( INextBot *bot, CBaseEntityHack* subject, IPathCost &cost, Vector *pPredictedSubjectPos );
+	void RefreshPath( INextBot *bot, CBaseEntity* subject, IPathCost &cost, Vector *pPredictedSubjectPos );
 
 	CountdownTimer m_failTimer;							// throttle re-pathing if last path attempt failed
 	CountdownTimer m_throttleTimer;						// require a minimum time between re-paths
@@ -94,7 +94,7 @@ inline void ChasePath::Invalidate( void )
 /**
  * Maintain a path to our chase subject and move along that path
  */
-inline void ChasePath::Update( INextBot *bot, CBaseEntityHack* subject, IPathCost &cost, Vector *pPredictedSubjectPos )
+inline void ChasePath::Update( INextBot *bot, CBaseEntity* subject, IPathCost &cost, Vector *pPredictedSubjectPos )
 {
 	VPROF_BUDGET( "ChasePath::Update", "NextBot" );
 
@@ -110,7 +110,7 @@ inline void ChasePath::Update( INextBot *bot, CBaseEntityHack* subject, IPathCos
 /**
  * Return true if situation has changed enough to warrant recomputing the current path
  */
-inline bool ChasePath::IsRepathNeeded( INextBot *bot, CBaseEntityHack* subject ) const
+inline bool ChasePath::IsRepathNeeded( INextBot *bot, CBaseEntity* subject ) const
 {
 	// the closer we get, the more accurate our path needs to be
 	Vector to = (subject->GetAbsOrigin() - bot->GetPosition());
@@ -128,7 +128,7 @@ inline bool ChasePath::IsRepathNeeded( INextBot *bot, CBaseEntityHack* subject )
 /**
  * Periodically rebuild the path to our victim
  */
-inline void ChasePath::RefreshPath( INextBot *bot, CBaseEntityHack* subject, IPathCost &cost, Vector *pPredictedSubjectPos )
+inline void ChasePath::RefreshPath( INextBot *bot, CBaseEntity* subject, IPathCost &cost, Vector *pPredictedSubjectPos )
 {
 	VPROF_BUDGET( "ChasePath::RefreshPath", "NextBot" );
 
@@ -167,7 +167,7 @@ inline void ChasePath::RefreshPath( INextBot *bot, CBaseEntityHack* subject, IPa
 	}
 
 	// if our path subject changed, repath immediately
-	if ( subject != (CBaseEntityHack*)(m_lastPathSubject.Get()) )
+	if ( subject != m_lastPathSubject.Get() )
 	{
 		if ( bot->IsDebugging( NEXTBOT_PATH ) )
 		{
@@ -282,7 +282,7 @@ public:
 	}
 
 	//-------------------------------------------------------------------------------------------------------
-	virtual void Update( INextBot *me, CBaseEntityHack* victim, IPathCost &pathCost, Vector *pPredictedSubjectPos = NULL )	// update path to chase target and move bot along path
+	virtual void Update( INextBot *me, CBaseEntity* victim, IPathCost &pathCost, Vector *pPredictedSubjectPos = NULL )	// update path to chase target and move bot along path
 	{
 		Assert( !pPredictedSubjectPos );
 		bool bComputedPredictedPosition;
@@ -296,7 +296,7 @@ public:
 	}
 
 	//-------------------------------------------------------------------------------------------------------
-	bool DirectChase( bool *pPredictedPositionComputed, Vector *pPredictedPos, INextBot *me, CBaseEntityHack* victim )		// if there is nothing between us and our victim, run directly at them
+	bool DirectChase( bool *pPredictedPositionComputed, Vector *pPredictedPos, INextBot *me, CBaseEntity* victim )		// if there is nothing between us and our victim, run directly at them
 	{
 		*pPredictedPositionComputed = false;
 
@@ -341,7 +341,7 @@ public:
 	}
 
 	//-------------------------------------------------------------------------------------------------------
-	virtual bool IsRepathNeeded( INextBot *bot, CBaseEntityHack* subject ) const			// return true if situation has changed enough to warrant recomputing the current path
+	virtual bool IsRepathNeeded( INextBot *bot, CBaseEntity* subject ) const			// return true if situation has changed enough to warrant recomputing the current path
 	{
 		if ( ChasePath::IsRepathNeeded( bot, subject ) )
 		{
@@ -365,7 +365,7 @@ public:
 		*crossPos = center;
 	}
 
-	void NotifyVictim( INextBot *me, CBaseEntityHack *victim );
+	void NotifyVictim( INextBot* me, CBaseEntity* victim );
 };
 
 

@@ -21,10 +21,10 @@ extern ConVar* NextBotDebugClimbing;
 class INextBot;
 class ILocomotion;
 
-class NextBotTraversableTraceFilter : public CTraceFilterSimpleHack
+class NextBotTraversableTraceFilter : public ToolsTraceFilterSimple
 {
 public:
-	NextBotTraversableTraceFilter( INextBot *bot, ILocomotion::TraverseWhenType when = ILocomotion::EVENTUALLY ) : CTraceFilterSimpleHack( bot->GetEntity(), COLLISION_GROUP_NONE )
+	NextBotTraversableTraceFilter( INextBot *bot, ILocomotion::TraverseWhenType when = ILocomotion::EVENTUALLY ) : ToolsTraceFilterSimple( bot->GetEntity(), COLLISION_GROUP_NONE )
 	{
 		m_bot = bot;
 		m_when = when;
@@ -36,7 +36,7 @@ public:
 		if (iEnt == gamehelpers->EntityToBCompatRef(reinterpret_cast<CBaseEntity *>(m_bot->GetEntity())))
 			return false;
 		
-		if ( CTraceFilterSimpleHack::ShouldHitEntity( pServerEntity, contentsMask ) )
+		if ( ToolsTraceFilterSimple::ShouldHitEntity( pServerEntity, contentsMask ) )
 		{
 			return !m_bot->GetLocomotionInterface()->IsEntityTraversable( gamehelpers->ReferenceToEntity(iEnt), m_when );
 		}
@@ -48,11 +48,11 @@ private:
 	ILocomotion::TraverseWhenType m_when;
 };
 
-class NextBotTraceFilterOnlyActors : public CTraceFilterSimpleHack
+class NextBotTraceFilterOnlyActors : public ToolsTraceFilterSimple
 {
 public:
 	NextBotTraceFilterOnlyActors( const IHandleEntity *passentity, int collisionGroup )
-		: CTraceFilterSimpleHack( passentity, collisionGroup )
+		: ToolsTraceFilterSimple( passentity, collisionGroup )
 	{
 	}
 	

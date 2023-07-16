@@ -26,9 +26,9 @@ public:
 		return m_iIndex;
 	};
 
-	CBaseEntityHack* GetEntity()
+	CBaseEntity* GetEntity()
 	{
-		return (CBaseEntityHack*)m_hEntity.Get();
+		return m_hEntity.Get();
 	};
 
 	void SetEntity(CBaseEntity* ent)

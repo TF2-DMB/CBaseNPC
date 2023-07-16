@@ -831,7 +831,7 @@ CBaseEntity *PathFollower::FindBlocker( INextBot *bot )
 		if ( result.DidHitNonWorldEntity() )
 		{
 			// if blocker is close, they could be behind us - check
-			Vector toBlocker = ((CBaseEntityHack *)result.m_pEnt)->GetAbsOrigin() - bot->GetLocomotionInterface()->GetFeet();
+			Vector toBlocker = ((CBaseEntity *)result.m_pEnt)->GetAbsOrigin() - bot->GetLocomotionInterface()->GetFeet();
 
 			Vector alongPath = s->pos - from;
 			alongPath.z = 0.0f;
@@ -936,7 +936,7 @@ Vector PathFollower::Avoid( INextBot *bot, const Vector &goalPos, const Vector &
 	Vector nextStepHullMin( -size, -size, 2.0f * mover->GetStepHeight() + 0.1f );
 
 	// avoid any open doors in our way
-	CBasePropDoorHack *door = NULL;
+	CBasePropDoor *door = NULL;
 
 	// check left side
 	m_leftFrom = mover->GetFeet() + offset * left;
@@ -962,7 +962,7 @@ Vector PathFollower::Avoid( INextBot *bot, const Vector &goalPos, const Vector &
 		// track any doors we need to avoid
 		if ( result.DidHitNonWorldEntity() )
 		{
-			door = (CBasePropDoorHack *)result.m_pEnt;
+			door = (CBasePropDoor *)result.m_pEnt;
 		}
 
 		// check for steps
@@ -998,7 +998,7 @@ Vector PathFollower::Avoid( INextBot *bot, const Vector &goalPos, const Vector &
 		// track any doors we need to avoid
 		if ( !door && result.DidHitNonWorldEntity() )
 		{
-			door = (CBasePropDoorHack *)result.m_pEnt;
+			door = (CBasePropDoor*)result.m_pEnt;
 		}
 
 		// check for steps
@@ -1390,7 +1390,7 @@ bool PathFollower::Climbing( INextBot *bot, const Path::Segment *goal, const Vec
 		}
 
 		// what are we climbing over?
-		CBaseEntityHack* obstacle = (CBaseEntityHack *)result.m_pEnt;
+		CBaseEntity* obstacle = (CBaseEntity *)result.m_pEnt;
 
 		if ( !result.DidHitNonWorldEntity() || bot->IsAbleToClimbOnto( obstacle ) )
 		{			

@@ -7,18 +7,18 @@
 #include "datamap.h"
 #include "utlvector.h"
 
-class CBaseAnimatingOverlayHack;
+class CBaseAnimatingOverlay;
 
 class CAnimationLayer
 {
 public:
 	DECLARE_CLASS_NOBASE(CAnimationLayer);
 	CAnimationLayer(void);
-	void	Init(CBaseAnimatingOverlayHack* pOverlay);
+	void	Init(CBaseAnimatingOverlay* pOverlay);
 
 	// float	SetBlending( int iBlender, float flValue, CBaseAnimating *pOwner );
-	void	StudioFrameAdvance(float flInterval, CBaseAnimatingOverlayHack* pOwner);
-	void	DispatchAnimEvents(CBaseAnimatingOverlayHack* eventHandler, CBaseAnimatingOverlayHack* pOwner);
+	void	StudioFrameAdvance(float flInterval, CBaseAnimatingOverlay* pOwner);
+	void	DispatchAnimEvents(CBaseAnimatingOverlay* eventHandler, CBaseAnimatingOverlay* pOwner);
 	void	SetOrder(int nOrder);
 
 	float GetFadeout(float flCurTime);
@@ -81,11 +81,11 @@ public:
 	float	m_flLastAccess;
 
 	// Network state changes get forwarded here.
-	CBaseAnimatingOverlayHack* m_pOwnerEntity;
+	CBaseAnimatingOverlay* m_pOwnerEntity;
 	DECLARE_SIMPLE_DATADESC();
 };
 
-class CBaseAnimatingOverlayHack : public CBaseAnimatingHack
+class CBaseAnimatingOverlay : public CBaseAnimating
 {
 public:
 	// SDK 2013 copy
@@ -153,7 +153,7 @@ private:
 	int		AllocateLayer(int iPriority = 0);
 };
 
-inline int CBaseAnimatingOverlayHack::GetNumAnimOverlays() const
+inline int CBaseAnimatingOverlay::GetNumAnimOverlays() const
 {
 	return m_AnimOverlay()->Count();
 }

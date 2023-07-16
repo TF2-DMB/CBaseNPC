@@ -73,15 +73,15 @@ offset_##var = offset_data_info.actual_offset
 	*var = value; \
 	this->NetworkStateChanged(var);
 
-class CBaseEntityHack;
+class CBaseEntity;
 
-#define SetThink( a ) ThinkSet( static_cast <void (CBaseEntityHack::*)(void)> (a), 0, nullptr )
-#define SetContextThink( a, b, context ) ThinkSet( static_cast <void (CBaseEntityHack::*)(void)> (a), (b), context )
+#define SetThink( a ) ThinkSet( static_cast <void (CBaseEntity::*)(void)> (a), 0, nullptr )
+#define SetContextThink( a, b, context ) ThinkSet( static_cast <void (CBaseEntity::*)(void)> (a), (b), context )
 
-typedef void(CBaseEntityHack::*HBASEPTR)(void);
+typedef void(CBaseEntity::*HBASEPTR)(void);
 
-class CBaseCombatCharacterHack;
-class CBaseAnimatingHack;
+class CBaseCombatCharacter;
+class CBaseAnimating;
 
 struct thinkfunc_t
 {
@@ -93,11 +93,7 @@ struct thinkfunc_t
 	DECLARE_SIMPLE_DATADESC();
 };
 
-// For seamless conversion from CBaseEntityHack to CBaseEntity
 class CBaseEntity : public IServerEntity
-{};
-
-class CBaseEntityHack : public CBaseEntity
 {
 public:
 	static bool Init(SourceMod::IGameConfig* config, char* error, size_t maxlength);
@@ -131,11 +127,11 @@ public:
 	static VCall<const QAngle &> vEyeAngles;
 	virtual const QAngle &EyeAngles(void);
 
-	static VCall<CBaseCombatCharacterHack*> vMyCombatCharacterPointer;
-	CBaseCombatCharacterHack* MyCombatCharacterPointer(void);
+	static VCall<CBaseCombatCharacter*> vMyCombatCharacterPointer;
+	CBaseCombatCharacter* MyCombatCharacterPointer(void);
 	
-	static VCall<CBaseAnimatingHack*> vGetBaseAnimating;
-	CBaseAnimatingHack* GetBaseAnimating(void);
+	static VCall<CBaseAnimating*> vGetBaseAnimating;
+	CBaseAnimating* GetBaseAnimating(void);
 
 	static VCall<INextBot*> vMyNextBotPointer;
 	INextBot* MyNextBotPointer(void);
@@ -238,9 +234,9 @@ public:
 
 	int		   GetParentAttachment(void);
 	MoveType_t GetMoveType(void) const;
-	CBaseEntityHack* GetMoveParent(void);
-	CBaseEntityHack* FirstMoveChild(void);
-	CBaseEntityHack* NextMovePeer(void);
+	CBaseEntity* GetMoveParent(void);
+	CBaseEntity* FirstMoveChild(void);
+	CBaseEntity* NextMovePeer(void);
 
 	int GetTeamNumber(void) const;
 
@@ -257,7 +253,7 @@ protected:
 
 private:
 	// Members
-	using think_ptr = void (CBaseEntityHack::*)(void);
+	using think_ptr = void (CBaseEntity::*)(void);
 	DECLAREVAR(think_ptr, m_pfnThink);
 	DECLAREVAR(CServerNetworkProperty, m_Network);
 	DECLAREVAR(string_t, m_iClassname);
@@ -301,48 +297,48 @@ private:
 	DECLAREVAR(string_t, m_ModelName);
 };
 
-class CBasePropDoorHack : public CBaseEntityHack
+class CBasePropDoor : public CBaseEntity
 {
 };
 
-inline CServerNetworkProperty* CBaseEntityHack::NetworkProp()
+inline CServerNetworkProperty* CBaseEntity::NetworkProp()
 {
 	return m_Network();
 }
 
-inline const CServerNetworkProperty* CBaseEntityHack::NetworkProp() const
+inline const CServerNetworkProperty* CBaseEntity::NetworkProp() const
 {
 	return m_Network();
 }
 
-inline CCollisionPropertyHack* CBaseEntityHack::CollisionProp()
+inline CCollisionPropertyHack* CBaseEntity::CollisionProp()
 {
 	return m_Collision();
 }
 
-inline const CCollisionPropertyHack* CBaseEntityHack::CollisionProp() const
+inline const CCollisionPropertyHack* CBaseEntity::CollisionProp() const
 {
 	return m_Collision();
 }
 
-inline void	CBaseEntityHack::NetworkStateChanged()
+inline void	CBaseEntity::NetworkStateChanged()
 {
 	NetworkProp()->NetworkStateChanged();
 }
 
-inline void	CBaseEntityHack::NetworkStateChanged(void* pVar)
+inline void	CBaseEntity::NetworkStateChanged(void* pVar)
 {
 	// Good, they passed an offset so we can track this variable's change
 	// and avoid sending the whole entity.
 	NetworkProp()->NetworkStateChanged((char*)pVar - (char*)this);
 }
 
-inline int CBaseEntityHack::entindex(void) const
+inline int CBaseEntity::entindex(void) const
 {
 	return m_Network()->entindex();
 }
 
-inline const char* CBaseEntityHack::GetClassname() const
+inline const char* CBaseEntity::GetClassname() const
 {
 	if (*m_iClassname() == NULL_STRING)
 	{
@@ -351,51 +347,51 @@ inline const char* CBaseEntityHack::GetClassname() const
 	return m_iClassname()->ToCStr();
 }
 
-inline string_t CBaseEntityHack::GetStringClassname() const
+inline string_t CBaseEntity::GetStringClassname() const
 {
 	return *m_iClassname();
 }
 
-inline int CBaseEntityHack::GetSpawnFlags(void) const
+inline int CBaseEntity::GetSpawnFlags(void) const
 { 
 	return *m_spawnflags();
 }
 
-inline void CBaseEntityHack::AddSpawnFlags(int nFlags)
+inline void CBaseEntity::AddSpawnFlags(int nFlags)
 { 
 	*m_spawnflags() |= nFlags;
 }
-inline void CBaseEntityHack::RemoveSpawnFlags(int nFlags)
+inline void CBaseEntity::RemoveSpawnFlags(int nFlags)
 { 
 	*m_spawnflags() &= ~nFlags;
 }
 
-inline void CBaseEntityHack::ClearSpawnFlags(void)
+inline void CBaseEntity::ClearSpawnFlags(void)
 { 
 	*m_spawnflags() = 0;
 }
 
-inline bool CBaseEntityHack::HasSpawnFlags(int nFlags) const
+inline bool CBaseEntity::HasSpawnFlags(int nFlags) const
 { 
 	return (*m_spawnflags() & nFlags) != 0; 
 }
 
-inline bool CBaseEntityHack::IsWorld(void) const 
+inline bool CBaseEntity::IsWorld(void) const 
 {
 	return entindex() == 0;
 }
 
-inline int CBaseEntityHack::GetFlags(void) const
+inline int CBaseEntity::GetFlags(void) const
 {
 	return *m_fFlags();
 }
 
-inline int CBaseEntityHack::GetEFlags(void) const
+inline int CBaseEntity::GetEFlags(void) const
 {
 	return *m_iEFlags();
 }
 
-inline void CBaseEntityHack::SetEFlags(int iEFlags)
+inline void CBaseEntity::SetEFlags(int iEFlags)
 {
 	*m_iEFlags() = iEFlags;
 
@@ -405,7 +401,7 @@ inline void CBaseEntityHack::SetEFlags(int iEFlags)
 	}
 }
 
-inline void CBaseEntityHack::AddEFlags(int nEFlagMask)
+inline void CBaseEntity::AddEFlags(int nEFlagMask)
 {
 	*m_iEFlags() |= nEFlagMask;
 
@@ -415,7 +411,7 @@ inline void CBaseEntityHack::AddEFlags(int nEFlagMask)
 	}
 }
 
-inline void CBaseEntityHack::RemoveEFlags(int nEFlagMask)
+inline void CBaseEntity::RemoveEFlags(int nEFlagMask)
 {
 	*m_iEFlags() &= ~nEFlagMask;
 	
@@ -425,75 +421,75 @@ inline void CBaseEntityHack::RemoveEFlags(int nEFlagMask)
 	}
 }
 
-inline bool CBaseEntityHack::IsEFlagSet(int nEFlagMask) const
+inline bool CBaseEntity::IsEFlagSet(int nEFlagMask) const
 {
 	return (*m_iEFlags() & nEFlagMask) != 0;
 }
 
-inline void CBaseEntityHack::SetModelName(string_t name)
+inline void CBaseEntity::SetModelName(string_t name)
 {
 	*m_ModelName() = name;
 	DispatchUpdateTransmitState();
 }
 
-inline string_t CBaseEntityHack::GetModelName(void) const
+inline string_t CBaseEntity::GetModelName(void) const
 {
 	return *m_ModelName();
 }
 
-inline char CBaseEntityHack::GetLifeState(void) const
+inline char CBaseEntity::GetLifeState(void) const
 {
 	return *m_lifeState();
 }
 
-inline char CBaseEntityHack::GetTakeDamage(void) const
+inline char CBaseEntity::GetTakeDamage(void) const
 {
 	return *m_takedamage();
 }
 
-inline int CBaseEntityHack::GetHealth() const
+inline int CBaseEntity::GetHealth() const
 {
 	return *m_iHealth();
 }
 
-inline void CBaseEntityHack::SetHealth(int amt)
+inline void CBaseEntity::SetHealth(int amt)
 {
 	*m_iHealth() = amt;
 }
 
-inline CBaseEntity* CBaseEntityHack::GetGroundEntity(void)
+inline CBaseEntity* CBaseEntity::GetGroundEntity(void)
 {
 	return *(m_hGroundEntity());
 }
 
-inline const Vector& CBaseEntityHack::GetAbsOrigin(void) const
+inline const Vector& CBaseEntity::GetAbsOrigin(void) const
 {
 	if (IsEFlagSet(EFL_DIRTY_ABSTRANSFORM))
 	{
-		const_cast<CBaseEntityHack*>(this)->CalcAbsolutePosition();
+		const_cast<CBaseEntity*>(this)->CalcAbsolutePosition();
 	}
 	return *m_vecAbsOrigin();
 }
 
-inline const QAngle& CBaseEntityHack::GetAbsAngles(void) const
+inline const QAngle& CBaseEntity::GetAbsAngles(void) const
 {
 	if (IsEFlagSet(EFL_DIRTY_ABSTRANSFORM))
 	{
-		const_cast<CBaseEntityHack*>(this)->CalcAbsolutePosition();
+		const_cast<CBaseEntity*>(this)->CalcAbsolutePosition();
 	}
 	return *m_angAbsRotation();
 }
 
-inline const Vector& CBaseEntityHack::GetAbsVelocity() const
+inline const Vector& CBaseEntity::GetAbsVelocity() const
 {
 	if (IsEFlagSet(EFL_DIRTY_ABSVELOCITY))
 	{
-		const_cast<CBaseEntityHack*>(this)->CalcAbsoluteVelocity();
+		const_cast<CBaseEntity*>(this)->CalcAbsoluteVelocity();
 	}
 	return *m_vecAbsVelocity();
 }
 
-inline matrix3x4_t &CBaseEntityHack::EntityToWorldTransform() 
+inline matrix3x4_t &CBaseEntity::EntityToWorldTransform() 
 {
 	if (IsEFlagSet(EFL_DIRTY_ABSTRANSFORM))
 	{
@@ -502,61 +498,61 @@ inline matrix3x4_t &CBaseEntityHack::EntityToWorldTransform()
 	return *m_rgflCoordinateFrame(); 
 }
 
-inline const matrix3x4_t &CBaseEntityHack::EntityToWorldTransform() const
+inline const matrix3x4_t &CBaseEntity::EntityToWorldTransform() const
 {
 	if (IsEFlagSet(EFL_DIRTY_ABSTRANSFORM))
 	{
-		const_cast<CBaseEntityHack*>(this)->CalcAbsolutePosition();
+		const_cast<CBaseEntity*>(this)->CalcAbsolutePosition();
 	}
 	return *m_rgflCoordinateFrame(); 
 }
 
-inline float CBaseEntityHack::GetSimulationTime() const
+inline float CBaseEntity::GetSimulationTime() const
 {
 	return *m_flSimulationTime();
 }
 
-inline void CBaseEntityHack::SetSimulationTime(float st)
+inline void CBaseEntity::SetSimulationTime(float st)
 {
 	*m_flSimulationTime() = st;
 }
 
-inline const QAngle& CBaseEntityHack::GetLocalAngles(void) const
+inline const QAngle& CBaseEntity::GetLocalAngles(void) const
 {
 	return *m_angRotation();
 }
 
-inline const Vector& CBaseEntityHack::GetLocalOrigin(void) const
+inline const Vector& CBaseEntity::GetLocalOrigin(void) const
 {
 	return *m_vecOrigin();
 }
 
-inline CBaseEntityHack* CBaseEntityHack::GetMoveParent(void)
+inline CBaseEntity* CBaseEntity::GetMoveParent(void)
 {
-	return (CBaseEntityHack*)m_hMoveParent()->Get();
+	return m_hMoveParent()->Get();
 }
 
-inline CBaseEntityHack* CBaseEntityHack::FirstMoveChild(void)
+inline CBaseEntity* CBaseEntity::FirstMoveChild(void)
 {
-	return (CBaseEntityHack*)m_hMoveChild()->Get();
+	return m_hMoveChild()->Get();
 }
 
-inline CBaseEntityHack* CBaseEntityHack::NextMovePeer(void)
+inline CBaseEntity* CBaseEntity::NextMovePeer(void)
 {
-	return (CBaseEntityHack*)m_hMovePeer()->Get();
+	return m_hMovePeer()->Get();
 }
 
-inline int CBaseEntityHack::GetParentAttachment()
+inline int CBaseEntity::GetParentAttachment()
 {
 	return *m_iParentAttachment();
 }
 
-inline MoveType_t CBaseEntityHack::GetMoveType() const
+inline MoveType_t CBaseEntity::GetMoveType() const
 {
 	return (MoveType_t)(unsigned char)*m_MoveType();
 }
 
-inline int CBaseEntityHack::GetTeamNumber(void) const
+inline int CBaseEntity::GetTeamNumber(void) const
 {
 	return *m_iTeamNum();
 }
@@ -619,8 +615,8 @@ inline bool NamesMatch(const char *pszQuery, string_t nameToMatch)
 
 inline bool FClassnameIs(const CBaseEntity* entity, const char* classname)
 {
-	return (((CBaseEntityHack*)entity)->GetClassname() != nullptr && strcmp(((CBaseEntityHack*)entity)->GetClassname(), classname) == 0)
-	|| (NamesMatch(classname, ((CBaseEntityHack*)entity)->GetStringClassname()));
+	return ((entity)->GetClassname() != nullptr && strcmp((entity)->GetClassname(), classname) == 0)
+	|| (NamesMatch(classname, (entity)->GetStringClassname()));
 }
 
 #endif // H_BASEENTITY_CBASENPC_

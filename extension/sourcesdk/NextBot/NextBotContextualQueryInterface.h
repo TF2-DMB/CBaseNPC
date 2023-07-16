@@ -3,7 +3,6 @@
 
 class INextBot;
 class CBaseEntity;
-class CBaseCombatCharacterHack;
 class Path;
 class CKnownEntity;
 
@@ -26,11 +25,11 @@ public:
 	virtual QueryResultType			ShouldAttack( const INextBot *me, const CKnownEntity *them ) const;
 	virtual QueryResultType			IsHindrance( const INextBot *me, CBaseEntity *blocker ) const;
 
-	virtual Vector					SelectTargetPoint( const INextBot *me, const CBaseCombatCharacterHack *subject ) const;
+	virtual Vector					SelectTargetPoint( const INextBot *me, const CBaseCombatCharacter* subject ) const;
 	virtual QueryResultType IsPositionAllowed( const INextBot *me, const Vector &pos ) const;
 
 	virtual const CKnownEntity *	SelectMoreDangerousThreat( const INextBot *me, 
-															   const CBaseCombatCharacterHack *subject,
+															   const CBaseCombatCharacter* subject,
 															   const CKnownEntity *threat1, 
 															   const CKnownEntity *threat2 ) const;
 };
@@ -60,7 +59,7 @@ inline QueryResultType IContextualQuery::IsHindrance( const INextBot *me, CBaseE
 	return ANSWER_UNDEFINED;
 }
 
-inline Vector IContextualQuery::SelectTargetPoint( const INextBot *me, const CBaseCombatCharacterHack *subject ) const
+inline Vector IContextualQuery::SelectTargetPoint( const INextBot *me, const CBaseCombatCharacter* subject ) const
 {
 	return vec3_origin;
 }
@@ -70,7 +69,7 @@ inline QueryResultType IContextualQuery::IsPositionAllowed( const INextBot *me, 
 	return ANSWER_UNDEFINED;
 }
 
-inline const CKnownEntity *IContextualQuery::SelectMoreDangerousThreat( const INextBot *me, const CBaseCombatCharacterHack *subject, const CKnownEntity *threat1, const CKnownEntity *threat2 ) const
+inline const CKnownEntity *IContextualQuery::SelectMoreDangerousThreat( const INextBot *me, const CBaseCombatCharacter* subject, const CKnownEntity *threat1, const CKnownEntity *threat2 ) const
 {
 	return NULL;
 }

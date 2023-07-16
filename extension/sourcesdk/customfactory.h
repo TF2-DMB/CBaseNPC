@@ -18,8 +18,8 @@ public:
 	CustomFactory(const char* classname, MCall<void>* entConstructor);
     ~CustomFactory();
 	virtual IServerNetworkable* Create(const char*) override final;
-	virtual void Create_Extra(CBaseEntityHack* ent) {};
-	virtual void Create_PostConstructor(CBaseEntityHack* ent) {};
+	virtual void Create_Extra(CBaseEntity* ent) {};
+	virtual void Create_PostConstructor(CBaseEntity* ent) {};
 	virtual void Destroy(IServerNetworkable*) override final;
 
 	MCall<void>* constructor;

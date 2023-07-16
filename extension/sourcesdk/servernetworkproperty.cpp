@@ -94,7 +94,7 @@ void CServerNetworkProperty::Release()
 //-----------------------------------------------------------------------------
 CServerNetworkProperty* CServerNetworkProperty::GetNetworkParent()
 {
-	CBaseEntityHack* pParent = (CBaseEntityHack *)m_hParent.Get();
+	CBaseEntity* pParent = m_hParent.Get();
 	return pParent ? pParent->NetworkProp() : NULL;
 }
 

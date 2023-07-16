@@ -2,7 +2,7 @@
 
 #include "sourcesdk/baseentity.h"
 
-class CFuncBrushHack : CBaseEntityHack
+class CFuncBrush : CBaseEntity
 {
 public:
 	static bool Init(SourceMod::IGameConfig* config, char* error, size_t maxlength);
@@ -21,7 +21,7 @@ private:
 	DECLAREVAR(BrushSolidities_e, m_iSolidity);
 };
 
-inline CFuncBrushHack::BrushSolidities_e CFuncBrushHack::GetSolidity()
+inline CFuncBrush::BrushSolidities_e CFuncBrush::GetSolidity()
 {
 	return *m_iSolidity();
 }
