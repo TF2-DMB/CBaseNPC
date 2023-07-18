@@ -62,11 +62,9 @@ IForward *g_pForwardEventKilled = nullptr;
 bool (ToolsTraceFilterSimple:: *ToolsTraceFilterSimple::func_ShouldHitEntity)(IHandleEntity *pHandleEntity, int contentsMask) = nullptr;
 CUtlMap<int32_t, int32_t> g_EntitiesHooks;
 
-bool CBaseNPCExt::SDK_OnLoad(char *error, size_t maxlength, bool late)
-{
+bool CBaseNPCExt::SDK_OnLoad(char* error, size_t maxlength, bool late) {
 	char conf_error[255];
-	if (!gameconfs->LoadGameConfigFile("cbasenpc", &g_pGameConf, conf_error, sizeof(conf_error)))
-	{
+	if (!gameconfs->LoadGameConfigFile("cbasenpc", &g_pGameConf, conf_error, sizeof(conf_error))) {
 		snprintf(error, maxlength, "FAILED TO LOAD GAMEDATA ERROR: %s", conf_error);
 		return false;
 	}
@@ -85,18 +83,15 @@ bool CBaseNPCExt::SDK_OnLoad(char *error, size_t maxlength, bool late)
 		|| !CBaseEntityOutput::Init(g_pGameConf, error, maxlength)
 		|| !CBaseNPC_Locomotion::Init(g_pGameConf, error, maxlength)
 		|| !ToolsNextBot::Init(g_pGameConf, error, maxlength)
-		)
-	{
+		) {
 		return false;
 	}
 
-	if ( !g_pPluginEntityFactories->Init( g_pGameConf, error, maxlength ) )
-	{
+	if ( !g_pPluginEntityFactories->Init( g_pGameConf, error, maxlength ) ) {
 		return false;
 	}
 
-	if ( !g_pBaseNPCPluginActionFactories->Init( g_pGameConf, error, maxlength ) )
-	{
+	if ( !g_pBaseNPCPluginActionFactories->Init( g_pGameConf, error, maxlength ) ) {
 		return false;
 	}
 
@@ -126,8 +121,7 @@ bool CBaseNPCExt::SDK_OnLoad(char *error, size_t maxlength, bool late)
 	return true;
 }
 
-bool CBaseNPCExt::SDK_OnMetamodLoad(ISmmAPI *ismm, char *error, size_t maxlen, bool late)
-{
+bool CBaseNPCExt::SDK_OnMetamodLoad(ISmmAPI *ismm, char *error, size_t maxlen, bool late) {
 	GET_V_IFACE_ANY(GetServerFactory, gameents, IServerGameEnts, INTERFACEVERSION_SERVERGAMEENTS);
 	GET_V_IFACE_ANY(GetEngineFactory, enginetrace, IEngineTrace, INTERFACEVERSION_ENGINETRACE_SERVER);
 	GET_V_IFACE_ANY(GetServerFactory, servertools, IServerTools, VSERVERTOOLS_INTERFACE_VERSION);
@@ -162,39 +156,32 @@ bool CBaseNPCExt::SDK_OnMetamodLoad(ISmmAPI *ismm, char *error, size_t maxlen, b
 	return true;
 }
 
-bool CBaseNPCExt::RegisterConCommandBase(ConCommandBase *pVar)
-{
+bool CBaseNPCExt::RegisterConCommandBase(ConCommandBase* var) {
 	/* Always call META_REGCVAR instead of going through the engine. */
-	return META_REGCVAR(pVar);
+	return META_REGCVAR(var);
 }
 
-void CBaseNPCExt::OnCoreMapStart(edict_t *pEdictList, int edictCount, int clientMax)
-{
+void CBaseNPCExt::OnCoreMapStart(edict_t* edictlist, int edictCount, int clientMax) {
 }
 
-void CBaseNPCExt::OnCoreMapEnd()
-{
+void CBaseNPCExt::OnCoreMapEnd() {
 	g_pBaseNPCPluginActionFactories->OnCoreMapEnd();
 	g_pPluginEntityFactories->OnCoreMapEnd();
 	CNavMesh::OnCoreMapEnd();
 }
 
-void CBaseNPCExt::OnEntityCreated(CBaseEntity* pEntity, const char* classname)
-{
+void CBaseNPCExt::OnEntityCreated(CBaseEntity* pEntity, const char* classname) {
 }
 
-void CBaseNPCExt::OnEntityDestroyed(CBaseEntity* pEntity)
-{
-	if (!pEntity)
-	{
+void CBaseNPCExt::OnEntityDestroyed(CBaseEntity* pEntity) {
+	if (!pEntity) {
 		return;
 	}
 
 	g_pBaseNPCTools->DeleteNPCByEntIndex(gamehelpers->EntityToBCompatRef(pEntity));
 
 	auto iIndex = g_EntitiesHooks.Find(gamehelpers->EntityToReference(pEntity));
-	if (g_EntitiesHooks.IsValidIndex(iIndex))
-	{
+	if (g_EntitiesHooks.IsValidIndex(iIndex)) {
 		int iHookID = g_EntitiesHooks.Element(iIndex);
 		SH_REMOVE_HOOK_ID(iHookID);
 		g_EntitiesHooks.RemoveAt(iIndex);
@@ -202,8 +189,7 @@ void CBaseNPCExt::OnEntityDestroyed(CBaseEntity* pEntity)
 }
 
 // https://github.com/alliedmodders/sourcemod/blob/6928d21bcf746920b0f2f54e2c28b34097a66be2/core/logic/HandleSys.h#L103
-struct QHandleType
-{
+struct QHandleType {
 	IHandleTypeDispatch *dispatch;
 	unsigned int freeID;
 	unsigned int children;
@@ -214,15 +200,13 @@ struct QHandleType
 };
 
 // https://github.com/alliedmodders/sourcemod/blob/6928d21bcf746920b0f2f54e2c28b34097a66be2/core/logic/HandleSys.h#L125
-struct HandleSystemHack
-{
+struct HandleSystemHack {
 	void** vptr;
 	void *m_Handles;
 	QHandleType *m_Types;
 };
 
-void CBaseNPCExt::SDK_OnAllLoaded()
-{
+void CBaseNPCExt::SDK_OnAllLoaded() {
 	SM_GET_LATE_IFACE(BINTOOLS, g_pBinTools);
 	SM_GET_LATE_IFACE(SDKTOOLS, g_pSDKTools);
 	SM_GET_LATE_IFACE(SDKHOOKS, g_pSDKHooks);
@@ -234,8 +218,7 @@ void CBaseNPCExt::SDK_OnAllLoaded()
 	// https://github.com/alliedmodders/sourcemod/blob/6928d21bcf746920b0f2f54e2c28b34097a66be2/core/logic/HandleSys.cpp#L254
 	g_pCoreIdent = reinterpret_cast< HandleSystemHack * >(handlesys)->m_Types[g_KeyValueType].typeSec.ident;
 
-	if (g_pSDKHooks)
-	{
+	if (g_pSDKHooks) {
 		g_pSDKHooks->AddEntityListener(this);
 	} 
 
@@ -243,49 +226,60 @@ void CBaseNPCExt::SDK_OnAllLoaded()
 
 	g_pPluginEntityFactories->SDK_OnAllLoaded();
 
-	CBaseNPC_Entity *npc = (CBaseNPC_Entity*)servertools->CreateEntityByName("base_npc");
-	if (npc)
-	{
+	CBaseNPC_Entity* npc = static_cast<CBaseNPC_Entity*>(servertools->CreateEntityByName("base_npc"));
+	if (npc) {
+		if (npc->GetNPC()->GetID() == INVALID_NPC_ID) {
+			g_pSM->LogError(myself, "Dummy NPC has no id!");
+		}
+
+		if (npc->MyNextBotPointer() == nullptr) {
+			g_pSM->LogError(myself, "Dummy NPC has no nextbot interface!");
+		}
+
+		if (npc->GetNPC()->m_pMover == nullptr || npc->MyNextBotPointer()->GetLocomotionInterface() == nullptr) {
+			g_pSM->LogError(myself, "Dummy NPC has no locomotion interface!");
+		}
+		
+		if (npc->GetNPC()->m_pBody == nullptr || npc->MyNextBotPointer()->GetBodyInterface() == nullptr) {
+			g_pSM->LogError(myself, "Dummy NPC has no body interface!");
+		}
+
 		servertools->RemoveEntityImmediate(npc);
 		g_pSM->LogMessage(myself, "Successfully created & destroyed dummy NPC");
+	} else {
+		g_pSM->LogError(myself, "Failed to create dummy NPC!");
 	}
 }
 
-bool CBaseNPCExt::QueryRunning(char *error, size_t maxlength)
-{
+bool CBaseNPCExt::QueryRunning(char* error, size_t maxlength) {
 	SM_CHECK_IFACE(BINTOOLS, g_pBinTools);
 	SM_GET_LATE_IFACE(SDKHOOKS, g_pSDKHooks);
 	return true;
 }
 
-bool CBaseNPCExt::QueryInterfaceDrop(SMInterface *pInterface)
-{
-	if (pInterface == g_pBinTools)
-	{
+bool CBaseNPCExt::QueryInterfaceDrop(SMInterface* interface) {
+	if (interface == g_pBinTools) {
 		return false;
 	}
 
-	if (pInterface == g_pSDKHooks)
-	{
+	if (interface == g_pSDKHooks) {
 		return false;
 	}
 
-	if (pInterface == g_pSDKTools)
-	{
+	if (interface == g_pSDKTools) {
 		return false;
 	}
 
-	return IExtensionInterface::QueryInterfaceDrop(pInterface);
+	return IExtensionInterface::QueryInterfaceDrop(interface);
 }
 
-void CBaseNPCExt::NotifyInterfaceDrop(SMInterface *pInterface)
-{
-	if (strcmp(pInterface->GetInterfaceName(), SMINTERFACE_BINTOOLS_NAME) == 0)
+void CBaseNPCExt::NotifyInterfaceDrop(SMInterface* interface) {
+	if (strcmp(interface->GetInterfaceName(), SMINTERFACE_BINTOOLS_NAME) == 0) {
 		g_pBinTools = nullptr;
+	}
 }
 
-void CBaseNPCExt::SDK_OnUnload()
-{
+void CBaseNPCExt::SDK_OnUnload() {
 	gameconfs->CloseGameConfigFile(g_pGameConf);
 	forwards->ReleaseForward(g_pForwardEventKilled);
 
@@ -295,8 +289,7 @@ void CBaseNPCExt::SDK_OnUnload()
 	delete g_pBaseNPCFactory;
 	g_pBaseNPCFactory = nullptr;
 	
-	if (g_pSDKHooks)
-	{
+	if (g_pSDKHooks) {
 		g_pSDKHooks->RemoveEntityListener(this);
 	}
 
@@ -307,37 +300,34 @@ void CBaseNPCExt::SDK_OnUnload()
 }
 
 //Fix external stuff error
-float IntervalTimer::Now( void ) const
-{
+float IntervalTimer::Now( void ) const {
 	return gpGlobals->curtime;
 }
 
-float CountdownTimer::Now( void ) const
-{
+float CountdownTimer::Now( void ) const {
 	return gpGlobals->curtime;
 }
 
-bool CGameTrace::DidHitWorld() const
-{
+bool CGameTrace::DidHitWorld() const {
 	return gamehelpers->EntityToBCompatRef(reinterpret_cast<CBaseEntity *>(m_pEnt)) == 0;
 }
 
-bool CGameTrace::DidHitNonWorldEntity() const
-{
+bool CGameTrace::DidHitNonWorldEntity() const {
 	return m_pEnt != nullptr && !DidHitWorld();
 }
 
-float UTIL_VecToYaw(const Vector& vec)
-{
-	if (vec.y == 0 && vec.x == 0)
+float UTIL_VecToYaw(const Vector& vec) {
+	if (vec.y == 0 && vec.x == 0) {
 		return 0;
+	}
 
 	float yaw = atan2(vec.y, vec.x);
 
 	yaw = RAD2DEG(yaw);
 
-	if (yaw < 0)
+	if (yaw < 0) {
 		yaw += 360;
+	}
 
 	return yaw;
 }

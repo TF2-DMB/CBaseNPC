@@ -208,20 +208,36 @@ void setup(std::vector<sp_nativeinfo_t>& natives) {
 
 }
 
-cell_t GetEntity(IPluginContext* context, const cell_t * params) {
-	CExtNPC* npc = g_objNPC[params[1]];
-	if (!npc) {
-		return context->ThrowNativeError("Invalid NPC %i", params[1]);
+inline CExtNPC* GetExtNPC(IPluginContext* context, cell_t param) {
+	if (param == INVALID_NPC_ID) {
+		context->ThrowNativeError("Native called with INVALID_NPC index !");
+		return nullptr;
 	}
+
+	if (param < 0 || param >= (sizeof(g_objNPC2) / sizeof(CExtNPC*))) {
+		context->ThrowNativeError("Npc index (%d) is out of bounds !", param);
+		return nullptr;
+	}
+
+	CExtNPC* npc = g_objNPC[param];
+	if (!npc) {
+		context->ThrowNativeError("Invalid NPC (%d) !", param);
+		return nullptr;
+	}
+	return npc;
+}
+
+cell_t GetEntity(IPluginContext* context, const cell_t * params) {
+	CExtNPC* npc = GetExtNPC(context, params[1]);
+	if (!npc) {
+		return 0;
+	}
+
 	return gamehelpers->EntityToBCompatRef(npc->GetEntity());
 }
 
 inline CBaseNPC_Entity::CBaseNPC* Get(IPluginContext* context, const cell_t param) {	
-	CBaseNPC_Entity::CBaseNPC* npc = (CBaseNPC_Entity::CBaseNPC*)(g_objNPC[param]);
-	if (!npc) {
-		context->ThrowNativeError("Invalid NPC %d", param);
-		return nullptr;
-	}
+	CBaseNPC_Entity::CBaseNPC* npc = static_cast<CBaseNPC_Entity::CBaseNPC*>(GetExtNPC(context, param));
 	return npc;
 }
 
