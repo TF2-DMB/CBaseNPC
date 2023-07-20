@@ -248,7 +248,7 @@ class ExtensionConfig(object):
     cxx.cflags += [
       '-pipe',
       '-fno-strict-aliasing',
-      #'-Werror',
+      '-Werror',
       '-Wall',
       '-Wno-unused',
       '-Wno-switch',

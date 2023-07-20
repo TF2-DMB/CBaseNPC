@@ -912,10 +912,6 @@ void setup(std::vector<sp_nativeinfo_t>& natives) {
 		{"CNavArea.IsCompletelyVisible", IsCompletelyVisible},
 
 		{"GetHidingSpotByID", native_GetHidingSpotByID},
-
-		// Deprecated
-		{"CNavArea.GetIncomingConnectionCount", GetIncomingConnectionsCount},
-		{"CNavArea.GetIncomingConnection", GetIncomingConnections},
 	};
 
 	natives.insert(natives.end(), std::begin(list), std::end(list));

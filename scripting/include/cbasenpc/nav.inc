@@ -662,7 +662,7 @@ methodmap CNavArea
 	 * @param dir     Direction
 	 * @return        Number of incoming connections
 	 */
-	public native int GetIncomingConnectionsCount(NavDirType dir);
+	public native int GetIncomingConnectionCount(NavDirType dir);
 
 	/**
 	 * Returns an area that has an incoming, one-way connection from the given direction.
@@ -671,7 +671,7 @@ methodmap CNavArea
 	 * @param i       Index in list
 	 * @return        CNavArea, or NULL_AREA if out of bounds
 	 */
-	public native CNavArea GetIncomingConnections(NavDirType dir, int i);
+	public native CNavArea GetIncomingConnection(NavDirType dir, int i);
 
 	/**
 	 * Pushes a list of areas that this area has an outgoing connection to in the given direction.
@@ -953,12 +953,6 @@ methodmap CNavArea
 	 * @error         Invalid area
 	 */
 	public native bool IsCompletelyVisible(CNavArea area);
-
-	#pragma deprecated Use GetIncomingConnectionsCount instead
-	public native int GetIncomingConnectionCount(NavDirType dir);
-
-	#pragma deprecated Use GetIncomingConnections instead
-	public native CNavArea GetIncomingConnection(NavDirType dir, int i);
 };
 
 enum TheNavAreasVector

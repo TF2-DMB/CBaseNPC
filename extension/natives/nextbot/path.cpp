@@ -245,7 +245,7 @@ cell_t GetSegmentPrior(IPluginContext* context, const cell_t* params) {
 		return 0;
 	}
 
-	PtrToPawnAddress(cursor->segmentPrior);
+	return PtrToPawnAddress(cursor->segmentPrior);
 }
 
 void setup(std::vector<sp_nativeinfo_t>& natives) {

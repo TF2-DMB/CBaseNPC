@@ -26,6 +26,10 @@ inline CTakeDamageInfo* Get(IPluginContext* context, const cell_t param) {
 	return info;
 }
 
+cell_t CTakeDamageInfo_Ctor(IPluginContext* context, const cell_t* params) {
+	return PtrToPawnAddress(PawnAddressToPtr(params[1]));
+}
+
 cell_t GetInflictor(IPluginContext* context, const cell_t* params) {
 	CTakeDamageInfo* info = Get(context, params[1]);
 	if (!info) {
@@ -491,6 +495,8 @@ cell_t SetCritType(IPluginContext* context, const cell_t* params) {
 
 void setup(std::vector<sp_nativeinfo_t>& natives) {
 	sp_nativeinfo_t list[] = {
+		{"CTakeDamageInfo.CTakeDamageInfo", CTakeDamageInfo_Ctor},
+
 		{"CTakeDamageInfo.GetInflictor", GetInflictor},
 		{"CTakeDamageInfo.SetInflictor", SetInflictor},
 

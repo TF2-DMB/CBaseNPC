@@ -88,7 +88,7 @@ for sdk_name in Extension.sdks:
       os.path.join(builder.currentSourcePath, 'shared'),
       os.path.join(builder.currentSourcePath, ''),
       os.path.join(sdk.path, 'game', 'shared'),
-      os.path.join(sdk.path, 'game/server')
+      os.path.join(sdk.path, 'game', 'server')
     ]
     if binary.compiler.behavior == 'gcc' or binary.compiler.behavior == 'clang':
       binary.compiler.cxxflags += ['-Wno-invalid-offsetof']

@@ -17,9 +17,10 @@ methodmap CBaseAnimating < CBaseEntity
 	 *
 	 * @return       VTable offset.
 	 */
-	property int OffsetHandleAnimEvent {
+	/*property int OffsetHandleAnimEvent {
 		public native get();
-	}
+	}*/
+	public static native int iHandleAnimEvent();
 	
 #if defined _dhooks_included
 	/**
@@ -33,7 +34,7 @@ methodmap CBaseAnimating < CBaseEntity
 		static DynamicHook hHook = null;
 		if (hHook == null)
 		{
-			hHook = new DynamicHook(CBaseAnimating.OffsetHandleAnimEvent(), HookType_Entity, ReturnType_Void, ThisPointer_CBaseEntity);
+			hHook = new DynamicHook(CBaseAnimating.iHandleAnimEvent(), HookType_Entity, ReturnType_Void, ThisPointer_CBaseEntity);
 			if (hHook == null) return;
 			hHook.AddParam(HookParamType_ObjectPtr);
 		}
@@ -160,7 +161,4 @@ methodmap CBaseAnimating < CBaseEntity
 	 * @error 		Invalid entity.
 	 */
 	public native float GetPoseParameter(int poseParam);
-
-	#pragma deprecated Use OffsetHandleAnimEvent
-	public static native int iHandleAnimEvent();
 };
