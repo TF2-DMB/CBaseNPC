@@ -249,7 +249,7 @@ class ExtensionConfig(object):
       '-pipe',
       '-fno-strict-aliasing',
       '-Werror',
-      '-Wall',
+      #'-Wall',
       '-Wno-unused',
       '-Wno-switch',
       '-Wno-array-bounds',
@@ -322,6 +322,7 @@ class ExtensionConfig(object):
     cxx.cxxflags += [
       '/EHsc',
       '/TP',
+      '/std:c++17'
     ]
     cxx.linkflags += [
       '/MACHINE:X86',
