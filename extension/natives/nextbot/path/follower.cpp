@@ -31,7 +31,7 @@ cell_t PathFollowerCtor(IPluginContext* context, const cell_t* params) {
 
 cell_t Update(IPluginContext* context, const cell_t* params) {
 	auto path = Get<PathFollower>(context, params[1]);
-	if (path) {
+	if (!path) {
 		return 0;
 	}
 
@@ -46,7 +46,7 @@ cell_t Update(IPluginContext* context, const cell_t* params) {
 
 cell_t SetMinLookAheadDistance(IPluginContext* context, const cell_t* params) {
 	auto path = Get<PathFollower>(context, params[1]);
-	if (path) {
+	if (!path) {
 		return 0;
 	}
 
@@ -56,7 +56,7 @@ cell_t SetMinLookAheadDistance(IPluginContext* context, const cell_t* params) {
 
 cell_t GetHindrance(IPluginContext* context, const cell_t* params) {
 	auto path = Get<PathFollower>(context, params[1]);
-	if (path) {
+	if (!path) {
 		return 0;
 	}
 
@@ -66,7 +66,7 @@ cell_t GetHindrance(IPluginContext* context, const cell_t* params) {
 
 cell_t IsDiscontinuityAhead(IPluginContext* context, const cell_t* params) {
 	auto path = Get<PathFollower>(context, params[1]);
-	if (path) {
+	if (!path) {
 		return 0;
 	}
 
@@ -80,7 +80,7 @@ cell_t IsDiscontinuityAhead(IPluginContext* context, const cell_t* params) {
 
 cell_t SetGoalTolerance(IPluginContext* context, const cell_t* params) {
 	auto path = Get<PathFollower>(context, params[1]);
-	if (path) {
+	if (!path) {
 		return 0;
 	}
 
