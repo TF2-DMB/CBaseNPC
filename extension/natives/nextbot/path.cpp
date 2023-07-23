@@ -296,7 +296,7 @@ cell_t GetPosition(IPluginContext* context, const cell_t* params) {
 	float dist = sp_ctof(params[2]);
 	cell_t* addr;
 	context->LocalToPhysAddr(params[3], &addr);
-	Path::Segment* segment = (Path::Segment*)(params[4]);
+	Path::Segment* segment = (Path::Segment*)PawnAddressToPtr(params[4]);
 
 	Vector pos = path->GetPosition(dist, segment);
 	VectorToPawnVector(addr, pos);
@@ -309,8 +309,8 @@ cell_t Copy(IPluginContext* context, const cell_t* params) {
 		return 0;
 	}
 
-	INextBot* bot = (INextBot*)(params[2]);
-	Path* path2 = (Path*)(params[3]);
+	INextBot* bot = (INextBot*)PawnAddressToPtr(params[2]);
+	Path* path2 = (Path*)PawnAddressToPtr(params[3]);
 	
 	path->Copy(bot, *path2);
 	return 0;
@@ -328,7 +328,7 @@ cell_t GetClosestPosition(IPluginContext* context, const cell_t* params) {
 	PawnVectorToVector(nearAddr, vecNear);
 	cell_t* posAddr;
 	context->LocalToPhysAddr(params[3], &posAddr);
-	Path::Segment* segment = (Path::Segment*)(params[4]);
+	Path::Segment* segment = (Path::Segment*)PawnAddressToPtr(params[4]);
 	float alongLimit = sp_ctof(params[5]);
 
 	Vector pos = path->GetClosestPosition(vecNear, segment, alongLimit);
@@ -477,7 +477,7 @@ cell_t Draw(IPluginContext* context, const cell_t* params) {
 		return 0;
 	}
 
-	Path::Segment* segment = (Path::Segment*)(params[2]);
+	Path::Segment* segment = (Path::Segment*)PawnAddressToPtr(params[2]);
 	path->Draw(segment);
 	return 0;
 }

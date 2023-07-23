@@ -173,7 +173,7 @@ cell_t IsOpenListEmpty(IPluginContext* context, const cell_t* params) {
 }
 
 cell_t PopOpenList(IPluginContext* context, const cell_t* params) {
-	return reinterpret_cast<cell_t>(CNavArea::PopOpenList());
+	return PtrToPawnAddress(CNavArea::PopOpenList());
 }
 
 inline CNavArea* Get(IPluginContext* context, const cell_t param) {
@@ -229,7 +229,7 @@ cell_t GetParent(IPluginContext* context, const cell_t* params) {
 		return 0;
 	}
 	
-	return (cell_t)area->GetParent();
+	return PtrToPawnAddress(area->GetParent());
 }
 
 cell_t GetParentHow(IPluginContext* context, const cell_t* params) {
@@ -383,12 +383,12 @@ cell_t ComputeAdjacentConnectionHeightChange(IPluginContext* context, const cell
 		return 0;
 	}
 	
-	CNavArea *pOther = (CNavArea *)params[2];
-	if (!pOther) {
-		return context->ThrowNativeError("Invalid nav area %x", params[2]);
+	CNavArea* other = Get(context, params[2]);
+	if (!other) {
+		return 0;
 	}
 
-	return sp_ftoc(area->ComputeAdjacentConnectionHeightChange(pOther));
+	return sp_ftoc(area->ComputeAdjacentConnectionHeightChange(other));
 }
 
 cell_t GetAttributes(IPluginContext* context, const cell_t* params) {
@@ -436,7 +436,7 @@ cell_t IsConnected(IPluginContext* context, const cell_t* params) {
 		return 0;
 	}
 	
-	return area->IsConnected((CNavArea *)params[2], (NavDirType)params[3]);
+	return area->IsConnected(PtrToPawnAddress(params[2]), (NavDirType)params[3]);
 }
 
 cell_t IsOverlappingPoint(IPluginContext* context, const cell_t* params) {
@@ -459,11 +459,12 @@ cell_t IsOverlappingX(IPluginContext* context, const cell_t* params) {
 		return 0;
 	}
 	
-	CNavArea *pOther = (CNavArea *)params[2];
-	if (!pOther) {
-		return context->ThrowNativeError("Invalid nav area %x", params[2]);
+	CNavArea* other = Get(context, params[2]);
+	if (!other) {
+		return 0;
 	}
-	return area->IsOverlappingX(pOther);
+
+	return area->IsOverlappingX(other);
 }
 
 cell_t IsOverlappingY(IPluginContext* context, const cell_t* params) {
@@ -472,11 +473,12 @@ cell_t IsOverlappingY(IPluginContext* context, const cell_t* params) {
 		return 0;
 	}
 	
-	CNavArea *pOther = (CNavArea *)params[2];
-	if (!pOther) {
-		return context->ThrowNativeError("Invalid nav area %x", params[2]);
+	CNavArea* other = Get(context, params[2]);
+	if (!other) {
+		return 0;
 	}
-	return area->IsOverlappingY(pOther);
+
+	return area->IsOverlappingY(other);
 }
 
 cell_t IsOverlappingArea(IPluginContext* context, const cell_t* params) {
@@ -485,12 +487,12 @@ cell_t IsOverlappingArea(IPluginContext* context, const cell_t* params) {
 		return 0;
 	}
 	
-	CNavArea *pOther = (CNavArea *)params[2];
-	if (!pOther) {
-		return context->ThrowNativeError("Invalid nav area %x", params[2]);
+	CNavArea* other = Get(context, params[2]);
+	if (!other) {
+		return 0;
 	}
 
-	return area->IsOverlapping(pOther);
+	return area->IsOverlapping(other);
 }
 
 cell_t IsOverlappingExtent(IPluginContext* context, const cell_t* params) {
@@ -615,7 +617,7 @@ cell_t Contains(IPluginContext* context, const cell_t* params) {
 		return 0;
 	}
 	
-	return area->Contains((CNavArea *)params[2]);
+	return area->Contains((CNavArea*)PawnAddressToPtr(params[2]));
 }
 
 cell_t ContainsPoint(IPluginContext* context, const cell_t* params) {

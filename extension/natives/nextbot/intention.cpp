@@ -127,9 +127,7 @@ cell_t SelectTargetPoint(IPluginContext* context, const cell_t* params) {
 	}
 
 	Vector targetPoint = intention->SelectTargetPoint(me, subject);
-	buffer[0] = sp_ftoc( targetPoint[0] );
-	buffer[1] = sp_ftoc( targetPoint[1] );
-	buffer[2] = sp_ftoc( targetPoint[2] );
+	VectorToPawnVector(buffer, targetPoint);
 
 	return 0;
 }
@@ -151,7 +149,8 @@ cell_t IsPositionAllowed(IPluginContext* context, const cell_t* params) {
 		return context->ThrowNativeError("GetBot returned null!");
 	}
 
-	Vector vecPos(sp_ctof(pos[0]), sp_ctof(pos[1]), sp_ctof(pos[2]));
+	Vector vecPos;
+	PawnVectorToVector(pos, vecPos);
 
 	return intention->IsPositionAllowed(me, vecPos);
 }

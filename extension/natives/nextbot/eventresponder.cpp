@@ -217,7 +217,7 @@ cell_t OnWeaponFired(IPluginContext* context, const cell_t* params) {
 	}
 
 	CBaseEntity* weapon = gamehelpers->ReferenceToEntity(params[3]);
-	if (!weapon && params[2] != -1) {
+	if (!weapon && params[3] != -1) {
 		return context->ThrowNativeError("Weapon entity %d is invalid!", params[3]);
 	}
 
@@ -403,8 +403,7 @@ cell_t OnShoved(IPluginContext* context, const cell_t* params) {
 	}
 
 	CBaseEntity* entity = gamehelpers->ReferenceToEntity(params[2]);
-	if (!entity && params[2] != -1)
-	{
+	if (!entity && params[2] != -1) {
 		return context->ThrowNativeError("Entity %d is invalid!", params[2]);
 	}
 

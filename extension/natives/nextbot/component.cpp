@@ -3,7 +3,7 @@
 namespace natives::nextbot::component {
 
 inline INextBotComponent* Get(IPluginContext* context, const cell_t param) {	
-	INextBotComponent* component = (INextBotComponent*)param;
+	INextBotComponent* component = (INextBotComponent*)PawnAddressToPtr(param);
 	if (!component) {
 		context->ThrowNativeError("Component is a null ptr!");
 		return nullptr;
@@ -48,7 +48,7 @@ cell_t GetBot(IPluginContext* context, const cell_t* params) {
 		return 0;
 	}
 
-	return (cell_t)(component->GetBot());
+	return PtrToPawnAddress(component->GetBot());
 }
 
 void setup(std::vector<sp_nativeinfo_t>& natives) {

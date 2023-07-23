@@ -479,8 +479,11 @@ cell_t GetCritType(IPluginContext* context, const cell_t* params) {
 	if (!info) {
 		return 0;
 	}
-
+#if SOURCE_ENGINE == SE_TF2
 	return (cell_t)info->m_eCritType;
+#else
+	return context->ThrowNativeError("No mod support.");
+#endif
 }
 
 cell_t SetCritType(IPluginContext* context, const cell_t* params) {
@@ -488,8 +491,11 @@ cell_t SetCritType(IPluginContext* context, const cell_t* params) {
 	if (!info) {
 		return 0;
 	}
-
+#if SOURCE_ENGINE == SE_TF2
 	info->SetCritType((CTakeDamageInfo::ECritType)params[2]);
+#else
+	context->ThrowNativeError("No mod support.");
+#endif
 	return 0;
 }
 

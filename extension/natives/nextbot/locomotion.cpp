@@ -263,7 +263,7 @@ cell_t ClimbLadder(IPluginContext* context, const cell_t* params) {
 		return 0;
 	}
 
-	mover->ClimbLadder((CNavLadder *)(params[2]), (CNavArea *)(params[3]));
+	mover->ClimbLadder((CNavLadder*)PawnAddressToPtr(params[2]), (CNavArea*)PawnAddressToPtr(params[3]));
 	return 0;
 }
 
@@ -273,7 +273,7 @@ cell_t DescendLadder(IPluginContext* context, const cell_t* params) {
 		return 0;
 	}
 
-	mover->DescendLadder((CNavLadder *)(params[2]), (CNavArea *)(params[3]));
+	mover->DescendLadder((CNavLadder*)PawnAddressToPtr(params[2]), (CNavArea*)PawnAddressToPtr(params[3]));
 	return 0;
 }
 
