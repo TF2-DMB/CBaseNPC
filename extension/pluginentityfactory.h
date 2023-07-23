@@ -30,7 +30,7 @@ enum PluginEntityFactoryBaseClass_t
 class PluginFactoryEntityRecord_t
 {
 public:
-	CBaseEntityHack* pEntity = nullptr;
+	CBaseEntity* pEntity = nullptr;
 	CPluginEntityFactory* pFactory = nullptr;
 	datamap_t* m_pDataMap = nullptr;
 	INextBot* m_pNextBot = nullptr;
@@ -39,7 +39,7 @@ public:
 
 	void Hook(bool bHookDestructor = true);
 
-	PluginFactoryEntityRecord_t( CBaseEntityHack* pEnt ) : pEntity(pEnt) { }
+	PluginFactoryEntityRecord_t( CBaseEntity* pEnt ) : pEntity(pEnt) { }
 	~PluginFactoryEntityRecord_t();
 
 	datamap_t* Hook_GetDataDescMap();

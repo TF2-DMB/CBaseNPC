@@ -5,7 +5,7 @@
 /**
  * Try to cutoff our chase subject
  */
-Vector ChasePath::PredictSubjectPosition( INextBot *bot, CBaseEntityHack *subject ) const
+Vector ChasePath::PredictSubjectPosition( INextBot* bot, CBaseEntity* subject ) const
 {
 	ILocomotion *mover = bot->GetLocomotionInterface();
 
@@ -144,7 +144,7 @@ Vector ChasePath::PredictSubjectPosition( INextBot *bot, CBaseEntityHack *subjec
 }
 
 // if the victim is a player, poke them so they know they're being chased
-void DirectChasePath::NotifyVictim( INextBot *me, CBaseEntityHack *victim )
+void DirectChasePath::NotifyVictim( INextBot* me, CBaseEntity* victim )
 {
 	/*CBaseCombatCharacter *pBCCVictim = ToBaseCombatCharacter( victim );
 	if ( !pBCCVictim )

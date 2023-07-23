@@ -158,7 +158,7 @@ CNavArea* CToolsNavMesh::GetNavArea(const Vector &pos, float beneathLimit) const
 	return use;
 }
 
-CNavArea* CToolsNavMesh::GetNavArea(CBaseEntity* paramEntity, int nFlags, float flBeneathLimit) const
+CNavArea* CToolsNavMesh::GetNavArea(CBaseEntity* pEntity, int nFlags, float flBeneathLimit) const
 {
 	VPROF("CToolsNavMesh::GetNavArea [ent]");
 
@@ -167,12 +167,10 @@ CNavArea* CToolsNavMesh::GetNavArea(CBaseEntity* paramEntity, int nFlags, float 
 		return nullptr;
 	}
 
-	CBaseEntityHack* pEntity = reinterpret_cast<CBaseEntityHack*>(paramEntity);
-
 	Vector testPos = pEntity->GetAbsOrigin();
 
 	float flStepHeight = 1e-3;
-	CBaseCombatCharacterHack* pBCC = pEntity->MyCombatCharacterPointer();
+	CBaseCombatCharacter* pBCC = pEntity->MyCombatCharacterPointer();
 	if ( pBCC )
 	{
 		// Check if we're still in the last area

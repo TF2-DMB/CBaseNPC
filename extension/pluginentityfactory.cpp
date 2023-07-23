@@ -122,7 +122,7 @@ PluginFactoryEntityRecord_t* CPluginEntityFactories::FindRecord(CBaseEntity* pEn
 	{
 		if (create)
 		{
-			m_Records.emplace(key, std::make_unique<PluginFactoryEntityRecord_t>((CBaseEntityHack*)pEntity));
+			m_Records.emplace(key, std::make_unique<PluginFactoryEntityRecord_t>(pEntity));
 		}
 		else
 		{
@@ -328,9 +328,9 @@ void CPluginEntityFactories::RemoveGameFactory(IEntityFactory* factory)
 
 void CPluginEntityFactories::SDK_OnAllLoaded()
 {
-	SH_MANUALHOOK_RECONFIGURE(FactoryEntity_GetDataDescMap, CBaseEntityHack::offset_GetDataDescMap, 0, 0);
-	SH_MANUALHOOK_RECONFIGURE(FactoryEntity_UpdateOnRemove, CBaseEntityHack::offset_UpdateOnRemove, 0, 0);
-	SH_MANUALHOOK_RECONFIGURE(EntityRecord_MyNextBotPointer, CBaseEntityHack::offset_MyNextBotPointer, 0, 0);
+	SH_MANUALHOOK_RECONFIGURE(FactoryEntity_GetDataDescMap, CBaseEntity::offset_GetDataDescMap, 0, 0);
+	SH_MANUALHOOK_RECONFIGURE(FactoryEntity_UpdateOnRemove, CBaseEntity::offset_UpdateOnRemove, 0, 0);
+	SH_MANUALHOOK_RECONFIGURE(EntityRecord_MyNextBotPointer, CBaseEntity::offset_MyNextBotPointer, 0, 0);
 }
 
 void CPluginEntityFactories::OnCoreMapEnd()
@@ -792,7 +792,7 @@ void CPluginEntityFactory::RemoveAllEntities()
 
 	for (int i = 0; i < entities.Count(); i++)
 	{
-		CBaseEntityHack* pEntity = reinterpret_cast< CBaseEntityHack* >( entities[i] );
+		CBaseEntity* pEntity = reinterpret_cast< CBaseEntity* >( entities[i] );
 		servertools->RemoveEntityImmediate( pEntity );
 	}
 }
@@ -931,8 +931,8 @@ IServerNetworkable* CPluginEntityFactory::RecursiveCreate(const char* classname,
 	{
 		bIsInstantiating = true;
 
-		CBaseEntityHack* pEnt = (CBaseEntityHack*)engine->PvAllocEntPrivateData(entitySize + ((4 - (entitySize % 4)) % 4));
-		CBaseEntityHack::CBaseEntity_Ctor(pEnt, m_Derive.m_bBaseEntityServerOnly);
+		CBaseEntity* pEnt = (CBaseEntity*)engine->PvAllocEntPrivateData(entitySize + ((4 - (entitySize % 4)) % 4));
+		CBaseEntity::CBaseEntity_Ctor(pEnt, m_Derive.m_bBaseEntityServerOnly);
 		pEnt->PostConstructor(classname);
 		pNet = pEnt->NetworkProp();
 	}
@@ -940,7 +940,7 @@ IServerNetworkable* CPluginEntityFactory::RecursiveCreate(const char* classname,
 	{
 		bIsInstantiating = true;
 
-		CBaseEntityHack* pEnt = (CBaseEntityHack*)engine->PvAllocEntPrivateData(entitySize + ((4 - (entitySize % 4)) % 4));
+		CBaseEntity* pEnt = (CBaseEntity*)engine->PvAllocEntPrivateData(entitySize + ((4 - (entitySize % 4)) % 4));
 		ctorCall.Init((void*)m_Derive.m_pConstructorFunc);
 		ctorCall(pEnt);
 		pEnt->PostConstructor(classname);
@@ -949,7 +949,7 @@ IServerNetworkable* CPluginEntityFactory::RecursiveCreate(const char* classname,
 
 	if (pNet)
 	{
-		CBaseEntityHack* pEnt = reinterpret_cast<CBaseEntityHack*>(pNet->GetBaseEntity());
+		CBaseEntity* pEnt = pNet->GetBaseEntity();
 
 		if (HasDataDesc())
 		{
@@ -985,8 +985,10 @@ IServerNetworkable* CPluginEntityFactory::RecursiveCreate(const char* classname,
 				{
 					if (nextBotFactory->IsRunnable())
 					{
-						nextBotFactory->PushCell((cell_t)pEnt);
-						nextBotFactory->Execute((cell_t*)&createdBot);
+						nextBotFactory->PushCell(PtrToPawnAddress(pEnt));
+						cell_t address = 0;
+						nextBotFactory->Execute(&address);
+						createdBot = (INextBot*)PawnAddressToPtr(address);
 					}
 				}
 				else

@@ -18,7 +18,7 @@
 #include <networkvar.h>
 #include <isaverestore.h>
 
-class CBaseEntityHack;
+class CBaseEntity;
 //
 // Lightweight base class for networkable data on the server.
 //
@@ -42,7 +42,7 @@ public:
 
 public:
 	// Other public methods
-	//void Init(CBaseEntityHack* pEntity);
+	//void Init(CBaseEntity* pEntity);
 
 	void AttachEdict(edict_t* pRequiredEdict = NULL);
 
@@ -103,13 +103,13 @@ public:
 private:
 	// Detaches the edict.. should only be called by CBaseNetworkable's destructor.
 	void DetachEdict();
-	CBaseEntityHack* GetOuter();
+	CBaseEntity* GetOuter();
 
 	// Marks the networkable that it will should transmit
 	void SetTransmit(CCheckTransmitInfo* pInfo);
 
 private:
-	CBaseEntityHack* m_pOuter;
+	CBaseEntity* m_pOuter;
 	// CBaseTransmitProxy *m_pTransmitProxy;
 	edict_t* m_pPev;
 	PVSInfo_t m_PVSInfo;

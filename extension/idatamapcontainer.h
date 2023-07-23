@@ -109,6 +109,12 @@ public:
 	// This class's datamap is used to calculate offsets.
 	virtual bool SetObjectDataEntity( void* obj, const char* prop, CBaseEntity* data, int element=0, char* error=nullptr, size_t maxlen=0 );
 
+	template<typename T>
+	bool SetObjectDataEx(void* obj, const char* prop, T data, int element=0, char* error=nullptr, size_t maxlen=0);
+
+	template<typename T>
+	bool GetObjectDataEx(void* obj, const char* prop, T* data, int element=0, char* error=nullptr, size_t maxlen=0);
+
 protected:
 	// Destroys a type description object allocated by this class.
 	virtual void DestroyDataTypeDescriptor(typedescription_t *desc) const;

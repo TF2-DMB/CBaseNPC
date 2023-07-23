@@ -9,9 +9,9 @@ SH_DECL_MANUALHOOK1(ToolsNextBot_OnTakeDamage_Dying, 0, 0, 0, int, const CTakeDa
 SH_DECL_MANUALHOOK1_void(ToolsNextBot_Event_Killed, 0, 0, 0, const CTakeDamageInfo&);
 SH_DECL_MANUALHOOK1_void(ToolsNextBot_HandleAnimEvent, 0, 0, 0, animevent_t*);
 SH_DECL_MANUALHOOK2_void(ToolsNextBot_OnNavAreaChanged, 0, 0, 0, CNavArea*, CNavArea*);
-SH_DECL_MANUALHOOK1_void(ToolsNextBot_Touch, 0, 0, 0, CBaseEntityHack*);
-SH_DECL_MANUALHOOK1_void(ToolsNextBot_Weapon_Equip, 0, 0, 0, CBaseEntityHack*);
-SH_DECL_MANUALHOOK3_void(ToolsNextBot_Weapon_Drop, 0, 0, 0, CBaseEntityHack*, const Vector*, const Vector*);
+SH_DECL_MANUALHOOK1_void(ToolsNextBot_Touch, 0, 0, 0, CBaseEntity*);
+SH_DECL_MANUALHOOK1_void(ToolsNextBot_Weapon_Equip, 0, 0, 0, CBaseEntity*);
+SH_DECL_MANUALHOOK3_void(ToolsNextBot_Weapon_Drop, 0, 0, 0, CBaseEntity*, const Vector*, const Vector*);
 
 bool ToolsNextBot::Init(SourceMod::IGameConfig* config, char* error, size_t maxlength)
 {
@@ -34,13 +34,13 @@ bool ToolsNextBot::Init(SourceMod::IGameConfig* config, char* error, size_t maxl
 		&& NextBotGroundLocomotion::Init(config, error, maxlength));
 }
 
-ToolsNextBot::ToolsNextBot(CBaseCombatCharacterHack* link) :
+ToolsNextBot::ToolsNextBot(CBaseCombatCharacter* link) :
 	INextBot(),
 	m_linkedEntity(link)
 {
 }
 
-ToolsNextBotPlayer::ToolsNextBotPlayer(CBaseCombatCharacterHack* link) :
+ToolsNextBotPlayer::ToolsNextBotPlayer(CBaseCombatCharacter* link) :
 	ToolsNextBot(link),
 	m_isDormantWhenDead(true)
 {
@@ -162,7 +162,7 @@ void ToolsNextBotPlayer::Hook_OnNavAreaChanged(CNavArea* enteredArea, CNavArea* 
 	RETURN_META(MRES_IGNORED);
 }
 
-void ToolsNextBotPlayer::Hook_Touch(CBaseEntityHack* other)
+void ToolsNextBotPlayer::Hook_Touch(CBaseEntity* other)
 {
 	if (ShouldTouch(other))
 	{
@@ -173,7 +173,7 @@ void ToolsNextBotPlayer::Hook_Touch(CBaseEntityHack* other)
 	RETURN_META(MRES_IGNORED);
 }
 
-void ToolsNextBotPlayer::Hook_Weapon_Equip(CBaseEntityHack* weapon)
+void ToolsNextBotPlayer::Hook_Weapon_Equip(CBaseEntity* weapon)
 {
 // TO-DO: L4D2 support
 // OnPickUp(weapon, weapon->GetDroppingPlayer());
@@ -181,7 +181,7 @@ void ToolsNextBotPlayer::Hook_Weapon_Equip(CBaseEntityHack* weapon)
 	RETURN_META(MRES_IGNORED);
 }
 
-void ToolsNextBotPlayer::Hook_Weapon_Drop(CBaseEntityHack* weapon, const Vector* target, const Vector* velocity)
+void ToolsNextBotPlayer::Hook_Weapon_Drop(CBaseEntity* weapon, const Vector* target, const Vector* velocity)
 {
 	OnDrop(weapon);
 	RETURN_META(MRES_IGNORED);

@@ -2,9 +2,9 @@
 #include <smsdk_ext.h>
 
 extern CGlobalVars* gpGlobals;
-DEFINEVAR(CBaseAnimatingOverlayHack, m_AnimOverlay);
+DEFINEVAR(CBaseAnimatingOverlay, m_AnimOverlay);
 
-bool CBaseAnimatingOverlayHack::Init(SourceMod::IGameConfig* config, char* error, size_t maxlength)
+bool CBaseAnimatingOverlay::Init(SourceMod::IGameConfig* config, char* error, size_t maxlength)
 {
 	// Any entity that inherits CBaseAnimatingOverlay is good
 	// To-do: Should this be moved to gamedata?
@@ -19,7 +19,7 @@ CAnimationLayer::CAnimationLayer()
 	Init(NULL);
 }
 
-void CAnimationLayer::Init(CBaseAnimatingOverlayHack* pOverlay)
+void CAnimationLayer::Init(CBaseAnimatingOverlay* pOverlay)
 {
 	m_pOwnerEntity = pOverlay;
 	m_fFlags = 0;
@@ -30,7 +30,7 @@ void CAnimationLayer::Init(CBaseAnimatingOverlayHack* pOverlay)
 	m_nActivity = ACT_INVALID;
 	m_nSequence = 0;
 	m_nPriority = 0;
-	m_nOrder.Set(CBaseAnimatingOverlayHack::MAX_OVERLAYS);
+	m_nOrder.Set(CBaseAnimatingOverlay::MAX_OVERLAYS);
 
 	m_flBlendIn = 0.0;
 	m_flBlendOut = 0.0;
@@ -58,7 +58,7 @@ void CAnimationLayer::MarkActive(void)
 }
 
 // Dumb and straigth copy of sdk2013
-int CBaseAnimatingOverlayHack::AddGestureSequence(int sequence, bool autokill /*= true*/)
+int CBaseAnimatingOverlay::AddGestureSequence(int sequence, bool autokill /*= true*/)
 {
 	int i = AddLayeredSequence(sequence, 0);
 	// No room?
@@ -70,7 +70,7 @@ int CBaseAnimatingOverlayHack::AddGestureSequence(int sequence, bool autokill /*
 	return i;
 }
 
-int CBaseAnimatingOverlayHack::AddGestureSequence(int nSequence, float flDuration, bool autokill)
+int CBaseAnimatingOverlay::AddGestureSequence(int nSequence, float flDuration, bool autokill)
 {
 	int iLayer = AddGestureSequence(nSequence, autokill);
 
@@ -82,7 +82,7 @@ int CBaseAnimatingOverlayHack::AddGestureSequence(int nSequence, float flDuratio
 	return iLayer;
 }
 
-int CBaseAnimatingOverlayHack::AddGesture(Activity activity, bool autokill)
+int CBaseAnimatingOverlay::AddGesture(Activity activity, bool autokill)
 {
 	if (IsPlayingGesture(activity))
 	{
@@ -106,7 +106,7 @@ int CBaseAnimatingOverlayHack::AddGesture(Activity activity, bool autokill)
 }
 
 
-int CBaseAnimatingOverlayHack::AddGesture(Activity activity, float flDuration, bool autokill)
+int CBaseAnimatingOverlay::AddGesture(Activity activity, float flDuration, bool autokill)
 {
 	int iLayer = AddGesture(activity, autokill);
 	SetLayerDuration(iLayer, flDuration);
@@ -115,7 +115,7 @@ int CBaseAnimatingOverlayHack::AddGesture(Activity activity, float flDuration, b
 }
 
 
-void CBaseAnimatingOverlayHack::SetLayerDuration(int iLayer, float flDuration)
+void CBaseAnimatingOverlay::SetLayerDuration(int iLayer, float flDuration)
 {
 	if (IsValidLayer(iLayer) && flDuration > 0)
 	{
@@ -124,7 +124,7 @@ void CBaseAnimatingOverlayHack::SetLayerDuration(int iLayer, float flDuration)
 	}
 }
 
-float CBaseAnimatingOverlayHack::GetLayerDuration(int iLayer)
+float CBaseAnimatingOverlay::GetLayerDuration(int iLayer)
 {
 	if (IsValidLayer(iLayer))
 	{
@@ -138,12 +138,12 @@ float CBaseAnimatingOverlayHack::GetLayerDuration(int iLayer)
 	return 0.0;
 }
 
-bool CBaseAnimatingOverlayHack::IsPlayingGesture(Activity activity)
+bool CBaseAnimatingOverlay::IsPlayingGesture(Activity activity)
 {
 	return FindGestureLayer(activity) != -1 ? true : false;
 }
 
-void CBaseAnimatingOverlayHack::RestartGesture(Activity activity, bool addifmissing /*=true*/, bool autokill /*=true*/)
+void CBaseAnimatingOverlay::RestartGesture(Activity activity, bool addifmissing /*=true*/, bool autokill /*=true*/)
 {
 	int idx = FindGestureLayer(activity);
 	if (idx == -1)
@@ -161,7 +161,7 @@ void CBaseAnimatingOverlayHack::RestartGesture(Activity activity, bool addifmiss
 	layer->m_flLastEventCheck = 0.0f;
 }
 
-void CBaseAnimatingOverlayHack::RemoveGesture(Activity activity)
+void CBaseAnimatingOverlay::RemoveGesture(Activity activity)
 {
 	int iLayer = FindGestureLayer(activity);
 	if (iLayer == -1)
@@ -170,7 +170,7 @@ void CBaseAnimatingOverlayHack::RemoveGesture(Activity activity)
 	RemoveLayer(iLayer);
 }
 
-void CBaseAnimatingOverlayHack::RemoveAllGestures(void)
+void CBaseAnimatingOverlay::RemoveAllGestures(void)
 {
 	auto overlay = m_AnimOverlay();
 	for (int i = 0; i < overlay->Count(); i++)
@@ -179,7 +179,7 @@ void CBaseAnimatingOverlayHack::RemoveAllGestures(void)
 	}
 }
 
-void CBaseAnimatingOverlayHack::SetLayerCycle(int iLayer, float flCycle)
+void CBaseAnimatingOverlay::SetLayerCycle(int iLayer, float flCycle)
 {
 	if (!IsValidLayer(iLayer))
 		return;
@@ -193,7 +193,7 @@ void CBaseAnimatingOverlayHack::SetLayerCycle(int iLayer, float flCycle)
 	layer->MarkActive();
 }
 
-void CBaseAnimatingOverlayHack::SetLayerCycle(int iLayer, float flCycle, float flPrevCycle)
+void CBaseAnimatingOverlay::SetLayerCycle(int iLayer, float flCycle, float flPrevCycle)
 {
 	if (!IsValidLayer(iLayer))
 		return;
@@ -210,7 +210,7 @@ void CBaseAnimatingOverlayHack::SetLayerCycle(int iLayer, float flCycle, float f
 	layer->MarkActive();
 }
 
-void CBaseAnimatingOverlayHack::SetLayerCycle(int iLayer, float flCycle, float flPrevCycle, float flLastEventCheck)
+void CBaseAnimatingOverlay::SetLayerCycle(int iLayer, float flCycle, float flPrevCycle, float flLastEventCheck)
 {
 	if (!IsValidLayer(iLayer))
 		return;
@@ -228,7 +228,7 @@ void CBaseAnimatingOverlayHack::SetLayerCycle(int iLayer, float flCycle, float f
 	layer->MarkActive();
 }
 
-float CBaseAnimatingOverlayHack::GetLayerCycle(int iLayer)
+float CBaseAnimatingOverlay::GetLayerCycle(int iLayer)
 {
 	if (!IsValidLayer(iLayer))
 		return 0.0;
@@ -237,7 +237,7 @@ float CBaseAnimatingOverlayHack::GetLayerCycle(int iLayer)
 	return overlay->Element(iLayer).m_flCycle;
 }
 
-void CBaseAnimatingOverlayHack::SetLayerPlaybackRate(int iLayer, float flPlaybackRate)
+void CBaseAnimatingOverlay::SetLayerPlaybackRate(int iLayer, float flPlaybackRate)
 {
 	if (!IsValidLayer(iLayer))
 		return;
@@ -246,7 +246,7 @@ void CBaseAnimatingOverlayHack::SetLayerPlaybackRate(int iLayer, float flPlaybac
 	overlay->Element(iLayer).m_flPlaybackRate = flPlaybackRate;
 }
 
-void CBaseAnimatingOverlayHack::SetLayerWeight(int iLayer, float flWeight)
+void CBaseAnimatingOverlay::SetLayerWeight(int iLayer, float flWeight)
 {
 	if (!IsValidLayer(iLayer))
 		return;
@@ -257,7 +257,7 @@ void CBaseAnimatingOverlayHack::SetLayerWeight(int iLayer, float flWeight)
 	overlay->Element(iLayer).MarkActive();
 }
 
-float CBaseAnimatingOverlayHack::GetLayerWeight(int iLayer)
+float CBaseAnimatingOverlay::GetLayerWeight(int iLayer)
 {
 	if (!IsValidLayer(iLayer))
 		return 0.0;
@@ -266,7 +266,7 @@ float CBaseAnimatingOverlayHack::GetLayerWeight(int iLayer)
 	return overlay->Element(iLayer).m_flWeight;
 }
 
-void CBaseAnimatingOverlayHack::SetLayerBlendIn(int iLayer, float flBlendIn)
+void CBaseAnimatingOverlay::SetLayerBlendIn(int iLayer, float flBlendIn)
 {
 	if (!IsValidLayer(iLayer))
 		return;
@@ -275,7 +275,7 @@ void CBaseAnimatingOverlayHack::SetLayerBlendIn(int iLayer, float flBlendIn)
 	overlay->Element(iLayer).m_flBlendIn = flBlendIn;
 }
 
-void CBaseAnimatingOverlayHack::SetLayerBlendOut(int iLayer, float flBlendOut)
+void CBaseAnimatingOverlay::SetLayerBlendOut(int iLayer, float flBlendOut)
 {
 	if (!IsValidLayer(iLayer))
 		return;
@@ -284,7 +284,7 @@ void CBaseAnimatingOverlayHack::SetLayerBlendOut(int iLayer, float flBlendOut)
 	overlay->Element(iLayer).m_flBlendOut = flBlendOut;
 }
 
-void CBaseAnimatingOverlayHack::SetLayerAutokill(int iLayer, bool bAutokill)
+void CBaseAnimatingOverlay::SetLayerAutokill(int iLayer, bool bAutokill)
 {
 	if (!IsValidLayer(iLayer))
 		return;
@@ -300,7 +300,7 @@ void CBaseAnimatingOverlayHack::SetLayerAutokill(int iLayer, bool bAutokill)
 	}
 }
 
-void CBaseAnimatingOverlayHack::SetLayerLooping(int iLayer, bool bLooping)
+void CBaseAnimatingOverlay::SetLayerLooping(int iLayer, bool bLooping)
 {
 	if (!IsValidLayer(iLayer))
 		return;
@@ -309,7 +309,7 @@ void CBaseAnimatingOverlayHack::SetLayerLooping(int iLayer, bool bLooping)
 	overlay->Element(iLayer).m_bLooping = bLooping;
 }
 
-void CBaseAnimatingOverlayHack::SetLayerNoRestore(int iLayer, bool bNoRestore)
+void CBaseAnimatingOverlay::SetLayerNoRestore(int iLayer, bool bNoRestore)
 {
 	if (!IsValidLayer(iLayer))
 		return;
@@ -325,7 +325,7 @@ void CBaseAnimatingOverlayHack::SetLayerNoRestore(int iLayer, bool bNoRestore)
 	}
 }
 
-Activity CBaseAnimatingOverlayHack::GetLayerActivity(int iLayer)
+Activity CBaseAnimatingOverlay::GetLayerActivity(int iLayer)
 {
 	if (!IsValidLayer(iLayer))
 	{
@@ -336,7 +336,7 @@ Activity CBaseAnimatingOverlayHack::GetLayerActivity(int iLayer)
 	return overlay->Element(iLayer).m_nActivity;
 }
 
-int CBaseAnimatingOverlayHack::GetLayerSequence(int iLayer)
+int CBaseAnimatingOverlay::GetLayerSequence(int iLayer)
 {
 	if (!IsValidLayer(iLayer))
 	{
@@ -347,7 +347,7 @@ int CBaseAnimatingOverlayHack::GetLayerSequence(int iLayer)
 	return overlay->Element(iLayer).m_nSequence;
 }
 
-void CBaseAnimatingOverlayHack::RemoveLayer(int iLayer, float flKillRate, float flKillDelay)
+void CBaseAnimatingOverlay::RemoveLayer(int iLayer, float flKillRate, float flKillDelay)
 {
 	if (!IsValidLayer(iLayer))
 		return;
@@ -367,7 +367,7 @@ void CBaseAnimatingOverlayHack::RemoveLayer(int iLayer, float flKillRate, float 
 	overlay->Element(iLayer).KillMe();
 }
 
-void CBaseAnimatingOverlayHack::FastRemoveLayer(int iLayer)
+void CBaseAnimatingOverlay::FastRemoveLayer(int iLayer)
 {
 	if (!IsValidLayer(iLayer))
 		return;
@@ -383,7 +383,7 @@ void CBaseAnimatingOverlayHack::FastRemoveLayer(int iLayer)
 	overlay->Element(iLayer).Init(this);
 }
 
-CAnimationLayer* CBaseAnimatingOverlayHack::GetAnimOverlay(int iIndex)
+CAnimationLayer* CBaseAnimatingOverlay::GetAnimOverlay(int iIndex)
 {
 	auto overlay = m_AnimOverlay();
 	iIndex = clamp(iIndex, 0, overlay->Count() - 1);
@@ -392,7 +392,7 @@ CAnimationLayer* CBaseAnimatingOverlayHack::GetAnimOverlay(int iIndex)
 }
 
 
-void CBaseAnimatingOverlayHack::SetNumAnimOverlays(int num)
+void CBaseAnimatingOverlay::SetNumAnimOverlays(int num)
 {
 	auto overlay = m_AnimOverlay();
 	if (overlay->Count() < num)
@@ -405,7 +405,7 @@ void CBaseAnimatingOverlayHack::SetNumAnimOverlays(int num)
 	}
 }
 
-bool CBaseAnimatingOverlayHack::HasActiveLayer(void)
+bool CBaseAnimatingOverlay::HasActiveLayer(void)
 {
 	auto overlay = m_AnimOverlay();
 	for (int j = 0; j < overlay->Count(); j++)
@@ -417,7 +417,7 @@ bool CBaseAnimatingOverlayHack::HasActiveLayer(void)
 	return false;
 }
 
-int	CBaseAnimatingOverlayHack::FindGestureLayer(Activity activity)
+int	CBaseAnimatingOverlay::FindGestureLayer(Activity activity)
 {
 	auto overlay = m_AnimOverlay();
 	for (int i = 0; i < overlay->Count(); i++)
@@ -439,7 +439,7 @@ int	CBaseAnimatingOverlayHack::FindGestureLayer(Activity activity)
 	return -1;
 }
 
-void CBaseAnimatingOverlayHack::SetLayerPriority(int iLayer, int iPriority)
+void CBaseAnimatingOverlay::SetLayerPriority(int iLayer, int iPriority)
 {
 	if (!IsValidLayer(iLayer))
 	{
@@ -495,7 +495,7 @@ void CBaseAnimatingOverlayHack::SetLayerPriority(int iLayer, int iPriority)
 	return;
 }
 
-int CBaseAnimatingOverlayHack::AllocateLayer(int iPriority)
+int CBaseAnimatingOverlay::AllocateLayer(int iPriority)
 {
 	int i;
 
@@ -564,7 +564,7 @@ int CBaseAnimatingOverlayHack::AllocateLayer(int iPriority)
 	return iOpenLayer;
 }
 
-int	CBaseAnimatingOverlayHack::AddLayeredSequence(int sequence, int iPriority)
+int	CBaseAnimatingOverlay::AddLayeredSequence(int sequence, int iPriority)
 {
 	int i = AllocateLayer(iPriority);
 	// No room?
@@ -587,7 +587,7 @@ int	CBaseAnimatingOverlayHack::AddLayeredSequence(int sequence, int iPriority)
 	return i;
 }
 
-bool CBaseAnimatingOverlayHack::IsValidLayer(int iLayer)
+bool CBaseAnimatingOverlay::IsValidLayer(int iLayer)
 {
 	auto overlay = m_AnimOverlay();
 	return (iLayer >= 0 && iLayer < overlay->Count() && overlay->Element(iLayer).IsActive());

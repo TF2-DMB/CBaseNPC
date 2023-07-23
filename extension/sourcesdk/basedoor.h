@@ -21,6 +21,6 @@
 #define SF_DOOR_IGNORE_USE			(1 << 15)
 #define SF_DOOR_NEW_USE_RULES		(1 << 16)
 
-class CBaseDoorHack : public CBaseToggleHack
+class CBaseDoor : public CBaseToggle
 {
 };

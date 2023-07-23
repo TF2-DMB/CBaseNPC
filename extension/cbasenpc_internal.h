@@ -91,8 +91,8 @@ public:
 	CBaseNPCFactory();
 	virtual ~CBaseNPCFactory();
 	virtual size_t GetEntitySize() override final;
-	virtual void Create_Extra(CBaseEntityHack* ent) override final;
-	virtual void Create_PostConstructor(CBaseEntityHack* ent) override final;
+	virtual void Create_Extra(CBaseEntity* ent) override final;
+	virtual void Create_PostConstructor(CBaseEntity* ent) override final;
 };
 
 extern CBaseNPCFactory* g_pBaseNPCFactory;

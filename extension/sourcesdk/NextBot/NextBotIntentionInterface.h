@@ -5,6 +5,7 @@
 #include "NextBotContextualQueryInterface.h"
 
 class INextBot;
+class CBaseCombatCharacter;
 
 class IIntention : public INextBotComponent, public IContextualQuery
 {
@@ -19,10 +20,10 @@ public:
 	virtual QueryResultType			ShouldRetreat( const INextBot *me ) const;
 	virtual QueryResultType			ShouldAttack( const INextBot *me, const CKnownEntity *them ) const;
 	virtual QueryResultType			IsHindrance( const INextBot *me, CBaseEntity *blocker ) const;
-	virtual Vector					SelectTargetPoint( const INextBot *me, const CBaseCombatCharacterHack *subject ) const;
+	virtual Vector					SelectTargetPoint( const INextBot *me, const CBaseCombatCharacter *subject ) const;
 	virtual QueryResultType			IsPositionAllowed( const INextBot *me, const Vector &pos ) const;
 	virtual const CKnownEntity *	SelectMoreDangerousThreat( const INextBot *me, 
-															   const CBaseCombatCharacterHack *subject,
+															   const CBaseCombatCharacter *subject,
 															   const CKnownEntity *threat1, 
 															   const CKnownEntity *threat2 ) const;
 };

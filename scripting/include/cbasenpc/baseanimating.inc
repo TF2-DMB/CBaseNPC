@@ -17,6 +17,9 @@ methodmap CBaseAnimating < CBaseEntity
 	 *
 	 * @return       VTable offset.
 	 */
+	/*property int OffsetHandleAnimEvent {
+		public native get();
+	}*/
 	public static native int iHandleAnimEvent();
 	
 #if defined _dhooks_included

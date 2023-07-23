@@ -13,10 +13,10 @@ public:
 	virtual void OnMapLoaded(void) = 0;
 	virtual void OnRoundRestart(void) = 0;
 	virtual void OnBeginChangeLevel(void) = 0;
-	virtual void OnKilled(CBaseCombatCharacterHack* victim, const CTakeDamageInfo& info) = 0;
-	virtual void OnSound(CBaseEntityHack* source, const Vector& pos, KeyValues* keys) = 0;
-	virtual void OnSpokeConcept(CBaseCombatCharacterHack* who, AIConcept_t concept, AI_Response* response) = 0;
-	virtual void OnWeaponFired(CBaseCombatCharacterHack* whoFired, CBaseEntityHack* weapon) = 0;
+	virtual void OnKilled(CBaseCombatCharacter* victim, const CTakeDamageInfo& info) = 0;
+	virtual void OnSound(CBaseEntity* source, const Vector& pos, KeyValues* keys) = 0;
+	virtual void OnSpokeConcept(CBaseCombatCharacter* who, AIConcept_t concept, AI_Response* response) = 0;
+	virtual void OnWeaponFired(CBaseCombatCharacter* whoFired, CBaseEntity* weapon) = 0;
 
 	bool ShouldUpdate(INextBot* bot);
 	void NotifyBeginUpdate(INextBot* bot);

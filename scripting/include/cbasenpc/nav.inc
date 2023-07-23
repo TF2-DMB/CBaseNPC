@@ -296,6 +296,12 @@ methodmap CNavLadder
 	/**
 	 * The length of the ladder.
 	 */
+	property float Length
+	{
+		public native get();
+	}
+
+	#pragma deprecated Use Length instead
 	property float length
 	{
 		public native get();
@@ -396,7 +402,7 @@ methodmap TheHidingSpotsVector
 	 * 
 	 * @return     Amount of hiding spots
 	 */
-	property int Length
+	property int Count
 	{
 		public native get();
 	}
@@ -408,6 +414,12 @@ methodmap TheHidingSpotsVector
 	 * @return      HidingSpot pointer, or NULL_HIDING_SPOT if out of bounds
 	 */
 	public native HidingSpot Get(int i);
+
+	#pragma deprecated Use Count instead
+	property int Length
+	{
+		public native get();
+	}
 };
 
 /**
@@ -958,7 +970,7 @@ methodmap TheNavAreasVector
 	 * 
 	 * @return     Amount of areas
 	 */
-	property int Length
+	property int Count
 	{
 		public native get();
 	}
@@ -970,6 +982,12 @@ methodmap TheNavAreasVector
 	 * @return      CNavArea pointer, or NULL_AREA if out of bounds
 	 */
 	public native CNavArea Get(int i);
+
+	#pragma deprecated Use Count instead
+	property int Length
+	{
+		public native get();
+	}
 };
 
 /**

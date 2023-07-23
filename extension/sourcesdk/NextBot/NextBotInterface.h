@@ -20,15 +20,15 @@ class IVision;
 class PathFollower;
 class Path;
 class NextBotCombatCharacter;
-class CBaseEntityHack;
-class CBaseCombatCharacterHack;
+class CBaseEntity;
+class CBaseCombatCharacter;
 
 bool IgnoreActorsTraceFilterFunction( IHandleEntity *pServerEntity, int contentsMask );
 
-class NextBotTraceFilterIgnoreActors : public CTraceFilterSimpleHack
+class NextBotTraceFilterIgnoreActors : public ToolsTraceFilterSimple
 {
 public:
-	NextBotTraceFilterIgnoreActors(const IHandleEntity *passentity, int collisionGroup) : CTraceFilterSimpleHack(passentity, collisionGroup, IgnoreActorsTraceFilterFunction)
+	NextBotTraceFilterIgnoreActors(const IHandleEntity *passentity, int collisionGroup) : ToolsTraceFilterSimple(passentity, collisionGroup, IgnoreActorsTraceFilterFunction)
 	{
 	}
 };
@@ -48,7 +48,7 @@ public:
 	
 	virtual bool IsRemovedOnReset() const { return true; }
 	
-	virtual CBaseCombatCharacterHack* GetEntity() const = 0;
+	virtual CBaseCombatCharacter* GetEntity() const = 0;
 	virtual NextBotCombatCharacter *GetNextBotCombatCharacter() const { return nullptr; };
 	
 	virtual ILocomotion *GetLocomotionInterface() const = 0;
@@ -59,15 +59,15 @@ public:
 	virtual bool SetPosition(const Vector& pos);
 	virtual const Vector& GetPosition() const;
 	
-	virtual bool IsEnemy(const CBaseEntityHack* ent) const;
-	virtual bool IsFriend(const CBaseEntityHack* ent) const;
-	virtual bool IsSelf(const CBaseEntityHack* ent) const;
+	virtual bool IsEnemy(const CBaseEntity* ent) const;
+	virtual bool IsFriend(const CBaseEntity* ent) const;
+	virtual bool IsSelf(const CBaseEntity* ent) const;
 	
-	virtual bool IsAbleToClimbOnto(const CBaseEntityHack* ent) const;
-	virtual bool IsAbleToBreak(const CBaseEntityHack* ent) const;
+	virtual bool IsAbleToClimbOnto(const CBaseEntity* ent) const;
+	virtual bool IsAbleToBreak(const CBaseEntity* ent) const;
 	virtual bool IsAbleToBlockMovementOf(const INextBot *nextbot) const { return true; }
 	
-	virtual bool ShouldTouch(const CBaseEntityHack* ent) const { return true; }
+	virtual bool ShouldTouch(const CBaseEntity* ent) const { return true; }
 	
 	virtual bool IsImmobile() const;
 	virtual float GetImmobileDuration() const;
@@ -78,14 +78,14 @@ public:
 	virtual void SetCurrentPath(const PathFollower *follower);
 	virtual void NotifyPathDestruction(const PathFollower *follower);
 	
-	virtual bool IsRangeLessThan(CBaseEntityHack*ent, float dist) const;
+	virtual bool IsRangeLessThan(CBaseEntity*ent, float dist) const;
 	virtual bool IsRangeLessThan(const Vector& vec, float dist) const;
-	virtual bool IsRangeGreaterThan(CBaseEntityHack*ent, float dist) const;
+	virtual bool IsRangeGreaterThan(CBaseEntity*ent, float dist) const;
 	virtual bool IsRangeGreaterThan(const Vector& vec, float dist) const;
 	
-	virtual float GetRangeTo(CBaseEntityHack *ent) const;
+	virtual float GetRangeTo(CBaseEntity*ent) const;
 	virtual float GetRangeTo(const Vector& vec) const;
-	virtual float GetRangeSquaredTo(CBaseEntityHack*ent) const;
+	virtual float GetRangeSquaredTo(CBaseEntity*ent) const;
 	virtual float GetRangeSquaredTo(const Vector& vec) const;
 	
 	virtual bool IsDebugging(unsigned int type) const;

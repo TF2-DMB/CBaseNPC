@@ -7,7 +7,7 @@ inline void UTILTools_TraceLine( const Vector& vecAbsStart, const Vector& vecAbs
 {
 	Ray_t ray;
 	ray.Init(vecAbsStart, vecAbsEnd);
-	CTraceFilterSimpleHack traceFilter(ignore, collisionGroup);
+	ToolsTraceFilterSimple traceFilter(ignore, collisionGroup);
 
 	enginetrace->TraceRay(ray, mask, &traceFilter, ptr);
 }

@@ -110,7 +110,7 @@ void INextBot::Upkeep( void )
 
 bool IgnoreActorsTraceFilterFunction(IHandleEntity *pServerEntity, int contentsMask)
 {
-	CBaseEntityHack* entity = (CBaseEntityHack *)EntityFromEntityHandle(pServerEntity);
+	CBaseEntity* entity = EntityFromEntityHandle(pServerEntity);
 	return (entity->MyCombatCharacterPointer() == NULL);
 }
 
@@ -150,7 +150,7 @@ const char *INextBot::GetDebugIdentifier( void ) const
 	const int nameSize = 256;
 	static char name[ nameSize ];
 	
-	CBaseCombatCharacterHack* pEnt = GetEntity(); 
+	CBaseCombatCharacter* pEnt = GetEntity(); 
 
 	Q_snprintf( name, nameSize, "%s(#%d)", pEnt->GetClassname(), pEnt->entindex() );
 
@@ -190,14 +190,14 @@ const Vector &INextBot::GetPosition(void) const
 	return const_cast<INextBot*>( this )->GetEntity()->GetAbsOrigin();
 }
 
-bool INextBot::IsEnemy(const CBaseEntityHack* them) const
+bool INextBot::IsEnemy(const CBaseEntity* them) const
 {
 	if (them == nullptr) 
 		return false;
 	return const_cast<INextBot *>(this)->GetEntity()->GetTeamNumber() != them->GetTeamNumber();
 }
 
-bool INextBot::IsFriend(const CBaseEntityHack* them) const
+bool INextBot::IsFriend(const CBaseEntity* them) const
 {
 	if (them == nullptr)
 		return false;
@@ -205,22 +205,22 @@ bool INextBot::IsFriend(const CBaseEntityHack* them) const
 	return const_cast<INextBot*>(this)->GetEntity()->GetTeamNumber() == them->GetTeamNumber();
 }
 
-bool INextBot::IsSelf(const CBaseEntityHack* them) const
+bool INextBot::IsSelf(const CBaseEntity* them) const
 {
 	if (them == nullptr)
 		return false;
 	return const_cast<INextBot *>( this )->GetEntity()->entindex() == them->entindex();
 }
 
-bool INextBot::IsAbleToClimbOnto(const CBaseEntityHack* object) const
+bool INextBot::IsAbleToClimbOnto(const CBaseEntity* object) const
 {
 	// TO-DO: HL2 FIX ?
-	if (object == nullptr /*|| !const_cast<CBaseEntityHack*>(object)->IsAIWalkable()*/)
+	if (object == nullptr /*|| !const_cast<CBaseEntity*>(object)->IsAIWalkable()*/)
 	{
 		return false;
 	}
 
-	if (FClassnameIs(const_cast<CBaseEntityHack*>(object), "prop_door*") || FClassnameIs(const_cast<CBaseEntityHack*>(object), "func_door*"))
+	if (FClassnameIs(const_cast<CBaseEntity*>(object), "prop_door*") || FClassnameIs(const_cast<CBaseEntity*>(object), "func_door*"))
 	{
 		return false;
 	}
@@ -228,17 +228,17 @@ bool INextBot::IsAbleToClimbOnto(const CBaseEntityHack* object) const
 	return true;
 }
 
-bool INextBot::IsAbleToBreak(const CBaseEntityHack* object) const
+bool INextBot::IsAbleToBreak(const CBaseEntity* object) const
 {
 	if (object && object->GetTakeDamage() == DAMAGE_YES)
 	{
-		if (FClassnameIs(const_cast<CBaseEntityHack*>( object ), "func_breakable" ) && 
+		if (FClassnameIs(const_cast<CBaseEntity*>( object ), "func_breakable" ) && 
 			 object->GetHealth())
 		{
 			return true;
 		}
 
-		if (FClassnameIs(const_cast<CBaseEntityHack*>( object ), "func_breakable_surf"))
+		if (FClassnameIs(const_cast<CBaseEntity*>( object ), "func_breakable_surf"))
 		{
 			return true;
 		}
@@ -253,10 +253,10 @@ bool INextBot::IsAbleToBreak(const CBaseEntityHack* object) const
 	return false;
 }
 
-bool INextBot::IsRangeLessThan(CBaseEntityHack* subject, float range) const
+bool INextBot::IsRangeLessThan(CBaseEntity* subject, float range) const
 {
 	Vector botPos;
-	CBaseEntityHack* bot = const_cast<INextBot *>(this)->GetEntity();
+	CBaseEntity* bot = const_cast<INextBot *>(this)->GetEntity();
 	if (!bot || !subject)
 		return 0.0f;
 	bot->CollisionProp()->CalcNearestPoint(subject->WorldSpaceCenter(), &botPos);
@@ -270,10 +270,10 @@ bool INextBot::IsRangeLessThan(const Vector &pos, float range) const
 	return to.IsLengthLessThan(range);
 }
 
-bool INextBot::IsRangeGreaterThan(CBaseEntityHack *subject, float range) const
+bool INextBot::IsRangeGreaterThan(CBaseEntity* subject, float range) const
 {
 	Vector botPos;
-	CBaseEntityHack *bot = const_cast<INextBot *>(this)->GetEntity();
+	CBaseEntity* bot = const_cast<INextBot *>(this)->GetEntity();
 	if (!bot || !subject)
 		return true;
 
@@ -288,10 +288,10 @@ bool INextBot::IsRangeGreaterThan(const Vector &pos, float range) const
 	return to.IsLengthGreaterThan(range);
 }
 
-float INextBot::GetRangeTo(CBaseEntityHack *subject) const
+float INextBot::GetRangeTo(CBaseEntity* subject) const
 {
 	Vector botPos;
-	CBaseEntityHack* bot = const_cast<INextBot *>(this)->GetEntity();
+	CBaseEntity* bot = const_cast<INextBot *>(this)->GetEntity();
 	if (!bot || !subject)
 		return 0.0f;
 
@@ -306,10 +306,10 @@ float INextBot::GetRangeTo(const Vector &pos) const
 	return to.Length();
 }
 
-float INextBot::GetRangeSquaredTo(CBaseEntityHack *subject) const
+float INextBot::GetRangeSquaredTo(CBaseEntity* subject) const
 {
 	Vector botPos;
-	CBaseEntityHack* bot = const_cast<INextBot*>(this)->GetEntity();
+	CBaseEntity* bot = const_cast<INextBot*>(this)->GetEntity();
 	if (!bot || !subject)
 		return 0.0f;
 

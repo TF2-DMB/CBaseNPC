@@ -13,7 +13,7 @@
 extern CUtlMemoryPool * g_pEntityListPool;
 extern ISaveRestoreOps *eventFuncs;
 
-class CEventActionHack
+class CEventAction
 {
 public:
 	string_t m_iTarget; // name of the entity(s) to cause the action in
@@ -24,13 +24,13 @@ public:
 
 	int m_iIDStamp;	// unique identifier stamp
 
-	CEventActionHack *m_pNext;
+	CEventAction *m_pNext;
 
 private:
-	CEventActionHack() {} // don't even instantiate this, we can't manage its memory
+	CEventAction() {} // don't even instantiate this, we can't manage its memory
 };
 
-class CBaseEntityOutputHack
+class CBaseEntityOutput
 {
 public:
 	static bool Init(SourceMod::IGameConfig* config, char* error, size_t maxlength);
@@ -48,11 +48,11 @@ public:
 
 public:
 	variant_t m_Value;
-	CEventActionHack *m_ActionList;
+	CEventAction *m_ActionList;
 
 };
 
-class COutputEventHack : public CBaseEntityOutputHack
+class COutputEvent : public CBaseEntityOutput
 {
 };
 

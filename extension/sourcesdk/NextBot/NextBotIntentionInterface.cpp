@@ -3,7 +3,7 @@
 #include "basecombatcharacter.h"
 #include "NextBotKnownEntity.h"
 
-Vector IIntention::SelectTargetPoint( const INextBot *me, const CBaseCombatCharacterHack *subject ) const
+Vector IIntention::SelectTargetPoint( const INextBot *me, const CBaseCombatCharacter *subject ) const
 {
 	for ( INextBotEventResponder *sub = FirstContainedResponder(); sub; sub = NextContainedResponder( sub ) )
 	{
@@ -28,7 +28,7 @@ Vector IIntention::SelectTargetPoint( const INextBot *me, const CBaseCombatChara
 	return targetPoint;
 }
 
-const CKnownEntity *IIntention::SelectMoreDangerousThreat( const INextBot *me, const CBaseCombatCharacterHack *subject, const CKnownEntity *threat1, const CKnownEntity *threat2 ) const
+const CKnownEntity *IIntention::SelectMoreDangerousThreat( const INextBot *me, const CBaseCombatCharacter *subject, const CKnownEntity *threat1, const CKnownEntity *threat2 ) const
 {
 	if ( !threat1 || threat1->IsObsolete() )
 	{

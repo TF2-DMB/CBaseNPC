@@ -123,7 +123,7 @@ void CBaseNPC_Locomotion::V_Update()
 {
 	// VPROF_ENTER_SCOPE("CBaseNPC_Locomotion::Update");
 
-	CBaseCombatCharacterHack* entity = GetBot()->GetEntity();
+	CBaseCombatCharacter* entity = GetBot()->GetEntity();
 	entity->UpdateLastKnownArea();
 
 	if (IsStuck())
@@ -398,7 +398,7 @@ void CBaseNPC_Locomotion::V_JumpAcrossGap(const Vector& landingGoal, const Vecto
 
 bool CBaseNPC_Locomotion::DefaultIsEntityTraversable(CBaseEntity* pEntity, ILocomotion::TraverseWhenType when)
 {
-	if (((CBaseEntityHack *)pEntity)->MyCombatCharacterPointer())
+	if ((pEntity)->MyCombatCharacterPointer())
 	{
 		return true;
 	}

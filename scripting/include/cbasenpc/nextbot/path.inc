@@ -54,7 +54,7 @@ methodmap Segment
 	/**
 	 * The CNavArea that this segment traverses.
 	 */
-	property CNavArea area
+	property CNavArea Area
 	{
 		public native get();
 	}
@@ -62,7 +62,7 @@ methodmap Segment
 	/**
 	 * The direction that this segment traverses.
 	 */
-	property NavTraverseType how
+	property NavTraverseType How
 	{
 		public native get();
 	}
@@ -71,18 +71,18 @@ methodmap Segment
 	 * The end position of the segment. 
 	 *
 	 * Note: This is not to be confused as the start position; use either the
-	 * previous segment's GetPos() method or manually calculate it using this
+	 * previous segment's GetPosition() method or manually calculate it using this
 	 * segment's negative forward vector and length to get the start position.
 	 *
 	 * @param pos   Position vector
 	 */
-	public native void GetPos(float pos[3]);
+	public native void GetPosition(float pos[3]);
 
 	/**
 	 * If how is GO_LADDER_UP or GO_LADDER_DOWN, then this is the CNavLadder
 	 * that bots should use to travel along the segment, otherwise will be NULL.
 	 */
-	property CNavLadder ladder
+	property CNavLadder Ladder
 	{
 		public native get();
 	}
@@ -90,7 +90,7 @@ methodmap Segment
 	/**
 	 * The type of movement required to travel this segment.
 	 */
-	property SegmentType type
+	property SegmentType Type
 	{
 		public native get();
 	}
@@ -106,7 +106,7 @@ methodmap Segment
 	/**
 	 * The total length of this segment from start to end.
 	 */
-	property float length
+	property float Length
 	{
 		public native get();
 	}
@@ -115,7 +115,7 @@ methodmap Segment
 	 * The total distance of this segment from the start of the path to the
 	 * end position of this segment.
 	 */
-	property float distanceFromStart
+	property float DistanceFromStart
 	{
 		public native get();
 	}
@@ -124,7 +124,7 @@ methodmap Segment
 	 * How much the path 'curves' from start to end in the XY plane. 0 = none,
 	 * 1 = 180 degree doubleback.
 	 */
-	property float curvature
+	property float Curvature
 	{
 		public native get();
 	}
@@ -140,7 +140,58 @@ methodmap Segment
 	/**
 	 * The width of the portal, in half.
 	 */
+	property float PortalHalfWidth
+	{
+		public native get();
+	}
+
+	#pragma deprecated Use PortalHalfWidth
 	property float m_portalHalfWidth
+	{
+		public native get();
+	}
+
+	#pragma deprecated Use Curvature
+	property float curvature
+	{
+		public native get();
+	}
+
+	#pragma deprecated Use DistanceFromStart
+	property float distanceFromStart
+	{
+		public native get();
+	}
+
+	#pragma deprecated Use Length
+	property float length
+	{
+		public native get();
+	}
+
+	#pragma deprecated Use Type
+	property SegmentType type
+	{
+		public native get();
+	}
+
+	#pragma deprecated Use Ladder
+	property CNavLadder ladder
+	{
+		public native get();
+	}
+
+	#pragma deprecated Use GetPosition
+	public native void GetPos(float pos[3]);
+
+	#pragma deprecated Use How
+	property NavTraverseType how
+	{
+		public native get();
+	}
+
+	#pragma deprecated Use Area
+	property CNavArea area
 	{
 		public native get();
 	}
@@ -156,7 +207,7 @@ methodmap CursorData
 	 *
 	 * @param vec   Position vector
 	 */
-	public native void GetPos(float vec[3]);
+	public native void GetPosition(float vec[3]);
 
 	/**
 	 * The current forward direction along the path.
@@ -169,7 +220,7 @@ methodmap CursorData
 	 * How much the path 'curves' from start to end in the XY plane. 0 = none,
 	 * 1 = 180 degree doubleback.
 	 */
-	property float curvature
+	property float Curvature
 	{
 		public native get();
 	}
@@ -177,6 +228,21 @@ methodmap CursorData
 	/**
 	 * The previous segment passed.
 	 */
+	property Segment SegmentPrior
+	{
+		public native get();
+	}
+
+	#pragma deprecated Use GetPosition
+	public native void GetPos(float vec[3]);
+
+	#pragma deprecated Use Curvature
+	property float curvature
+	{
+		public native get();
+	}
+
+	#pragma deprecated Use SegmentPrior
 	property Segment segmentPrior
 	{
 		public native get();
@@ -388,124 +454,6 @@ methodmap Path
 	public native void Destroy();
 };
 
-methodmap PathFollower < Path
-{
-	public native PathFollower(PathFollowerCostFunctor costfunction = INVALID_FUNCTION, TraceFilterActors ignoreActorsFilter, TraceFilterActors onlyActorsFilter);
-
-	/**
-	 * Moves the bot along the path.
-	 *
-	 * @param nextbot     INextBot that will use this path
-	 */
-	public native void Update(INextBot nextbot);
-
-	/**
-	 * Sets the look ahead distance of the path. This value is used to 
-	 * check if the bot can skip redundant path nodes within the given
-	 * distance for smoother movement.
-	 *
-	 * @param dist     Look ahead distance
-	 */
-	public native void SetMinLookAheadDistance(float dist);
-
-	/**
-	 * The entity that is blocking navigation along this path.
-	 *
-	 * @note       This is only set if the bot's IIntention or one of its contained responders
-	 *             returns ANSWER_YES for IsHindrance. If a responder returns ANSWER_YES for
-	 *             IsHindrance(-1) AND IsHindrance(entity), then the hindrance entity will be
-	 *             set to "entity".
-	 * @return     Entity index
-	 */
-	public native int GetHindrance();
-
-	/**
-	 * Return whether there is a the given discontinuity ahead in the path
-	 * within the given range or not.
-	 *
-	 * @param nextbot     INextBot using the path
-	 * @param stype       Type of discontinuity
-	 * @param range       Maximum distance ahead to search
-	 * @return            True if there's a discontinuity, false otherwise
-	 */
-	public native bool IsDiscontinuityAhead(INextBot nextbot, SegmentType stype, float range = -1.0);
-};
-
-enum SubjectChaseType
-{
-	LEAD_SUBJECT,
-	DONT_LEAD_SUBJECT
-};
-
-methodmap ChasePath < PathFollower
-{
-	/**
-	 * A Path designed for chasing entities.
-	 *
-	 * @param how                    Chase behavior
-	 * @param costFunction           Callback that calculates travel cost
-	 * @param ignoreActorsFilter     Callback that determines which actors to ignore
-	 * @param onlyActorsFilter       Callback that determines which actors to hit
-	 */
-	public native ChasePath(SubjectChaseType how = DONT_LEAD_SUBJECT, PathFollowerCostFunctor costfunction = INVALID_FUNCTION, TraceFilterActors ignoreActorsFilter, TraceFilterActors onlyActorsFilter);
-	
-	/**
-	 * Updates path progress to the goal entity, automatically recomputing
-	 * when needed.
-	 *
-	 * @param bot                 INextBot using the path
-	 * @param iTarget             Goal entity
-	 * @param vecPredictedPos     If not NULL_VECTOR and path has LEAD_SUBJECT behavior,
-	 *                            then will be filled with the predicted position of the
-	 *                            goal entity.
-	 */
-	public native void Update(INextBot bot, int iTarget, float vecPredictedPos[3] = NULL_VECTOR);
-
-	/**
-	 * The distance to start predicting lead position for a subject.
-	 * 
-	 * @return     Lead distance
-	 */
-	public native float GetLeadRadius();
-
-	/**
-	 * Maximum path length.
-	 *
-	 * @return     Length
-	 */
-	public native float GetMaxPathLength();
-
-	/**
-	 * Tries to predict the subject's lead position.
-	 *
-	 * @param nextbot     INextBot to use
-	 * @param entity      Entity index of the subject
-	 * @param pos         Position vector
-	 */
-	public native void PredictSubjectPosition(INextBot nextbot, int entity, float pos[3]);
-
-	/**
-	 * Determines if the path to the goal entity needs to be recomputed.
-	 *
-	 * @param nextbot     INextBot using the path
-	 * @param entity      Goal entity
-	 * @return            True if repath is needed, false otherwise
-	 */
-	public native bool IsRepathNeeded(INextBot nextbot, int entity);
-
-	/**
-	 * The duration that this path has been valid.
-	 *
-	 * @return     Duration
-	 */
-	public native float GetLifetime();
-};
-
-methodmap DirectChasePath < ChasePath
-{
-	public native DirectChasePath(SubjectChaseType how = DONT_LEAD_SUBJECT, PathFollowerCostFunctor costfunction = INVALID_FUNCTION, TraceFilterActors ignoreActorsFilter, TraceFilterActors onlyActorsFilter);
-};
-
 public bool Path_FilterIgnoreActors(int entity, int contentsMask, int desiredcollisiongroup)
 {
 	if ((entity > 0 && entity <= MaxClients) || !CBaseEntity(entity).MyNextBotPointer())
@@ -518,3 +466,6 @@ public bool Path_FilterOnlyActors(int entity, int contentsMask, int desiredcolli
 {
 	return ((entity > 0 && entity <= MaxClients) || !!CBaseEntity(entity).MyNextBotPointer());
 }
+
+#include "path/follower.inc"
+#include "path/chase.inc"

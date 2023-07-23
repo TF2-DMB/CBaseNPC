@@ -10,7 +10,7 @@ enum TOGGLE_STATE
 	TS_GOING_DOWN
 };
 
-class CBaseToggleHack : public CBaseEntityHack
+class CBaseToggle : public CBaseEntity
 {
 public:
 	static bool Init(SourceMod::IGameConfig* config, char* error, size_t maxlength);
@@ -21,7 +21,7 @@ private:
 	DECLAREVAR(TOGGLE_STATE, m_toggle_state);
 };
 
-inline TOGGLE_STATE CBaseToggleHack::GetToggleState()
+inline TOGGLE_STATE CBaseToggle::GetToggleState()
 {
 	return *m_toggle_state();
 }

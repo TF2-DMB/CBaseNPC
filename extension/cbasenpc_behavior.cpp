@@ -268,7 +268,7 @@ BEGINQUERYCALLBACK(IsHindrance, CBaseEntity* blocker)
 	CBPUSHENTITY(blocker == IS_ANY_HINDRANCE_POSSIBLE ? nullptr : blocker)
 ENDQUERYCALLBACK()
 
-Vector CBaseNPCPluginAction::SelectTargetPoint( const INextBot *me, const CBaseCombatCharacterHack *subject ) const
+Vector CBaseNPCPluginAction::SelectTargetPoint( const INextBot* me, const CBaseCombatCharacter* subject ) const
 {
 	Vector result = vec3_origin;
 
@@ -282,7 +282,7 @@ Vector CBaseNPCPluginAction::SelectTargetPoint( const INextBot *me, const CBaseC
 
 		CBPUSHCELL(this)
 		CBPUSHCELL(me)
-		CBPUSHENTITY((CBaseCombatCharacterHack*)subject)
+		CBPUSHENTITY((CBaseCombatCharacter*)subject)
 		pCallback->PushArray(buffer, 3, SM_PARAM_COPYBACK);
 		pCallback->Execute(nullptr);
 
@@ -299,7 +299,7 @@ BEGINQUERYCALLBACK(IsPositionAllowed, const Vector &pos)
 ENDQUERYCALLBACK()
 
 const CKnownEntity * CBaseNPCPluginAction::SelectMoreDangerousThreat( const INextBot *me, 
-	const CBaseCombatCharacterHack *subject,
+	const CBaseCombatCharacter *subject,
 	const CKnownEntity *threat1, 
 	const CKnownEntity *threat2 ) const
 {
@@ -310,7 +310,7 @@ const CKnownEntity * CBaseNPCPluginAction::SelectMoreDangerousThreat( const INex
 	{
 		CBPUSHCELL(this)
 		CBPUSHCELL(me)
-		CBPUSHENTITY((CBaseCombatCharacterHack*)subject)
+		CBPUSHENTITY((CBaseCombatCharacter*)subject)
 		CBPUSHCELL(threat1)
 		CBPUSHCELL(threat2)
 		pCallback->Execute(&result);
@@ -366,7 +366,7 @@ BEGINEVENTCALLBACK(OnAnimationEvent, animevent_t *event)
 	EVENTPUSHFLOAT(event->cycle)
 	EVENTPUSHFLOAT(event->eventtime)
 	EVENTPUSHCELL(event->type)
-	EVENTPUSHENTITY((CBaseAnimatingHack*)event->pSource)
+	EVENTPUSHENTITY((CBaseAnimating*)event->pSource)
 ENDEVENTCALLBACK()
 
 BEGINEVENTCALLBACK(OnIgnite)
@@ -394,7 +394,7 @@ BEGINEVENTCALLBACK(OnKilled, const CTakeDamageInfo &info)
 	EVENTPUSHCELL(info.GetDamageCustom())
 ENDEVENTCALLBACK()
 
-BEGINEVENTCALLBACK(OnOtherKilled, CBaseCombatCharacterHack *victim, const CTakeDamageInfo &info)
+BEGINEVENTCALLBACK(OnOtherKilled, CBaseCombatCharacter *victim, const CTakeDamageInfo &info)
 	EVENTPUSHENTITY(victim)
 	EVENTPUSHENTITY(info.GetAttacker())
 	EVENTPUSHENTITY(info.GetInflictor())
@@ -435,13 +435,13 @@ BEGINEVENTCALLBACK(OnSound, CBaseEntity *source, const Vector &pos, KeyValues *k
 
 ENDEVENTCALLBACK_NOEXECUTE()
 
-BEGINEVENTCALLBACK(OnSpokeConcept, CBaseCombatCharacterHack* who, AIConcept_t concept, AI_Response *response)
+BEGINEVENTCALLBACK(OnSpokeConcept, CBaseCombatCharacter* who, AIConcept_t concept, AI_Response *response)
 	EVENTPUSHENTITY(who)
 	EVENTPUSHCELL(concept)
 	EVENTPUSHCELL(response)
 ENDEVENTCALLBACK()
 
-BEGINEVENTCALLBACK(OnWeaponFired, CBaseCombatCharacterHack* whoFired, CBaseEntity* weapon )
+BEGINEVENTCALLBACK(OnWeaponFired, CBaseCombatCharacter* whoFired, CBaseEntity* weapon )
 	EVENTPUSHENTITY(whoFired)
 	EVENTPUSHENTITY(weapon)
 ENDEVENTCALLBACK()
@@ -454,7 +454,7 @@ ENDEVENTCALLBACK()
 BEGINEVENTCALLBACK(OnModelChanged)
 ENDEVENTCALLBACK()
 
-BEGINEVENTCALLBACK(OnPickUp, CBaseEntity* item, CBaseCombatCharacterHack* giver)
+BEGINEVENTCALLBACK(OnPickUp, CBaseEntity* item, CBaseCombatCharacter* giver)
 	EVENTPUSHENTITY(item)
 	EVENTPUSHENTITY(giver)
 ENDEVENTCALLBACK()
@@ -463,7 +463,7 @@ BEGINEVENTCALLBACK(OnDrop, CBaseEntity* item)
 	EVENTPUSHENTITY(item)
 ENDEVENTCALLBACK()
 
-BEGINEVENTCALLBACK(OnActorEmoted, CBaseCombatCharacterHack* emoter, int emote)
+BEGINEVENTCALLBACK(OnActorEmoted, CBaseCombatCharacter* emoter, int emote)
 	EVENTPUSHENTITY(emoter)
 	EVENTPUSHCELL(emote)
 ENDEVENTCALLBACK()

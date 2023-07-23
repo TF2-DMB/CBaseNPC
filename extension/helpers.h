@@ -58,7 +58,7 @@
 	g_##name##Handle = handlesys->CreateType(#name, &g_##name##Handler, 0, nullptr, nullptr, myself->GetIdentity(), nullptr); \
 
 #define CREATEHANDLE(name, obj) \
-	handlesys->CreateHandle(g_##name##Handle, obj, pContext->GetIdentity(), myself->GetIdentity(), nullptr) \
+	handlesys->CreateHandle(g_##name##Handle, obj, context->GetIdentity(), myself->GetIdentity(), nullptr) \
 
 #define REMOVEHANDLETYPE(name) \
 	handlesys->RemoveType(g_##name##Handle, myself->GetIdentity()); \
@@ -75,9 +75,10 @@
 
 #define READHANDLE(hnd, name, obj) \
 	HandleError chnderr = handlesys->ReadHandle(hnd, g_##name##Handle, &security, (void **)&obj); \
-	if(chnderr != HandleError_None) \
+	if (chnderr != HandleError_None) \
 	{ \
-		return pContext->ThrowNativeError("Invalid Handle %x (error %i: %s)", hnd, chnderr, HandleErrorToString(chnderr)); \
+		context->ThrowNativeError("Invalid Handle %x (error %i: %s)", hnd, chnderr, HandleErrorToString(chnderr)); \
+		return nullptr; \
 	} \
 
 #define SH_MANUALHOOK_RECONFIGURE_CONFIG(name, sh) \
@@ -91,15 +92,77 @@
 		return false; \
 	}
 
-void VectorToPawnVector(cell_t* vecAddr, const Vector vector);
-void VectorToPawnVector(cell_t* vecAddr, const Vector* vector);
-void VectorToPawnVector(cell_t* angAddr, const QAngle angle);
-void VectorToPawnVector(cell_t* angAddr, const QAngle* angle);
+inline void PawnVectorToVector(cell_t* vecAddr, Vector& vector)
+{
+	vector.x = sp_ctof(vecAddr[0]);
+	vector.y = sp_ctof(vecAddr[1]);
+	vector.z = sp_ctof(vecAddr[2]);
+}
 
-void PawnVectorToVector(cell_t* vecAddr, Vector* vector);
-void PawnVectorToVector(cell_t* vecAddr, Vector& vector);
-void PawnVectorToVector(cell_t* angAddr, QAngle* angle);
-void PawnVectorToVector(cell_t* angAddr, QAngle& angle);
+inline void PawnVectorToVector(cell_t* angAddr, QAngle& angle)
+{
+	angle.x = sp_ctof(angAddr[0]);
+	angle.y = sp_ctof(angAddr[1]);
+	angle.z = sp_ctof(angAddr[2]);
+}
+
+inline void PawnVectorToVector(cell_t* vecAddr, Vector* vector)
+{
+	vector->x = sp_ctof(vecAddr[0]);
+	vector->y = sp_ctof(vecAddr[1]);
+	vector->z = sp_ctof(vecAddr[2]);
+}
+
+inline void PawnVectorToVector(cell_t* angAddr, QAngle* angle)
+{
+	angle->x = sp_ctof(angAddr[0]);
+	angle->y = sp_ctof(angAddr[1]);
+	angle->z = sp_ctof(angAddr[2]);
+}
+
+inline void VectorToPawnVector(cell_t* vecAddr, const Vector vector)
+{
+	vecAddr[0] = sp_ftoc(vector.x);
+	vecAddr[1] = sp_ftoc(vector.y);
+	vecAddr[2] = sp_ftoc(vector.z);
+}
+
+inline void VectorToPawnVector(cell_t* angAddr, const QAngle angle)
+{
+	angAddr[0] = sp_ftoc(angle.x);
+	angAddr[1] = sp_ftoc(angle.y);
+	angAddr[2] = sp_ftoc(angle.z);
+}
+
+inline void VectorToPawnVector(cell_t* vecAddr, const Vector* vector)
+{
+	vecAddr[0] = sp_ftoc(vector->x);
+	vecAddr[1] = sp_ftoc(vector->y);
+	vecAddr[2] = sp_ftoc(vector->z);
+}
+
+inline void VectorToPawnVector(cell_t* angAddr, const QAngle* angle)
+{
+	angAddr[0] = sp_ftoc(angle->x);
+	angAddr[1] = sp_ftoc(angle->y);
+	angAddr[2] = sp_ftoc(angle->z);
+}
+
+inline cell_t PtrToPawnAddress(const void* ptr) {
+#ifdef PLATFORM_X64
+	return g_pSM->ToPseudoAddress(ptr);
+#else
+	return (cell_t)ptr;
+#endif
+}
+
+inline void* PawnAddressToPtr(cell_t addr) {
+#ifdef PLATFORM_X64
+	return (void*)g_pSM->FromPseudoAddress(param);
+#else
+	return (void*)addr;
+#endif
+}
 
 #if SOURCEPAWN_API_VERSION >= 0x0211
 void MatrixToPawnMatrix(IPluginContext* context, cell_t* matAddr, const matrix3x4_t& mat);

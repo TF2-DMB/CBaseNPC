@@ -50,27 +50,27 @@ CBaseNPCFactory::~CBaseNPCFactory()
 {
 }
 
-void CBaseNPCFactory::Create_Extra(CBaseEntityHack* ent)
+void CBaseNPCFactory::Create_Extra(CBaseEntity* ent)
 {
 	// Replace the vtable with ours
 	if (CBaseNPC_Entity::vtable == nullptr)
 	{
 		CBaseNPC_Entity::vtable = vtable_dup(ent, NextBotCombatCharacter::vtable_entries);
 		void* original = nullptr;
-		original = CBaseEntityHack::vSpawn.Replace(CBaseNPC_Entity::vtable, &CBaseNPC_Entity::BotSpawn);
+		original = CBaseEntity::vSpawn.Replace(CBaseNPC_Entity::vtable, &CBaseNPC_Entity::BotSpawn);
 		CBaseNPC_Entity::mOriginalSpawn.Init(original);
-		original = CBaseEntityHack::vOnTakeDamage.Replace(CBaseNPC_Entity::vtable, &CBaseNPC_Entity::OnTakeDamage);
+		original = CBaseEntity::vOnTakeDamage.Replace(CBaseNPC_Entity::vtable, &CBaseNPC_Entity::OnTakeDamage);
 		CBaseNPC_Entity::mOriginalOnTakeDamage.Init(original);
-		original = CBaseCombatCharacterHack::vOnTakeDamage_Alive.Replace(CBaseNPC_Entity::vtable, &CBaseNPC_Entity::OnTakeDamage_Alive);
+		original = CBaseCombatCharacter::vOnTakeDamage_Alive.Replace(CBaseNPC_Entity::vtable, &CBaseNPC_Entity::OnTakeDamage_Alive);
 		CBaseNPC_Entity::mOriginalOnTakeDamage_Alive.Init(original);
-		original = CBaseEntityHack::vUpdateOnRemove.Replace(CBaseNPC_Entity::vtable, &CBaseNPC_Entity::BotUpdateOnRemove);
+		original = CBaseEntity::vUpdateOnRemove.Replace(CBaseNPC_Entity::vtable, &CBaseNPC_Entity::BotUpdateOnRemove);
 		CBaseNPC_Entity::mOriginalUpdateOnRemove.Init(original);
 	}
 	vtable_replace(ent, CBaseNPC_Entity::vtable);
 	new (((CBaseNPC_Entity*)ent)->GetNPC()) CBaseNPC_Entity::CBaseNPC((NextBotCombatCharacter*)ent);
 }
 
-void CBaseNPCFactory::Create_PostConstructor(CBaseEntityHack* ent)
+void CBaseNPCFactory::Create_PostConstructor(CBaseEntity* ent)
 {
 	((CBaseNPC_Entity*)ent)->GetNPC()->SetEntity(ent);
 }
@@ -204,7 +204,7 @@ CBaseNPC_Body::CBaseNPC_Body(INextBot* bot) : IBody(bot)
 void CBaseNPC_Body::Update()
 {
 	// VPROF_ENTER_SCOPE("CBaseNPC_Body::Update");
-	CBaseCombatCharacterHack* entity = GetBot()->GetEntity();
+	CBaseCombatCharacter* entity = GetBot()->GetEntity();
 	entity->DispatchAnimEvents(entity);
 	entity->StudioFrameAdvance();
 	// VPROF_EXIT_SCOPE();

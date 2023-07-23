@@ -49,6 +49,7 @@ const Segment NULL_PATH_SEGMENT = view_as<Segment>(0);
 #include "cbasenpc/basecombatcharacter.inc"
 #include "cbasenpc/nextbot.inc"
 #include "cbasenpc/entityfactory.inc"
+#include "cbasenpc/takedamageinfo.inc"
 
 methodmap CExtNPC __nullable__
 {

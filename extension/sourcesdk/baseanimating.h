@@ -7,7 +7,7 @@
 class CStudioHdr;
 class COutputEvent;
 
-class CBaseAnimatingHack : public CBaseEntityHack
+class CBaseAnimating : public CBaseEntity
 {
 public:
 	static bool Init(SourceMod::IGameConfig* config, char* error, size_t maxlength);
@@ -39,8 +39,8 @@ public:
 	static VCall<void> vStudioFrameAdvance;
 	void StudioFrameAdvance(void);
 
-	static VCall<void, CBaseAnimatingHack*> vDispatchAnimEvents;
-	void DispatchAnimEvents(CBaseAnimatingHack*);
+	static VCall<void, CBaseAnimating*> vDispatchAnimEvents;
+	void DispatchAnimEvents(CBaseAnimating*);
 
 	static MCall<float, CStudioHdr*, int> mSequenceDuration;
 	float SequenceDuration(CStudioHdr*, int);
@@ -69,7 +69,7 @@ public:
 	DECLAREVAR(float, m_flModelScale);
 };
 
-inline float CBaseAnimatingHack::GetModelScale() const
+inline float CBaseAnimating::GetModelScale() const
 {
 	return *m_flModelScale();
 }
