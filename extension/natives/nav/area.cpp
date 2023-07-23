@@ -436,7 +436,7 @@ cell_t IsConnected(IPluginContext* context, const cell_t* params) {
 		return 0;
 	}
 	
-	return area->IsConnected(PtrToPawnAddress(params[2]), (NavDirType)params[3]);
+	return area->IsConnected((CNavArea*)PawnAddressToPtr(params[2]), (NavDirType)params[3]);
 }
 
 cell_t IsOverlappingPoint(IPluginContext* context, const cell_t* params) {
