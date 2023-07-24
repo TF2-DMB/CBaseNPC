@@ -23,4 +23,12 @@ parser.options.add_argument('-s', '--sdks', default='all', dest='sdks',
                             'comma-delimited list of engine names (default: %default)')
 parser.options.add_argument('--targets', type=str, dest='targets', default=None,
 		                      help="Override the target architecture (use commas to separate multiple targets).")
+parser.options.add_argument('--extension-only', action='store_true', dest='extension_only', default=False,
+                         help='Only build the extension.')
+parser.options.add_argument('--scripting-only', action='store_true', dest='scripting_only', default=False,
+                         help='Only build and package the files required for scripting in SourcePawn.')
+parser.options.add_argument('--spcomp-path', type=str, dest='spcomp_path', default=None,
+                         help="Path to spcomp")
+parser.options.add_argument('--sm-api-path', type=str, dest='smapi_path', default=None,
+                         help="Path to base SourceMod includes folder")
 parser.Configure()

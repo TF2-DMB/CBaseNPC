@@ -1,0 +1,66 @@
+name: SourcePawn CI
+on:
+  workflow_call:
+  pull_request:
+    branches: [ master ]
+    paths:
+      - 'AMBuildScript'
+      - 'PackageScript'
+      - 'scripting/**'
+      - 'scripting/**'
+
+jobs:
+  build-options:
+    runs-on: ubuntu-latest
+    outputs:
+      exclude: ${{ steps.set.outputs.exclude }}
+    steps:
+      - id: set
+        run: |
+          echo "exclude=[${{ github.event_name == 'push' && '{"platform": { "release": false } }' || '' }}]" >> $GITHUB_OUTPUT
+
+  build:
+    needs: build-options
+
+    strategy:
+      matrix:
+        platform: [
+          { sm-version: '1.11.x', release: true },
+          { sm-version: '1.12.x', release: false }
+        ]
+        exclude: ${{ fromJson(needs.build-options.outputs.exclude) }}
+
+    name: SM version ${{ matrix.platform.sm-version }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-python@v3
+        name: Setup Python 3.8
+        with:
+          python-version: '3.8'
+      
+      - name: Install AMBuild
+        run: |
+          python -m pip install --upgrade pip setuptools wheel
+          pip install git+https://github.com/alliedmodders/ambuild
+      
+      - name: Setup SP
+        uses: rumblefrog/setup-sp@master
+        with:
+          version: ${{ matrix.platform.sm-version }}
+          no-spcomp-proxy: true
+      
+      - name: Build
+        run: |
+          mkdir -p build && cd build
+          python ../configure.py --scripting-only
+          ambuild
+      
+      - name: Upload artifact
+        if: github.event_name == 'push' && matrix.platform.release
+        uses: actions/upload-artifact@v3
+        with:
+          name: cbasenpc_plugins
+          path: build/package

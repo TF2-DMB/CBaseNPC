@@ -176,7 +176,7 @@ public Action Command_SpawnNPC(int iClient, int iArgs)
 	TR_GetEndPosition(endPos, hTrace);
 	delete hTrace;
 	
-	CBaseNPC npc = new CBaseNPC();
+	CBaseNPC npc = CBaseNPC();
 	if (npc == INVALID_NPC)
 	{
 		ReplyToCommand(iClient, "Failed to create npc!");
