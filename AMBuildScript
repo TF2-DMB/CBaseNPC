@@ -100,7 +100,7 @@ class ExtensionConfig(object):
     self.all_targets = []
     self.target_archs = set()
 
-    if not getattr(builder.options, 'scripting_only', False):
+    if self.build_extension():
       if builder.options.targets:
         target_archs = builder.options.targets.split(',')
       else:
@@ -122,6 +122,12 @@ class ExtensionConfig(object):
 
       if not self.all_targets:
           raise Exception('No suitable C/C++ compiler was found.')
+
+  def build_extension(self):
+    return not getattr(builder.options, 'scripting_only', False)
+
+  def build_plugins(self):
+    return not getattr(builder.options, 'extension_only', False)
 
   def use_auto_versioning(self):
     if builder.backend != 'amb2':
@@ -190,14 +196,14 @@ class ExtensionConfig(object):
     self.mms_root = Normalize(self.mms_root)
 
   def configure(self):
-    if not set(self.target_archs).issubset(['x86', 'x86_64']):
-      raise Exception('Unknown target architecture: {0}'.format(self.target_archs))
+    if self.build_extension():
+      if not set(self.target_archs).issubset(['x86', 'x86_64']):
+        raise Exception('Unknown target architecture: {0}'.format(self.target_archs))
 
-    if not getattr(builder.options, 'scripting_only', False):
       for cxx in self.all_targets:
         self.configure_cxx(cxx)
     
-    if not getattr(builder.options, 'extension_only', False):
+    if self.build_plugins():
       self.configure_sp()
   
   def configure_sp(self):
@@ -607,7 +613,7 @@ class ExtensionConfig(object):
 
 Extension = ExtensionConfig()
 Extension.detectProductVersion()
-if not getattr(builder.options, 'scripting_only', False):
+if Extension.build_extension():
   Extension.detectSDKs()
 Extension.configure()
 
@@ -621,10 +627,10 @@ builder.targets = builder.CloneableList(Extension.all_targets)
 # Add additional buildscripts here
 BuildScripts = []
 
-if not getattr(builder.options, 'extension_only', False):
+if Extension.build_plugins():
   BuildScripts += ['scripting/AMBuilder']
 
-if not getattr(builder.options, 'scripting_only', False):
+if Extension.build_extension():
   BuildScripts += ['extension/AMBuilder']
 
 BuildScripts += ['PackageScript']
