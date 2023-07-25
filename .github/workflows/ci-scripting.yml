@@ -25,11 +25,11 @@ jobs:
     strategy:
       matrix:
         platform: [
-          { sm-version: '1.11.x', release: true }
+          { name: Stable, sm-version: '1.11.x', release: true }
         ]
         exclude: ${{ fromJson(needs.build-options.outputs.exclude) }}
 
-    name: SM (Stable)
+    name: SM (${{ matrix.platform.name }})
     runs-on: ubuntu-latest
 
     steps:
