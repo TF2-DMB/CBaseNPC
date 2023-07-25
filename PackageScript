@@ -13,7 +13,9 @@ folder_list = [
   'addons/sourcemod/scripting/include/cbasenpc',
   'addons/sourcemod/scripting/include/cbasenpc/tf',
   'addons/sourcemod/scripting/include/cbasenpc/nextbot',
+  'addons/sourcemod/scripting/include/cbasenpc/nextbot/path',
   'addons/sourcemod/gamedata',
+  'addons/sourcemod/plugins/disabled'
 ]
 
 # Create the distribution folder hierarchy.
@@ -38,11 +40,15 @@ def CopyDirContent(src, dest):
 # Copy binaries.
 for cxx_task in Extension.extensions:
   builder.AddCopy(cxx_task.binary, folder_map['addons/sourcemod/extensions'])
+for smx_file in Extension.smx_files:
+  smx_entry = Extension.smx_files[smx_file]
+  builder.AddCopy(smx_entry, folder_map['addons/sourcemod/plugins/disabled'])
 # Include files
 CopyDirContent('scripting/include', 'addons/sourcemod/scripting/include')
 CopyDirContent('scripting/include/cbasenpc', 'addons/sourcemod/scripting/include/cbasenpc')
 CopyDirContent('scripting/include/cbasenpc/tf', 'addons/sourcemod/scripting/include/cbasenpc/tf')
 CopyDirContent('scripting/include/cbasenpc/nextbot', 'addons/sourcemod/scripting/include/cbasenpc/nextbot')
+CopyDirContent('scripting/include/cbasenpc/nextbot/path', 'addons/sourcemod/scripting/include/cbasenpc/nextbot/path')
 CopyDirContent('gamedata', 'addons/sourcemod/gamedata')
 
 #shutil.make_archive(builder.buildFolder, 'gztar', builder.buildFolder)

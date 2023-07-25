@@ -1,0 +1,144 @@
+name: Extension CI
+
+on:
+  workflow_call:
+  pull_request:
+    branches: [ master ]
+    paths:
+      - 'AMBuildScript'
+      - 'PackageScript'
+      - 'extension/**'
+      - 'extension/**'
+
+jobs:
+  build-options:
+    runs-on: ubuntu-latest
+    outputs:
+      exclude: ${{ steps.set.outputs.exclude }}
+    steps:
+      - id: set
+        run: |
+          echo "exclude=[${{ github.event_name == 'push' && '{"platform": { "release": false } }' || '' }}]" >> $GITHUB_OUTPUT
+
+  build:
+    needs: build-options
+
+    strategy:
+      matrix:
+        platform: [
+          { os: ubuntu-20.04, cc: clang-8, cxx: clang++-8, release: true },
+          { os: ubuntu-latest, cc: clang, cxx: clang++, release: false },
+          { os: windows-2019, cc: msvc, release: true },
+          { os: windows-latest, cc: msvc, release: false }
+        ]
+        exclude: ${{ fromJson(needs.build-options.outputs.exclude) }}
+
+    name: ${{ matrix.platform.os }} - ${{ matrix.platform.cc }}
+    runs-on: ${{ matrix.platform.os }}
+
+    env:
+      # We currently only support tf2 - however when we support more sdks
+      # we will have to deal with the special case of our custom tf2 + AM's sdks
+      SDKS: '["tf2"]'
+      MMSOURCE_VERSION: '1.10'
+      SOURCEMOD_VERSION: '1.11'
+      CACHE_PATH: ${{ github.workspace }}/cache
+    steps:
+          
+      - uses: actions/checkout@v3
+        name: Repository checkout
+        with:
+          fetch-depth: 0
+          path: CBaseNPC
+
+      - uses: actions/checkout@v3
+        name: Sourcemod checkout
+        with:
+          repository: alliedmodders/sourcemod
+          ref: ${{ env.SOURCEMOD_VERSION }}-dev
+          submodules: true
+          path: cache/sourcemod
+      
+      - uses: actions/checkout@v3
+        name: Metamod-Source checkout
+        with:
+          repository: alliedmodders/metamod-source
+          ref: ${{ env.MMSOURCE_VERSION }}-dev
+          path: cache/metamod
+
+      - uses: actions/checkout@v3
+        name: AMBuild checkout
+        with:
+          repository: alliedmodders/ambuild
+          ref: master
+          path: cache/ambuild
+
+      - uses: actions/checkout@v3
+        name: Custom TF2 SDK checkout
+        with:
+          repository: TF2-DMB/hl2sdk-tf2
+          ref: tf2
+          path: cache/hl2sdk-tf2
+
+      #- uses: actions/cache@v2
+      #  name: Setup cache
+      #  with:
+      #    path: ${{ env.CACHE_PATH }}
+      #    key: ${{ runner.os }}-mms_${{ env.MMSOURCE_VERSION }}-sm_${{ env.SOURCEMOD_VERSION }}-${{ join(fromJSON(env.SDKS), '') }}
+      #    restore-keys: |
+      #      ${{ runner.os }}-mms_${{ env.MMSOURCE_VERSION }}-sm_${{ env.SOURCEMOD_VERSION }}-${{ join(fromJSON(env.SDKS), '') }}
+
+      - uses: actions/setup-python@v3
+        name: Setup Python 3.8
+        with:
+          python-version: 3.8
+      
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip setuptools wheel
+
+      - name: Setup AMBuild
+        working-directory: cache
+        shell: bash
+        run: |
+          pip install ./ambuild
+
+      - name: Linux dependencies
+        if: startsWith(runner.os, 'Linux')
+        run: |
+          sudo dpkg --add-architecture i386
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            gcc-multilib g++-multilib libstdc++6 lib32stdc++6 \
+            libc6-dev libc6-dev-i386 linux-libc-dev \
+            linux-libc-dev:i386 lib32z1-dev ${{ matrix.platform.cc }}
+
+      - name: Select clang compiler
+        if: startsWith(runner.os, 'Linux')
+        run: |
+          echo "CC=${{ matrix.platform.cc }}" >> $GITHUB_ENV
+          echo "CXX=${{ matrix.platform.cxx }}" >> $GITHUB_ENV
+          ${{ matrix.platform.cc }} --version
+          ${{ matrix.platform.cxx }} --version
+
+      - name: Build
+        working-directory: CBaseNPC
+        run: |
+          mkdir build
+          cd build
+          python ../configure.py --extension-only --enable-auto-versioning --enable-optimize --sdks=${{ join(fromJSON(env.SDKS)) }} --mms-path=${{ env.CACHE_PATH }}/metamod --hl2sdk-root=${{ env.CACHE_PATH }} --sm-path=${{ env.CACHE_PATH }}/sourcemod
+          ambuild
+
+      - name: Upload artifact
+        if: github.event_name == 'push' && matrix.platform.release
+        uses: actions/upload-artifact@v3
+        with:
+          name: cbasenpc_${{ runner.os }}
+          path: ${{ github.workspace }}/CBaseNPC/build/package
+      
+      - name: Upload artifact
+        if: github.event_name == 'push' && strategy.job-index == 0
+        uses: actions/upload-artifact@v3
+        with:
+          name: cbasenpc_versioning_files
+          path: ${{ github.workspace }}/CBaseNPC/build/includes

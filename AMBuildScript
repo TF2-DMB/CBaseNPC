@@ -1,5 +1,5 @@
 # vim: set sts=2 ts=8 sw=2 tw=99 et ft=python:
-import os, sys
+import os, sys, shutil
 
 # Simple extensions do not need to modify this file.
 
@@ -56,21 +56,22 @@ PossibleSDKs = {
 #  'bms':  SDK('HL2SDKBMS', '2.bms', '10', 'BMS', WinLinux, 'bms'),
 }
 
-def ResolveEnvPath(env, folder):
+def ResolveEnvPath(env, folder=None):
   if env in os.environ:
     path = os.environ[env]
     if os.path.isdir(path):
       return path
     return None
 
-  head = os.getcwd()
-  oldhead = None
-  while head != None and head != oldhead:
-    path = os.path.join(head, folder)
-    if os.path.isdir(path):
-      return path
-    oldhead = head
-    head, tail = os.path.split(head)
+  if folder:
+    head = os.getcwd()
+    oldhead = None
+    while head != None and head != oldhead:
+      path = os.path.join(head, folder)
+      if os.path.isdir(path):
+        return path
+      oldhead = head
+      head, tail = os.path.split(head)
 
   return None
 
@@ -93,30 +94,40 @@ class ExtensionConfig(object):
     self.generated_headers = None
     self.mms_root = None
     self.sm_root = None
+    self.smx_files = {}
+    self.spcomp_path = None
+    self.smapi_path = None
     self.all_targets = []
     self.target_archs = set()
 
-    if builder.options.targets:
-      target_archs = builder.options.targets.split(',')
-    else:
-      target_archs = ['x86']
-      if builder.backend != 'amb2':
-        target_archs.append('x86_64')
+    if self.build_extension():
+      if builder.options.targets:
+        target_archs = builder.options.targets.split(',')
+      else:
+        target_archs = ['x86']
+        if builder.backend != 'amb2':
+          target_archs.append('x86_64')
 
-    for arch in target_archs:
-        try:
-            cxx = builder.DetectCxx(target_arch = arch)
-            self.target_archs.add(cxx.target.arch)
-        except Exception as e:
-            # Error if archs were manually overridden.
-            if builder.options.targets:
-                raise
-            print('Skipping target {}: {}'.format(arch, e))
-            continue
-        self.all_targets.append(cxx)
+      for arch in target_archs:
+          try:
+              cxx = builder.DetectCxx(target_arch = arch)
+              self.target_archs.add(cxx.target.arch)
+          except Exception as e:
+              # Error if archs were manually overridden.
+              if builder.options.targets:
+                  raise
+              print('Skipping target {}: {}'.format(arch, e))
+              continue
+          self.all_targets.append(cxx)
 
-    if not self.all_targets:
-        raise Exception('No suitable C/C++ compiler was found.')
+      if not self.all_targets:
+          raise Exception('No suitable C/C++ compiler was found.')
+
+  def build_extension(self):
+    return not getattr(builder.options, 'scripting_only', False)
+
+  def build_plugins(self):
+    return not getattr(builder.options, 'extension_only', False)
 
   def use_auto_versioning(self):
     if builder.backend != 'amb2':
@@ -185,13 +196,48 @@ class ExtensionConfig(object):
     self.mms_root = Normalize(self.mms_root)
 
   def configure(self):
+    if self.build_extension():
+      if not set(self.target_archs).issubset(['x86', 'x86_64']):
+        raise Exception('Unknown target architecture: {0}'.format(self.target_archs))
 
-    if not set(self.target_archs).issubset(['x86', 'x86_64']):
-      raise Exception('Unknown target architecture: {0}'.format(self.target_archs))
-
-    for cxx in self.all_targets:
+      for cxx in self.all_targets:
         self.configure_cxx(cxx)
     
+    if self.build_plugins():
+      self.configure_sp()
+  
+  def configure_sp(self):
+    if builder.options.spcomp_path:
+      self.spcomp_path = builder.options.spcomp_path
+    else:
+      spcomp_name = 'spcomp' if sys.platform != 'win32' else 'spcomp.exe'
+
+      self.spcomp_path = ResolveEnvPath('SPCOMP')
+      if not self.spcomp_path:
+        self.spcomp_path = ResolveEnvPath('SCRIPTING_PATH')
+        if self.spcomp_path:
+          self.spcomp_path = os.path.join(self.spcomp_path, spcomp_name)
+      if not self.spcomp_path:
+        self.spcomp_path = shutil.which('spcomp')
+
+    if not self.spcomp_path or not os.path.isfile(self.spcomp_path):
+      raise Exception('Could not find spcomp')
+
+    if builder.options.smapi_path:
+      self.smapi_path = builder.options.smapi_path
+    else:
+      self.smapi_path = ResolveEnvPath('SOURCEMOD_API')
+      if not self.smapi_path:
+        self.smapi_path = ResolveEnvPath('SCRIPTING_PATH')
+        if self.smapi_path:
+          self.smapi_path = os.path.join(self.smapi_path, 'include')
+      if not self.smapi_path:
+        if self.spcomp_path:
+          self.smapi_path = os.path.join(os.path.dirname(self.spcomp_path), 'include')
+
+    if not self.smapi_path or not os.path.isdir(self.smapi_path):
+      raise Exception('Could not find SourceMod includes folder')
+
   def configure_cxx(self, cxx):
     if cxx.family == 'msvc':
       if cxx.version < 1900:
@@ -567,7 +613,8 @@ class ExtensionConfig(object):
 
 Extension = ExtensionConfig()
 Extension.detectProductVersion()
-Extension.detectSDKs()
+if Extension.build_extension():
+  Extension.detectSDKs()
 Extension.configure()
 
 if Extension.use_auto_versioning():
@@ -578,9 +625,14 @@ if Extension.use_auto_versioning():
 
 builder.targets = builder.CloneableList(Extension.all_targets)
 # Add additional buildscripts here
-BuildScripts = [
-  'extension/AMBuilder',
-  'PackageScript'
-]
+BuildScripts = []
+
+if Extension.build_plugins():
+  BuildScripts += ['scripting/AMBuilder']
+
+if Extension.build_extension():
+  BuildScripts += ['extension/AMBuilder']
+
+BuildScripts += ['PackageScript']
 
 builder.Build(BuildScripts, {'Extension': Extension})

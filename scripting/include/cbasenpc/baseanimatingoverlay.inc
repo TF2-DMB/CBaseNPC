@@ -9,16 +9,9 @@
 #define ANIM_LAYER_DONTRESTORE	0x0008
 #define ANIM_LAYER_CHECKACCESS	0x0010
 #define ANIM_LAYER_DYING		0x0020
+#define ANIM_LAYER_NOEVENTS         0x0040
 
 #define MAX_OVERLAYS			15
-
-#define ANIM_LAYER_ACTIVE        0x0001 
-#define ANIM_LAYER_AUTOKILL      0x0002 
-#define ANIM_LAYER_KILLME        0x0004 
-#define ANIM_LAYER_DONTRESTORE   0x0008 
-#define ANIM_LAYER_CHECKACCESS   0x0010 
-#define ANIM_LAYER_DYING         0x0020
-#define ANIM_LAYER_NOEVENTS         0x0040
 
 #pragma deprecated Use CAnimationLayer instead
 enum //CAnimationLayer 

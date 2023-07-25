@@ -1,0 +1,37 @@
+import os
+
+files = [
+  'cbasenpc_actiontest.sp',
+  'cbasenpc_example.sp'
+]
+
+spcomp_argv = [
+  os.path.join(builder.buildPath, Extension.spcomp_path),
+  '-i' + os.path.join(builder.currentSourcePath, 'include'),
+  '-i' + Extension.smapi_path,
+  '-O2',
+  '-h',
+]
+
+def build_plugin(script_path, smx_file):
+  inputs = [
+    Extension.spcomp_path,
+    script_path,
+  ]
+  outputs = [
+    smx_file
+  ]
+  argv = spcomp_argv + [script_path]
+  (smx_entry,) = builder.AddCommand(
+    inputs = inputs,
+    argv = argv,
+    outputs = outputs,
+    dep_type = 'msvc',
+    weak_inputs = Extension.generated_headers or []
+  )
+  Extension.smx_files[smx_file] = smx_entry
+
+for script_file in files:
+  script_path = os.path.join(builder.currentSourcePath, script_file)
+  smx_file = os.path.splitext(script_file)[0] + '.smx'
+  build_plugin(script_path, smx_file)

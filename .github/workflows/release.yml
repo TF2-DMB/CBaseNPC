@@ -1,0 +1,90 @@
+name: Build Release
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ master ]
+
+jobs:
+  build-plugins:
+    uses: ./.github/workflows/ci-scripting.yml
+
+  build-extension:
+    uses: ./.github/workflows/ci-extension.yml
+
+  release:
+    permissions: write-all
+    runs-on: ubuntu-latest
+    needs: [build-plugins, build-extension]
+
+    steps:
+    - run: sudo apt-get install -y tree
+
+    - name: Download Linux release
+      uses: actions/download-artifact@v3
+      with:
+        name: cbasenpc_Linux
+        path: cbasenpc_linux
+
+    - name: Download Windows release
+      uses: actions/download-artifact@v3
+      with:
+        name: cbasenpc_Windows
+        path: cbasenpc_windows
+    
+    - name: Download Plugins
+      uses: actions/download-artifact@v3
+      with:
+        name: cbasenpc_plugins
+        path: cbasenpc_plugins
+
+    - name: Download CBaseNPC verisioning files
+      uses: actions/download-artifact@v3
+      with:
+        name: cbasenpc_versioning_files
+        path: cbasenpc_versioning_files
+
+    - name: Prepare archives
+      run: |
+        cp -r cbasenpc_plugins/. cbasenpc_linux/
+        cp -r cbasenpc_plugins/. cbasenpc_windows/
+        cd cbasenpc_linux
+        tar -czf cbasenpc_linux.tar.gz *
+        cd ../cbasenpc_windows
+        zip -r cbasenpc_windows.zip .
+        cd ..
+        RELEASE="$(cat ./cbasenpc_versioning_files/git_action_release)"
+        echo "GITHUB_RELEASE_TAG=$RELEASE" >> $GITHUB_ENV
+
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+          tag_name: ${{ env.GITHUB_RELEASE_TAG }}
+          release_name: CBaseNPC ${{ env.GITHUB_RELEASE_TAG }}
+          body: |
+            ${{ github.event.head_commit.message }}
+          draft: false
+          prerelease: false
+
+    - name: Upload Linux release
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./cbasenpc_linux/cbasenpc_linux.tar.gz
+        asset_name: cbasenpc${{ env.GITHUB_RELEASE_TAG }}_linux.tar.gz
+        asset_content_type: application/gzip
+
+    - name: Upload Windows release
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./cbasenpc_windows/cbasenpc_windows.zip
+        asset_name: cbasenpc${{ env.GITHUB_RELEASE_TAG }}_windows.zip
+        asset_content_type: application/zip
