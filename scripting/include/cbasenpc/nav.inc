@@ -244,14 +244,14 @@ methodmap CNavMesh
 	public native SurroundingAreasCollector CollectSurroundingAreas(CNavArea startArea, float travelDistanceLimit = 1500.0, float maxStepUpLimit = 18.0, float maxDropDownLimit = 100.0);
 	
 	/**
-	 * Collects all areas that overlap the 2D region defined by the given `lo` and `hi`
+	 * Collects all areas that overlap the box defined by the given `mins` and `maxs`
 	 * vectors.
 	 * 
-	 * @param lo     The minimum world vector of the 2D region to search in.
-	 * @param hi     The maximum world vector of the 2D region to search in.
-	 * @return       SurroundingAreasCollector iterator. You must delete this when you are done with it.
+	 * @param mins     World vector of the minimum corner of the box.
+	 * @param maxs     World vector of the maximum corner of the box.
+	 * @return         SurroundingAreasCollector iterator. You must delete this when you are done with it.
 	 */
-	public native SurroundingAreasCollector CollectAreasOverlappingExtent(const float lo[3], const float hi[3]);
+	public native SurroundingAreasCollector CollectAreasOverlappingExtent(const float mins[3], const float maxs[3]);
 
 	/**
 	 * Collects all areas whose center is within the radius of the given position.
