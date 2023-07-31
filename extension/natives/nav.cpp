@@ -94,9 +94,64 @@ cell_t GetNavAreaByID(IPluginContext* context, const cell_t* params) {
 	return PtrToPawnAddress(ToolsNavMesh->GetNavAreaByID(id));
 }
 
+class CCollectorAddToTail {
+public:
+	CCollectorAddToTail( CUtlVector<CNavArea*>* vec ) : m_vec( vec ) {}
+	bool operator() ( CNavArea *area ) { m_vec->AddToTail(area); return true; }
+
+private:
+	CUtlVector<CNavArea*>* m_vec;
+};
+
 cell_t CollectSurroundingAreas(IPluginContext* context, const cell_t* params) {
 	CUtlVector<CNavArea*> *pCollector = new CUtlVector<CNavArea*>;
 	CollectSurroundingAreas( pCollector, (CNavArea*)PawnAddressToPtr(params[2]), sp_ctof(params[3]), sp_ctof(params[4]), sp_ctof(params[5]));
+	return CREATEHANDLE(SurroundingAreasCollector, pCollector);
+}
+
+cell_t CollectAreasOverlappingExtent(IPluginContext* context, const cell_t* params) {
+	Vector lo; Vector hi; cell_t* addr;
+	context->LocalToPhysAddr(params[2], &addr);
+	PawnVectorToVector(addr, lo);
+	context->LocalToPhysAddr(params[3], &addr);
+	PawnVectorToVector(addr, hi);
+
+	Extent extent;
+	extent.Init();
+	extent.lo = lo;
+	extent.hi = hi;
+
+	CUtlVector<CNavArea*> *pCollector = new CUtlVector<CNavArea*>;
+	CCollectorAddToTail addToTail(pCollector);
+
+	ToolsNavMesh->ForAllAreasOverlappingExtent(addToTail, extent);
+	return CREATEHANDLE(SurroundingAreasCollector, pCollector);
+}
+
+cell_t CollectAreasInRadius(IPluginContext* context, const cell_t* params) {
+	cell_t* posAddr; Vector pos;
+	context->LocalToPhysAddr(params[2], &posAddr);
+	PawnVectorToVector(posAddr, pos);
+
+	float radius = sp_ctof(params[3]);
+
+	CUtlVector<CNavArea*> *pCollector = new CUtlVector<CNavArea*>;
+	CCollectorAddToTail addToTail(pCollector);
+
+	ToolsNavMesh->ForAllAreasInRadius(addToTail, pos, radius);
+	return CREATEHANDLE(SurroundingAreasCollector, pCollector);
+}
+
+cell_t CollectAreasAlongLine(IPluginContext* context, const cell_t* params) {
+	CNavArea* startArea = (CNavArea*)PawnAddressToPtr(params[2]);
+	CNavArea* endArea = (CNavArea*)PawnAddressToPtr(params[3]);
+	cell_t* reachedEndAddr;
+	context->LocalToPhysAddr(params[4], &reachedEndAddr);
+
+	CUtlVector<CNavArea*> *pCollector = new CUtlVector<CNavArea*>;
+	CCollectorAddToTail addToTail(pCollector);
+
+	*(bool*)(reachedEndAddr) = ToolsNavMesh->ForAllAreasAlongLine(addToTail, startArea, endArea);
 	return CREATEHANDLE(SurroundingAreasCollector, pCollector);
 }
 
@@ -210,6 +265,9 @@ void setup(std::vector<sp_nativeinfo_t>& natives) {
 		{"CNavMesh.IsOutOfDate", IsOutOfDate},
 		{"CNavMesh.GetNavAreaCount", GetNavAreaCount},
 		{"CNavMesh.CollectSurroundingAreas", CollectSurroundingAreas},
+		{"CNavMesh.CollectAreasOverlappingExtent", CollectAreasOverlappingExtent},
+		{"CNavMesh.CollectAreasInRadius", CollectAreasInRadius},
+		{"CNavMesh.CollectAreasAlongLine", CollectAreasAlongLine},
 		{"CNavMesh.GetNavAreaByID", GetNavAreaByID},
 		{"CNavMesh.GetNearestNavArea", GetNearestNavArea},
 		{"CNavMesh.BuildPath", BuildPath},
