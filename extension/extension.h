@@ -32,8 +32,8 @@ extern HandleType_t HANDLENAME(PluginPathFollower);
 extern HandleType_t HANDLENAME(PluginBotReply);
 extern HandleType_t HANDLENAME(PluginBotEntityFilter);
 
-extern HandleType_t HANDLENAME(SurroundingAreasCollector);
-extern HandleType_t HANDLENAME(TSurroundingAreasCollector);
+extern HandleType_t HANDLENAME(AreasCollector);
+extern HandleType_t HANDLENAME(TAreasCollector);
 
 extern HandleType_t g_CellArrayHandle;
 extern HandleType_t g_KeyValueType;

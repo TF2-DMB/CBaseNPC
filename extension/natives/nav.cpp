@@ -7,7 +7,7 @@
 
 namespace natives::nav {
 
-namespace surroundingareas {
+namespace collector {
 
 inline CUtlVector<CNavArea*>* Get(IPluginContext* context, const cell_t param) {	
 	HandleSecurity security;
@@ -15,7 +15,7 @@ inline CUtlVector<CNavArea*>* Get(IPluginContext* context, const cell_t param) {
 	security.pIdentity = myself->GetIdentity();
 	Handle_t hndlObject = static_cast<Handle_t>(param);
 	CUtlVector<CNavArea*>* collector = nullptr;
-	READHANDLE(hndlObject, SurroundingAreasCollector, collector) 
+	READHANDLE(hndlObject, AreasCollector, collector) 
 	return collector;
 }
 
@@ -36,6 +36,8 @@ cell_t GetElement(IPluginContext* context, const cell_t* params) {
 
 void setup(std::vector<sp_nativeinfo_t>& natives) {
 	sp_nativeinfo_t list[] = {
+		{"AreasCollector.Count", GetCount},
+		{"AreasCollector.Get", GetElement},
 		{"SurroundingAreasCollector.Count", GetCount},
 		{"SurroundingAreasCollector.Get", GetElement},
 	};
@@ -106,7 +108,7 @@ private:
 cell_t CollectSurroundingAreas(IPluginContext* context, const cell_t* params) {
 	CUtlVector<CNavArea*> *pCollector = new CUtlVector<CNavArea*>;
 	CollectSurroundingAreas( pCollector, (CNavArea*)PawnAddressToPtr(params[2]), sp_ctof(params[3]), sp_ctof(params[4]), sp_ctof(params[5]));
-	return CREATEHANDLE(SurroundingAreasCollector, pCollector);
+	return CREATEHANDLE(AreasCollector, pCollector);
 }
 
 cell_t CollectAreasOverlappingExtent(IPluginContext* context, const cell_t* params) {
@@ -125,7 +127,7 @@ cell_t CollectAreasOverlappingExtent(IPluginContext* context, const cell_t* para
 	CCollectorAddToTail addToTail(pCollector);
 
 	ToolsNavMesh->ForAllAreasOverlappingExtent(addToTail, extent);
-	return CREATEHANDLE(SurroundingAreasCollector, pCollector);
+	return CREATEHANDLE(AreasCollector, pCollector);
 }
 
 cell_t CollectAreasInRadius(IPluginContext* context, const cell_t* params) {
@@ -139,7 +141,7 @@ cell_t CollectAreasInRadius(IPluginContext* context, const cell_t* params) {
 	CCollectorAddToTail addToTail(pCollector);
 
 	ToolsNavMesh->ForAllAreasInRadius(addToTail, pos, radius);
-	return CREATEHANDLE(SurroundingAreasCollector, pCollector);
+	return CREATEHANDLE(AreasCollector, pCollector);
 }
 
 cell_t CollectAreasAlongLine(IPluginContext* context, const cell_t* params) {
@@ -152,7 +154,7 @@ cell_t CollectAreasAlongLine(IPluginContext* context, const cell_t* params) {
 	CCollectorAddToTail addToTail(pCollector);
 
 	*reachedEndAddr = ToolsNavMesh->ForAllAreasAlongLine(addToTail, startArea, endArea) ? 1 : 0;
-	return CREATEHANDLE(SurroundingAreasCollector, pCollector);
+	return CREATEHANDLE(AreasCollector, pCollector);
 }
 
 class SMPathCost : public IPathCost
@@ -254,7 +256,7 @@ cell_t BuildPath(IPluginContext* context, const cell_t* params) {
 
 void setup(std::vector<sp_nativeinfo_t>& natives) {
 	area::setup(natives);
-	surroundingareas::setup(natives);
+	collector::setup(natives);
 	
 	tf::nav::setup(natives);
 

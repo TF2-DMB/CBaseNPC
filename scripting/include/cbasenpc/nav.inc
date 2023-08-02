@@ -160,6 +160,15 @@ enum CNavMesh
 
 methodmap SurroundingAreasCollector < Handle
 {
+	#pragma deprecated Use AreasCollector.Get() instead.
+	public native CNavArea Get(int index);
+
+	#pragma deprecated Use AreasCollector.Count() instead.
+	public native int Count();
+};
+
+methodmap AreasCollector < SurroundingAreasCollector
+{
 	public native CNavArea Get(int index);
 	public native int Count();
 };
@@ -238,10 +247,10 @@ methodmap CNavMesh
 	 * @param travelDistanceLimit     Maximum travel distance
 	 * @param maxStepUpLimit          Maximum step height
 	 * @param maxDropDownLimit        Maximum drop down height limit
-	 * @return                        SurroundingAreasCollector iterator. You must delete this
+	 * @return                        AreasCollector iterator. You must delete this
 	 *                                when you are done with it.
  	 */
-	public native SurroundingAreasCollector CollectSurroundingAreas(CNavArea startArea, float travelDistanceLimit = 1500.0, float maxStepUpLimit = 18.0, float maxDropDownLimit = 100.0);
+	public native AreasCollector CollectSurroundingAreas(CNavArea startArea, float travelDistanceLimit = 1500.0, float maxStepUpLimit = 18.0, float maxDropDownLimit = 100.0);
 	
 	/**
 	 * Collects all areas that overlap the box defined by the given `mins` and `maxs`
@@ -249,18 +258,18 @@ methodmap CNavMesh
 	 * 
 	 * @param mins     World vector of the minimum corner of the box.
 	 * @param maxs     World vector of the maximum corner of the box.
-	 * @return         SurroundingAreasCollector iterator. You must delete this when you are done with it.
+	 * @return         AreasCollector iterator. You must delete this when you are done with it.
 	 */
-	public native SurroundingAreasCollector CollectAreasOverlappingExtent(const float mins[3], const float maxs[3]);
+	public native AreasCollector CollectAreasOverlappingExtent(const float mins[3], const float maxs[3]);
 
 	/**
 	 * Collects all areas whose center is within the radius of the given position.
 	 * 
 	 * @param pos        Position to search for.
 	 * @param radius     Radius
-	 * @return           SurroundingAreasCollector iterator. You must delete this when you are done with it.
+	 * @return           AreasCollector iterator. You must delete this when you are done with it.
 	 */
-	public native SurroundingAreasCollector CollectAreasInRadius(const float pos[3], float radius);
+	public native AreasCollector CollectAreasInRadius(const float pos[3], float radius);
 
 	/**
 	 * Steps through the nav mesh and collects all areas along the line between `startArea` and `endArea`.
@@ -269,9 +278,9 @@ methodmap CNavMesh
 	 * @param endArea        End area
 	 * @param reachedEnd     Optional. Set to true if collection reached the end area, false if it doesn't reach it 
 	 *                       (no mesh between, bad connection, etc).
-	 * @return               SurroundingAreasCollector iterator. You must delete this when you are done with it.
+	 * @return               AreasCollector iterator. You must delete this when you are done with it.
 	 */
-	public native SurroundingAreasCollector CollectAreasAlongLine(CNavArea startArea, CNavArea endArea, bool &reachedEnd = false);
+	public native AreasCollector CollectAreasAlongLine(CNavArea startArea, CNavArea endArea, bool &reachedEnd = false);
 
 	/**
 	 * Given an ID, return the associated area.
