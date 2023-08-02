@@ -151,7 +151,7 @@ cell_t CollectAreasAlongLine(IPluginContext* context, const cell_t* params) {
 	CUtlVector<CNavArea*> *pCollector = new CUtlVector<CNavArea*>;
 	CCollectorAddToTail addToTail(pCollector);
 
-	*(bool*)(reachedEndAddr) = ToolsNavMesh->ForAllAreasAlongLine(addToTail, startArea, endArea);
+	*reachedEndAddr = ToolsNavMesh->ForAllAreasAlongLine(addToTail, startArea, endArea) ? 1 : 0;
 	return CREATEHANDLE(SurroundingAreasCollector, pCollector);
 }
 

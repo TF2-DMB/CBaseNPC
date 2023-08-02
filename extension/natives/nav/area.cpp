@@ -579,15 +579,13 @@ cell_t GetAdjacentLength(IPluginContext* context, const cell_t* params) {
 
 	NavDirType dir = (NavDirType)params[2];
 	if (dir < 0 || dir >= NUM_DIRECTIONS) {
-		context->ReportError("Invalid direction %d", dir);
-		return 0;
+		return context->ThrowNativeError("Invalid direction %d", dir);
 	}
 	
 	int i = params[3];
 	const NavConnectVector *adjacent = area->GetAdjacentAreas(dir);
 	if (i < 0 || i >= adjacent->Count()) {
-		context->ReportError("Array index %d is out of bounds (array size: %d)", i, adjacent->Count());
-		return 0;
+		return context->ThrowNativeError("Array index %d is out of bounds (array size: %d)", i, adjacent->Count());
 	}
 
 	return sp_ftoc(adjacent->Element(i).length);
@@ -632,15 +630,13 @@ cell_t GetIncomingConnectionLength(IPluginContext* context, const cell_t* params
 	
 	NavDirType dir = (NavDirType)params[2];
 	if (dir < 0 || dir >= NUM_DIRECTIONS) {
-		context->ReportError("Invalid direction %d", dir);
-		return 0;
+		return context->ThrowNativeError("Invalid direction %d", dir);
 	}
 
 	int i = params[3];
 	const NavConnectVector *incoming = area->GetIncomingConnections(dir);
 	if (i < 0 || i >= incoming->Count()) {
-		context->ReportError("Array index %d is out of bounds (array size: %d)", i, incoming->Count());
-		return 0;
+		return context->ThrowNativeError("Array index %d is out of bounds (array size: %d)", i, incoming->Count());
 	}
 
 	return sp_ftoc(incoming->Element(i).length);
