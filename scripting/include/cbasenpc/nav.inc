@@ -160,6 +160,15 @@ enum CNavMesh
 
 methodmap SurroundingAreasCollector < Handle
 {
+	#pragma deprecated Use AreasCollector.Get() instead.
+	public native CNavArea Get(int index);
+
+	#pragma deprecated Use AreasCollector.Count() instead.
+	public native int Count();
+};
+
+methodmap AreasCollector < SurroundingAreasCollector
+{
 	public native CNavArea Get(int index);
 	public native int Count();
 };
@@ -238,11 +247,41 @@ methodmap CNavMesh
 	 * @param travelDistanceLimit     Maximum travel distance
 	 * @param maxStepUpLimit          Maximum step height
 	 * @param maxDropDownLimit        Maximum drop down height limit
-	 * @return                        SurroundingAreasCollector iterator. You must delete this
+	 * @return                        AreasCollector iterator. You must delete this
 	 *                                when you are done with it.
  	 */
-	public native SurroundingAreasCollector CollectSurroundingAreas(CNavArea startArea, float travelDistanceLimit = 1500.0, float maxStepUpLimit = 18.0, float maxDropDownLimit = 100.0);
+	public native AreasCollector CollectSurroundingAreas(CNavArea startArea, float travelDistanceLimit = 1500.0, float maxStepUpLimit = 18.0, float maxDropDownLimit = 100.0);
 	
+	/**
+	 * Collects all areas that overlap the box defined by the given `mins` and `maxs`
+	 * vectors.
+	 * 
+	 * @param mins     World vector of the minimum corner of the box.
+	 * @param maxs     World vector of the maximum corner of the box.
+	 * @return         AreasCollector iterator. You must delete this when you are done with it.
+	 */
+	public native AreasCollector CollectAreasOverlappingExtent(const float mins[3], const float maxs[3]);
+
+	/**
+	 * Collects all areas whose center is within the radius of the given position.
+	 * 
+	 * @param pos        Position to search for.
+	 * @param radius     Radius
+	 * @return           AreasCollector iterator. You must delete this when you are done with it.
+	 */
+	public native AreasCollector CollectAreasInRadius(const float pos[3], float radius);
+
+	/**
+	 * Steps through the nav mesh and collects all areas along the line between `startArea` and `endArea`.
+	 * 
+	 * @param startArea      Start area
+	 * @param endArea        End area
+	 * @param reachedEnd     Optional. Set to true if collection reached the end area, false if it doesn't reach it 
+	 *                       (no mesh between, bad connection, etc).
+	 * @return               AreasCollector iterator. You must delete this when you are done with it.
+	 */
+	public native AreasCollector CollectAreasAlongLine(CNavArea startArea, CNavArea endArea, bool &reachedEnd = false);
+
 	/**
 	 * Given an ID, return the associated area.
 	 * 
@@ -438,6 +477,7 @@ methodmap CNavArea
 	/**
 	 * Updates the blocked status of the area.
 	 *
+	 * @note             This does nothing in Team Fortress 2.
 	 * @param force      If true, will ignore the throttle timer and update
 	 * @param teamID     Team to check for blocked status for
 	 */
@@ -629,6 +669,16 @@ methodmap CNavArea
 	public native CNavArea GetAdjacentArea(NavDirType dir, int i);
 
 	/**
+	 * Returns the length of the connection to the adjacent area.
+	 * Length is calculated by distance between the areas' centers.
+	 * 
+	 * @param dir     Direction
+	 * @param i       Index in list
+	 * @return        Length of connection
+	 */
+	public native float GetAdjacentLength(NavDirType dir, int i);
+
+	/**
 	 * Pushes a list of areas that this area has an outgoing connection to in the given direction.
 	 * 
 	 * @param dir     Direction
@@ -672,6 +722,16 @@ methodmap CNavArea
 	 * @return        CNavArea, or NULL_AREA if out of bounds
 	 */
 	public native CNavArea GetIncomingConnection(NavDirType dir, int i);
+
+	/**
+	 * Returns the length of the connection from the incoming connection.
+	 * Length is calculated by distance between the areas' centers.
+	 * 
+	 * @param dir     Direction
+	 * @param i       Index in list
+	 * @return        Length of connection
+	 */
+	public native float GetIncomingConnectionLength(NavDirType dir, int i);
 
 	/**
 	 * Pushes a list of areas that this area has an outgoing connection to in the given direction.

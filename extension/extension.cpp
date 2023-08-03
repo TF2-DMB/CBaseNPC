@@ -34,7 +34,7 @@ ConVar* sourcemod_version = nullptr;
 IBaseNPC_Tools* g_pBaseNPCTools = new BaseNPC_Tools_API;
 std::vector<sp_nativeinfo_t> gNatives;
 
-DEFINEHANDLEOBJ(SurroundingAreasCollector, CUtlVector< CNavArea* >);
+DEFINEHANDLEOBJ(AreasCollector, CUtlVector< CNavArea* >);
 
 ConVar* g_cvDeveloper = nullptr;
 extern ConVar* NextBotSpeedLookAheadRange;
@@ -102,7 +102,7 @@ bool CBaseNPCExt::SDK_OnLoad(char* error, size_t maxlength, bool late) {
 	GETGAMEDATAOFFSET("CBaseEntity::Event_Killed", iOffset);
 	SH_MANUALHOOK_RECONFIGURE(MEvent_Killed, iOffset, 0, 0);
 	
-	CREATEHANDLETYPE(SurroundingAreasCollector);
+	CREATEHANDLETYPE(AreasCollector);
 
 	sharesys->AddDependency(myself, "bintools.ext", true, true);
 	sharesys->AddDependency(myself, "sdktools.ext", true, true);

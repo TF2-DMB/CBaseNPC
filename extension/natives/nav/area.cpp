@@ -571,6 +571,26 @@ cell_t GetAdjacentArea(IPluginContext* context, const cell_t* params) {
 	return PtrToPawnAddress(area->GetAdjacentArea(dir, params[3]));
 }
 
+cell_t GetAdjacentLength(IPluginContext* context, const cell_t* params) {
+	auto area = Get(context, params[1]);
+	if (!area) {
+		return 0;
+	}
+
+	NavDirType dir = (NavDirType)params[2];
+	if (dir < 0 || dir >= NUM_DIRECTIONS) {
+		return context->ThrowNativeError("Invalid direction %d", dir);
+	}
+	
+	int i = params[3];
+	const NavConnectVector *adjacent = area->GetAdjacentAreas(dir);
+	if (i < 0 || i >= adjacent->Count()) {
+		return context->ThrowNativeError("Array index %d is out of bounds (array size: %d)", i, adjacent->Count());
+	}
+
+	return sp_ftoc(adjacent->Element(i).length);
+}
+
 cell_t GetIncomingConnectionsCount(IPluginContext* context, const cell_t* params) {
 	auto area = Get(context, params[1]);
 	if (!area) {
@@ -583,7 +603,7 @@ cell_t GetIncomingConnectionsCount(IPluginContext* context, const cell_t* params
 	return area->GetIncomingConnections(dir)->Count();
 }
 
-cell_t GetIncomingConnections(IPluginContext* context, const cell_t* params) {
+cell_t GetIncomingConnection(IPluginContext* context, const cell_t* params) {
 	auto area = Get(context, params[1]);
 	if (!area) {
 		return 0;
@@ -600,6 +620,26 @@ cell_t GetIncomingConnections(IPluginContext* context, const cell_t* params) {
 		return 0;
 	}
 	return PtrToPawnAddress(incoming->Element(i).area);
+}
+
+cell_t GetIncomingConnectionLength(IPluginContext* context, const cell_t* params) {
+	auto area = Get(context, params[1]);
+	if (!area) {
+		return 0;
+	}
+	
+	NavDirType dir = (NavDirType)params[2];
+	if (dir < 0 || dir >= NUM_DIRECTIONS) {
+		return context->ThrowNativeError("Invalid direction %d", dir);
+	}
+
+	int i = params[3];
+	const NavConnectVector *incoming = area->GetIncomingConnections(dir);
+	if (i < 0 || i >= incoming->Count()) {
+		return context->ThrowNativeError("Array index %d is out of bounds (array size: %d)", i, incoming->Count());
+	}
+
+	return sp_ftoc(incoming->Element(i).length);
 }
 
 cell_t IsEdge(IPluginContext* context, const cell_t* params) {
@@ -881,6 +921,7 @@ void setup(std::vector<sp_nativeinfo_t>& natives) {
 		{"CNavArea.GetCenter", GetCenter},
 		{"CNavArea.GetAdjacentCount", GetAdjacentCount},
 		{"CNavArea.GetAdjacentArea", GetAdjacentArea},
+		{"CNavArea.GetAdjacentLength", GetAdjacentLength},
 		{"CNavArea.IsConnected", IsConnected},
 		{"CNavArea.IsOverlappingX", IsOverlappingX},
 		{"CNavArea.IsOverlappingY", IsOverlappingY},
@@ -889,7 +930,8 @@ void setup(std::vector<sp_nativeinfo_t>& natives) {
 		{"CNavArea.IsOverlappingExtent", IsOverlappingExtent},
 		{"CNavArea.GetExtent", GetExtent},
 		{"CNavArea.GetIncomingConnectionCount", GetIncomingConnectionsCount},
-		{"CNavArea.GetIncomingConnection", GetIncomingConnections},
+		{"CNavArea.GetIncomingConnection", GetIncomingConnection},
+		{"CNavArea.GetIncomingConnectionLength", GetIncomingConnectionLength},
 		{"CNavArea.IsEdge", IsEdge},
 		{"CNavArea.Contains", Contains},
 		{"CNavArea.ContainsPoint", ContainsPoint},
