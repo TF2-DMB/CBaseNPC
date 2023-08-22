@@ -14,6 +14,7 @@ methodmap TestScoutBotMainAction < NextBotAction
 		ActionFactory.SetCallback(NextBotActionCallbackType_OnEnd, OnEnd);
 		ActionFactory.SetEventCallback(EventResponderType_OnInjured, OnInjured);
 		ActionFactory.SetEventCallback(EventResponderType_OnKilled, OnKilled);
+		ActionFactory.SetEventCallback(EventResponderType_OnCommandString, OnCommandString);
 	}
 
 	public static NextBotActionFactory GetFactory()
@@ -151,4 +152,17 @@ static int OnKilled(TestScoutBotMainAction action,
 	const float damagePosition[3], int damageCustom)
 {
 	return action.TryChangeTo(TestScoutBotDeathAction(damagetype), RESULT_CRITICAL);
+}
+
+static void OnCommandString(TestScoutBotMainAction action, TestScoutBot actor, const char[] command) {
+	if (strcmp(command, "started baiting") == 0) {
+		if (actor.MyNextBotPointer().IsDebugging(DEBUG_BEHAVIOR)) {
+			PrintToChatAll("The Scout #%d: I started taunting!", actor.index);
+		}
+	}
+	else if (strcmp(command, "stopped baiting") == 0) {
+		if (actor.MyNextBotPointer().IsDebugging(DEBUG_BEHAVIOR)) {
+			PrintToChatAll("The Scout #%d: I stopped taunting!", actor.index);
+		}
+	}
 }

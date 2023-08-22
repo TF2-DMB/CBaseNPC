@@ -30,6 +30,7 @@ private:
 
 	bool m_bInActionCallback;
 	int m_inEventCallback;
+	bool m_skipEvents;
 
 public:
     CBaseNPCPluginAction(CBaseNPCPluginActionFactory * pFactory);

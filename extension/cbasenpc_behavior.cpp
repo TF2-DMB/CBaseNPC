@@ -45,6 +45,7 @@ QueryResultType CBaseNPCPluginAction:: funcName ( const INextBot *me, ##__VA_ARG
 
 #define BEGINEVENTCALLBACKEX(funcName, typeName, ...) \
 EventDesiredResult< INextBot > CBaseNPCPluginAction:: funcName (INextBot* me, ##__VA_ARGS__) {	\
+	if (m_skipEvents) { return TryContinue(); } \
 	m_inEventCallback++; \
 	ResetPluginEventResult(); \
 	IPluginFunction* pCallback = m_pFactory->GetEventCallback( CBaseNPCPluginActionFactory::EventResponderCallbackType::typeName ); \
@@ -100,6 +101,7 @@ CBaseNPCPluginAction::CBaseNPCPluginAction(CBaseNPCPluginActionFactory* pFactory
 
 	m_bInActionCallback = false;
 	m_inEventCallback = 0;
+	m_skipEvents = false;
 
 	pFactory->OnActionCreated(this);
 }
@@ -200,23 +202,22 @@ BEGINACTIONCALLBACK(OnResume, Action< INextBot > *interruptingAction)
 	CBPUSHCELL(PtrToPawnAddress(interruptingAction))
 ENDACTIONCALLBACK()
 
-void CBaseNPCPluginAction::OnEnd( INextBot * me, Action< INextBot > *nextAction )
-{
+void CBaseNPCPluginAction::OnEnd( INextBot * me, Action< INextBot > *nextAction ) {
+	bool oldStarted = m_isStarted;
+
+	// Allow events in OnEnd to propagate to buried actions.
+	m_isStarted = true;
+	m_skipEvents = true; // pass over myself since I'm ending
+
 	IPluginFunction* pCallback = m_pFactory->GetCallback( CBaseNPCPluginActionFactory::CallbackType::OnEnd );
-	if (pCallback && pCallback->IsRunnable()) 
-	{
+	if (pCallback && pCallback->IsRunnable()) {
 		CBPUSHCELL(PtrToPawnAddress(this))
 		CBPUSHENTITY(me->GetEntity())
 		CBPUSHCELL(PtrToPawnAddress(nextAction))
-
-		// Allow events in OnEnd to propagate to buried actions.
-		bool oldStarted = m_isStarted;
-		m_isStarted = true;
-
 		pCallback->Execute(nullptr);
-
-		m_isStarted = oldStarted;
 	}
+
+	m_isStarted = oldStarted;
 }
 
 Action< INextBot >* CBaseNPCPluginAction::InitialContainedAction( INextBot * me )
