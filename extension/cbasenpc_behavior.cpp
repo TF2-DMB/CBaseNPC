@@ -19,7 +19,7 @@ ActionResult< INextBot > CBaseNPCPluginAction:: funcName (INextBot* me, ##__VA_A
 	ResetPluginActionResult(); \
 	IPluginFunction* pCallback = m_pFactory->GetCallback( CBaseNPCPluginActionFactory::CallbackType::typeName ); \
 	if (pCallback && pCallback->IsRunnable()) { \
-		pCallback->PushCell((cell_t)this); pCallback->PushCell(gamehelpers->EntityToBCompatRef(me->GetEntity()));
+		pCallback->PushCell(PtrToPawnAddress(this)); pCallback->PushCell(gamehelpers->EntityToBCompatRef(me->GetEntity()));
 
 #define BEGINACTIONCALLBACK(funcName, ...) BEGINACTIONCALLBACKEX(funcName, funcName, ##__VA_ARGS__)
 
@@ -35,7 +35,7 @@ QueryResultType CBaseNPCPluginAction:: funcName ( const INextBot *me, ##__VA_ARG
 	cell_t result = ANSWER_UNDEFINED; \
 	IPluginFunction* pCallback = m_pFactory->GetQueryCallback( CBaseNPCPluginActionFactory::QueryCallbackType::funcName ); \
 	if (pCallback && pCallback->IsRunnable()) { \
-		CBPUSHCELL(this); CBPUSHCELL(me);
+		CBPUSHCELL(PtrToPawnAddress(this)); CBPUSHCELL(PtrToPawnAddress(me));
 
 #define ENDQUERYCALLBACK() \
 		pCallback->Execute(&result); \
@@ -45,11 +45,11 @@ QueryResultType CBaseNPCPluginAction:: funcName ( const INextBot *me, ##__VA_ARG
 
 #define BEGINEVENTCALLBACKEX(funcName, typeName, ...) \
 EventDesiredResult< INextBot > CBaseNPCPluginAction:: funcName (INextBot* me, ##__VA_ARGS__) {	\
-	m_eventResultStack.push( m_pluginEventResult ); \
+	m_inEventCallback++; \
 	ResetPluginEventResult(); \
 	IPluginFunction* pCallback = m_pFactory->GetEventCallback( CBaseNPCPluginActionFactory::EventResponderCallbackType::typeName ); \
 	if (pCallback && pCallback->IsRunnable()) { \
-		pCallback->PushCell((cell_t)this); \
+		pCallback->PushCell(PtrToPawnAddress(this)); \
 		pCallback->PushCell(gamehelpers->EntityToBCompatRef(me->GetEntity()));
 
 #define BEGINEVENTCALLBACK(funcName, ...) BEGINEVENTCALLBACKEX(funcName, funcName, ##__VA_ARGS__)
@@ -63,18 +63,14 @@ EventDesiredResult< INextBot > CBaseNPCPluginAction:: funcName (INextBot* me, ##
 #define ENDEVENTCALLBACK() \
 		pCallback->Execute(nullptr); \
 	}	\
-	EventDesiredResult< INextBot > result = m_pluginEventResult; \
-	m_pluginEventResult = m_eventResultStack.front(); \
-	m_eventResultStack.pop(); \
-	return result; \
+	m_inEventCallback--; \
+	return m_pluginEventResult; \
 }
 
 #define ENDEVENTCALLBACK_NOEXECUTE() \
 	}	\
-	EventDesiredResult< INextBot > result = m_pluginEventResult; \
-	m_pluginEventResult = m_eventResultStack.front(); \
-	m_eventResultStack.pop(); \
-	return result; \
+	m_inEventCallback--; \
+	return m_pluginEventResult; \
 }
 
 // https://github.com/alliedmodders/sourcemod/blob/6928d21bcf746920b0f2f54e2c28b34097a66be2/core/smn_keyvalues.h#L42
@@ -103,6 +99,7 @@ CBaseNPCPluginAction::CBaseNPCPluginAction(CBaseNPCPluginActionFactory* pFactory
 	ResetPluginEventResult();
 
 	m_bInActionCallback = false;
+	m_inEventCallback = 0;
 
 	pFactory->OnActionCreated(this);
 }
@@ -188,7 +185,7 @@ void CBaseNPCPluginAction::PluginTryToSustain( EventResultPriorityType priority,
 // Actions
 
 BEGINACTIONCALLBACK(OnStart, Action< INextBot > *prevAction)
-	CBPUSHCELL(prevAction)
+	CBPUSHCELL(PtrToPawnAddress(prevAction))
 ENDACTIONCALLBACK()
 
 BEGINACTIONCALLBACK(Update, float interval)
@@ -196,22 +193,19 @@ BEGINACTIONCALLBACK(Update, float interval)
 ENDACTIONCALLBACK()
 
 BEGINACTIONCALLBACK(OnSuspend, Action< INextBot > *interruptingAction)
-	CBPUSHCELL(interruptingAction)
+	CBPUSHCELL(PtrToPawnAddress(interruptingAction))
 ENDACTIONCALLBACK()
 
 BEGINACTIONCALLBACK(OnResume, Action< INextBot > *interruptingAction)
-	CBPUSHCELL(interruptingAction)
+	CBPUSHCELL(PtrToPawnAddress(interruptingAction))
 ENDACTIONCALLBACK()
 
-void CBaseNPCPluginAction::OnEnd( INextBot * me, Action< INextBot > *nextAction )
-{
+void CBaseNPCPluginAction::OnEnd( INextBot * me, Action< INextBot > *nextAction ) {
 	IPluginFunction* pCallback = m_pFactory->GetCallback( CBaseNPCPluginActionFactory::CallbackType::OnEnd );
-	if (pCallback && pCallback->IsRunnable()) 
-	{
-		CBPUSHCELL(this)
+	if (pCallback && pCallback->IsRunnable()) {
+		CBPUSHCELL(PtrToPawnAddress(this))
 		CBPUSHENTITY(me->GetEntity())
-		CBPUSHCELL(nextAction)
-
+		CBPUSHCELL(PtrToPawnAddress(nextAction))
 		pCallback->Execute(nullptr);
 	}
 }
@@ -223,13 +217,13 @@ Action< INextBot >* CBaseNPCPluginAction::InitialContainedAction( INextBot * me 
 	IPluginFunction* pCallback = m_pFactory->GetCallback( CBaseNPCPluginActionFactory::CallbackType::InitialContainedAction );
 	if (pCallback && pCallback->IsRunnable()) 
 	{
-		CBPUSHCELL(this)
+		CBPUSHCELL(PtrToPawnAddress(this))
 		CBPUSHENTITY(me->GetEntity())
 
 		pCallback->Execute(&result);
 	}
 
-	return (Action< INextBot >*)result;
+	return (Action< INextBot >*)PawnAddressToPtr(result);
 }
 
 bool CBaseNPCPluginAction::IsAbleToBlockMovementOf( const INextBot *botInMotion ) const
@@ -239,8 +233,8 @@ bool CBaseNPCPluginAction::IsAbleToBlockMovementOf( const INextBot *botInMotion 
 	IPluginFunction* pCallback = m_pFactory->GetCallback( CBaseNPCPluginActionFactory::CallbackType::IsAbleToBlockMovementOf );
 	if (pCallback && pCallback->IsRunnable()) 
 	{
-		CBPUSHCELL(this)
-		CBPUSHCELL(botInMotion)
+		CBPUSHCELL(PtrToPawnAddress(this))
+		CBPUSHCELL(PtrToPawnAddress(botInMotion))
 
 		pCallback->Execute(&result);
 	}
@@ -261,7 +255,7 @@ BEGINQUERYCALLBACK(ShouldRetreat)
 ENDQUERYCALLBACK()
 
 BEGINQUERYCALLBACK(ShouldAttack, const CKnownEntity *them)
-	CBPUSHCELL(them)
+	CBPUSHCELL(PtrToPawnAddress(them))
 ENDQUERYCALLBACK()
 
 BEGINQUERYCALLBACK(IsHindrance, CBaseEntity* blocker)
@@ -280,8 +274,8 @@ Vector CBaseNPCPluginAction::SelectTargetPoint( const INextBot* me, const CBaseC
 		buffer[1] = sp_ftoc(result[1]);
 		buffer[2] = sp_ftoc(result[2]);
 
-		CBPUSHCELL(this)
-		CBPUSHCELL(me)
+		CBPUSHCELL(PtrToPawnAddress(this))
+		CBPUSHCELL(PtrToPawnAddress(me))
 		CBPUSHENTITY((CBaseCombatCharacter*)subject)
 		pCallback->PushArray(buffer, 3, SM_PARAM_COPYBACK);
 		pCallback->Execute(nullptr);
@@ -308,15 +302,15 @@ const CKnownEntity * CBaseNPCPluginAction::SelectMoreDangerousThreat( const INex
 	IPluginFunction* pCallback = m_pFactory->GetQueryCallback( CBaseNPCPluginActionFactory::QueryCallbackType::SelectMoreDangerousThreat );
 	if (pCallback && pCallback->IsRunnable()) 
 	{
-		CBPUSHCELL(this)
-		CBPUSHCELL(me)
+		CBPUSHCELL(PtrToPawnAddress(this))
+		CBPUSHCELL(PtrToPawnAddress(me))
 		CBPUSHENTITY((CBaseCombatCharacter*)subject)
-		CBPUSHCELL(threat1)
-		CBPUSHCELL(threat2)
+		CBPUSHCELL(PtrToPawnAddress(threat1))
+		CBPUSHCELL(PtrToPawnAddress(threat2))
 		pCallback->Execute(&result);
 	}
 
-	return (const CKnownEntity*)result;
+	return (const CKnownEntity*)PawnAddressToPtr(result);
 }
 
 // Events
@@ -331,15 +325,15 @@ ENDEVENTCALLBACK()
 
 BEGINEVENTCALLBACK(OnContact, CBaseEntity* other, CGameTrace* traceResult)
 	EVENTPUSHENTITY(other)
-	EVENTPUSHCELL(traceResult)
+	EVENTPUSHCELL(PtrToPawnAddress(traceResult))
 ENDEVENTCALLBACK()
 
 BEGINEVENTCALLBACK(OnMoveToSuccess, const Path *path)
-	EVENTPUSHCELL(path)
+	EVENTPUSHCELL(PtrToPawnAddress(path))
 ENDEVENTCALLBACK()
 
 BEGINEVENTCALLBACK(OnMoveToFailure, const Path *path, MoveToFailureType reason)
-	EVENTPUSHCELL(path)
+	EVENTPUSHCELL(PtrToPawnAddress(path))
 	EVENTPUSHCELL(reason)
 ENDEVENTCALLBACK()
 
@@ -438,7 +432,7 @@ ENDEVENTCALLBACK_NOEXECUTE()
 BEGINEVENTCALLBACK(OnSpokeConcept, CBaseCombatCharacter* who, AIConcept_t concept, AI_Response *response)
 	EVENTPUSHENTITY(who)
 	EVENTPUSHCELL(concept)
-	EVENTPUSHCELL(response)
+	EVENTPUSHCELL(PtrToPawnAddress(response))
 ENDEVENTCALLBACK()
 
 BEGINEVENTCALLBACK(OnWeaponFired, CBaseCombatCharacter* whoFired, CBaseEntity* weapon )
@@ -447,8 +441,8 @@ BEGINEVENTCALLBACK(OnWeaponFired, CBaseCombatCharacter* whoFired, CBaseEntity* w
 ENDEVENTCALLBACK()
 
 BEGINEVENTCALLBACK(OnNavAreaChanged, CNavArea *newArea, CNavArea *oldArea)
-	EVENTPUSHCELL(newArea)
-	EVENTPUSHCELL(oldArea)
+	EVENTPUSHCELL(PtrToPawnAddress(newArea))
+	EVENTPUSHCELL(PtrToPawnAddress(oldArea))
 ENDEVENTCALLBACK()
 
 BEGINEVENTCALLBACK(OnModelChanged)
@@ -756,7 +750,7 @@ void CBaseNPCPluginActionFactory::OnCreateInitialAction(Action <INextBot>* pActi
 	IPluginFunction * pCallback = GetCallback( CreateInitialAction );
 	if (pCallback && pCallback->IsRunnable())
 	{
-		pCallback->PushCell((cell_t)pAction);
+		pCallback->PushCell(PtrToPawnAddress(pAction));
 		pCallback->Execute(nullptr);
 	}
 }
