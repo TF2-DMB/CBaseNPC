@@ -4,11 +4,6 @@ on:
   workflow_call:
   pull_request:
     branches: [ master ]
-    paths:
-      - 'AMBuildScript'
-      - 'PackageScript'
-      - 'extension/**'
-      - 'extension/**'
 
 jobs:
   build-options:
