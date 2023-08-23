@@ -603,6 +603,7 @@ cell_t Destroy(IPluginContext* context, const cell_t* params) {
 
 void setup(std::vector<sp_nativeinfo_t>& natives) {
 	cursor::setup(natives);
+	segment::setup(natives);
 
 	chase::setup(natives);
 	follower::setup(natives);
