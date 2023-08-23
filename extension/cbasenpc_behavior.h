@@ -22,24 +22,6 @@ public:
 	
 private:
 	ActionResult< INextBot > m_pluginActionResult;
-
-	/**
-	 * Stores event result states.
-	 *
-	 * A stack is used to maintain event result states for each event callback.
-	 * This is because events are not atomic; an event can trigger another event
-	 * during execution of a callback. Since the plugin natives write results
-	 * to the shared m_pluginEventResult member, an inner event can overwrite
-	 * the result of the outer event causing unexpected behavior, especially if
-	 * the outer event does not actually use a Try*() native. Thus, the stack
-	 * is used to restore the event result state when exiting an event
-	 * callback.
-	 * 
-	 * A stack is not used for m_pluginActionResult because OnStart(), Update(),
-	 * OnSuspend(), OnResume(), and OnEnd() are all atomic; these callbacks
-	 * will never execute within each other.
-	 */ 
-	SourceHook::CStack<EventDesiredResult< INextBot >> m_eventResultStack;
 	EventDesiredResult< INextBot > m_pluginEventResult;
 
 	void * m_pData;
@@ -47,6 +29,7 @@ private:
 	CBaseNPCPluginActionFactory * m_pFactory;
 
 	bool m_bInActionCallback;
+	int m_inEventCallback;
 
 public:
     CBaseNPCPluginAction(CBaseNPCPluginActionFactory * pFactory);
@@ -64,15 +47,8 @@ public:
 	void PluginSuspendFor( Action< INextBot > *action, const char *reason );
 	void PluginDone( const char *reason );
 
-	bool IsInActionCallback()
-	{
-		return m_bInActionCallback;
-	}
-
-	bool IsInEventCallback()
-	{
-		return m_eventResultStack.size() > 0;
-	}
+	bool IsInActionCallback() const { return m_bInActionCallback; }
+	bool IsInEventCallback() const { return m_inEventCallback > 0; }
 
 	virtual ActionResult< INextBot > OnStart( INextBot *me, Action< INextBot > *prevAction ) override final;
 	virtual ActionResult< INextBot > Update( INextBot *me, float interval ) override final;
