@@ -961,9 +961,7 @@ private:
 
 	Actor *m_actor;											// only valid after OnStart()
 	mutable EventDesiredResult< Actor > m_eventResult;		// set by event handlers
-protected:
 	bool m_isStarted;										// Action doesn't start until OnStart() is invoked
-private:
 	bool m_isSuspended;										// are we suspended for another Action
 public:
 	Action< Actor > *GetActionBuriedUnderMe( void ) const	// return Action just "under" us that we will resume to when we finish

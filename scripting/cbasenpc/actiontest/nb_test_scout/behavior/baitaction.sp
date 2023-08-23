@@ -21,7 +21,6 @@ methodmap TestScoutBotBaitAction < NextBotAction
 		ActionFactory.SetCallback(NextBotActionCallbackType_OnEnd, OnEnd);
 		ActionFactory.SetCallback(NextBotActionCallbackType_OnSuspend, OnSuspend);
 		ActionFactory.SetEventCallback(EventResponderType_OnInjured, OnInjured);
-		ActionFactory.SetEventCallback(EventResponderType_OnCommandString, OnCommandString);
 	}
 
 	public TestScoutBotBaitAction()
@@ -58,8 +57,6 @@ methodmap TestScoutBotBaitAction < NextBotAction
 
 static int OnStart(TestScoutBotBaitAction action, TestScoutBot actor, NextBotAction prevAction)
 {
-	actor.MyNextBotPointer().GetIntentionInterface().OnCommandString("started baiting");
-
 	for (int i = 0; i < sizeof(g_sStartSounds); i++)
 	{
 		PrecacheSound(g_sStartSounds[i]);
@@ -138,7 +135,6 @@ static int Update(TestScoutBotBaitAction action, TestScoutBot actor, float inter
 
 static void OnEnd(TestScoutBotBaitAction action, TestScoutBot actor, NextBotAction nextAction)
 {
-	actor.MyNextBotPointer().GetIntentionInterface().OnCommandString("stopped baiting");
 }
 
 static int OnSuspend(TestScoutBotBaitAction action, TestScoutBot actor, NextBotAction interruptingAction)
@@ -158,10 +154,4 @@ static int OnInjured(TestScoutBotBaitAction action,
 	const float damagePosition[3], int damageCustom )
 {
 	return action.TryDone();
-}
-
-static void OnCommandString(TestScoutBotBaitAction action, TestScoutBot actor, const char[] command) {
-	if (strcmp(command, "started baiting") == 0 || strcmp(command, "stopped baiting") == 0) {
-		LogError("You shouldn't be seeing this.");
-	}
 }
