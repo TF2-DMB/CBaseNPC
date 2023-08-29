@@ -196,6 +196,7 @@ void setup(std::vector<sp_nativeinfo_t>& natives) {
 		{"Segment.GetPos", GetPosition},
 		{"Segment.ladder.get", GetLadder},
 		{"Segment.type.get", GetType},
+		{"Segment.length.get", GetLength},
 		{"Segment.distanceFromStart.get", GetDistanceFromStart},
 		{"Segment.curvature.get", GetCurvature},
 		{"Segment.m_portalHalfWidth.get", GetPortalHalfWidth},
