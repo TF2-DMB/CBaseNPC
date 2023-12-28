@@ -33,7 +33,7 @@ methodmap CTakeDamageInfo
 	 * @param reportedPosition     The position to report to players on where the damage came from.
 	 * @error                      Invalid takedamageinfo, or invalid inflictor, attacker, and weapon entity index.
 	 */
-	public native void Set(int inflictor = -1, int attacker = -1, int weapon = -1, const float damageForce[3] = NULL_VECTOR, const float damagePosition[3] = NULL_VECTOR, float damage = 0.0, int bitsDamageType = 0, int customDamage = 0, const float reportedPosition[3] = NULL_VECTOR);
+	public native void Init(int inflictor = -1, int attacker = -1, int weapon = -1, const float damageForce[3] = NULL_VECTOR, const float damagePosition[3] = NULL_VECTOR, float damage = 0.0, int bitsDamageType = 0, int customDamage = 0, const float reportedPosition[3] = NULL_VECTOR);
 
 	/**
 	 * Gets the inflictor.
@@ -390,7 +390,7 @@ methodmap CTakeDamageInfo
 
 /**
  * Returns the address of a global CTakeDamageInfo object. Make sure to
- * initialize the values of the object first using CTakeDamageInfo.Set()
+ * initialize the values of the object first using CTakeDamageInfo.Init()
  * before modifying and using it in a function call.
  * 
  * @return     Address to the global CTakeDamageInfo object.

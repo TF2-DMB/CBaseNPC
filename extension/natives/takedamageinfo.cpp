@@ -34,7 +34,7 @@ cell_t GetGlobalDamageInfo(IPluginContext* context, const cell_t* params) {
 	return PtrToPawnAddress(&g_GlobalDamageInfo);
 }
 
-cell_t Set(IPluginContext* context, const cell_t* params) {
+cell_t Init(IPluginContext* context, const cell_t* params) {
 	CTakeDamageInfo* info = Get(context, params[1]);
 	if (!info) {
 		return 0;
@@ -55,7 +55,7 @@ cell_t Set(IPluginContext* context, const cell_t* params) {
 		return context->ThrowNativeError("Invalid weapon index!");
 	}
 
-	cell_t *damageForceAddr;
+	cell_t* damageForceAddr;
 	context->LocalToPhysAddr(params[5], &damageForceAddr);
 	Vector damageForce;
 	if (context->GetNullRef(SP_NULL_VECTOR) == damageForceAddr) {
@@ -65,7 +65,7 @@ cell_t Set(IPluginContext* context, const cell_t* params) {
 		PawnVectorToVector(damageForceAddr, &damageForce);
 	}
 	
-	cell_t *damagePositionAddr;
+	cell_t* damagePositionAddr;
 	context->LocalToPhysAddr(params[6], &damagePositionAddr);
 	Vector damagePosition;
 	if (context->GetNullRef(SP_NULL_VECTOR) == damagePositionAddr) {
@@ -79,7 +79,7 @@ cell_t Set(IPluginContext* context, const cell_t* params) {
 	int bitsDamageType = params[8];
 	int customDamage = params[9];
 
-	cell_t *reportedPositionAddr;
+	cell_t* reportedPositionAddr;
 	context->LocalToPhysAddr(params[10], &reportedPositionAddr);
 	Vector reportedPosition;
 	if (context->GetNullRef(SP_NULL_VECTOR) == reportedPositionAddr) {
@@ -568,7 +568,7 @@ void setup(std::vector<sp_nativeinfo_t>& natives) {
 
 		{"GetGlobalDamageInfo", GetGlobalDamageInfo},
 
-		{"CTakeDamageInfo.Set", Set},
+		{"CTakeDamageInfo.Init", Init},
 
 		{"CTakeDamageInfo.GetInflictor", GetInflictor},
 		{"CTakeDamageInfo.SetInflictor", SetInflictor},

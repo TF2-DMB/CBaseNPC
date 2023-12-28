@@ -147,7 +147,7 @@ public:
 	void CalcAbsoluteVelocity(void);
 
 	static MCall<void, const CTakeDamageInfo&> mTakeDamage;
-	void TakeDamage(const CTakeDamageInfo &inputInfo);
+	void TakeDamage(const CTakeDamageInfo& inputInfo);
 
 	static VCall<int, const CTakeDamageInfo&> vOnTakeDamage;
 	int OnTakeDamage(const CTakeDamageInfo& info);
