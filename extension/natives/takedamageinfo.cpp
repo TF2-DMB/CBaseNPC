@@ -13,9 +13,9 @@
 #include <IGameHelpers.h>
 extern SourceMod::IGameHelpers* gamehelpers;
 
-CTakeDamageInfo::CTakeDamageInfo(){}
-
 namespace natives::takedamageinfo {
+
+CTakeDamageInfo g_GlobalDamageInfo;
 
 inline CTakeDamageInfo* Get(IPluginContext* context, const cell_t param) {
 	CTakeDamageInfo* info = (CTakeDamageInfo*)PawnAddressToPtr(param);
@@ -28,6 +28,69 @@ inline CTakeDamageInfo* Get(IPluginContext* context, const cell_t param) {
 
 cell_t CTakeDamageInfo_Ctor(IPluginContext* context, const cell_t* params) {
 	return PtrToPawnAddress(PawnAddressToPtr(params[1]));
+}
+
+cell_t GetGlobalDamageInfo(IPluginContext* context, const cell_t* params) {
+	return PtrToPawnAddress(&g_GlobalDamageInfo);
+}
+
+cell_t Init(IPluginContext* context, const cell_t* params) {
+	CTakeDamageInfo* info = Get(context, params[1]);
+	if (!info) {
+		return 0;
+	}
+
+	CBaseEntity* inflictor = gamehelpers->ReferenceToEntity(params[2]);
+	if (!inflictor && params[2] != -1) {
+		return context->ThrowNativeError("Invalid inflictor index!");
+	}
+
+	CBaseEntity* attacker = gamehelpers->ReferenceToEntity(params[3]);
+	if (!attacker && params[3] != -1) {
+		return context->ThrowNativeError("Invalid attacker index!");
+	}
+
+	CBaseEntity* weapon = gamehelpers->ReferenceToEntity(params[4]);
+	if (!attacker && params[4] != -1) {
+		return context->ThrowNativeError("Invalid weapon index!");
+	}
+
+	cell_t* damageForceAddr;
+	context->LocalToPhysAddr(params[5], &damageForceAddr);
+	Vector damageForce;
+	if (context->GetNullRef(SP_NULL_VECTOR) == damageForceAddr) {
+		damageForce = vec3_origin;
+	}
+	else {
+		PawnVectorToVector(damageForceAddr, &damageForce);
+	}
+	
+	cell_t* damagePositionAddr;
+	context->LocalToPhysAddr(params[6], &damagePositionAddr);
+	Vector damagePosition;
+	if (context->GetNullRef(SP_NULL_VECTOR) == damagePositionAddr) {
+		damagePosition = vec3_origin;
+	}
+	else {
+		PawnVectorToVector(damagePositionAddr, &damagePosition);
+	}
+
+	float damage = sp_ctof(params[7]);
+	int bitsDamageType = params[8];
+	int customDamage = params[9];
+
+	cell_t* reportedPositionAddr;
+	context->LocalToPhysAddr(params[10], &reportedPositionAddr);
+	Vector reportedPosition;
+	if (context->GetNullRef(SP_NULL_VECTOR) == reportedPositionAddr) {
+		reportedPosition = vec3_origin;
+	}
+	else {
+		PawnVectorToVector(reportedPositionAddr, &reportedPosition);
+	}
+
+	info->Set(inflictor, attacker, weapon, damageForce, damagePosition, damage, bitsDamageType, customDamage, &reportedPosition);	
+	return 0;
 }
 
 cell_t GetInflictor(IPluginContext* context, const cell_t* params) {
@@ -47,7 +110,7 @@ cell_t SetInflictor(IPluginContext* context, const cell_t* params) {
 
 	CBaseEntity* inflictor = gamehelpers->ReferenceToEntity(params[2]);
 	if (!inflictor && params[2] != -1) {
-		context->ThrowNativeError("Invalid inflictor index!");
+		return context->ThrowNativeError("Invalid inflictor index!");
 	}
 	info->m_hInflictor = inflictor;
 	return 0;
@@ -70,7 +133,7 @@ cell_t SetWeapon(IPluginContext* context, const cell_t* params) {
 
 	CBaseEntity* weapon = gamehelpers->ReferenceToEntity(params[2]);
 	if (!weapon && params[2] != -1) {
-		context->ThrowNativeError("Invalid weapon index!");
+		return context->ThrowNativeError("Invalid weapon index!");
 	}
 	info->m_hWeapon = weapon;
 	return 0;
@@ -90,7 +153,7 @@ cell_t SetAttacker(IPluginContext* context, const cell_t* params) {
 
 	CBaseEntity* attacker = gamehelpers->ReferenceToEntity(params[2]);
 	if (!attacker && params[2] != -1) {
-		context->ThrowNativeError("Invalid attacker index!");
+		return context->ThrowNativeError("Invalid attacker index!");
 	}
 	info->m_hAttacker = attacker;
 	return 0;
@@ -502,6 +565,10 @@ cell_t SetCritType(IPluginContext* context, const cell_t* params) {
 void setup(std::vector<sp_nativeinfo_t>& natives) {
 	sp_nativeinfo_t list[] = {
 		{"CTakeDamageInfo.CTakeDamageInfo", CTakeDamageInfo_Ctor},
+
+		{"GetGlobalDamageInfo", GetGlobalDamageInfo},
+
+		{"CTakeDamageInfo.Init", Init},
 
 		{"CTakeDamageInfo.GetInflictor", GetInflictor},
 		{"CTakeDamageInfo.SetInflictor", SetInflictor},
