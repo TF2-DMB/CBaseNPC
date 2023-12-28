@@ -510,6 +510,22 @@ cell_t IsCombatCharacter(IPluginContext* context, const cell_t* params) {
 	return entity->MyCombatCharacterPointer() ? 1 : 0;
 }
 
+cell_t TakeDamage(IPluginContext* context, const cell_t* params) {
+	auto entity = Get(context, params[1]);
+	if (!entity) {
+		return 0;
+	}
+
+	CTakeDamageInfo* inputInfo = (CTakeDamageInfo*)PawnAddressToPtr(params[2]);
+	if (!inputInfo) {
+		context->ThrowNativeError("CTakeDamageInfo is a null ptr!");
+		return 0;
+	}
+
+	entity->TakeDamage(*inputInfo);
+	return 0;
+}
+
 void setup(std::vector<sp_nativeinfo_t>& natives) {
 	sp_nativeinfo_t list[] = {
 		{"CBaseEntity.iUpdateOnRemove", iUpdateOnRemove},
@@ -554,7 +570,8 @@ void setup(std::vector<sp_nativeinfo_t>& natives) {
 		{"CBaseEntity.MyNextBotPointer", MyNextBotPointer},
 		{"CBaseEntity.GetBaseAnimating", GetBaseAnimating},
 		{"CBaseEntity.MyCombatCharacterPointer", MyCombatCharacterPointer},
-		{"CBaseEntity.IsCombatCharacter", IsCombatCharacter}
+		{"CBaseEntity.IsCombatCharacter", IsCombatCharacter},
+		{"CBaseEntity.TakeDamage", TakeDamage}
 	};
 	natives.insert(natives.end(), std::begin(list), std::end(list));
 }

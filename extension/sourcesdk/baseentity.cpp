@@ -23,6 +23,7 @@ VCall<CBaseAnimating*> CBaseEntity::vGetBaseAnimating;
 VCall<INextBot*> CBaseEntity::vMyNextBotPointer;
 MCall<void, int> CBaseEntity::mInvalidatePhysicsRecursive;
 VCall<const Vector&> CBaseEntity::vWorldSpaceCenter;
+MCall<void, const CTakeDamageInfo&> CBaseEntity::mTakeDamage;
 VCall<int, const CTakeDamageInfo&> CBaseEntity::vOnTakeDamage;
 VCall<bool> CBaseEntity::vIsAlive;
 MCall<void> CBaseEntity::mCalcAbsolutePosition;
@@ -120,6 +121,7 @@ bool CBaseEntity::Init(SourceMod::IGameConfig* config, char* error, size_t maxle
 		vMyNextBotPointer.Init(config, "CBaseEntity::MyNextBotPointer");
 		vWorldSpaceCenter.Init(config, "CBaseEntity::WorldSpaceCenter");
 		vEyeAngles.Init(config, "CBaseEntity::EyeAngles");
+		mTakeDamage.Init(config, "CBaseEntity::TakeDamage");
 		vOnTakeDamage.Init(configSDKHooks, "OnTakeDamage");
 		vIsAlive.Init(config, "CBaseEntity::IsAlive");
 
@@ -301,6 +303,11 @@ INextBot* CBaseEntity::MyNextBotPointer(void)
 const Vector& CBaseEntity::WorldSpaceCenter(void)
 {
 	return vWorldSpaceCenter(this);
+}
+
+void CBaseEntity::TakeDamage(const CTakeDamageInfo& inputInfo)
+{
+	return mTakeDamage(this, inputInfo);
 }
 
 int CBaseEntity::OnTakeDamage(const CTakeDamageInfo& info)

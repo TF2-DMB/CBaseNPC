@@ -3,6 +3,8 @@
 #endif
 #define _CBASENPC_BASEENTITY_INC_
 
+#include "takedamageinfo.inc"
+
 methodmap CBaseEntity
 {
 	public CBaseEntity(int iEnt) 
@@ -910,4 +912,14 @@ methodmap CBaseEntity
 	{
 		SetEntityMoveType(this.index, val);
 	}
+
+	/**
+	 * Causes the entity to take damage with the given parameters.
+	 * Filters are checked and damage scaling is applied before it calls the
+	 * entity's OnTakeDamage().
+	 *
+	 * @param inputInfo    The damage parameters to use
+	 * @error              Invalid entity or a NULL pointer is given
+	 */
+	public native void TakeDamage(CTakeDamageInfo inputInfo);
 }

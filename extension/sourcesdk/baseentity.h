@@ -146,6 +146,9 @@ public:
 	void CalcAbsolutePosition(void);
 	void CalcAbsoluteVelocity(void);
 
+	static MCall<void, const CTakeDamageInfo&> mTakeDamage;
+	void TakeDamage(const CTakeDamageInfo &inputInfo);
+
 	static VCall<int, const CTakeDamageInfo&> vOnTakeDamage;
 	int OnTakeDamage(const CTakeDamageInfo& info);
 

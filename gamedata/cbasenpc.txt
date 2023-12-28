@@ -268,6 +268,13 @@
 				"windows"		""
 				"linux"			"@_ZN11CBaseEntity15SetGroundEntityEPS_"
 			}
+			// Find string "CBaseEntity::TakeDamage:  with inputInfo.GetDamageForce() == vec3_origin\n"
+			"CBaseEntity::TakeDamage"
+			{
+				"library"		"server"
+				"windows"		"\x55\x8B\xEC\x81\xEC\x98\x00\x00\x00\x53\x8B\xD9"
+				"linux"			"@_ZN11CBaseEntity10TakeDamageERK15CTakeDamageInfo"
+			}
 			// "g_EntityListPool"
 			"g_EntityListPool"
 			{
