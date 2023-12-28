@@ -265,7 +265,7 @@ methodmap CTakeDamageInfo
 	 * @param bitmask 	The damage type bitmask.
 	 * @error			Invalid takedamageinfo.
 	 */
-	public native int SetDamageType();
+	public native int SetDamageType(int bitmask);
 
 	/**
 	 * Adds the damage bitmask to the current damage bitmask.
