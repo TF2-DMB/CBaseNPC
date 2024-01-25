@@ -772,8 +772,8 @@ void IEntityDataMapInputFuncDelegate::Alloc()
 	if (m_pInputFuncPtr)
 		return;
 
-	uint32_t thisAddr = (uint32_t)this;
-	uint32_t callFuncAddr = (uint32_t)(&IEntityDataMapInputFuncDelegate::HandleInput);
+	intp thisAddr = (intp)this;
+	intp callFuncAddr = (intp)(&IEntityDataMapInputFuncDelegate::HandleInput);
 
 	uint8_t funcBytes[] = { 
 #ifdef WIN32
@@ -824,11 +824,11 @@ void IEntityDataMapInputFuncDelegate::Alloc()
 		g_InputFuncAlloc.SetRW(m_pInputFuncPtr);
 
 #ifdef WIN32
-		*((uint32_t*)(&funcBytes[11])) = thisAddr;
-		*((uint32_t*)(&funcBytes[16])) = callFuncAddr;
+		*((intp*)(&funcBytes[11])) = thisAddr;
+		*((intp*)(&funcBytes[16])) = callFuncAddr;
 #else
-		*((uint32_t*)(&funcBytes[14])) = thisAddr;
-		*((uint32_t*)(&funcBytes[19])) = callFuncAddr;
+		*((intp*)(&funcBytes[14])) = thisAddr;
+		*((intp*)(&funcBytes[19])) = callFuncAddr;
 #endif
 
 		memcpy(m_pInputFuncPtr, funcBytes, m_iInputFuncSize);
@@ -984,7 +984,7 @@ void IEntityDataMapContainer::DefineInputFunc(const char* name, fieldtype_t fiel
 	m_pEntityInputFuncDelegates.AddToTail(pDelegate);
 	
 	// this shuts up the compiler
-	*(uint32_t*)(&(typeDesc.inputFunc)) = (uint32_t)pDelegate->m_pInputFuncPtr;
+	*(intp*)(&(typeDesc.inputFunc)) = (intp)pDelegate->m_pInputFuncPtr;
 
 	m_vecEntityDataTypeDescriptors.AddToTail(typeDesc);
 }

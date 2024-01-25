@@ -12,8 +12,6 @@ project.sources = [
   'pluginentityfactory.cpp',
   'toolsnav_mesh.cpp',
   'toolsnextbot.cpp',
-  'CDetour/detours.cpp',
-  'asm/asm.c',
   'helpers.cpp',
   'sourcesdk/NextBot/Path/NextBotPath.cpp',
   'sourcesdk/NextBot/Path/NextBotPathFollow.cpp',
@@ -69,29 +67,36 @@ project.sources = [
   'natives/nextbotplayer.cpp',
   'natives/tf/nav.cpp',
   'natives/tf/nav/area.cpp',
-  'smsdk_ext.cpp'
+  'smsdk_ext.cpp',
+  os.path.join(Extension.sm_root, 'public/CDetour/detours.cpp'),
+  os.path.join(Extension.sm_root, 'public/asm/asm.c'),
+  os.path.join(Extension.sm_root, 'public/libudis86/decode.c'),
+  os.path.join(Extension.sm_root, 'public/libudis86/itab.c'),
+  os.path.join(Extension.sm_root, 'public/libudis86/syn-att.c'),
+  os.path.join(Extension.sm_root, 'public/libudis86/syn-intel.c'),
+  os.path.join(Extension.sm_root, 'public/libudis86/syn.c'),
+  os.path.join(Extension.sm_root, 'public/libudis86/udis86.c')
 ]
 
 for sdk_name in Extension.sdks:
   sdk = Extension.sdks[sdk_name]
 
   for cxx in builder.targets:
-    if not cxx.target.arch in sdk.platformSpec[cxx.target.platform]:
+    if not cxx.target.arch in sdk['platforms'][cxx.target.platform]:
       continue
-  
-    binary = Extension.HL2ExtConfig(project, builder, cxx, 'cbasenpc.ext.' + sdk.ext, sdk)
+    binary = Extension.HL2ExtConfig(project, builder, cxx, 'cbasenpc.ext.' + sdk['extension'], sdk)
     binary.compiler.cxxincludes += [
       os.path.join(builder.currentSourcePath, 'sourcesdk'),
       os.path.join(builder.currentSourcePath, 'sourcesdk/NextBot'),
       os.path.join(builder.currentSourcePath, 'sourcesdk/NextBot/Path'),
       os.path.join(builder.currentSourcePath, 'natives'),
       os.path.join(builder.currentSourcePath, 'shared'),
-      os.path.join(builder.currentSourcePath, ''),
-      os.path.join(sdk.path, 'game', 'shared'),
-      os.path.join(sdk.path, 'game', 'server')
+      os.path.join(builder.currentSourcePath),
+      os.path.join(sdk['path'], 'game', 'server')
     ]
+    binary.compiler.defines += ['RAD_TELEMETRY_DISABLED', 'HAVE_STRING_H']
     if binary.compiler.behavior == 'gcc' or binary.compiler.behavior == 'clang':
       binary.compiler.cxxflags += ['-Wno-invalid-offsetof']
       binary.sources += ['linux/glibc_compat.cpp']
 
-Extension.extensions = builder.Add(project)
+Extension.extensions += builder.Add(project)

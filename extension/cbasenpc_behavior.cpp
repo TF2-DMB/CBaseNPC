@@ -431,7 +431,7 @@ ENDEVENTCALLBACK_NOEXECUTE()
 
 BEGINEVENTCALLBACK(OnSpokeConcept, CBaseCombatCharacter* who, AIConcept_t concept, AI_Response *response)
 	EVENTPUSHENTITY(who)
-	EVENTPUSHCELL(concept)
+	EVENTPUSHSTRING(concept)
 	EVENTPUSHCELL(PtrToPawnAddress(response))
 ENDEVENTCALLBACK()
 

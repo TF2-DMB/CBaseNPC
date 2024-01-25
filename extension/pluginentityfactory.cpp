@@ -117,7 +117,7 @@ PluginFactoryEntityRecord_t* CPluginEntityFactories::FindRecord(CBaseEntity* pEn
 		return nullptr;
 	}
 	
-	cell_t key = (cell_t)pEntity;
+	intp key = (intp)pEntity;
 	if (m_Records.find(key) == m_Records.end())
 	{
 		if (create)
@@ -140,7 +140,7 @@ void CPluginEntityFactories::RemoveRecord(CBaseEntity* pEntity)
 		return;
 	}
 
-	cell_t key = (cell_t)pEntity;
+	intp key = (intp)pEntity;
 	m_Records.erase(key);
 }
 
