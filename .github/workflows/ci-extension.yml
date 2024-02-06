@@ -35,8 +35,8 @@ jobs:
       # We currently only support tf2 - however when we support more sdks
       # we will have to deal with the special case of our custom tf2 + AM's sdks
       SDKS: '["tf2"]'
-      MMSOURCE_VERSION: '1.10'
-      SOURCEMOD_VERSION: '1.11'
+      MMSOURCE_VERSION: '1.12-dev'
+      SOURCEMOD_VERSION: '35ac74c7a7243e17a3aa2338b116eaa8a0a9ccdc'
       CACHE_PATH: ${{ github.workspace }}/cache
     steps:
           
@@ -51,7 +51,7 @@ jobs:
         name: Sourcemod checkout
         with:
           repository: alliedmodders/sourcemod
-          ref: ${{ env.SOURCEMOD_VERSION }}-dev
+          ref: ${{ env.SOURCEMOD_VERSION }}
           submodules: true
           path: cache/sourcemod
       
@@ -59,7 +59,7 @@ jobs:
         name: Metamod-Source checkout
         with:
           repository: alliedmodders/metamod-source
-          ref: ${{ env.MMSOURCE_VERSION }}-dev
+          ref: ${{ env.MMSOURCE_VERSION }}
           path: cache/metamod
 
       - uses: actions/checkout@v4
