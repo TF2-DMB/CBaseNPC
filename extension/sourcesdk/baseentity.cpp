@@ -166,8 +166,12 @@ bool CBaseEntity::Init(SourceMod::IGameConfig* config, char* error, size_t maxle
 			snprintf(error, maxlength, "Couldn't find offset for g_TouchTrace ptr!");
 			return false;
 		}
-		
+#ifdef PLATFORM_X64
+		int32_t relativeoffset = *reinterpret_cast<int32_t*>(addr + offset);
+		g_pTouchTrace = *reinterpret_cast<trace_t**>(addr + offset + sizeof(int32_t) + relativeoffset);
+#else
 		g_pTouchTrace = *reinterpret_cast<trace_t**>(addr + offset);
+#endif
 	}
 	else
 	{

@@ -74,6 +74,13 @@ bool CBaseAnimating::Init(SourceMod::IGameConfig* config, char* error, size_t ma
 	}
 
 	uint8_t* aGetAnimationEvent = reinterpret_cast<uint8_t*>(aVal);
+#ifdef PLATFORM_X64
+#ifdef WIN64
+#else
+	SourceHook::SetMemAccess(aGetAnimationEvent + 0xF2, sizeof(uint32_t), SH_MEM_READ | SH_MEM_WRITE | SH_MEM_EXEC);
+	*(uint32_t*)(aGetAnimationEvent + 0xF2) = 9999;
+#endif
+#else
 #ifdef WIN32
 	SourceHook::SetMemAccess(aGetAnimationEvent + 0x83, sizeof(uint32_t), SH_MEM_READ | SH_MEM_WRITE | SH_MEM_EXEC);
 	*(uint32_t*)(aGetAnimationEvent + 0x83) = 9999;
@@ -82,6 +89,7 @@ bool CBaseAnimating::Init(SourceMod::IGameConfig* config, char* error, size_t ma
 	*(uint32_t*)(aGetAnimationEvent + 0x17E) = 9999;
 	SourceHook::SetMemAccess(aGetAnimationEvent + 0xB3, sizeof(uint32_t), SH_MEM_READ | SH_MEM_WRITE | SH_MEM_EXEC);
 	*(uint32_t*)(aGetAnimationEvent + 0xB3) = 9999;
+#endif
 #endif
 	return true;
 }

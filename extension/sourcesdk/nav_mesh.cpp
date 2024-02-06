@@ -37,17 +37,24 @@ bool CNavMesh::Init(SourceMod::IGameConfig* config, char* error, size_t maxlengt
 			snprintf(error, maxlength, "Couldn't find offset for TheNavMesh ptr!");
 			return false;
 		}
-		
-		CNavMesh** pTheNavMesh = *reinterpret_cast<CNavMesh***>(addr + offset);
-		TheNavMesh = *pTheNavMesh;
+#ifdef PLATFORM_X64
+		int32_t relativeoffset = *reinterpret_cast<int32_t*>(addr + offset);
+		TheNavMesh = **reinterpret_cast<CNavMesh***>(addr + offset + sizeof(int32_t) + relativeoffset);
+#else
+		TheNavMesh = **reinterpret_cast<CNavMesh***>(addr + offset);
+#endif
 
 		if (!config->GetOffset("TheNavAreas", &offset) || !offset)
 		{
 			snprintf(error, maxlength, "Couldn't find offset for TheNavAreas ptr!");
 			return false;
 		}
-
+#ifdef PLATFORM_X64
+		relativeoffset = *reinterpret_cast<int32_t*>(addr + offset);
+		pTheNavAreas = reinterpret_cast<NavAreaVector*>(addr + offset + sizeof(int32_t) + relativeoffset);
+#else
 		pTheNavAreas = *reinterpret_cast<NavAreaVector**>(addr + offset);
+#endif
 	}
 	else
 	{
@@ -86,10 +93,6 @@ bool CNavMesh::Init(SourceMod::IGameConfig* config, char* error, size_t maxlengt
 
 	ToolsNavMesh->Load();
 	return true;
-}
-
-void CNavMesh::OnCoreMapEnd()
-{
 }
 
 void CNavMesh::SDK_OnUnload()
