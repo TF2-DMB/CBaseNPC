@@ -267,8 +267,8 @@ class ExtensionConfig(object):
       '-fpermissive'
     ]
 
-    have_gcc = cxx.vendor == 'gcc'
-    have_clang = cxx.vendor == 'clang'
+    have_gcc = cxx.family == 'gcc'
+    have_clang = cxx.family == 'clang'
     if cxx.version >= 'clang-3.9' or cxx.version == 'clang-3.4' or cxx.version > 'apple-clang-6.0':
       cxx.cxxflags += ['-Wno-expansion-to-defined']
     if cxx.version == 'clang-3.9' or cxx.version == 'apple-clang-8.0':
