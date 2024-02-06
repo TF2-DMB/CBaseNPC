@@ -457,6 +457,11 @@ const char *SDKExtension::GetVersion()
 	return GetExtensionVerString();
 }
 
+METAMOD_PLUGIN *SDKExtension::SDK_OnMetamodCreateInterface(const MetamodVersionInfo *mvi, const MetamodLoaderInfo *mli)
+{
+	return this;
+}
+
 bool SDKExtension::SDK_OnMetamodLoad(ISmmAPI *ismm, char *error, size_t maxlength, bool late)
 {
 	return true;
