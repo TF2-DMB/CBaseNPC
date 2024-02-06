@@ -775,7 +775,21 @@ void IEntityDataMapInputFuncDelegate::Alloc()
 	intp thisAddr = (intp)this;
 	intp callFuncAddr = (intp)(&IEntityDataMapInputFuncDelegate::HandleInput);
 
-	uint8_t funcBytes[] = { 
+	uint8_t funcBytes[] = {
+#ifdef PLATFORM_X64
+#ifdef WIN64
+#else
+		// (IEntityDataMapInputFuncDelegate* pDelegate, CBaseEntity* pEntity, inputdata_t &data)
+		// this::(inputdata_t &)
+		// RDI, RSI, RDX, RCX, R8, R9
+		0x48, 0x89, 0xF2,									// mov RDX, RSI - 3rd arg
+		0x48, 0x89, 0xFE,									// mov RSI, RDI
+		0x48, 0xBF, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, // mov rdi, thisAddr
+		0x48, 0xB9, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,	// mov r9, callFuncAddr
+		0x41, 0xFF, 0xD1,									// call r9
+		0xC3												// ret
+#endif
+#else
 #ifdef WIN32
 		// MSVC __thiscall
 		0x55,									// push ebp
@@ -814,6 +828,7 @@ void IEntityDataMapInputFuncDelegate::Alloc()
 		0x5D,									// pop ebp
 		0xC3									// ret
 #endif
+#endif
 	};
 
 	m_iInputFuncSize = sizeof(funcBytes);
@@ -823,6 +838,13 @@ void IEntityDataMapInputFuncDelegate::Alloc()
 	{
 		g_InputFuncAlloc.SetRW(m_pInputFuncPtr);
 
+#ifdef PLATFORM_X64
+#ifdef WIN64
+#else
+		*((intp*)(&funcBytes[8])) = thisAddr;
+		*((intp*)(&funcBytes[18])) = callFuncAddr;
+#endif
+#else
 #ifdef WIN32
 		*((intp*)(&funcBytes[11])) = thisAddr;
 		*((intp*)(&funcBytes[16])) = callFuncAddr;
@@ -830,7 +852,7 @@ void IEntityDataMapInputFuncDelegate::Alloc()
 		*((intp*)(&funcBytes[14])) = thisAddr;
 		*((intp*)(&funcBytes[19])) = callFuncAddr;
 #endif
-
+#endif
 		memcpy(m_pInputFuncPtr, funcBytes, m_iInputFuncSize);
 
 		g_InputFuncAlloc.SetRE(m_pInputFuncPtr);
