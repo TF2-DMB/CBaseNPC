@@ -23,7 +23,7 @@ bool INextBotComponent::Init(SourceMod::IGameConfig* config, char* error, size_t
 INextBotComponent::INextBotComponent(INextBot *bot)
 {
 #if SOURCE_ENGINE == SE_TF2
-	m_scriptInstance = 0;
+	m_scriptInstance = nullptr;
 #endif
 
 	m_curInterval = TICK_INTERVAL;

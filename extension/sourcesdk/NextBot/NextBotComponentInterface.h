@@ -4,6 +4,10 @@
 #include "helpers.h"
 #include "NextBotEventResponderInterface.h"
 
+#if SOURCE_ENGINE == SE_TF2
+FORWARD_DECLARE_HANDLE(HSCRIPT);
+#endif
+
 class INextBot;
 class Path;
 class CGameTrace;
@@ -61,7 +65,7 @@ private:
 	INextBotComponent *m_nextComponent;
 
 #if SOURCE_ENGINE == SE_TF2
-	std::int32_t m_scriptInstance;
+	HSCRIPT m_scriptInstance;
 #endif
 
 public:
