@@ -158,6 +158,11 @@ inline cell_t PtrToPawnAddress(const void* ptr) {
 
 inline void* PawnAddressToPtr(cell_t addr) {
 #ifdef PLATFORM_X64
+	if (!addr) {
+		// BUGFIX: Passing 0 to FromPseudoAddress won't return nullptr but a valid pseudo address.
+		// If we're getting 0 from a plugin then we treat it as nullptr since Address_Null is 0.
+		return 0;
+	}
 	return (void*)g_pSM->FromPseudoAddress(addr);
 #else
 	return (void*)addr;
