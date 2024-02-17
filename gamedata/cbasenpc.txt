@@ -123,7 +123,7 @@
 				"linux"		"143"
 				"linux64"	"143"
 			}
-			"CBaseEntity::WorldSpaceCenter"		
+			"CBaseEntity::WorldSpaceCenter"
 			{
 				"windows"	"155"
 				"windows64"	"155"
@@ -256,7 +256,7 @@
 			"CNavMesh::Load"
 			{
 				"library"		"server"
-				"windows"		"\x55\x8B\xEC\x81\xEC\x84\x01\x00\x00\x53\x56\x8B\x35\x2A\x2A\x2A\x2A" 
+				"windows"		"\x55\x8B\xEC\x81\xEC\x84\x01\x00\x00\x53\x56\x8B\x35\x2A\x2A\x2A\x2A"
 				"windows64"		"\x48\x8B\xC4\x48\x89\x48\x2A\x55\x53\x57\x41\x55"
 				"linux"			"@_ZN8CNavMesh4LoadEv"
 				"linux64"		"@_ZN8CNavMesh4LoadEv"
@@ -433,12 +433,17 @@
 				"linux"			"@_ZN14CBaseAnimating19LookupPoseParameterEP10CStudioHdrPKc"
 				"linux64"		"@_ZN14CBaseAnimating19LookupPoseParameterEP10CStudioHdrPKc"
 			}
-			// Go to data xref of string "CBaseAnimating::SequenceDuration( %d ) NULL pstudiohdr on %s!\n"
+			// Look up data xrefs to string "CBaseAnimating::SequenceDuration( %d ) NULL pstudiohdr on %s!\n"
+			// One of them is CBaseAnimating::GetSequenceCycleRate, is referenced by CBaseAnimating::DispatchAnimEvents
+			// One of them is CBaseAnimating::GetSequenceGroundSpeed, it's a virtual function
+			// One of them is CBaseAnimating::ScriptGetSequenceDuration, has xref to a VScript init function which has a xref to string "GetAttachmentBone"
+			// One of them divides the final result
+			// The last xref left should be CBaseAnimating::SequenceDuration
 			"CBaseAnimating::SequenceDuration"
 			{
 				"library"		"server"
 				"windows"		"\x55\x8B\xEC\x56\x8B\x75\x08\x57\x8B\xF9\x85\xF6\x75\x2A\x8B\x47\x5C"
-				"windows64"		"\x48\x89\x5C\x24\x2A\x48\x89\x74\x24\x2A\x57\x48\x83\xEC\x20\x80\xB9\x2A\x2A\x2A\x2A\x00\x8B\xF2"
+				"windows64"		"\x48\x89\x5C\x24\x2A\x48\x89\x74\x24\x2A\x57\x48\x83\xEC\x20\x41\x8B\xD8\x48\x8B\xFA\x48\x8B\xF1\x48\x85\xD2\x75\x2A\x48\x8B\x81\x2A\x2A\x2A\x2A\x4C\x8D\x0D\x2A\x2A\x2A\x2A\x48\x85\xC0\x48\x8D\x15\x2A\x2A\x2A\x2A\x8D\x4F\x2A\x4C\x0F\x45\xC8\xFF\x15\x2A\x2A\x2A\x2A\xEB\x2A\x48\x8B\xCF\xE8\x2A\x2A\x2A\x2A\x84\xC0\x74\x2A\x48\x8B\xCF\xE8\x2A\x2A\x2A\x2A\x3B\xD8\x7D\x2A\x85\xDB\x78\x2A\x4C\x8D\x86\x2A\x2A\x2A\x2A\x8B\xD3\x48\x8B\xCF\x48\x8B\x5C\x24"
 				"linux"			"@_ZN14CBaseAnimating16SequenceDurationEP10CStudioHdri"
 				"linux64"		"@_ZN14CBaseAnimating16SequenceDurationEP10CStudioHdri"
 			}
@@ -473,7 +478,7 @@
 			}
 		}
 		"Addresses"
-		{		
+		{
 			"GetAnimationEvent"
 			{
 				"windows"
