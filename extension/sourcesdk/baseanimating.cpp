@@ -1,4 +1,5 @@
 #include "sourcesdk/baseanimating.h"
+#include <studio.h>
 #include <smsdk_ext.h>
 #include <sh_memory.h>
 #include <IGameHelpers.h>
@@ -139,6 +140,21 @@ float CBaseAnimating::GetPoseParameter(const char* name)
 
 float CBaseAnimating::SequenceDuration(CStudioHdr* pStudioHdr, int iSequence)
 {
+	if ( !pStudioHdr )
+	{
+		DevWarning( 2, "CBaseAnimating::SequenceDuration( %d ) NULL pstudiohdr on %s!\n", iSequence, GetClassname() );
+		return 0.1;
+	}
+	if ( !pStudioHdr->SequencesAvailable() )
+	{
+		return 0.1;
+	}
+	if (iSequence >= pStudioHdr->GetNumSeq() || iSequence < 0 )
+	{
+		DevWarning( 2, "CBaseAnimating::SequenceDuration( %d ) out of range\n", iSequence );
+		return 0.1;
+	}
+
 	return fStudio_Duration(pStudioHdr, iSequence, GetPoseParameterArray());
 }
 
@@ -148,7 +164,7 @@ void CBaseAnimating::ResetSequence(int sequence)
 }
 
 bool CBaseAnimating::GetAttachment(const char *szName, Vector &absOrigin, QAngle &absAngles)
-{																
+{
 	return GetAttachment(LookupAttachment(szName), absOrigin, absAngles);
 }
 

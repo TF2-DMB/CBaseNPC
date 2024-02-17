@@ -28,6 +28,7 @@ project.sources = [
   'sourcesdk/nav_mesh.cpp',
   'sourcesdk/entityfactorydictionary.cpp',
   'sourcesdk/customfactory.cpp',
+  'sourcesdk/studio.cpp',
   'sourcesdk/baseentity.cpp',
   'sourcesdk/baseentityoutput.cpp',
   'sourcesdk/baseanimating.cpp',
