@@ -34,6 +34,8 @@ public:
 
 	float	GetPoseParameter(const char* name);
 
+	const float* GetPoseParameterArray() { return m_flPoseParameter(); }
+
 	static int offset_HandleAnimEvent;
 
 	static VCall<void> vStudioFrameAdvance;
@@ -42,7 +44,6 @@ public:
 	static VCall<void, CBaseAnimating*> vDispatchAnimEvents;
 	void DispatchAnimEvents(CBaseAnimating*);
 
-	static MCall<float, CStudioHdr*, int> mSequenceDuration;
 	float SequenceDuration(CStudioHdr*, int);
 
 	static MCall<void, int> mResetSequence;
@@ -67,6 +68,7 @@ public:
 	DECLAREVAR(CStudioHdr*, m_pStudioHdr);
 	DECLAREVAR(int, m_nSequence);
 	DECLAREVAR(float, m_flModelScale);
+	DECLAREVAR(float, m_flPoseParameter);
 };
 
 inline float CBaseAnimating::GetModelScale() const

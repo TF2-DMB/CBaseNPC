@@ -327,6 +327,16 @@
 				"linux"			"@_Z21Studio_FindAttachmentPK10CStudioHdrPKc"
 				"linux64"		"@_Z21Studio_FindAttachmentPK10CStudioHdrPKc"
 			}
+			// Look up data xrefs to string "CBaseAnimating::SequenceDuration( %d ) NULL pstudiohdr on %s!\n"
+			// Find call that takes 3 parameters
+			"Studio_Duration"
+			{
+				"library"		"server"
+				"windows"		"\x55\x8B\xEC\xFF\x75\x2A\x8B\x4D\x2A\xE8\x2A\x2A\x2A\x2A\xFF\x75"
+				"windows64"		"\x48\x89\x5C\x24\x2A\x48\x89\x74\x24\x2A\x57\x48\x83\xEC\x20\x49\x8B\xD8\x8B\xFA"
+				"linux"			"@_Z15Studio_DurationPK10CStudioHdriPKf"
+				"linux64"		"@_Z15Studio_DurationPK10CStudioHdriPKf"
+			}
 			// Bytes sequence search "00 00 C0 00", go to the only subroutine that uses that number with 'and' & 'cmp'
 			"SimThink_EntityChanged"
 			{
@@ -432,20 +442,6 @@
 				"windows64"		"\x48\x89\x74\x24\x2A\x57\x48\x83\xEC\x20\x49\x8B\xF0\x48\x8B\xFA\x48\x85\xD2\x74\x2A\x48\x8B\xCA"
 				"linux"			"@_ZN14CBaseAnimating19LookupPoseParameterEP10CStudioHdrPKc"
 				"linux64"		"@_ZN14CBaseAnimating19LookupPoseParameterEP10CStudioHdrPKc"
-			}
-			// Look up data xrefs to string "CBaseAnimating::SequenceDuration( %d ) NULL pstudiohdr on %s!\n"
-			// One of them is CBaseAnimating::GetSequenceCycleRate, is referenced by CBaseAnimating::DispatchAnimEvents
-			// One of them is CBaseAnimating::GetSequenceGroundSpeed, it's a virtual function
-			// One of them is CBaseAnimating::ScriptGetSequenceDuration, has xref to a VScript init function which has a xref to string "GetAttachmentBone"
-			// One of them divides the final result
-			// The last xref left should be CBaseAnimating::SequenceDuration
-			"CBaseAnimating::SequenceDuration"
-			{
-				"library"		"server"
-				"windows"		"\x55\x8B\xEC\x56\x8B\x75\x08\x57\x8B\xF9\x85\xF6\x75\x2A\x8B\x47\x5C"
-				"windows64"		"\x48\x89\x5C\x24\x2A\x48\x89\x74\x24\x2A\x57\x48\x83\xEC\x20\x41\x8B\xD8\x48\x8B\xFA\x48\x8B\xF1\x48\x85\xD2\x75\x2A\x48\x8B\x81\x2A\x2A\x2A\x2A\x4C\x8D\x0D\x2A\x2A\x2A\x2A\x48\x85\xC0\x48\x8D\x15\x2A\x2A\x2A\x2A\x8D\x4F\x2A\x4C\x0F\x45\xC8\xFF\x15\x2A\x2A\x2A\x2A\xEB\x2A\x48\x8B\xCF\xE8\x2A\x2A\x2A\x2A\x84\xC0\x74\x2A\x48\x8B\xCF\xE8\x2A\x2A\x2A\x2A\x3B\xD8\x7D\x2A\x85\xDB\x78\x2A\x4C\x8D\x86\x2A\x2A\x2A\x2A\x8B\xD3\x48\x8B\xCF\x48\x8B\x5C\x24"
-				"linux"			"@_ZN14CBaseAnimating16SequenceDurationEP10CStudioHdri"
-				"linux64"		"@_ZN14CBaseAnimating16SequenceDurationEP10CStudioHdri"
 			}
 			// Go to data xref of string "ResetSequence : %s: %s -> %s\n"
 			"CBaseAnimating::ResetSequence"
