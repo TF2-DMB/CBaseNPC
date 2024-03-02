@@ -2,9 +2,6 @@
 #include "path/chase.hpp"
 #include "path/follower.hpp"
 
-#include "NextBotChasePath.h"
-#include "NextBotPathFollow.h"
-
 namespace natives::nextbot::path {
 
 SMPathFollowerCost::SMPathFollowerCost(INextBot* bot, IPluginFunction* func) : m_pFunc(func), m_bot(bot)
