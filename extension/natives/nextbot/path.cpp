@@ -2,6 +2,9 @@
 #include "path/chase.hpp"
 #include "path/follower.hpp"
 
+#include "NextBotChasePath.h"
+#include "NextBotPathFollow.h"
+
 namespace natives::nextbot::path {
 
 SMPathFollowerCost::SMPathFollowerCost(INextBot* bot, IPluginFunction* func) : m_pFunc(func), m_bot(bot)
@@ -594,7 +597,7 @@ cell_t ComputeToTarget(IPluginContext* context, const cell_t* params) {
 
 cell_t Destroy(IPluginContext* context, const cell_t* params) {
 	auto path = Get<Path>(context, params[1]);
-	if (path) {
+	if (!path) {
 		return 0;
 	}
 
