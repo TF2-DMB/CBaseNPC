@@ -167,7 +167,6 @@ void CBaseNPCExt::OnCoreMapStart(edict_t* edictlist, int edictCount, int clientM
 void CBaseNPCExt::OnCoreMapEnd() {
 	g_pBaseNPCPluginActionFactories->OnCoreMapEnd();
 	g_pPluginEntityFactories->OnCoreMapEnd();
-	CNavMesh::OnCoreMapEnd();
 }
 
 void CBaseNPCExt::OnEntityCreated(CBaseEntity* pEntity, const char* classname) {

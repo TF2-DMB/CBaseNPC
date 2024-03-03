@@ -150,7 +150,7 @@ inline void VectorToPawnVector(cell_t* angAddr, const QAngle* angle)
 
 inline cell_t PtrToPawnAddress(const void* ptr) {
 #ifdef PLATFORM_X64
-	return g_pSM->ToPseudoAddress(ptr);
+	return g_pSM->ToPseudoAddress((void*)(ptr));
 #else
 	return (cell_t)ptr;
 #endif
@@ -158,7 +158,12 @@ inline cell_t PtrToPawnAddress(const void* ptr) {
 
 inline void* PawnAddressToPtr(cell_t addr) {
 #ifdef PLATFORM_X64
-	return (void*)g_pSM->FromPseudoAddress(param);
+	if (!addr) {
+		// BUGFIX: Passing 0 to FromPseudoAddress won't return nullptr but a valid pseudo address.
+		// If we're getting 0 from a plugin then we treat it as nullptr since Address_Null is 0.
+		return 0;
+	}
+	return (void*)g_pSM->FromPseudoAddress(addr);
 #else
 	return (void*)addr;
 #endif

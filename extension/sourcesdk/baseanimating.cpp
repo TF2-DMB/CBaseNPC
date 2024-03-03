@@ -1,4 +1,5 @@
 #include "sourcesdk/baseanimating.h"
+#include <studio.h>
 #include <smsdk_ext.h>
 #include <sh_memory.h>
 #include <IGameHelpers.h>
@@ -8,13 +9,13 @@
 FCall<int, CStudioHdr*, const char*> fStudio_LookupSequence;
 FCall<int, const CStudioHdr*, const char*> fStudio_FindAttachment;
 FCall<int, CStudioHdr*, int, int> fStudio_SelectWeightedSequence;
+FCall<float, CStudioHdr*, int, const float*> fStudio_Duration;
 
 int CBaseAnimating::offset_HandleAnimEvent = 0;
 
 VCall<void> CBaseAnimating::vStudioFrameAdvance;
 VCall<void, CBaseAnimating*> CBaseAnimating::vDispatchAnimEvents;
 VCall< bool, int, matrix3x4_t& > CBaseAnimating::vGetAttachment;
-MCall<float, CStudioHdr*, int> CBaseAnimating::mSequenceDuration;
 MCall<void, int> CBaseAnimating::mResetSequence;
 MCall<int, CStudioHdr*, const char*> CBaseAnimating::mLookupPoseParameter;
 MCall<float, int> CBaseAnimating::mGetPoseParameter;
@@ -25,6 +26,7 @@ DEFINEVAR(CBaseAnimating, m_pStudioHdr);
 DEFINEVAR(CBaseAnimating, m_OnIgnite);
 DEFINEVAR(CBaseAnimating, m_nSequence);
 DEFINEVAR(CBaseAnimating, m_flModelScale);
+DEFINEVAR(CBaseAnimating, m_flPoseParameter);
 
 bool CBaseAnimating::Init(SourceMod::IGameConfig* config, char* error, size_t maxlength)
 {
@@ -33,8 +35,8 @@ bool CBaseAnimating::Init(SourceMod::IGameConfig* config, char* error, size_t ma
 		fStudio_LookupSequence.Init(config, "Studio_LookupSequence");
 		fStudio_FindAttachment.Init(config, "Studio_FindAttachment");
 		fStudio_SelectWeightedSequence.Init(config, "Studio_SelectWeightedSequence");
+		fStudio_Duration.Init(config, "Studio_Duration");
 
-		mSequenceDuration.Init(config, "CBaseAnimating::SequenceDuration");
 		mResetSequence.Init(config, "CBaseAnimating::ResetSequence");
 		mLookupPoseParameter.Init(config, "CBaseAnimating::LookupPoseParameter");
 		mSetPoseParameter.Init(config, "CBaseAnimating::SetPoseParameter");
@@ -64,6 +66,7 @@ bool CBaseAnimating::Init(SourceMod::IGameConfig* config, char* error, size_t ma
 	OFFSETVAR_SEND(CBaseAnimating, m_flModelScale);
 	// m_pStudioHdr is in front of m_OnIgnite
 	VAR_OFFSET_SET(m_pStudioHdr, VAR_OFFSET(m_OnIgnite) + sizeof(COutputEvent));
+	OFFSETVAR_SEND(CBaseAnimating, m_flPoseParameter);
 	END_VAR;
 
 	void* aVal = nullptr;
@@ -74,6 +77,13 @@ bool CBaseAnimating::Init(SourceMod::IGameConfig* config, char* error, size_t ma
 	}
 
 	uint8_t* aGetAnimationEvent = reinterpret_cast<uint8_t*>(aVal);
+#ifdef PLATFORM_X64
+#ifdef WIN64
+#else
+	SourceHook::SetMemAccess(aGetAnimationEvent + 0xF2, sizeof(uint32_t), SH_MEM_READ | SH_MEM_WRITE | SH_MEM_EXEC);
+	*(uint32_t*)(aGetAnimationEvent + 0xF2) = 9999;
+#endif
+#else
 #ifdef WIN32
 	SourceHook::SetMemAccess(aGetAnimationEvent + 0x83, sizeof(uint32_t), SH_MEM_READ | SH_MEM_WRITE | SH_MEM_EXEC);
 	*(uint32_t*)(aGetAnimationEvent + 0x83) = 9999;
@@ -82,6 +92,7 @@ bool CBaseAnimating::Init(SourceMod::IGameConfig* config, char* error, size_t ma
 	*(uint32_t*)(aGetAnimationEvent + 0x17E) = 9999;
 	SourceHook::SetMemAccess(aGetAnimationEvent + 0xB3, sizeof(uint32_t), SH_MEM_READ | SH_MEM_WRITE | SH_MEM_EXEC);
 	*(uint32_t*)(aGetAnimationEvent + 0xB3) = 9999;
+#endif
 #endif
 	return true;
 }
@@ -127,9 +138,24 @@ float CBaseAnimating::GetPoseParameter(const char* name)
 	return GetPoseParameter(LookupPoseParameter(name));
 }
 
-float CBaseAnimating::SequenceDuration(CStudioHdr* studio, int sequence)
+float CBaseAnimating::SequenceDuration(CStudioHdr* pStudioHdr, int iSequence)
 {
-	return mSequenceDuration(this, studio, sequence);
+	if ( !pStudioHdr )
+	{
+		DevWarning( 2, "CBaseAnimating::SequenceDuration( %d ) NULL pstudiohdr on %s!\n", iSequence, GetClassname() );
+		return 0.1;
+	}
+	if ( !pStudioHdr->SequencesAvailable() )
+	{
+		return 0.1;
+	}
+	if (iSequence >= pStudioHdr->GetNumSeq() || iSequence < 0 )
+	{
+		DevWarning( 2, "CBaseAnimating::SequenceDuration( %d ) out of range\n", iSequence );
+		return 0.1;
+	}
+
+	return fStudio_Duration(pStudioHdr, iSequence, GetPoseParameterArray());
 }
 
 void CBaseAnimating::ResetSequence(int sequence)
@@ -138,7 +164,7 @@ void CBaseAnimating::ResetSequence(int sequence)
 }
 
 bool CBaseAnimating::GetAttachment(const char *szName, Vector &absOrigin, QAngle &absAngles)
-{																
+{
 	return GetAttachment(LookupAttachment(szName), absOrigin, absAngles);
 }
 

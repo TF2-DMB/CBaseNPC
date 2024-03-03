@@ -9,6 +9,7 @@ builder.SetBuildFolder('package')
 # Add any folders you need to this list
 folder_list = [
   'addons/sourcemod/extensions',
+  'addons/sourcemod/extensions/x64',
   'addons/sourcemod/scripting/include',
   'addons/sourcemod/scripting/include/cbasenpc',
   'addons/sourcemod/scripting/include/cbasenpc/tf',
@@ -39,7 +40,10 @@ def CopyDirContent(src, dest):
       builder.AddCopy(item.path, dest_entry)
 # Copy binaries.
 for cxx_task in Extension.extensions:
-  builder.AddCopy(cxx_task.binary, folder_map['addons/sourcemod/extensions'])
+  if cxx_task.target.arch == 'x86_64':
+    builder.AddCopy(cxx_task.binary, folder_map['addons/sourcemod/extensions/x64'])
+  else:
+    builder.AddCopy(cxx_task.binary, folder_map['addons/sourcemod/extensions'])
 for smx_file in Extension.smx_files:
   smx_entry = Extension.smx_files[smx_file]
   builder.AddCopy(smx_entry, folder_map['addons/sourcemod/plugins/disabled'])

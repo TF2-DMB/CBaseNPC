@@ -188,7 +188,7 @@ void IDataMapContainer::EndDataDesc()
 void IDataMapContainer::DefineField(const char* name, fieldtype_t fieldType, unsigned short count, short flags, const char* externalName, float fieldTolerance)
 {
 	size_t padding = 0;
-	int fieldOffset = GetAlignedOffset( GetDataDescOffset() + m_DataMapDescSizeInBytes, fieldType, &padding );
+	int fieldOffset = (int)GetAlignedOffset( GetDataDescOffset() + m_DataMapDescSizeInBytes, fieldType, &padding );
 	int fieldSizeInBytes = g_DataMapDescFieldSizes[fieldType] * count;
 
 	name = name ? strdup(name) : NULL;
@@ -772,10 +772,29 @@ void IEntityDataMapInputFuncDelegate::Alloc()
 	if (m_pInputFuncPtr)
 		return;
 
-	uint32_t thisAddr = (uint32_t)this;
-	uint32_t callFuncAddr = (uint32_t)(&IEntityDataMapInputFuncDelegate::HandleInput);
+	intp thisAddr = (intp)this;
+	intp callFuncAddr = (intp)(&IEntityDataMapInputFuncDelegate::HandleInput);
 
-	uint8_t funcBytes[] = { 
+	uint8_t funcBytes[] = {
+#ifdef PLATFORM_X64
+		// (IEntityDataMapInputFuncDelegate* pDelegate, CBaseEntity* pEntity, inputdata_t &data)
+		// this::(inputdata_t &)
+#ifdef WIN64
+		// RCX / XMM0L, RDX / XMM1L, R8 / XMM2L, and R9 / XMM3L
+		0x49, 0x89, 0xD0,										// mov R8, RDX
+		0x48, 0x89, 0xCA, 										// mov RDX, RCX
+		0x48, 0xB9, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 	// movabs rcx, thisAddr
+		0x49, 0xB9, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 	// movabs r9, callFuncAddr
+		0x41, 0xFF, 0xE1 										// jmp r9
+#else
+		// RDI, RSI, RDX, RCX, R8, R9
+		0x48, 0x89, 0xF2,										// mov RDX, RSI - 3rd arg
+		0x48, 0x89, 0xFE,										// mov RSI, RDI
+		0x48, 0xBF, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,		// movabs rdi, thisAddr
+		0x49, 0xB9, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,		// movabs r9, callFuncAddr
+		0x41, 0xFF, 0xE1										// jmp r9
+#endif
+#else
 #ifdef WIN32
 		// MSVC __thiscall
 		0x55,									// push ebp
@@ -814,6 +833,7 @@ void IEntityDataMapInputFuncDelegate::Alloc()
 		0x5D,									// pop ebp
 		0xC3									// ret
 #endif
+#endif
 	};
 
 	m_iInputFuncSize = sizeof(funcBytes);
@@ -823,14 +843,23 @@ void IEntityDataMapInputFuncDelegate::Alloc()
 	{
 		g_InputFuncAlloc.SetRW(m_pInputFuncPtr);
 
-#ifdef WIN32
-		*((uint32_t*)(&funcBytes[11])) = thisAddr;
-		*((uint32_t*)(&funcBytes[16])) = callFuncAddr;
+#ifdef PLATFORM_X64
+#ifdef WIN64
+		*((intp*)(&funcBytes[8])) = thisAddr;
+		*((intp*)(&funcBytes[18])) = callFuncAddr;
 #else
-		*((uint32_t*)(&funcBytes[14])) = thisAddr;
-		*((uint32_t*)(&funcBytes[19])) = callFuncAddr;
+		*((intp*)(&funcBytes[8])) = thisAddr;
+		*((intp*)(&funcBytes[18])) = callFuncAddr;
 #endif
-
+#else
+#ifdef WIN32
+		*((intp*)(&funcBytes[11])) = thisAddr;
+		*((intp*)(&funcBytes[16])) = callFuncAddr;
+#else
+		*((intp*)(&funcBytes[14])) = thisAddr;
+		*((intp*)(&funcBytes[19])) = callFuncAddr;
+#endif
+#endif
 		memcpy(m_pInputFuncPtr, funcBytes, m_iInputFuncSize);
 
 		g_InputFuncAlloc.SetRE(m_pInputFuncPtr);
@@ -984,7 +1013,7 @@ void IEntityDataMapContainer::DefineInputFunc(const char* name, fieldtype_t fiel
 	m_pEntityInputFuncDelegates.AddToTail(pDelegate);
 	
 	// this shuts up the compiler
-	*(uint32_t*)(&(typeDesc.inputFunc)) = (uint32_t)pDelegate->m_pInputFuncPtr;
+	*(intp*)(&(typeDesc.inputFunc)) = (intp)pDelegate->m_pInputFuncPtr;
 
 	m_vecEntityDataTypeDescriptors.AddToTail(typeDesc);
 }
@@ -992,7 +1021,7 @@ void IEntityDataMapContainer::DefineInputFunc(const char* name, fieldtype_t fiel
 void IEntityDataMapContainer::DefineOutput(const char* name, const char* mapname)
 {
 	size_t padding = 0;
-	int fieldOffset = GetAlignedOffset( GetDataDescOffset() + m_DataMapDescSizeInBytes, sizeof(int*), &padding );
+	int fieldOffset = (int)GetAlignedOffset( GetDataDescOffset() + m_DataMapDescSizeInBytes, sizeof(int*), &padding );
 	int fieldSizeInBytes = sizeof(CBaseEntityOutput);
 
 	name = name ? strdup(name) : NULL;

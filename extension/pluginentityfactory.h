@@ -119,7 +119,7 @@ private:
 
 	size_t m_BaseClassSizes[ FACTORYBASECLASS_MAX ];
 	CUtlVector< CPluginEntityFactory* > m_Factories;
-	std::map<cell_t, std::unique_ptr<PluginFactoryEntityRecord_t>> m_Records;
+	std::map<intp, std::unique_ptr<PluginFactoryEntityRecord_t>> m_Records;
 	std::map<std::string, IEntityFactory*> m_gameFactories;
 	std::map<std::string, CPluginEntityFactory*> m_pluginFactories;
 	std::vector<int> m_hookIds;

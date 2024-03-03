@@ -35,40 +35,41 @@ jobs:
       # We currently only support tf2 - however when we support more sdks
       # we will have to deal with the special case of our custom tf2 + AM's sdks
       SDKS: '["tf2"]'
-      MMSOURCE_VERSION: '1.10'
-      SOURCEMOD_VERSION: '1.11'
+      MMSOURCE_VERSION: '1.12-dev'
+      SOURCEMOD_VERSION: '35ac74c7a7243e17a3aa2338b116eaa8a0a9ccdc'
       CACHE_PATH: ${{ github.workspace }}/cache
     steps:
           
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         name: Repository checkout
         with:
           fetch-depth: 0
+          submodules: true
           path: CBaseNPC
 
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         name: Sourcemod checkout
         with:
           repository: alliedmodders/sourcemod
-          ref: ${{ env.SOURCEMOD_VERSION }}-dev
+          ref: ${{ env.SOURCEMOD_VERSION }}
           submodules: true
           path: cache/sourcemod
       
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         name: Metamod-Source checkout
         with:
           repository: alliedmodders/metamod-source
-          ref: ${{ env.MMSOURCE_VERSION }}-dev
+          ref: ${{ env.MMSOURCE_VERSION }}
           path: cache/metamod
 
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         name: AMBuild checkout
         with:
           repository: alliedmodders/ambuild
           ref: master
           path: cache/ambuild
 
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         name: Custom TF2 SDK checkout
         with:
           repository: TF2-DMB/hl2sdk-tf2
@@ -121,7 +122,7 @@ jobs:
         run: |
           mkdir build
           cd build
-          python ../configure.py --extension-only --enable-auto-versioning --enable-optimize --sdks=${{ join(fromJSON(env.SDKS)) }} --mms-path=${{ env.CACHE_PATH }}/metamod --hl2sdk-root=${{ env.CACHE_PATH }} --sm-path=${{ env.CACHE_PATH }}/sourcemod
+          python ../configure.py --extension-only --enable-auto-versioning --enable-optimize --targets x86,x86_64 --sdks=${{ join(fromJSON(env.SDKS)) }} --mms-path=${{ env.CACHE_PATH }}/metamod --hl2sdk-root=${{ env.CACHE_PATH }} --sm-path=${{ env.CACHE_PATH }}/sourcemod
           ambuild
 
       - name: Upload artifact

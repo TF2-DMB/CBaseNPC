@@ -27,7 +27,12 @@ bool CBaseEntityOutput::Init(SourceMod::IGameConfig* config, char* error, size_t
 			snprintf(error, maxlength, "Couldn't find offset for g_EntityListPool ptr!");
 			return false;
 		}
+#ifdef PLATFORM_X64
+		int32_t relativeoffset = *reinterpret_cast<int32_t*>(addr + offset);
+		g_pEntityListPool = *reinterpret_cast<CUtlMemoryPool**>(addr + offset + sizeof(int32_t) + relativeoffset);
+#else
 		g_pEntityListPool = *reinterpret_cast<CUtlMemoryPool**>(addr + offset);
+#endif
 #endif
 	}
 	else
