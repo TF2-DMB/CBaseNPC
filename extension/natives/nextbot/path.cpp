@@ -594,7 +594,7 @@ cell_t ComputeToTarget(IPluginContext* context, const cell_t* params) {
 
 cell_t Destroy(IPluginContext* context, const cell_t* params) {
 	auto path = Get<Path>(context, params[1]);
-	if (path) {
+	if (!path) {
 		return 0;
 	}
 
