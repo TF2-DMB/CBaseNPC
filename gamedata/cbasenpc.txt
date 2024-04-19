@@ -7,18 +7,18 @@
 			// Locate CNavMesh::Load, first dword is TheNavMesh second is TheNavAreas
 			"TheNavMesh"
 			{
-				"linux"		"979"
+				"linux"		"813"
 				"windows"	"786"
 			}
 			"TheNavAreas"
 			{
-				"linux"		"1058"
+				"linux"		"1201"
 				"windows"	"819"
 			}
 			// Locate CBaseEntity::PhysicsMarkEntitiesAsTouching, first dword is g_TouchTrace
 			"g_TouchTrace"
 			{
-				"linux"		"29"
+				"linux"		"53"
 				"windows"	"32"
 			}
 			"g_EntityListPool"
@@ -336,6 +336,7 @@
 				"linux"
 				{
 					"signature"	"__GetAnimationEvent__"
+					"offset"	"204"
 				}
 			}
 		}

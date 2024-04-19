@@ -74,15 +74,9 @@ bool CBaseAnimating::Init(SourceMod::IGameConfig* config, char* error, size_t ma
 	}
 
 	uint8_t* aGetAnimationEvent = reinterpret_cast<uint8_t*>(aVal);
-#ifdef WIN32
-	SourceHook::SetMemAccess(aGetAnimationEvent + 0x83, sizeof(uint32_t), SH_MEM_READ | SH_MEM_WRITE | SH_MEM_EXEC);
-	*(uint32_t*)(aGetAnimationEvent + 0x83) = 9999;
-#else
-	SourceHook::SetMemAccess(aGetAnimationEvent + 0x17E, sizeof(uint32_t), SH_MEM_READ | SH_MEM_WRITE | SH_MEM_EXEC);
-	*(uint32_t*)(aGetAnimationEvent + 0x17E) = 9999;
-	SourceHook::SetMemAccess(aGetAnimationEvent + 0xB3, sizeof(uint32_t), SH_MEM_READ | SH_MEM_WRITE | SH_MEM_EXEC);
-	*(uint32_t*)(aGetAnimationEvent + 0xB3) = 9999;
-#endif
+	SourceHook::SetMemAccess(aGetAnimationEvent, sizeof(uint32_t), SH_MEM_READ | SH_MEM_WRITE | SH_MEM_EXEC);
+	*(uint32_t*)(aGetAnimationEvent) = 9999;
+
 	return true;
 }
 
