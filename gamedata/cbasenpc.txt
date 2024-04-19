@@ -246,7 +246,7 @@
 			"CBaseEntity::PhysicsMarkEntitiesAsTouching"
 			{
 				"library"		"server"
-				"windows"		"\x55\x8B\xEC\x56\x57\xFF\x75\x0C\x8B\xF1"
+				"windows"		"\x55\x8B\xEC\x57\xFF\x75\x2A\x8B\xF9\xB9"
 				"linux"			"@_ZN11CBaseEntity29PhysicsMarkEntitiesAsTouchingEPS_R10CGameTrace"
 			}
 			// Find "m_CalcAbsolutePositionMutex" to find CBaseEntity::CalcAbsolutePosition
