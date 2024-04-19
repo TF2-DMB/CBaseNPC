@@ -285,7 +285,7 @@
 			"CBaseAnimating::SetPoseParameter"
 			{
 				"library"		"server"
-				"windows"		"\x55\x8B\xEC\x51\x8B\x45\x08\xD9\x45\x10"
+				"windows"		"\x55\x8B\xEC\x51\x8B\x45\x2A\xD9\x45"
 				"linux"			"@_ZN14CBaseAnimating16SetPoseParameterEP10CStudioHdrif"
 			}
 			"CBaseAnimating::GetPoseParameter"
