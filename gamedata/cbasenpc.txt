@@ -8,18 +8,18 @@
 			"TheNavMesh"
 			{
 				"linux"		"813"
-				"windows"	"786"
+				"windows"	"481"
 			}
 			"TheNavAreas"
 			{
 				"linux"		"1201"
-				"windows"	"819"
+				"windows"	"687"
 			}
 			// Locate CBaseEntity::PhysicsMarkEntitiesAsTouching, first dword is g_TouchTrace
 			"g_TouchTrace"
 			{
 				"linux"		"53"
-				"windows"	"32"
+				"windows"	"10"
 			}
 			"g_EntityListPool"
 			{
@@ -163,59 +163,73 @@
 		}
 		"Signatures"
 		{
+			// Find string "Missing command string" which is used by nb_command
+			// nb_command calls TheNextBots()
 			"TheNextBots"
 			{
 				"library"		"server"
-				"windows"		"\xA1\x2A\x2A\x2A\x2A\x85\xC0\x75\x2A\x8B\x0D\x2A\x2A\x2A\x2A\xF6\xC1\x01"
+				"windows"		"\xA1\x2A\x2A\x2A\x2A\x85\xC0\x0F\x85\x2A\x2A\x2A\x2A\xA1"
 				"linux"			"@_Z11TheNextBotsv"
 			}
+			// Find string "or_crit_vs_playercond"
 			"CTFGameRules::ApplyOnDamageModifyRules"
 			{
 				"library"		"server"
-				"windows"		"\x55\x8B\xEC\x81\xEC\xAC\x00\x00\x00\x56\x8B\x75\x0C"
+				"windows"		"\x55\x8B\xEC\x81\xEC\x90\x00\x00\x00\x56\x8B\x75\x2A\x57\x8B\x7D"
 				"linux"			"@_ZN12CTFGameRules24ApplyOnDamageModifyRulesER15CTakeDamageInfoP11CBaseEntityb"
 			}
+			// Find string "mult_dmgtaken"
 			"CTFGameRules::ApplyOnDamageAliveModifyRules"
 			{
 				"library"		"server"
-				"windows"		"\x55\x8B\xEC\x81\xEC\x2A\x00\x00\x00\x53\x8B\x5D\x0C\x89\x2A\x2A\x56"
+				"windows"		"\x55\x8B\xEC\x81\xEC\xD4\x00\x00\x00\x53\x8B\x5D"
 				"linux"			"@_ZN12CTFGameRules29ApplyOnDamageAliveModifyRulesERK15CTakeDamageInfoP11CBaseEntityRNS_20DamageModifyExtras_tE"
 			}
 			// Find string "Invalid navigation file.\n"
 			"CNavMesh::Load"
 			{
 				"library"		"server"
-				"windows"		"\x55\x8B\xEC\x81\xEC\x84\x01\x00\x00\x53\x56\x8B\x35\x2A\x2A\x2A\x2A" 
+				"windows"		"\x55\x8B\xEC\x81\xEC\x7C\x01\x00\x00" 
 				"linux"			"@_ZN8CNavMesh4LoadEv"
 			}
+			// Find CNavMesh::Load first, then continue until you find call to CNavArea::CheckWaterLevel() in source
+			// CNavArea::CheckWaterLevel calls CNavMesh::GetGroundHeight
 			"CNavMesh::GetGroundHeight"
 			{
 				"library"		"server"
-				"windows"		"\x53\x8B\xDC\x83\xEC\x08\x83\xE4\xF0\x83\xC4\x04\x55\x8B\x6B\x04\x89\x6C\x24\x04\x8B\xEC\x81\xEC\xFC\x00\x00\x00\x56\x6A\x00\x6A\x00\x6A\x00\x8D"
+				"windows"		"\x53\x8B\xDC\x83\xEC\x08\x83\xE4\xF0\x83\xC4\x04\x55\x8B\x6B\x2A\x89\x6C\x24\x2A\x8B\xEC\x81\xEC\xCC\x00\x00\x00\x56"
 				"linux"			"@_ZNK8CNavMesh15GetGroundHeightERK6VectorPfPS0_"
 			}
+			// Find data xref of string "weapon_*", should be taken to ppszIgnoredClasses static char* array in CTraceFilterValidForDecal::ShouldHitEntity
+			// CTraceFilterSimple::ShouldHitEntity called with 2 params
 			"CTraceFilterSimple::ShouldHitEntity"
 			{
 				"library"		"server"
-				"windows"		"\x55\x8B\xEC\x53\x8B\x5D\x0C\x56\x8B\x75\x08\x57\x53\x56"
+				"windows"		"\x55\x8B\xEC\x51\x53\x56\x8B\x75\x2A\x57\x8B\xF9\x8B\x0D"
 				"linux"			"@_ZN18CTraceFilterSimple15ShouldHitEntityEP13IHandleEntityi"
 			}
+			// Go to first data xref of string "%s has changed its model while processing AnimEvents on sequence %d. Aborting dispatch.\n", this is CBaseAnimating::DispatchAnimEvents
+			// GetAnimationEvent is used in a loop
 			"__GetAnimationEvent__"
 			{
 				"library"		"server"
-				"windows"		"\x55\x8B\xEC\x53\x56\x8B\x75\x08\x85\xF6\x0F\x84\x2A\x2A\x2A\x2A\x8B\xCE\xE8\x2A\x2A\x2A\x2A"
+				"windows"		"\x55\x8B\xEC\x53\x56\x8B\x75\x2A\x57\x85\xF6\x0F\x84\x2A\x2A\x2A\x2A\x8B\xCE"
 				"linux"			"@_Z17GetAnimationEventP10CStudioHdriP11animevent_tffi"
 			}
+			// Search for string "%s: unknown scripted sequence \"%s\"\n" to find CAI_ScriptedSequence::StartSequence
+			// CBaseAnimating::LookupSequence is used prior to jmp to this
 			"Studio_LookupSequence"
 			{
 				"library"		"server"
 				"windows"		"\x55\x8B\xEC\x56\x8B\x75\x2A\x85\xF6\x0F\x84\x2A\x2A\x2A\x2A\x8B\xCE"
 				"linux"			"@_Z14LookupSequenceP10CStudioHdrPKc"
 			}
+			// Search for string "CBaseAnimatingOverlay::AddGesture:  model %s missing activity %s\n" to find CBaseAnimatingOverlay::AddGesture
+			// CBaseAnimating::SelectWeightedSequence(Activity) is used prior to jmp to this
 			"Studio_SelectWeightedSequence"
 			{
 				"library"		"server"
-				"windows"		"\x55\x8B\xEC\x83\xEC\x10\x53\x8B\x5D\x08\x56\x57\x53"
+				"windows"		"\x55\x8B\xEC\x56\x8B\x75\x2A\x85\xF6\x74\x2A\x8B\xCE\xE8\x2A\x2A\x2A\x2A\x84\xC0\x74\x2A\x57\x56"
 				"linux"			"@_Z22SelectWeightedSequenceP10CStudioHdrii"
 			}
 			// Find "placementOrigin" first subroutine call below it
@@ -279,9 +293,12 @@
 			"g_EntityListPool"
 			{
 				"library"		"server"
-				"windows"		"\x6A\x00\x68\x2A\x2A\x2A\x2A\x6A\x01\x68\x00\x02\x00\x00\x6A\x1C"
+				"windows"		"\x6A\x04\x68\x2A\x2A\x2A\x2A\x6A\x01\x68\x00\x02\x00\x00\x6A\x1C"
 				"linux"			"@g_EntityListPool"
 			}
+			// Go to data xref of "vehicle_wheel_fl_height" to find CFourWheelPhysics::InitializePoseParameters
+			// CFourWheelPhysics::SetPoseParameter is called after calls to CFourWheelPhysics::LookupPoseParameter
+			// CFourWheelPhysics::SetPoseParameter directly calls CBaseAnimating::SetPoseParameter
 			"CBaseAnimating::SetPoseParameter"
 			{
 				"library"		"server"
@@ -294,34 +311,46 @@
 				"windows"		"\x55\x8B\xEC\x56\x8B\xF1\x57\x80\xBE\x69\x03\x00\x00\x00\x75\x2A\x83\xBE\x98\x04\x00\x00\x00\x75\x2A\xE8\x2A\x2A\x2A\x2A\x85\xC0\x74\x2A\x8B\xCE\xE8\x2A\x2A\x2A\x2A\x8B\xBE\x98\x04\x00\x00"
 				"linux"			"@_ZN14CBaseAnimating16GetPoseParameterEi"
 			}
+			// Go to data xref of string "move_scale", this is CMultiPlayerAnimState::SetupPoseParameters
+			// Multiple calls to CBaseAnimating::LookupPoseParameter with different pose param names
 			"CBaseAnimating::LookupPoseParameter"
 			{
 				"library"		"server"
 				"windows"		"\x55\x8B\xEC\x57\x8B\x7D\x08\x85\xFF\x74\x2A\x8B\xCF\xE8\x2A\x2A\x2A\x2A\x84\xC0"
 				"linux"			"@_ZN14CBaseAnimating19LookupPoseParameterEP10CStudioHdrPKc"
 			}
+			// Find string "CBaseAnimating::SequenceDuration( %d ) NULL pstudiohdr on %s!\n"
+			// This function is copied across several funcs; the right one is the one returning plain 0.1 floats, and has two parameters (CStudioHdr and int).
 			"CBaseAnimating::SequenceDuration"
 			{
 				"library"		"server"
-				"windows"		"\x55\x8B\xEC\x56\x8B\x75\x08\x57\x8B\xF9\x85\xF6\x75\x2A\x8B\x47\x5C"
+				"windows"		"\x55\x8B\xEC\x56\x8B\x75\x2A\x57\x8B\xF9\x85\xF6\x75\x2A\x8B\x47\x2A\xB9\x2A\x2A\x2A\x2A\x85\xC0\x0F\x45\xC8\x51\xFF\x75\x2A\x68\x2A\x2A\x2A\x2A\x6A\x02\xFF\x15\x2A\x2A\x2A\x2A\xD9\x05"
 				"linux"			"@_ZN14CBaseAnimating16SequenceDurationEP10CStudioHdri"
 			}
+			// Go to data xref of string "ResetSequence : %s: %s -> %s\n"
 			"CBaseAnimating::ResetSequence"
 			{
 				"library"		"server"
 				"windows"		"\x55\x8B\xEC\x51\xA1\x2A\x2A\x2A\x2A\x53\x56\x57\x83\x78\x2A\x00\x8B\xD9\x8B\x7D"
 				"linux"			"@_ZN14CBaseAnimating13ResetSequenceEi"
 			}
+			// Go to first data xref of "simple_bot"
+			// Go to ptr of second push instruction, this is the CEntityFactory<CSimpleBot> singleton
+			// Go to ptr, this is the vtable of CEntityFactory<CSimpleBot>
+			// Go to first vptr, this is CEntityFactory<CSimpleBot>::Create
+			// There's a call that has one parameter of around ~0x140 bytes, this is operator.new and NextBotGroundLocomotion::NextBotGroundLocomotion is below it
 			"NextBotGroundLocomotion::NextBotGroundLocomotion"
 			{
 				"library"		"server"
-				"windows"		"\x55\x8B\xEC\x56\xFF\x75\x08\x8B\xF1\xE8\x2A\x2A\x2A\x2A\xC7\x06\x2A\x2A\x2A\x2A\x8B\xC6\xC7\x86\xB4\x00\x00\x00\xFF\xFF\xFF\xFF"
+				"windows"		"\x55\x8B\xEC\x56\xFF\x75\x2A\x8B\xF1\xE8\x2A\x2A\x2A\x2A\xC7\x06\x2A\x2A\x2A\x2A\x8B\xC6\xC7\x86\x2A\x2A\x2A\x2A\x00\x00\x80\xBF"
 				"linux"			"@_ZN23NextBotGroundLocomotionC2EP8INextBot"
 			}
+			// Go to CEntityFactory<CSimpleBot>::Create
+			// Second call is NextBotCombatCharacter::NextBotCombatCharacter
 			"NextBotCombatCharacter::NextBotCombatCharacter"
 			{
 				"library"		"server"
-				"windows"		"\x56\x57\x8B\xF9\xE8\x2A\x2A\x2A\x2A\x8D\x8F\x74\x08\x00\x00"
+				"windows"		"\x56\x57\x8B\xF9\xE8\x2A\x2A\x2A\x2A\x8D\x8F\x2A\x2A\x2A\x2A\xE8"
 				"linux"			"@_ZN22NextBotCombatCharacterC2Ev"
 			}
 		}
@@ -332,6 +361,7 @@
 				"windows"
 				{
 					"signature"	"__GetAnimationEvent__"
+					"offset"	"131"
 				}
 				"linux"
 				{
