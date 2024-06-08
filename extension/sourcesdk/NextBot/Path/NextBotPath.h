@@ -57,7 +57,7 @@ class Path
 {
 public:
 	Path( void );
-	virtual ~Path() { }
+	virtual ~Path();
 	
 	enum SegmentType
 	{

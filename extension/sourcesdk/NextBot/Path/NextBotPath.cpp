@@ -1,5 +1,6 @@
 #include "NextBotPath.h"
 #include "sourcesdk/nav_mesh.h"
+#include "natives.hpp"
 
 ConVar* NextBotPathDrawIncrement = nullptr;
 ConVar* NextBotPathSegmentInfluenceRadius = nullptr;
@@ -7,6 +8,14 @@ ConVar* NextBotPathSegmentInfluenceRadius = nullptr;
 //--------------------------------------------------------------------------------------------------------------
 Path::Path( void )
 {
+	natives::add_ptr(this);
+	// This is fine as long as we don't have any Path class overriding this function
+	natives::add_ptr(&GetCursorData());
+	for (int i = 0; i < MAX_PATH_SEGMENTS; i++)
+	{
+		natives::add_ptr(&m_path[i]);
+	}
+
 	m_segmentCount = 0;
 	
 	m_cursorPos = 0.0f;
@@ -14,6 +23,16 @@ Path::Path( void )
 	m_cursorData.segmentPrior = NULL;
 	m_ageTimer.Invalidate();
 	m_subject = NULL;
+}
+
+Path::~Path( )
+{
+	natives::erase_ptr(this);
+	natives::erase_ptr(&GetCursorData());
+	for (int i = 0; i < MAX_PATH_SEGMENTS; i++)
+	{
+		natives::erase_ptr(&m_path[i]);
+	}
 }
 
 

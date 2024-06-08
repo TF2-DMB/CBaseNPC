@@ -1,4 +1,5 @@
 #include "toolsnextbot.h"
+#include "natives.hpp"
 
 ConVar* NextBotPlayerStop = nullptr;
 
@@ -38,6 +39,12 @@ ToolsNextBot::ToolsNextBot(CBaseCombatCharacter* link) :
 	INextBot(),
 	m_linkedEntity(link)
 {
+	natives::add_ptr(this);
+}
+
+ToolsNextBot::~ToolsNextBot()
+{
+	natives::erase_ptr(this);
 }
 
 ToolsNextBotPlayer::ToolsNextBotPlayer(CBaseCombatCharacter* link) :

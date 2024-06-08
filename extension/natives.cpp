@@ -15,8 +15,11 @@
 #include <isaverestore.h>
 #include <takedamageinfo.h>
 #include <utlmap.h>
+#include <CDetour/detours.h>
 
 #include "sourcesdk/baseentity.h"
+#include "sourcesdk/NextBot/NextBotInterface.h"
+#include "sourcesdk/nav_area.h"
 
 class CTakeDamageInfoHack : public CTakeDamageInfo
 {
@@ -183,11 +186,114 @@ void setup(std::vector<sp_nativeinfo_t>& natives) {
 	natives.insert(natives.end(), std::begin(list), std::end(list));
 }
 
-std::unordered_map<void*, std::uint32_t> g_ptrToIndex;
-std::unordered_map<std::uint32_t, void*> g_indexToPtr;
+#ifdef __linux__
+SH_DECL_MANUALHOOK0_void(Entity_Dtor, 1, 0, 0);
+#else
+SH_DECL_MANUALHOOK1_void(Entity_Dtor, 0, 0, 0, unsigned int);
+#endif
+
+struct EntityPointersInfo {
+	EntityPointersInfo(CBaseEntity* entity) : _gameCreatedNextBot(nullptr) {
+		natives::add_ptr(entity);
+
+		_gameCreatedNextBot = entity->MyNextBotPointer();
+		if (_gameCreatedNextBot)
+		{
+			natives::add_ptr(_gameCreatedNextBot);
+			// Some interfaces are only created if retrieved
+			// create them early, so we don't miss one
+			_gameCreatedNextBot->GetLocomotionInterface();
+			_gameCreatedNextBot->GetBodyInterface();
+			_gameCreatedNextBot->GetIntentionInterface();
+			_gameCreatedNextBot->GetVisionInterface();
+
+			for (auto it = _gameCreatedNextBot->FirstContainedResponder(); it; it = _gameCreatedNextBot->NextContainedResponder(it)) {
+				natives::add_ptr(it);
+				_gameCreatedResponders.push_back(it);
+			}
+		}
+
+		_hookID = SH_ADD_MANUALHOOK(Entity_Dtor, entity, SH_MEMBER(this, &EntityPointersInfo::Hook_EntityDestructor), false);
+	}
+
+#ifdef __linux__
+	void Hook_EntityDestructor(void) {
+#else
+	void Hook_EntityDestructor(unsigned int flags) {
+#endif
+		CBaseEntity* entity = META_IFACEPTR(CBaseEntity);
+		natives::erase_ptr(entity);
+
+		delete this;
+	}
+
+	~EntityPointersInfo() {
+		if (_gameCreatedNextBot) {
+			natives::erase_ptr(_gameCreatedNextBot);
+		}
+
+		for (auto responder : _gameCreatedResponders) {
+			natives::erase_ptr(responder);
+		}
+
+		SH_REMOVE_HOOK_ID(_hookID);
+	}
+
+	int _hookID;
+	INextBot* _gameCreatedNextBot;
+	std::vector<void*> _gameCreatedResponders;
+};
+
+CDetour* g_CBaseEntity_PostConstructor = nullptr;
+DETOUR_DECL_MEMBER1(CBaseEntity_PostConstructor, void, const char*, name)
+{
+	DETOUR_MEMBER_CALL(CBaseEntity_PostConstructor)(name);
+
+	new EntityPointersInfo((CBaseEntity*)this);
+}
+
+// We're in a lot of troubles if nav areas are added or removed
+void ptr_register_navmesh() {
+	FOR_EACH_VEC(TheNavAreas, it) {
+		auto area = TheNavAreas[it];
+		add_ptr(area);
+
+		// Register the ladders
+		for (int k = 0; k < (int)CNavLadder::LadderDirectionType::NUM_LADDER_DIRECTIONS; k++) {
+			auto& ladderVector = *area->GetLadders( (CNavLadder::LadderDirectionType)k );
+			FOR_EACH_VEC(ladderVector, it) {
+				add_ptr(ladderVector[it].ladder);
+			}
+		}
+	}
+	FOR_EACH_VEC(TheHidingSpots, it) {
+		add_ptr(TheHidingSpots[it]);
+	}
+}
+
+// We're in a lot of troubles if nav areas are added or removed
+void ptr_unregister_navmesh() {
+	FOR_EACH_VEC(TheNavAreas, it) {
+		auto area = TheNavAreas[it];
+		erase_ptr(area);	
+
+		for (int k = 0; k < (int)CNavLadder::LadderDirectionType::NUM_LADDER_DIRECTIONS; k++) {
+			auto& ladderVector = *area->GetLadders( (CNavLadder::LadderDirectionType)k );
+			FOR_EACH_VEC(ladderVector, it) {
+				erase_ptr(ladderVector[it].ladder);
+			}
+		}
+	}
+	FOR_EACH_VEC(TheHidingSpots, it) {
+		erase_ptr(TheHidingSpots[it]);
+	}
+}
+
+std::unordered_map<const void*, std::uint32_t> g_ptrToIndex;
+std::unordered_map<std::uint32_t, const void*> g_indexToPtr;
 std::uint32_t g_ptrCounter = 0;
 
-std::uint32_t ptr_toPtrIndex(void* ptr) {
+std::uint32_t ptr_toPtrIndex(const void* ptr) {
 	if (ptr == nullptr || g_ptrToIndex.find(ptr) == g_ptrToIndex.end()) {
 		return 0;
 	}
@@ -198,30 +304,43 @@ void* ptrIndex_toPtr(std::uint32_t index) {
 	if (index == 0 || g_indexToPtr.find(index) == g_indexToPtr.end()) {
 		return nullptr;
 	}
-	return g_indexToPtr[index];
+	return (void*)g_indexToPtr[index];
 }
 
-std::uint32_t add_ptr(void* ptr) {
+std::uint32_t add_ptr(const void* ptr) {
 	if (g_ptrCounter == 0) {
 		g_ptrCounter++;
 	}
 
 	g_ptrToIndex[ptr] = g_ptrCounter;
 	g_indexToPtr[g_ptrCounter] = ptr;
+	return g_ptrCounter;
 }
 
 void erase_ptrIndex(std::uint32_t index) {
-	void* ptr = g_indexToPtr[index];
+	const void* ptr = g_indexToPtr[index];
 
 	g_indexToPtr.erase(index);
 	g_ptrToIndex.erase(ptr);
 }
 
-void erase_ptr(void* ptr) {
+void erase_ptr(const void* ptr) {
 	std::uint32_t index = g_ptrToIndex[ptr];
 
 	g_indexToPtr.erase(index);
 	g_ptrToIndex.erase(ptr);
+}
+
+void ptr_setup(SourceMod::IGameConfig* config) {
+	// Impossible to fail
+	int offset = -100000;
+	config->GetOffset("CBaseEntity::PostConstructor", &offset);
+
+	auto entity = servertools->CreateEntityByName("info_target");
+	void** vtable = *(void***)entity;
+	g_CBaseEntity_PostConstructor = DETOUR_CREATE_MEMBER(CBaseEntity_PostConstructor, vtable[offset]);
+	g_CBaseEntity_PostConstructor->EnableDetour();
+	servertools->RemoveEntityImmediate(entity);
 }
 
 }

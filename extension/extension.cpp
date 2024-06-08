@@ -112,6 +112,7 @@ bool CBaseNPCExt::SDK_OnLoad(char* error, size_t maxlength, bool late) {
 	
 	gNatives.reserve(1000);
 	natives::setup(gNatives);
+	natives::ptr_setup(g_pGameConf);
 	gNatives.push_back({nullptr, nullptr});
 	sharesys->AddNatives(myself, gNatives.data());
 
@@ -165,6 +166,8 @@ void CBaseNPCExt::OnCoreMapStart(edict_t* edictlist, int edictCount, int clientM
 }
 
 void CBaseNPCExt::OnCoreMapEnd() {
+	natives::ptr_unregister_navmesh();
+
 	g_pBaseNPCPluginActionFactories->OnCoreMapEnd();
 	g_pPluginEntityFactories->OnCoreMapEnd();
 }

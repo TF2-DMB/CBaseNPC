@@ -1,6 +1,7 @@
 #include "sourcesdk/baseentity.h"
 #include "sourcesdk/baseanimating.h"
 #include "smsdk_ext.h"
+#include "natives.hpp"
 #include <CDetour/detours.h>
 #include <shareddefs.h>
 #include <worldsize.h>
@@ -129,7 +130,7 @@ bool CBaseEntity::Init(SourceMod::IGameConfig* config, char* error, size_t maxle
 		SimThink_EntityChanged.Init(config, "SimThink_EntityChanged");
 #ifndef __linux__
 		g_pSimThink_EntityChangedDetour = DETOUR_CREATE_MEMBER(SimThink_EntityChanged, "SimThink_EntityChanged")
-			g_pSimThink_EntityChangedDetour->EnableDetour();
+		g_pSimThink_EntityChangedDetour->EnableDetour();
 #endif
 	}
 	catch (const std::exception & e)

@@ -1,6 +1,7 @@
 #include "toolsnav_mesh.h"
 #include "toolsutil.h"
 #include "sourcesdk/nav_mesh.h"
+#include "natives.hpp"
 #include "tier0/vprof.h"
 
 CToolsNavMesh* ToolsNavMesh = new CToolsNavMesh;
@@ -64,6 +65,7 @@ void CToolsNavMesh::Load()
 		AddNavArea(TheNavAreas[it]);
 	}
 	m_isLoaded = true;
+	natives::ptr_register_navmesh();
 
 	g_pSM->LogMessage(myself, "Parsed %d nav areas.", GetNavAreaCount());
 }
