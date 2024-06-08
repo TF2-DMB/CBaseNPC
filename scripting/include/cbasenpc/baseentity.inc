@@ -44,6 +44,7 @@ methodmap CBaseEntity
 	 * @return		Memory address of CServerNetworkProperty.
 	 * @error 		Invalid entity.
 	 */
+	#pragma deprecated This native doesn't work on 64bits, please use <> instead
 	public native Address NetworkProp();
 
 	/**
@@ -52,6 +53,7 @@ methodmap CBaseEntity
 	 * @return		Memory address of CCollisionProperty.
 	 * @error 		Invalid entity.
 	 */
+	#pragma deprecated This native doesn't work on 64bits, please use <> instead
 	public native Address CollisionProp();
 
 	/**
@@ -69,6 +71,7 @@ methodmap CBaseEntity
 	 * @param varAddr	Entity networked property address.
 	 * @error 		Invalid entity.
 	 */
+	#pragma deprecated This native doesn't work on 64bits, please use <> instead
 	public native void NetworkStateChangedVar(Address varAddr);
 
 	/**
@@ -921,5 +924,6 @@ methodmap CBaseEntity
 	 * @param inputInfo    The damage parameters to use
 	 * @error              Invalid entity or a NULL pointer is given
 	 */
+	#pragma deprecated This native doesn't work on 64bits, please use <> instead
 	public native void TakeDamage(CTakeDamageInfo inputInfo);
 }

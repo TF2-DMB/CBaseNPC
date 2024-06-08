@@ -132,6 +132,7 @@ methodmap CBaseAnimating < CBaseEntity
 	 * @return		Memory address of CStudioHdr.
 	 * @error 		Invalid entity.
 	 */
+	#pragma deprecated This native doesn't work on 64bits, please use <> instead
 	public native Address GetModelPtr();
 
 	/**

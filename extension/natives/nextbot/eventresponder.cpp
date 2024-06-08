@@ -6,7 +6,7 @@
 namespace natives::nextbot::eventresponder  {
 
 inline INextBotEventResponder* Get(IPluginContext* context, const cell_t param) {	
-	INextBotEventResponder* responder = (INextBotEventResponder*)PawnAddressToPtr(param);
+	INextBotEventResponder* responder = (INextBotEventResponder*)ptrIndex_toPtr(param);
 	if (!responder) {
 		context->ThrowNativeError("Event responder ptr is null!");
 		return nullptr;
@@ -20,7 +20,7 @@ cell_t FirstContainedResponder(IPluginContext* context, const cell_t* params) {
 		return 0;
 	}
 
-	return PtrToPawnAddress(responder->FirstContainedResponder());
+	return ptr_toPtrIndex(responder->FirstContainedResponder());
 }
 
 cell_t NextContainedResponder(IPluginContext* context, const cell_t* params) {
@@ -33,7 +33,7 @@ cell_t NextContainedResponder(IPluginContext* context, const cell_t* params) {
 	if (!responder2) {
 		return 0;
 	}
-	return PtrToPawnAddress(responder->NextContainedResponder(responder2));
+	return ptr_toPtrIndex(responder->NextContainedResponder(responder2));
 }
 
 cell_t OnLeaveGround(IPluginContext* context, const cell_t* params) {
@@ -74,7 +74,7 @@ cell_t OnMoveToSuccess(IPluginContext* context, const cell_t* params) {
 		return 0;
 	}
 
-	Path* path = (Path*)PawnAddressToPtr(params[2]);
+	Path* path = (Path*)ptrIndex_toPtr(params[2]);
 	if (!path) {
 		return context->ThrowNativeError("Path is null!");
 	}
@@ -89,7 +89,7 @@ cell_t OnMoveToFailure(IPluginContext* context, const cell_t* params) {
 		return 0;
 	}
 
-	Path* path = (Path*)PawnAddressToPtr(params[2]);
+	Path* path = (Path*)ptrIndex_toPtr(params[2]);
 	if (!path) {
 		return context->ThrowNativeError("Path is null!");
 	}
@@ -231,7 +231,7 @@ cell_t OnNavAreaChanged(IPluginContext* context, const cell_t* params) {
 		return 0;
 	}
 
-	responder->OnNavAreaChanged((CNavArea*)PawnAddressToPtr(params[2]), (CNavArea*)PawnAddressToPtr(params[3]));
+	responder->OnNavAreaChanged((CNavArea*)ptrIndex_toPtr(params[2]), (CNavArea*)ptrIndex_toPtr(params[3]));
 	return 0;
 }
 

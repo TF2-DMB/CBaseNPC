@@ -757,10 +757,12 @@ void setup(std::vector<sp_nativeinfo_t>& natives) {
 		{"CBaseAnimatingOverlay.FindGestureLayer", FindGestureLayer},
 		{"CBaseAnimatingOverlay.RemoveLayer", RemoveLayer},
 		{"CBaseAnimatingOverlay.FastRemoveLayer", FastRemoveLayer},
-		{"CBaseAnimatingOverlay.GetAnimOverlay", GetAnimOverlay},
 		{"CBaseAnimatingOverlay.GetNumAnimOverlays", GetNumAnimOverlays},
 		{"CBaseAnimatingOverlay.SetNumAnimOverlays", SetNumAnimOverlays},
 		{"CBaseAnimatingOverlay.HasActiveLayer", HasActiveLayer},
+
+		// To-Do: Remove in 2.0.0
+		{"CBaseAnimatingOverlay.GetAnimOverlay", GetAnimOverlay}
 	};
 	natives.insert(natives.end(), std::begin(list), std::end(list));
 }

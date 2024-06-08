@@ -177,13 +177,13 @@ void setup(std::vector<sp_nativeinfo_t>& natives) {
 		{"CBaseAnimating.SelectWeightedSequence", SelectWeightedSequence},
 		{"CBaseAnimating.ResetSequence", ResetSequence},
 		{"CBaseAnimating.SequenceDuration", SequenceDuration},
-		{"CBaseAnimating.GetModelPtr", GetModelPtr},
 		{"CBaseAnimating.LookupPoseParameter", LookupPoseParameter},
 		{"CBaseAnimating.SetPoseParameter", SetPoseParameter},
 		{"CBaseAnimating.GetPoseParameter", GetPoseParameter},
 		
 		// To-Do: remove this in 2.0.0
-		{"CBaseAnimating.iHandleAnimEvent", OffsetHandleAnimEvent}
+		{"CBaseAnimating.iHandleAnimEvent", OffsetHandleAnimEvent},
+		{"CBaseAnimating.GetModelPtr", GetModelPtr},
 	};
 	natives.insert(natives.end(), std::begin(list), std::end(list));
 }

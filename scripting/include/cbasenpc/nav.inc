@@ -183,6 +183,7 @@ methodmap CNavMesh
 	 */
 	property Address Address
 	{
+		#pragma deprecated This native doesn't work on 64bits, please use <> instead
 		public native get();
 	}
 

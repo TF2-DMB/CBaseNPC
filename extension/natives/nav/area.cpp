@@ -19,7 +19,7 @@ inline cell_t Get(IPluginContext* context, const cell_t* params)
 	if (i < 0 || i >= TheHidingSpots.Count()) {
 		return context->ThrowNativeError("Index is out of bounds!");
 	}
-	return PtrToPawnAddress(TheHidingSpots[i]);
+	return ptr_toPtrIndex(TheHidingSpots[i]);
 }
 
 void setup(std::vector<sp_nativeinfo_t>& natives) {
@@ -38,7 +38,7 @@ void setup(std::vector<sp_nativeinfo_t>& natives) {
 }
 
 inline HidingSpot* Get(IPluginContext* context, const cell_t param) {
-	HidingSpot* spot = (HidingSpot*)PawnAddressToPtr(param);
+	HidingSpot* spot = (HidingSpot*)ptrIndex_toPtr(param);
 	if (!spot) {
 		context->ThrowNativeError("Hiding spot ptr is null!");
 		return nullptr;
@@ -82,7 +82,7 @@ cell_t GetArea(IPluginContext* context, const cell_t* params) {
 		return 0;
 	}
 
-	return PtrToPawnAddress(spot->GetArea());
+	return ptr_toPtrIndex(spot->GetArea());
 }
 
 void setup(std::vector<sp_nativeinfo_t>& natives) {
@@ -103,7 +103,7 @@ void setup(std::vector<sp_nativeinfo_t>& natives) {
 namespace ladder {
 
 inline CNavLadder* Get(IPluginContext* context, const cell_t param) {
-	CNavLadder* spot = (CNavLadder*)PawnAddressToPtr(param);
+	CNavLadder* spot = (CNavLadder*)ptrIndex_toPtr(param);
 	if (!spot) {
 		context->ThrowNativeError("Nav ladder ptr is null!");
 		return nullptr;
@@ -146,7 +146,7 @@ inline cell_t Get(IPluginContext* context, const cell_t* params)
 	if (i < 0 || i >= TheNavAreas.Count()) {
 		return context->ThrowNativeError("Index is out of bounds!");
 	}
-	return PtrToPawnAddress(TheNavAreas[i]);
+	return ptr_toPtrIndex(TheNavAreas[i]);
 }
 
 void setup(std::vector<sp_nativeinfo_t>& natives) {
@@ -173,11 +173,11 @@ cell_t IsOpenListEmpty(IPluginContext* context, const cell_t* params) {
 }
 
 cell_t PopOpenList(IPluginContext* context, const cell_t* params) {
-	return PtrToPawnAddress(CNavArea::PopOpenList());
+	return ptr_toPtrIndex(CNavArea::PopOpenList());
 }
 
 inline CNavArea* Get(IPluginContext* context, const cell_t param) {
-	CNavArea* area = (CNavArea*)PawnAddressToPtr(param);
+	CNavArea* area = (CNavArea*)ptrIndex_toPtr(param);
 	if (!area) {
 		context->ThrowNativeError("Nav area ptr is null!");
 		return nullptr;
@@ -219,7 +219,7 @@ cell_t SetParent(IPluginContext* context, const cell_t* params) {
 		return 0;
 	}
 	
-	area->SetParent((CNavArea*)PawnAddressToPtr(params[2]), (NavTraverseType)params[3]);
+	area->SetParent((CNavArea*)ptrIndex_toPtr(params[2]), (NavTraverseType)params[3]);
 	return 1;
 }
 
@@ -229,7 +229,7 @@ cell_t GetParent(IPluginContext* context, const cell_t* params) {
 		return 0;
 	}
 	
-	return PtrToPawnAddress(area->GetParent());
+	return ptr_toPtrIndex(area->GetParent());
 }
 
 cell_t GetParentHow(IPluginContext* context, const cell_t* params) {
@@ -304,7 +304,7 @@ cell_t ComputePortal(IPluginContext* context, const cell_t* params) {
 		return 0;
 	}
 	
-	CNavArea* other = (CNavArea*)PawnAddressToPtr(params[2]);
+	CNavArea* other = (CNavArea*)ptrIndex_toPtr(params[2]);
 	if (!other) {
 		return context->ThrowNativeError("Nav area is null !");
 	}
@@ -328,7 +328,7 @@ cell_t ComputeClosestPointInPortal(IPluginContext* context, const cell_t* params
 		return 0;
 	}
 	
-	CNavArea* other = (CNavArea*)PawnAddressToPtr(params[2]);
+	CNavArea* other = (CNavArea*)ptrIndex_toPtr(params[2]);
 	if (!other) {
 		return context->ThrowNativeError("Nav area is null !");
 	}
@@ -436,7 +436,7 @@ cell_t IsConnected(IPluginContext* context, const cell_t* params) {
 		return 0;
 	}
 	
-	return area->IsConnected((CNavArea*)PawnAddressToPtr(params[2]), (NavDirType)params[3]);
+	return area->IsConnected((CNavArea*)ptrIndex_toPtr(params[2]), (NavDirType)params[3]);
 }
 
 cell_t IsOverlappingPoint(IPluginContext* context, const cell_t* params) {
@@ -568,7 +568,7 @@ cell_t GetAdjacentArea(IPluginContext* context, const cell_t* params) {
 	if (dir < 0 || dir >= NUM_DIRECTIONS) {
 		return context->ThrowNativeError("Invalid direction %d", dir);
 	}
-	return PtrToPawnAddress(area->GetAdjacentArea(dir, params[3]));
+	return ptr_toPtrIndex(area->GetAdjacentArea(dir, params[3]));
 }
 
 cell_t GetAdjacentLength(IPluginContext* context, const cell_t* params) {
@@ -619,7 +619,7 @@ cell_t GetIncomingConnection(IPluginContext* context, const cell_t* params) {
 	if (i < 0 || i >= incoming->Count()) {
 		return 0;
 	}
-	return PtrToPawnAddress(incoming->Element(i).area);
+	return ptr_toPtrIndex(incoming->Element(i).area);
 }
 
 cell_t GetIncomingConnectionLength(IPluginContext* context, const cell_t* params) {
@@ -657,7 +657,7 @@ cell_t Contains(IPluginContext* context, const cell_t* params) {
 		return 0;
 	}
 	
-	return area->Contains((CNavArea*)PawnAddressToPtr(params[2]));
+	return area->Contains((CNavArea*)ptrIndex_toPtr(params[2]));
 }
 
 cell_t ContainsPoint(IPluginContext* context, const cell_t* params) {
@@ -769,7 +769,7 @@ cell_t GetHidingSpot(IPluginContext* context, const cell_t* params) {
 	if ((i < 0) || (i >= pSpots->Count())) {
 		return 0;
 	}
-	return PtrToPawnAddress(pSpots->Element(i));
+	return ptr_toPtrIndex(pSpots->Element(i));
 }
 
 cell_t IsOpen(IPluginContext* context, const cell_t* params) {
@@ -864,7 +864,7 @@ cell_t IsPotentiallyVisible(IPluginContext* context, const cell_t* params) {
 		return 0;
 	}
 	
-	CNavArea* viewedArea = (CNavArea*)PawnAddressToPtr(params[2]);
+	CNavArea* viewedArea = (CNavArea*)ptrIndex_toPtr(params[2]);
 	if (!viewedArea) {
 		return context->ThrowNativeError("Nav area is null !");
 	}
@@ -877,7 +877,7 @@ cell_t IsCompletelyVisible(IPluginContext* context, const cell_t* params) {
 		return 0;
 	}
 	
-	CNavArea* viewedArea = (CNavArea*)PawnAddressToPtr(params[2]);
+	CNavArea* viewedArea = (CNavArea*)ptrIndex_toPtr(params[2]);
 	if (!viewedArea) {
 		return context->ThrowNativeError("Nav area is null !");
 	}
@@ -886,7 +886,7 @@ cell_t IsCompletelyVisible(IPluginContext* context, const cell_t* params) {
 
 cell_t native_GetHidingSpotByID(IPluginContext* pContext, const cell_t* params) {
 	unsigned int id = params[1];
-	return PtrToPawnAddress(GetHidingSpotByID(id));
+	return ptr_toPtrIndex(GetHidingSpotByID(id));
 }
 
 void setup(std::vector<sp_nativeinfo_t>& natives) {

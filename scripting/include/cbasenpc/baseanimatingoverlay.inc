@@ -469,6 +469,7 @@ methodmap CBaseAnimatingOverlay < CBaseAnimating
 	 * @return		Memory address of the layer.
 	 * @error 		Invalid entity.
 	 */
+	#pragma deprecated This native doesn't work on 64bits, please use <> instead
 	public native CAnimationLayer GetAnimOverlay(int layer);
 
 	/**

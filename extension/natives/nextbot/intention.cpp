@@ -6,7 +6,7 @@
 namespace natives::nextbot::intention {
 
 inline IIntention* Get(IPluginContext* context, const cell_t param) {
-	IIntention* intention = (IIntention*)PawnAddressToPtr(param);
+	IIntention* intention = (IIntention*)ptrIndex_toPtr(param);
 	if (!intention) {
 		context->ThrowNativeError("Intention ptr is null!");
 		return nullptr;

@@ -17,6 +17,7 @@ methodmap CTakeDamageInfo
 	 *
 	 * @return		The CTakeDamageInfo.
 	 */
+	#pragma deprecated This native doesn't work on 64bits, please use <> instead
 	public native CTakeDamageInfo(Address ptr);
 
 	/**

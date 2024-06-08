@@ -122,7 +122,7 @@ cell_t CBaseNPC_GetNextBotOfEntity(IPluginContext *pContext, const cell_t *param
 	CBaseEntity *pEntity;
 	ENTINDEX_TO_CBASEENTITY(params[1], pEntity);
 	
-	return PtrToPawnAddress(pEntity->MyNextBotPointer());
+	return ptr_toPtrIndex(pEntity->MyNextBotPointer());
 }
 
 cell_t CBaseNPC_HookEventKilled(IPluginContext *pContext, const cell_t *params)
@@ -181,6 +181,47 @@ void setup(std::vector<sp_nativeinfo_t>& natives) {
 	};
 
 	natives.insert(natives.end(), std::begin(list), std::end(list));
+}
+
+std::unordered_map<void*, std::uint32_t> g_ptrToIndex;
+std::unordered_map<std::uint32_t, void*> g_indexToPtr;
+std::uint32_t g_ptrCounter = 0;
+
+std::uint32_t ptr_toPtrIndex(void* ptr) {
+	if (ptr == nullptr || g_ptrToIndex.find(ptr) == g_ptrToIndex.end()) {
+		return 0;
+	}
+	return g_ptrToIndex[ptr];
+}
+
+void* ptrIndex_toPtr(std::uint32_t index) {
+	if (index == 0 || g_indexToPtr.find(index) == g_indexToPtr.end()) {
+		return nullptr;
+	}
+	return g_indexToPtr[index];
+}
+
+std::uint32_t add_ptr(void* ptr) {
+	if (g_ptrCounter == 0) {
+		g_ptrCounter++;
+	}
+
+	g_ptrToIndex[ptr] = g_ptrCounter;
+	g_indexToPtr[g_ptrCounter] = ptr;
+}
+
+void erase_ptrIndex(std::uint32_t index) {
+	void* ptr = g_indexToPtr[index];
+
+	g_indexToPtr.erase(index);
+	g_ptrToIndex.erase(ptr);
+}
+
+void erase_ptr(void* ptr) {
+	std::uint32_t index = g_ptrToIndex[ptr];
+
+	g_indexToPtr.erase(index);
+	g_ptrToIndex.erase(ptr);
 }
 
 }

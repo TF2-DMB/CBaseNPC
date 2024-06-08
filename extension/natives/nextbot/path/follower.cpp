@@ -7,7 +7,7 @@ namespace natives::nextbot::path::follower {
 
 template<typename T>
 inline T* Get(IPluginContext* context, const cell_t param) {	
-	T* bot = (T*)PawnAddressToPtr(param);
+	T* bot = (T*)ptrIndex_toPtr(param);
 	if (!bot) {
 		context->ThrowNativeError("Object is a null ptr!");
 		return nullptr;
@@ -26,7 +26,7 @@ cell_t PathFollowerCtor(IPluginContext* context, const cell_t* params) {
 	path->pTraceFilterIgnoreActors = pTraceFilter;
 	path->pTraceFilterOnlyActors = pTraceFilter2;
 	
-	return PtrToPawnAddress(path);
+	return ptr_toPtrIndex(path);
 }
 
 cell_t Update(IPluginContext* context, const cell_t* params) {

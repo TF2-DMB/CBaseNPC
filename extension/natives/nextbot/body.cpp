@@ -5,7 +5,7 @@
 namespace natives::nextbot::body {
 
 inline IBody* Get(IPluginContext* context, const cell_t param) {
-	IBody* body = (IBody*)PawnAddressToPtr(param);
+	IBody* body = (IBody*)ptrIndex_toPtr(param);
 	if (!body) {
 		context->ThrowNativeError("Body ptr is null!");
 		return nullptr;

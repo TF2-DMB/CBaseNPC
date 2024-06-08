@@ -6,7 +6,7 @@
 namespace natives::nextbot::vision  {
 
 inline IVision* Get(IPluginContext* context, const cell_t param) {
-	IVision* vision = (IVision*)PawnAddressToPtr(param);
+	IVision* vision = (IVision*)ptrIndex_toPtr(param);
 	if (!vision) {
 		context->ThrowNativeError("Vision ptr is null!");
 		return nullptr;

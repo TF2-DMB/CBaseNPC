@@ -31,7 +31,7 @@ cell_t GetElement(IPluginContext* context, const cell_t* params) {
 	if (ID > collector->Count()) {
 		return 0;
 	}
-	return PtrToPawnAddress(collector->Element(ID));
+	return ptr_toPtrIndex(collector->Element(ID));
 }
 
 void setup(std::vector<sp_nativeinfo_t>& natives) {
@@ -72,7 +72,7 @@ cell_t GetNavArea(IPluginContext* context, const cell_t* params) {
 	context->LocalToPhysAddr(params[2], &vecAddr);
 	Vector vecPos;
 	PawnVectorToVector(vecAddr, vecPos);
-	return PtrToPawnAddress(ToolsNavMesh->GetNavArea(vecPos, sp_ctof(params[3])));
+	return ptr_toPtrIndex(ToolsNavMesh->GetNavArea(vecPos, sp_ctof(params[3])));
 }
 
 cell_t GetNavAreaEntity(IPluginContext* context, const cell_t* params) {
@@ -80,7 +80,7 @@ cell_t GetNavAreaEntity(IPluginContext* context, const cell_t* params) {
 	if (!ent) {
 		return context->ThrowNativeError("Invalid Entity index/reference %d", params[1]);
 	}
-	return PtrToPawnAddress(ToolsNavMesh->GetNavArea(ent, params[3], sp_ctof(params[4])));
+	return ptr_toPtrIndex(ToolsNavMesh->GetNavArea(ent, params[3], sp_ctof(params[4])));
 }
 
 cell_t GetNearestNavArea(IPluginContext* context, const cell_t* params) {
@@ -88,12 +88,12 @@ cell_t GetNearestNavArea(IPluginContext* context, const cell_t* params) {
 	context->LocalToPhysAddr(params[2], &vecAddr);
 	Vector vecPos;
 	PawnVectorToVector(vecAddr, vecPos);
-	return PtrToPawnAddress(ToolsNavMesh->GetNearestNavArea(vecPos, params[3], sp_ctof(params[4]), params[5], params[6], params[7]));
+	return ptr_toPtrIndex(ToolsNavMesh->GetNearestNavArea(vecPos, params[3], sp_ctof(params[4]), params[5], params[6], params[7]));
 }
 
 cell_t GetNavAreaByID(IPluginContext* context, const cell_t* params) {
 	unsigned int id = (unsigned int)params[2];
-	return PtrToPawnAddress(ToolsNavMesh->GetNavAreaByID(id));
+	return ptr_toPtrIndex(ToolsNavMesh->GetNavAreaByID(id));
 }
 
 class CCollectorAddToTail {
@@ -107,7 +107,7 @@ private:
 
 cell_t CollectSurroundingAreas(IPluginContext* context, const cell_t* params) {
 	CUtlVector<CNavArea*> *pCollector = new CUtlVector<CNavArea*>;
-	CollectSurroundingAreas( pCollector, (CNavArea*)PawnAddressToPtr(params[2]), sp_ctof(params[3]), sp_ctof(params[4]), sp_ctof(params[5]));
+	CollectSurroundingAreas( pCollector, (CNavArea*)ptrIndex_toPtr(params[2]), sp_ctof(params[3]), sp_ctof(params[4]), sp_ctof(params[5]));
 	return CREATEHANDLE(AreasCollector, pCollector);
 }
 
@@ -145,8 +145,8 @@ cell_t CollectAreasInRadius(IPluginContext* context, const cell_t* params) {
 }
 
 cell_t CollectAreasAlongLine(IPluginContext* context, const cell_t* params) {
-	CNavArea* startArea = (CNavArea*)PawnAddressToPtr(params[2]);
-	CNavArea* endArea = (CNavArea*)PawnAddressToPtr(params[3]);
+	CNavArea* startArea = (CNavArea*)ptrIndex_toPtr(params[2]);
+	CNavArea* endArea = (CNavArea*)ptrIndex_toPtr(params[3]);
 	cell_t* reachedEndAddr;
 	context->LocalToPhysAddr(params[4], &reachedEndAddr);
 
@@ -167,9 +167,9 @@ public:
 		if (m_pFunc && m_pFunc->IsRunnable())
 		{
 			cell_t result = sp_ftoc(0.0);
-			m_pFunc->PushCell(PtrToPawnAddress(area));
-			m_pFunc->PushCell(PtrToPawnAddress(fromArea));
-			m_pFunc->PushCell(PtrToPawnAddress(ladder));
+			m_pFunc->PushCell(ptr_toPtrIndex(area));
+			m_pFunc->PushCell(ptr_toPtrIndex(fromArea));
+			m_pFunc->PushCell(ptr_toPtrIndex(ladder));
 			m_pFunc->PushCell(gamehelpers->EntityToBCompatRef((CBaseEntity*)elevator));
 			m_pFunc->PushFloat(length);
 			m_pFunc->Execute(&result);
@@ -215,12 +215,12 @@ private:
 };
 
 cell_t BuildPath(IPluginContext* context, const cell_t* params) {
-	CNavArea *startArea = (CNavArea *)PawnAddressToPtr(params[2]);
+	CNavArea *startArea = (CNavArea *)ptrIndex_toPtr(params[2]);
 	if (!startArea) {
 		return context->ThrowNativeError("Starting area is null!");
 	}
 
-	CNavArea* goalArea = (CNavArea *)PawnAddressToPtr(params[3]);
+	CNavArea* goalArea = (CNavArea *)ptrIndex_toPtr(params[3]);
 	cell_t* goalPosAddr;
 	context->LocalToPhysAddr(params[4], &goalPosAddr);
 	Vector goalPos;
@@ -248,7 +248,7 @@ cell_t BuildPath(IPluginContext* context, const cell_t* params) {
 		ignoreNavBlockers);
 
 	if (closestAreaAddr) {
-		*closestAreaAddr = PtrToPawnAddress(closestArea);
+		*closestAreaAddr = ptr_toPtrIndex(closestArea);
 	}
 
 	return result;

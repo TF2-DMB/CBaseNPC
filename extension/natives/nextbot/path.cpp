@@ -44,10 +44,10 @@ float SMPathFollowerCost::operator()(CNavArea* area, CNavArea* fromArea, const C
 		}
 	
 		cell_t cost = sp_ftoc(0.0);
-		m_pFunc->PushCell(PtrToPawnAddress(m_bot));
-		m_pFunc->PushCell(PtrToPawnAddress(area));
-		m_pFunc->PushCell(PtrToPawnAddress(fromArea));
-		m_pFunc->PushCell(PtrToPawnAddress(ladder));
+		m_pFunc->PushCell(ptr_toPtrIndex(m_bot));
+		m_pFunc->PushCell(ptr_toPtrIndex(area));
+		m_pFunc->PushCell(ptr_toPtrIndex(fromArea));
+		m_pFunc->PushCell(ptr_toPtrIndex(ladder));
 		m_pFunc->PushCell(gamehelpers->EntityToBCompatRef((CBaseEntity *)elevator));
 		m_pFunc->PushFloat(length);
 		m_pFunc->Execute(&cost);
@@ -58,7 +58,7 @@ float SMPathFollowerCost::operator()(CNavArea* area, CNavArea* fromArea, const C
 
 template<typename T>
 inline T* Get(IPluginContext* context, const cell_t param) {
-	T* bot = (T*)PawnAddressToPtr(param);
+	T* bot = (T*)ptrIndex_toPtr(param);
 	if (!bot) {
 		context->ThrowNativeError("Object is a null ptr!");
 		return nullptr;
@@ -74,7 +74,7 @@ cell_t GetArea(IPluginContext* context, const cell_t* params) {
 		return 0;
 	}
 
-	return PtrToPawnAddress(seg->area);
+	return ptr_toPtrIndex(seg->area);
 }
 
 cell_t GetHow(IPluginContext* context, const cell_t* params) {
@@ -104,7 +104,7 @@ cell_t GetLadder(IPluginContext* context, const cell_t* params) {
 		return 0;
 	}
 
-	return PtrToPawnAddress(seg->ladder);
+	return ptr_toPtrIndex(seg->ladder);
 }
 
 cell_t GetType(IPluginContext* context, const cell_t* params) {
@@ -246,7 +246,7 @@ cell_t GetSegmentPrior(IPluginContext* context, const cell_t* params) {
 		return 0;
 	}
 
-	return PtrToPawnAddress(cursor->segmentPrior);
+	return ptr_toPtrIndex(cursor->segmentPrior);
 }
 
 void setup(std::vector<sp_nativeinfo_t>& natives) {
@@ -276,7 +276,7 @@ cell_t PathCtor(IPluginContext* context, const cell_t* params) {
 	path->pTraceFilterIgnoreActors = pTraceFilter;
 	path->pTraceFilterOnlyActors = pTraceFilter2;
 	
-	return PtrToPawnAddress(path);
+	return ptr_toPtrIndex(path);
 }
 
 cell_t GetLength(IPluginContext* context, const cell_t* params) {
@@ -297,7 +297,7 @@ cell_t GetPosition(IPluginContext* context, const cell_t* params) {
 	float dist = sp_ctof(params[2]);
 	cell_t* addr;
 	context->LocalToPhysAddr(params[3], &addr);
-	Path::Segment* segment = (Path::Segment*)PawnAddressToPtr(params[4]);
+	Path::Segment* segment = (Path::Segment*)ptrIndex_toPtr(params[4]);
 
 	Vector pos = path->GetPosition(dist, segment);
 	VectorToPawnVector(addr, pos);
@@ -310,8 +310,16 @@ cell_t Copy(IPluginContext* context, const cell_t* params) {
 		return 0;
 	}
 
-	INextBot* bot = (INextBot*)PawnAddressToPtr(params[2]);
-	Path* path2 = (Path*)PawnAddressToPtr(params[3]);
+	INextBot* bot = (INextBot*)ptrIndex_toPtr(params[2]);
+	if (!bot) {
+		context->ThrowNativeError("Nextbot is an invalid ptr!");
+		return 0;
+	}
+	Path* path2 = (Path*)ptrIndex_toPtr(params[3]);
+	if (!path2) {
+		context->ThrowNativeError("Path to copy is an invalid ptr!");
+		return 0;
+	}
 	
 	path->Copy(bot, *path2);
 	return 0;
@@ -329,7 +337,7 @@ cell_t GetClosestPosition(IPluginContext* context, const cell_t* params) {
 	PawnVectorToVector(nearAddr, vecNear);
 	cell_t* posAddr;
 	context->LocalToPhysAddr(params[3], &posAddr);
-	Path::Segment* segment = (Path::Segment*)PawnAddressToPtr(params[4]);
+	Path::Segment* segment = (Path::Segment*)ptrIndex_toPtr(params[4]);
 	float alongLimit = sp_ctof(params[5]);
 
 	Vector pos = path->GetClosestPosition(vecNear, segment, alongLimit);
@@ -379,7 +387,7 @@ cell_t GetCurrentGoal(IPluginContext* context, const cell_t* params) {
 		return 0;
 	}
 
-	return PtrToPawnAddress(path->GetCurrentGoal());
+	return ptr_toPtrIndex(path->GetCurrentGoal());
 }
 
 cell_t GetAge(IPluginContext* context, const cell_t* params) {
@@ -450,7 +458,7 @@ cell_t GetCursorData(IPluginContext* context, const cell_t* params) {
 		return 0;
 	}
 
-	return PtrToPawnAddress(&path->GetCursorData());
+	return ptr_toPtrIndex(&path->GetCursorData());
 }
 
 cell_t IsValid(IPluginContext* context, const cell_t* params) {
@@ -478,7 +486,7 @@ cell_t Draw(IPluginContext* context, const cell_t* params) {
 		return 0;
 	}
 
-	Path::Segment* segment = (Path::Segment*)PawnAddressToPtr(params[2]);
+	Path::Segment* segment = (Path::Segment*)ptrIndex_toPtr(params[2]);
 	path->Draw(segment);
 	return 0;
 }
@@ -499,7 +507,7 @@ cell_t FirstSegment(IPluginContext* context, const cell_t* params) {
 		return 0;
 	}
 
-	return PtrToPawnAddress(path->FirstSegment());
+	return ptr_toPtrIndex(path->FirstSegment());
 }
 
 cell_t NextSegment(IPluginContext* context, const cell_t* params) {
@@ -513,7 +521,7 @@ cell_t NextSegment(IPluginContext* context, const cell_t* params) {
 		return 0;
 	}
 
-	return PtrToPawnAddress(path->NextSegment(segment));
+	return ptr_toPtrIndex(path->NextSegment(segment));
 }
 
 cell_t PriorSegment(IPluginContext* context, const cell_t* params) {
@@ -527,7 +535,7 @@ cell_t PriorSegment(IPluginContext* context, const cell_t* params) {
 		return 0;
 	}
 
-	return PtrToPawnAddress(path->PriorSegment(segment));
+	return ptr_toPtrIndex(path->PriorSegment(segment));
 }
 
 cell_t LastSegment(IPluginContext* context, const cell_t* params) {
@@ -536,7 +544,7 @@ cell_t LastSegment(IPluginContext* context, const cell_t* params) {
 		return 0;
 	}
 
-	return PtrToPawnAddress(path->LastSegment());
+	return ptr_toPtrIndex(path->LastSegment());
 }
 
 cell_t ComputeToPos(IPluginContext* context, const cell_t* params) {

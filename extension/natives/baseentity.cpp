@@ -480,7 +480,7 @@ cell_t MyNextBotPointer(IPluginContext* context, const cell_t* params) {
 		return 0;
 	}
 
-	return PtrToPawnAddress(entity->MyNextBotPointer());
+	return ptr_toPtrIndex(entity->MyNextBotPointer());
 }
 
 cell_t GetBaseAnimating(IPluginContext* context, const cell_t* params) {
