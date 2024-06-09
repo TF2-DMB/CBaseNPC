@@ -73,5 +73,6 @@ methodmap IIntention < INextBotComponent
 	 * @param threat2     Second threat
 	 * @return            Most threatening entity
 	 */
+	#pragma deprecated Currently broken, do not use!
 	public native CKnownEntity SelectMoreDangerousThreat(int subject, CKnownEntity threat1, CKnownEntity threat2);
 };

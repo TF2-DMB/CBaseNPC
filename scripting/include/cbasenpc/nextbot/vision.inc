@@ -33,6 +33,7 @@ methodmap IVision < INextBotComponent
 	 * @param bVisible     Whether or not to take visibility into account.
 	 * @return             Known entity
 	 */
+	#pragma deprecated Currently broken, do not use!
 	public native CKnownEntity GetPrimaryKnownThreat(bool bVisible);
 
 	/**
@@ -50,6 +51,7 @@ methodmap IVision < INextBotComponent
 	 * @param iTeam     Team to search for
 	 * @return          Known entity
 	 */
+	#pragma deprecated Currently broken, do not use!
 	public native CKnownEntity GetClosestKnown(int iTeam = TEAM_ANY);
 
 	/**
@@ -68,6 +70,7 @@ methodmap IVision < INextBotComponent
 	 * @param iEntity     Entity index
 	 * @return            Known entity, or NULL_KNOWN_ENTITY if not known.
 	 */
+	#pragma deprecated Currently broken, do not use!
 	public native CKnownEntity GetKnown(int iEntity);
 
 	/**

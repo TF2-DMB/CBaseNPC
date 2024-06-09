@@ -777,6 +777,7 @@ methodmap NextBotActionFactory < Handle
 	 * @param callback
 	 * @error                  Invalid handle.
 	 */
+	#pragma deprecated Warning, do not use callbacks that have CKnownEntity
 	public native void SetQueryCallback(ContextualQueryType callbackType, ActionContextualQueryCallback callback);
 
 	/**

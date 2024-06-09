@@ -14,12 +14,14 @@ methodmap CKnownEntity
 	/**
 	 * Invalidates this entry. This will mark the entry for deletion.
 	 */
+	#pragma deprecated Currently broken, do not use!
 	public native void Destroy();
 
 	/**
 	 * Updates the known position of the entity with the entity's current
 	 * position.
 	 */
+	#pragma deprecated Currently broken, do not use!
 	public native void UpdatePosition();
 
 	/**
@@ -27,6 +29,7 @@ methodmap CKnownEntity
 	 *
 	 * @return     Entity index
 	 */
+	#pragma deprecated Currently broken, do not use!
 	public native int GetEntity();
 
 	/**
@@ -34,6 +37,7 @@ methodmap CKnownEntity
 	 *
 	 * @param vecPos      Position vector
 	 */
+	#pragma deprecated Currently broken, do not use!
 	public native void GetLastKnownPosition(float vecPos[3]);
 
 	/**
@@ -42,12 +46,14 @@ methodmap CKnownEntity
 	 *
 	 * @return
 	 */
+	#pragma deprecated Currently broken, do not use!
 	public native bool HasLastKnownPositionBeenSeen();
 
 	/**
 	 * Determines that the last known position was updated because the bot saw
 	 * the entity.
 	 */
+	#pragma deprecated Currently broken, do not use!
 	public native void MarkLastKnownPositionAsSeen();
 
 	/**
@@ -56,6 +62,7 @@ methodmap CKnownEntity
 	 *
 	 * @return     CNavArea
 	 */
+	#pragma deprecated Currently broken, do not use!
 	public native CNavArea GetLastKnownArea();
 
 	/**
@@ -63,6 +70,7 @@ methodmap CKnownEntity
 	 *
 	 * @return     Game time
 	 */
+	#pragma deprecated Currently broken, do not use!
 	public native float GetTimeSinceLastKnown();
 
 	/**
@@ -71,6 +79,7 @@ methodmap CKnownEntity
 	 *
 	 * @return     Game time
 	 */
+	#pragma deprecated Currently broken, do not use!
 	public native float GetTimeSinceBecameKnown();
 
 	/**
@@ -80,6 +89,7 @@ methodmap CKnownEntity
 	 *
 	 * @param visible     Visibility status
 	 */
+	#pragma deprecated Currently broken, do not use!
 	public native void UpdateVisibilityStatus(bool visible);
 
 	/**
@@ -87,6 +97,7 @@ methodmap CKnownEntity
 	 *
 	 * @return     Visibility status
 	 */
+	#pragma deprecated Currently broken, do not use!
 	public native bool IsVisibleInFOVNow();
 
 	/**
@@ -96,6 +107,7 @@ methodmap CKnownEntity
 	 *
 	 * @return     Visibility status
 	 */
+	#pragma deprecated Currently broken, do not use!
 	public native bool IsVisibleRecently();
 
 	/**
@@ -103,6 +115,7 @@ methodmap CKnownEntity
 	 *
 	 * @return     Game time
 	 */
+	#pragma deprecated Currently broken, do not use!
 	public native float GetTimeSinceBecameVisible();
 
 	/**
@@ -110,6 +123,7 @@ methodmap CKnownEntity
 	 *
 	 * @return     Game time
 	 */
+	#pragma deprecated Currently broken, do not use!
 	public native float GetTimeWhenBecameVisible();
 
 	/**
@@ -118,6 +132,7 @@ methodmap CKnownEntity
 	 *
 	 * @return     Game time
 	 */
+	#pragma deprecated Currently broken, do not use!
 	public native float GetTimeSinceLastSeen();
 
 	/**
@@ -125,6 +140,7 @@ methodmap CKnownEntity
 	 *
 	 * @return     True if was visible at any point, false otherwise.
 	 */
+	#pragma deprecated Currently broken, do not use!
 	public native bool WasEverVisible();
 
 	/**
@@ -133,6 +149,7 @@ methodmap CKnownEntity
 	 *
 	 * @return     True if obsolete, false otherwise
 	 */
+	#pragma deprecated Currently broken, do not use!
 	public native bool IsObsolete();
 
 	/**
@@ -142,5 +159,6 @@ methodmap CKnownEntity
 	 * @return            True if the given entity is tracked by this entry,
 	 *                    false otherwise.
 	 */
+	#pragma deprecated Currently broken, do not use!
 	public native bool Is(int iEntity);
 };
