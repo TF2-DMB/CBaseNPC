@@ -259,14 +259,17 @@ bool CBaseNPCExt::QueryRunning(char* error, size_t maxlength) {
 
 bool CBaseNPCExt::QueryInterfaceDrop(SMInterface* interface) {
 	if (interface == g_pBinTools) {
+		g_pBinTools = nullptr;
 		return false;
 	}
 
 	if (interface == g_pSDKHooks) {
+		g_pSDKHooks = nullptr;
 		return false;
 	}
 
 	if (interface == g_pSDKTools) {
+		g_pSDKTools = nullptr;
 		return false;
 	}
 
