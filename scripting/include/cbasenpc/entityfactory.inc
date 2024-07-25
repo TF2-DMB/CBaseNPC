@@ -87,8 +87,10 @@ methodmap CEntityFactory < Handle
 	 *                          Perform any needed cleanup for your entity here.
 	 * @param error             Invalid handle, classname is NULL or empty, or out of
 	 *                          memory.
+	 * @param plugin            Optional Handle to another plugin to mark as the owner.
+	 *                          If no owner is passed, the owner is the calling plugin.
 	 */
-	public native CEntityFactory(const char[] classname, CEntityFactoryPostConstructor postConstructor=INVALID_FUNCTION, CEntityFactoryOnRemoveCallback onRemove=INVALID_FUNCTION);
+	public native CEntityFactory(const char[] classname, CEntityFactoryPostConstructor postConstructor=INVALID_FUNCTION, CEntityFactoryOnRemoveCallback onRemove=INVALID_FUNCTION, Handle plugin = INVALID_HANDLE);
 	
 	/**
 	 * Instructs the factory to use CBaseNPC (NextBot) as the base class.

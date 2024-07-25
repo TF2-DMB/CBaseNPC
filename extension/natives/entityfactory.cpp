@@ -42,6 +42,15 @@ cell_t CPluginEntityFactory_Ctor(IPluginContext * context, const cell_t * params
 	IPluginFunction *postConstructor = context->GetFunctionById(params[2]);
 	IPluginFunction *onRemove = context->GetFunctionById(params[3]);
 
+	if (params[0] >= 4 && params[4] != 0) {
+		// This factory needs to be created for another plugin
+		HandleError error = HandleError_None;
+		plugin = plsys->PluginFromHandle(static_cast<Handle_t>(params[4]), &error);
+		if (error != HandleError_None || plugin == nullptr) {
+			return context->ThrowNativeError("Could not create entity factory with the given plugin handle %d (error %d)", params[4], error);
+		}
+	}
+
 	CPluginEntityFactory* factory = new CPluginEntityFactory(plugin, classname, postConstructor, onRemove);
 	return factory->m_Handle;
 }
