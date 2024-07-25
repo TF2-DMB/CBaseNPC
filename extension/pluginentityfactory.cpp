@@ -200,6 +200,11 @@ bool CPluginEntityFactories::Init( IGameConfig* config, char* error, size_t maxl
 		m_hookIds.push_back(SH_ADD_HOOK(IEntityFactoryDictionary, GetCannonicalName, factoryDictionary, SH_MEMBER(this, &CPluginEntityFactories::Hook_GetCannonicalName), false));
 	}
 
+	HandleAccess security;
+	handlesys->InitAccessDefaults(nullptr, &security);
+	// Disallow this handle type from being cloned
+	security.access[HandleAccess_Clone] = HANDLE_RESTRICT_IDENTITY;
+
 	m_FactoryType = g_PluginEntityFactoryHandle = handlesys->CreateType( "PluginEntityFactory", this, 0, nullptr, nullptr, myself->GetIdentity(), nullptr );
 	if ( !m_FactoryType )
 	{
