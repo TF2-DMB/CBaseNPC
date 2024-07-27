@@ -18,7 +18,7 @@ namespace natives::takedamageinfo {
 CTakeDamageInfo g_GlobalDamageInfo;
 
 inline CTakeDamageInfo* Get(IPluginContext* context, const cell_t param) {
-	CTakeDamageInfo* info = (CTakeDamageInfo*)PawnAddressToPtr(param);
+	CTakeDamageInfo* info = (CTakeDamageInfo*)PawnAddressToPtr(param, context);
 	if (!info) {
 		context->ThrowNativeError("CTakeDamageInfo is a null ptr!");
 		return nullptr;
@@ -27,11 +27,15 @@ inline CTakeDamageInfo* Get(IPluginContext* context, const cell_t param) {
 }
 
 cell_t CTakeDamageInfo_Ctor(IPluginContext* context, const cell_t* params) {
-	return PtrToPawnAddress(PawnAddressToPtr(params[1]));
+	return PtrToPawnAddress(PawnAddressToPtr(params[1], context), context);
 }
 
 cell_t GetGlobalDamageInfo(IPluginContext* context, const cell_t* params) {
-	return PtrToPawnAddress(&g_GlobalDamageInfo);
+	static Handle_t globalDmg = BAD_HANDLE;
+	if (globalDmg == BAD_HANDLE) {
+		globalDmg = PtrToPawnAddress(&g_GlobalDamageInfo, nullptr);
+	}
+	return globalDmg;
 }
 
 cell_t Init(IPluginContext* context, const cell_t* params) {

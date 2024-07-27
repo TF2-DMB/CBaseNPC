@@ -54,6 +54,7 @@ extern ConVar* nb_update_framelimit;
 extern ConVar* nb_update_maxslide;
 
 HandleType_t g_KeyValueType;
+HandleType_t g_MemoryPtr;
 
 CBaseNPCExt g_CBaseNPCExt;
 SMEXT_LINK(&g_CBaseNPCExt);
@@ -211,6 +212,7 @@ void CBaseNPCExt::SDK_OnAllLoaded() {
 	SM_GET_LATE_IFACE(SDKHOOKS, g_pSDKHooks);
 
 	handlesys->FindHandleType("KeyValues", &g_KeyValueType);
+	handlesys->FindHandleType("MemoryPointer", &g_MemoryPtr);
 
 	// HACK: Get g_pCoreIdent from KeyValues QHandleType
 	// g_KeyValueType is an index of QHandleType array m_Types

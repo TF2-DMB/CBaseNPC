@@ -5,7 +5,7 @@
 namespace natives::tf::nav::area {
 
 inline CTFNavArea* Get(IPluginContext* context, const cell_t param) {
-	CTFNavArea* area = (CTFNavArea*)PawnAddressToPtr(param);
+	CTFNavArea* area = (CTFNavArea*)PawnAddressToPtr(param, context);
 	if (!area) {
 		context->ThrowNativeError("TFNav area ptr is null!");
 		return nullptr;

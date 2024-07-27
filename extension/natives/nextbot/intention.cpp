@@ -6,7 +6,7 @@
 namespace natives::nextbot::intention {
 
 inline IIntention* Get(IPluginContext* context, const cell_t param) {
-	IIntention* intention = (IIntention*)PawnAddressToPtr(param);
+	IIntention* intention = (IIntention*)PawnAddressToPtr(param, context);
 	if (!intention) {
 		context->ThrowNativeError("Intention ptr is null!");
 		return nullptr;
@@ -67,7 +67,7 @@ cell_t ShouldAttack(IPluginContext* context, const cell_t* params) {
 		return 0;
 	}
 	
-	CKnownEntity* them = reinterpret_cast< CKnownEntity* >( PawnAddressToPtr(params[2]) );
+	CKnownEntity* them = reinterpret_cast< CKnownEntity* >( PawnAddressToPtr(params[2], context) );
 	if (!them) {
 		return context->ThrowNativeError("them entity is a null ptr!");
 	}
@@ -171,12 +171,12 @@ cell_t SelectMoreDangerousThreat(IPluginContext* context, const cell_t* params) 
 		return context->ThrowNativeError( "Subject entity is not a CBaseCombatCharacter.");
 	}
 
-	CKnownEntity* threat1 = reinterpret_cast< CKnownEntity* >( PawnAddressToPtr(params[3]) );
+	CKnownEntity* threat1 = reinterpret_cast< CKnownEntity* >( PawnAddressToPtr(params[3], context) );
 	if (!threat1) {
 		return context->ThrowNativeError("threat1 entity cannot be a null ptr!");
 	}
 
-	CKnownEntity* threat2 = reinterpret_cast< CKnownEntity* >( PawnAddressToPtr(params[4]) );
+	CKnownEntity* threat2 = reinterpret_cast< CKnownEntity* >( PawnAddressToPtr(params[4], context) );
 	if (!threat2) {
 		return context->ThrowNativeError("threat2 entity cannot be a null ptr!");
 	}
@@ -186,7 +186,7 @@ cell_t SelectMoreDangerousThreat(IPluginContext* context, const cell_t* params) 
 		return context->ThrowNativeError("GetBot returned null!");
 	}
 
-	return PtrToPawnAddress(intention->SelectMoreDangerousThreat(me, subject, threat1, threat2));
+	return PtrToPawnAddress(intention->SelectMoreDangerousThreat(me, subject, threat1, threat2), context);
 }
 
 void setup(std::vector<sp_nativeinfo_t>& natives) {

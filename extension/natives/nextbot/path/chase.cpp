@@ -6,7 +6,7 @@ namespace natives::nextbot::path::chase {
 
 template<typename T>
 inline T* Get(IPluginContext* context, const cell_t param) {	
-	T* bot = (T*)PawnAddressToPtr(param);
+	T* bot = (T*)PawnAddressToPtr(param, context);
 	if (!bot) {
 		context->ThrowNativeError("Object is a null ptr!");
 		return nullptr;
@@ -26,7 +26,7 @@ cell_t ChasePathCtor(IPluginContext* context, const cell_t* params) {
 	path->pTraceFilterIgnoreActors = pTraceFilter;
 	path->pTraceFilterOnlyActors = pTraceFilter2;
 	
-	return PtrToPawnAddress(path);
+	return PtrToPawnAddress(path, context);
 }
 
 cell_t Update(IPluginContext* context, const cell_t* params) {
@@ -144,7 +144,7 @@ cell_t DirectChasePathCtor(IPluginContext* context, const cell_t* params) {
 	path->pTraceFilterIgnoreActors = pTraceFilter;
 	path->pTraceFilterOnlyActors = pTraceFilter2;
 	
-	return PtrToPawnAddress(path);
+	return PtrToPawnAddress(path, context);
 }
 
 void setup(std::vector<sp_nativeinfo_t>& natives) {

@@ -7,7 +7,7 @@ namespace natives::nextbotplayer {
 
 template<typename T>
 inline T* Get(IPluginContext* context, const cell_t param) {	
-	T* bot = (T*)PawnAddressToPtr(param);
+	T* bot = (T*)PawnAddressToPtr(param, context);
 	if (!bot) {
 		context->ThrowNativeError("Botplayer is a null ptr!");
 		return nullptr;
@@ -16,12 +16,12 @@ inline T* Get(IPluginContext* context, const cell_t param) {
 }
 
 cell_t ToolsNextBotPlayer(IPluginContext* context, const cell_t* params) {
-	CBaseCombatCharacter* entity = (CBaseCombatCharacter*)PawnAddressToPtr(params[1]);
+	CBaseCombatCharacter* entity = (CBaseCombatCharacter*)PawnAddressToPtr(params[1], context);
 	if (!entity) {
 		return context->ThrowNativeError("Invalid entity address %x", params[1]);
 	}
 
-	return PtrToPawnAddress(new class ToolsNextBotPlayer(entity));
+	return PtrToPawnAddress(new class ToolsNextBotPlayer(entity), context);
 }
 
 cell_t SetIsDormantWhenDead(IPluginContext* context, const cell_t* params) {

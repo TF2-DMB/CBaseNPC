@@ -133,7 +133,7 @@ cell_t GetModelPtr(IPluginContext* context, const cell_t* params) {
 		return 0;
 	}
 
-	return PtrToPawnAddress(entity->GetModelPtr());
+	return PtrToPawnAddress(entity->GetModelPtr(), context);
 }
 
 cell_t LookupPoseParameter(IPluginContext* context, const cell_t* params) {

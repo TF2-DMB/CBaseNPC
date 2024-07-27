@@ -83,7 +83,7 @@ cell_t Create(IPluginContext* context, const cell_t* params) {
 		return 0;
 	}
 
-	return PtrToPawnAddress(factory->Create());
+	return PtrToPawnAddress(factory->Create(), context);
 }
 
 cell_t BeginDataMapDesc(IPluginContext* context, const cell_t* params) {
@@ -171,7 +171,7 @@ void setup(std::vector<sp_nativeinfo_t>& natives) {
 }
 
 inline CBaseNPCPluginAction* Get(IPluginContext* context, const cell_t param) {
-	CBaseNPCPluginAction* action = (CBaseNPCPluginAction*)PawnAddressToPtr(param);
+	CBaseNPCPluginAction* action = (CBaseNPCPluginAction*)PawnAddressToPtr(param, context);
 	if (!action) {
 		context->ThrowNativeError("CBaseNPCPluginAction ptr is null!");
 		return nullptr;
@@ -301,7 +301,7 @@ cell_t GetParent(IPluginContext* context, const cell_t* params) {
 		return 0;
 	}
 
-	return PtrToPawnAddress(action->GetParentAction());
+	return PtrToPawnAddress(action->GetParentAction(), context);
 }
 
 cell_t GetActiveChild(IPluginContext* context, const cell_t* params) {
@@ -310,7 +310,7 @@ cell_t GetActiveChild(IPluginContext* context, const cell_t* params) {
 		return 0;
 	}
 
-	return PtrToPawnAddress(action->GetActiveChildAction());
+	return PtrToPawnAddress(action->GetActiveChildAction(), context);
 }
 
 cell_t GetActionBuriedUnderMe(IPluginContext* context, const cell_t* params) {
@@ -319,7 +319,7 @@ cell_t GetActionBuriedUnderMe(IPluginContext* context, const cell_t* params) {
 		return 0;
 	}
 
-	return PtrToPawnAddress(action->GetActionBuriedUnderMe());
+	return PtrToPawnAddress(action->GetActionBuriedUnderMe(), context);
 }
 
 cell_t GetActionCoveringMe(IPluginContext* context, const cell_t* params) {
@@ -328,7 +328,7 @@ cell_t GetActionCoveringMe(IPluginContext* context, const cell_t* params) {
 		return 0;
 	}
 
-	return PtrToPawnAddress(action->GetActionCoveringMe());
+	return PtrToPawnAddress(action->GetActionCoveringMe(), context);
 }
 
 cell_t GetIsSuspended(IPluginContext* context, const cell_t* params) {
@@ -531,7 +531,7 @@ cell_t ChangeTo(IPluginContext* context, const cell_t* params) {
 
 	char* reason = nullptr;
 	context->LocalToStringNULL( params[3], &reason );
-	action->PluginChangeTo( (CBaseNPCPluginAction*)PawnAddressToPtr(params[2]), reason );
+	action->PluginChangeTo( (CBaseNPCPluginAction*)PawnAddressToPtr(params[2], context), reason );
 	return 0;
 }
 
@@ -547,7 +547,7 @@ cell_t SuspendFor(IPluginContext* context, const cell_t* params) {
 
 	char* reason = nullptr;
 	context->LocalToStringNULL( params[3], &reason );
-	action->PluginSuspendFor( (CBaseNPCPluginAction*)PawnAddressToPtr(params[2]), reason );
+	action->PluginSuspendFor( (CBaseNPCPluginAction*)PawnAddressToPtr(params[2], context), reason );
 	return 0;
 }
 
@@ -591,7 +591,7 @@ cell_t TryChangeTo(IPluginContext* context, const cell_t* params) {
 		return context->ThrowNativeError( "Cannot use TryChangeTo() outside of event callback" );
 	}
 
-	CBaseNPCPluginAction* otherAction = (CBaseNPCPluginAction*)PawnAddressToPtr(params[2]);
+	CBaseNPCPluginAction* otherAction = (CBaseNPCPluginAction*)PawnAddressToPtr(params[2], context);
 	if (!otherAction) {
 		return context->ThrowNativeError("action is NULL");
 	}
@@ -613,7 +613,7 @@ cell_t TrySuspendFor(IPluginContext* context, const cell_t* params) {
 		return context->ThrowNativeError( "Cannot use TrySuspendFor() outside of event callback" );
 	}
 		
-	CBaseNPCPluginAction* otherAction = (CBaseNPCPluginAction*)PawnAddressToPtr(params[2]);
+	CBaseNPCPluginAction* otherAction = (CBaseNPCPluginAction*)PawnAddressToPtr(params[2], context);
 	if (!otherAction) {
 		return context->ThrowNativeError("action is NULL");
 	}

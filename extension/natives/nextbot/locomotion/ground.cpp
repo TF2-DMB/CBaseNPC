@@ -5,7 +5,7 @@
 namespace natives::nextbot::locomotion::ground  {
 
 inline NextBotGroundLocomotion* Get(IPluginContext* context, const cell_t param) {
-	NextBotGroundLocomotion* mover = (NextBotGroundLocomotion*)PawnAddressToPtr(param);
+	NextBotGroundLocomotion* mover = (NextBotGroundLocomotion*)PawnAddressToPtr(param, context);
 	if (!mover) {
 		context->ThrowNativeError("NextBotGroundLocomotion ptr is null!");
 		return nullptr;

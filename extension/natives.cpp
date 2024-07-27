@@ -118,14 +118,14 @@ void Event_Killed(CTakeDamageInfoHack &info)
 	RETURN_META(MRES_IGNORED);
 }
 
-cell_t CBaseNPC_GetNextBotOfEntity(IPluginContext *pContext, const cell_t *params) {
+cell_t CBaseNPC_GetNextBotOfEntity(IPluginContext* pContext, const cell_t *params) {
 	CBaseEntity *pEntity;
 	ENTINDEX_TO_CBASEENTITY(params[1], pEntity);
 	
-	return PtrToPawnAddress(pEntity->MyNextBotPointer());
+	return PtrToPawnAddress(pEntity->MyNextBotPointer(), pContext);
 }
 
-cell_t CBaseNPC_HookEventKilled(IPluginContext *pContext, const cell_t *params)
+cell_t CBaseNPC_HookEventKilled(IPluginContext* pContext, const cell_t *params)
 {
 	CBaseEntity *pEntity;
 	ENTINDEX_TO_CBASEENTITY(params[1], pEntity);
@@ -139,22 +139,22 @@ cell_t CBaseNPC_HookEventKilled(IPluginContext *pContext, const cell_t *params)
 	return 1;
 }
 
-cell_t Util_ConcatTransforms(IPluginContext* pContext, const cell_t* params) {
+cell_t Util_ConcatTransforms(IPluginContext* context, const cell_t* params) {
 	cell_t* inMat1;
 	cell_t* inMat2;
 	cell_t* outMat;
-	pContext->LocalToPhysAddr(params[1], &inMat1);
-	pContext->LocalToPhysAddr(params[2], &inMat2);
-	pContext->LocalToPhysAddr(params[3], &outMat);
+	context->LocalToPhysAddr(params[1], &inMat1);
+	context->LocalToPhysAddr(params[2], &inMat2);
+	context->LocalToPhysAddr(params[3], &outMat);
 
 	matrix3x4_t in1;
 	matrix3x4_t in2;
 	matrix3x4_t out;
 
-	PawnMatrixToMatrix(pContext, inMat1, in1);
-	PawnMatrixToMatrix(pContext, inMat2, in2);
+	PawnMatrixToMatrix(context, inMat1, in1);
+	PawnMatrixToMatrix(context, inMat2, in2);
 	ConcatTransforms(in1, in2, out);
-	MatrixToPawnMatrix(pContext, outMat, out);
+	MatrixToPawnMatrix(context, outMat, out);
 
 	return 0;
 }

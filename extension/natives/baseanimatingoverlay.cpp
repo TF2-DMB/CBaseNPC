@@ -6,7 +6,7 @@ namespace natives::baseanimatingoverlay {
 namespace layer {
 
 inline CAnimationLayer* Get(IPluginContext* context, const cell_t param) {	
-	CAnimationLayer* layer = (CAnimationLayer*)PawnAddressToPtr(param);
+	CAnimationLayer* layer = (CAnimationLayer*)PawnAddressToPtr(param, context);
 	if (!layer) {
 		context->ThrowNativeError("Layer is a null ptr!");
 		return nullptr;
@@ -697,7 +697,7 @@ cell_t GetAnimOverlay(IPluginContext* context, const cell_t* params) {
 		return 0;
 	}
 
-	return PtrToPawnAddress(entity->GetAnimOverlay(params[2]));
+	return PtrToPawnAddress(entity->GetAnimOverlay(params[2]), context);
 };
 
 cell_t GetNumAnimOverlays(IPluginContext* context, const cell_t* params) {

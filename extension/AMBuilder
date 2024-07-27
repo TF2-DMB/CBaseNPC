@@ -68,15 +68,7 @@ project.sources = [
   'natives/nextbotplayer.cpp',
   'natives/tf/nav.cpp',
   'natives/tf/nav/area.cpp',
-  os.path.join(Extension.sm_root, 'public/smsdk_ext.cpp'),
-  os.path.join(Extension.sm_root, 'public/CDetour/detours.cpp'),
-  os.path.join(Extension.sm_root, 'public/asm/asm.c'),
-  os.path.join(Extension.sm_root, 'public/libudis86/decode.c'),
-  os.path.join(Extension.sm_root, 'public/libudis86/itab.c'),
-  os.path.join(Extension.sm_root, 'public/libudis86/syn-att.c'),
-  os.path.join(Extension.sm_root, 'public/libudis86/syn-intel.c'),
-  os.path.join(Extension.sm_root, 'public/libudis86/syn.c'),
-  os.path.join(Extension.sm_root, 'public/libudis86/udis86.c')
+  os.path.join(Extension.sm_root, 'public/smsdk_ext.cpp')
 ]
 
 for sdk_name in Extension.sdks:
@@ -86,6 +78,7 @@ for sdk_name in Extension.sdks:
     if not cxx.target.arch in sdk['platforms'][cxx.target.platform]:
       continue
     binary = Extension.HL2ExtConfig(project, builder, cxx, 'cbasenpc.ext.' + sdk['extension'], sdk)
+    Extension.AddCDetour(binary)
     binary.compiler.cxxincludes += [
       os.path.join(builder.currentSourcePath, 'sourcesdk'),
       os.path.join(builder.currentSourcePath, 'sourcesdk/NextBot'),

@@ -48,6 +48,7 @@ class ExtensionConfig(object):
     self.smapi_path = None
     self.all_targets = []
     self.target_archs = set()
+    self.libsafetyhook = {}
 
     if self.build_extension():
       if builder.options.targets:
@@ -343,7 +344,7 @@ class ExtensionConfig(object):
     ]
 
     if builder.options.opt == '1':
-      cxx.cflags += ['/Ox', '/Zo', '-O3']
+      cxx.cflags += ['/Ox', '/Zo']
       cxx.linkflags += ['/OPT:ICF', '/OPT:REF']
 
     if builder.options.debug == '1':
@@ -422,6 +423,16 @@ class ExtensionConfig(object):
     if self.use_auto_versioning():
       binary.compiler.sourcedeps += Extension.generated_headers
     return binary
+
+  def AddCDetour(self, binary):
+    binary.sources += [ os.path.join(self.sm_root, 'public', 'CDetour', 'detours.cpp') ]
+    binary.compiler.cxxincludes += [ os.path.join(builder.sourcePath, 'third_party', 'safetyhook', 'include') ]
+
+    for task in self.libsafetyhook:
+      if task.target.arch == binary.compiler.target.arch:
+        binary.compiler.linkflags += [task.binary]
+        return
+    raise Exception('No suitable build of safetyhook was found.')
   
   def LibraryBuilder(self, compiler, name):
     binary = compiler.Library(name)
@@ -459,6 +470,16 @@ Extension.detectProductVersion()
 if Extension.build_extension():
   Extension.detectSDKs()
 Extension.configure()
+
+class SafetyHookShim(object):
+  def __init__(self):
+    self.all_targets = {}
+    self.libsafetyhook = {}
+
+SafetyHook = SafetyHookShim()
+SafetyHook.all_targets = Extension.all_targets
+builder.Build(os.path.join('third_party/safetyhook/AMBuilder'), {'SafetyHook': SafetyHook })
+Extension.libsafetyhook = SafetyHook.libsafetyhook
 
 if Extension.use_auto_versioning():
   Extension.generated_headers = builder.Build(

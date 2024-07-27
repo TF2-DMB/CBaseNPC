@@ -15,7 +15,7 @@ namespace natives::nextbot {
 
 template<typename T>
 inline T* Get(IPluginContext* context, const cell_t param) {	
-	T* bot = (T*)PawnAddressToPtr(param);
+	T* bot = (T*)PawnAddressToPtr(param, context);
 	if (!bot) {
 		context->ThrowNativeError("Bot is a null ptr!");
 		return nullptr;
@@ -79,7 +79,7 @@ cell_t GetLocomotionInterface(IPluginContext* context, const cell_t* params) {
 	if (!bot) {
 		return 0;
 	}
-	return PtrToPawnAddress(bot->GetLocomotionInterface());
+	return PtrToPawnAddress(bot->GetLocomotionInterface(), context);
 }
 
 cell_t GetBodyInterface(IPluginContext* context, const cell_t* params) {
@@ -87,7 +87,7 @@ cell_t GetBodyInterface(IPluginContext* context, const cell_t* params) {
 	if (!bot) {
 		return 0;
 	}
-	return PtrToPawnAddress(bot->GetBodyInterface());
+	return PtrToPawnAddress(bot->GetBodyInterface(), context);
 }
 
 cell_t GetIntentionInterface(IPluginContext* context, const cell_t* params) {
@@ -95,7 +95,7 @@ cell_t GetIntentionInterface(IPluginContext* context, const cell_t* params) {
 	if (!bot) {
 		return 0;
 	}
-	return PtrToPawnAddress(bot->GetIntentionInterface());
+	return PtrToPawnAddress(bot->GetIntentionInterface(), context);
 }
 
 cell_t GetVisionInterface(IPluginContext* context, const cell_t* params) {
@@ -103,7 +103,7 @@ cell_t GetVisionInterface(IPluginContext* context, const cell_t* params) {
 	if (!bot) {
 		return 0;
 	}
-	return PtrToPawnAddress(bot->GetVisionInterface());
+	return PtrToPawnAddress(bot->GetVisionInterface(), context);
 }
 
 cell_t SetPosition(IPluginContext* context, const cell_t* params) {
@@ -274,7 +274,7 @@ cell_t GetCurrentPath(IPluginContext* context, const cell_t* params) {
 		return 0;
 	}
 
-	return PtrToPawnAddress(bot->GetCurrentPath());
+	return PtrToPawnAddress(bot->GetCurrentPath(), context);
 }
 
 cell_t SetCurrentPath(IPluginContext* context, const cell_t* params) {
@@ -283,7 +283,7 @@ cell_t SetCurrentPath(IPluginContext* context, const cell_t* params) {
 		return 0;
 	}
 
-	bot->SetCurrentPath((PathFollower*)PawnAddressToPtr(params[2]));
+	bot->SetCurrentPath((PathFollower*)PawnAddressToPtr(params[2], context));
 	return 0;
 }
 
@@ -293,7 +293,7 @@ cell_t NotifyPathDestruction(IPluginContext* context, const cell_t* params) {
 		return 0;
 	}
 
-	bot->NotifyPathDestruction((PathFollower*)PawnAddressToPtr(params[2]));
+	bot->NotifyPathDestruction((PathFollower*)PawnAddressToPtr(params[2], context));
 	return 0;
 }
 
@@ -454,12 +454,12 @@ cell_t DisplayDebugText(IPluginContext* context, const cell_t* params) {
 }
 
 cell_t ToolsNextBot(IPluginContext* context, const cell_t* params) {
-	CBaseCombatCharacter* entity = (CBaseCombatCharacter*)PawnAddressToPtr(params[1]);
+	CBaseCombatCharacter* entity = (CBaseCombatCharacter*)PawnAddressToPtr(params[1], context);
 	if (!entity) {
 		return context->ThrowNativeError("Invalid entity address %x", params[1]);
 	}
 
-	return PtrToPawnAddress(new class ToolsNextBot(entity));
+	return PtrToPawnAddress(new class ToolsNextBot(entity), context);
 }	
 
 void setup(std::vector<sp_nativeinfo_t>& natives) {

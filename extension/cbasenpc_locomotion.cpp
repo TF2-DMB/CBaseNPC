@@ -180,8 +180,12 @@ bool CBaseNPC_Locomotion::V_IsAbleToClimb()
 	{
 		cell_t _result = 0;
 
-		pCallback->PushCell(PtrToPawnAddress(this));
+		Handle_t hndlThis = PtrToPawnAddress(this, nullptr);
+
+		pCallback->PushCell(hndlThis);
 		pCallback->Execute(&_result);
+
+		ReleasePawnAddress(hndlThis, nullptr);
 
 		result = !!_result;
 	}
@@ -211,8 +215,12 @@ bool CBaseNPC_Locomotion::V_IsClimbingUpToLedge()
 	{
 		cell_t _result = 0;
 
-		pCallback->PushCell(PtrToPawnAddress(this));
+		Handle_t hndlThis = PtrToPawnAddress(this, nullptr);
+
+		pCallback->PushCell(hndlThis);
 		pCallback->Execute(&_result);
+
+		ReleasePawnAddress(hndlThis, nullptr);
 
 		result = !!_result;
 	}
@@ -285,11 +293,15 @@ bool CBaseNPC_Locomotion::V_ClimbUpToLedge(const Vector& vecGoal, const Vector& 
 		cell_t entRef = gamehelpers->EntityToBCompatRef(const_cast<CBaseEntity*>(pEntity));
 		cell_t _result = 0;
 
-		pCallback->PushCell(PtrToPawnAddress(this));
+		Handle_t hndlThis = PtrToPawnAddress(this, nullptr);
+
+		pCallback->PushCell(hndlThis);
 		pCallback->PushArray(goalArr, 3);
 		pCallback->PushArray(forwardArr, 3);
 		pCallback->PushCell(entRef);
 		pCallback->Execute(&_result);
+
+		ReleasePawnAddress(hndlThis, nullptr);
 
 		result = !!_result;
 	}
@@ -319,8 +331,12 @@ bool CBaseNPC_Locomotion::V_IsAbleToJumpAcrossGaps()
 	{
 		cell_t _result = 0;
 
-		pCallback->PushCell(PtrToPawnAddress(this));
+		Handle_t hndlThis = PtrToPawnAddress(this, nullptr);
+
+		pCallback->PushCell(hndlThis);
 		pCallback->Execute(&_result);
+
+		ReleasePawnAddress(hndlThis, nullptr);
 
 		result = !!_result;
 	}
@@ -350,8 +366,12 @@ bool CBaseNPC_Locomotion::V_IsJumpingAcrossGap()
 	{
 		cell_t _result = 0;
 
-		pCallback->PushCell(PtrToPawnAddress(this));
+		Handle_t hndlThis = PtrToPawnAddress(this, nullptr);
+
+		pCallback->PushCell(hndlThis);
 		pCallback->Execute(&_result);
+
+		ReleasePawnAddress(hndlThis, nullptr);
 
 		result = !!_result;
 	}
@@ -383,10 +403,14 @@ void CBaseNPC_Locomotion::V_JumpAcrossGap(const Vector& landingGoal, const Vecto
 		VectorToPawnVector(forwardArr, landingForward);
 		cell_t result = 0;
 
-		pCallback->PushCell(PtrToPawnAddress(this));
+		Handle_t hndlThis = PtrToPawnAddress(this, nullptr);
+
+		pCallback->PushCell(hndlThis);
 		pCallback->PushArray(goalArr, 3);
 		pCallback->PushArray(forwardArr, 3);
 		pCallback->Execute(&result);
+
+		ReleasePawnAddress(hndlThis, nullptr);
 	}
 	else 
 	{
@@ -418,10 +442,14 @@ bool CBaseNPC_Locomotion::V_IsEntityTraversable(CBaseEntity* pEntity, ILocomotio
 		cell_t entRef = gamehelpers->EntityToBCompatRef(pEntity);
 		cell_t _result = 0;
 
-		pCallback->PushCell(PtrToPawnAddress(this));
+		Handle_t hndlThis = PtrToPawnAddress(this, nullptr);
+
+		pCallback->PushCell(hndlThis);
 		pCallback->PushCell(entRef);
 		pCallback->PushCell((cell_t)when);
 		pCallback->Execute(&_result);
+
+		ReleasePawnAddress(hndlThis, nullptr);
 
 		result = !!_result;
 	}
@@ -452,9 +480,13 @@ bool CBaseNPC_Locomotion::V_ShouldCollideWith(const CBaseEntity* pEntity)
 		cell_t entRef = gamehelpers->EntityToBCompatRef(const_cast<CBaseEntity*>(pEntity));
 		cell_t _result = 0;
 
-		pCallback->PushCell(PtrToPawnAddress(this));
+		Handle_t hndlThis = PtrToPawnAddress(this, nullptr);
+
+		pCallback->PushCell(hndlThis);
 		pCallback->PushCell(entRef);
 		pCallback->Execute(&_result);
+
+		ReleasePawnAddress(hndlThis, nullptr);
 
 		result = !!_result;
 	}

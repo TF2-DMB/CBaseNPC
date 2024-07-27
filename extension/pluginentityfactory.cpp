@@ -985,10 +985,15 @@ IServerNetworkable* CPluginEntityFactory::RecursiveCreate(const char* classname,
 				{
 					if (nextBotFactory->IsRunnable())
 					{
-						nextBotFactory->PushCell(PtrToPawnAddress(pEnt));
+						Handle_t hndlEnt = PtrToPawnAddress(pEnt, nullptr);
+
+						nextBotFactory->PushCell(hndlEnt);
 						cell_t address = 0;
 						nextBotFactory->Execute(&address);
-						createdBot = (INextBot*)PawnAddressToPtr(address);
+
+						ReleasePawnAddress(hndlEnt, nullptr);
+
+						createdBot = (INextBot*)PawnAddressToPtr(address, nullptr);
 					}
 				}
 				else

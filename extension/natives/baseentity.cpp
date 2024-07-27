@@ -23,7 +23,7 @@ cell_t NetworkProp(IPluginContext* context, const cell_t* params) {
 		return 0;
 	}
 
-	return PtrToPawnAddress(entity->NetworkProp());
+	return PtrToPawnAddress(entity->NetworkProp(), context);
 }
 
 cell_t CollisionProp(IPluginContext* context, const cell_t* params) {
@@ -32,7 +32,7 @@ cell_t CollisionProp(IPluginContext* context, const cell_t* params) {
 		return 0;
 	}
 
-	return PtrToPawnAddress(entity->CollisionProp());
+	return PtrToPawnAddress(entity->CollisionProp(), context);
 }
 
 cell_t DispatchUpdateTransmitState(IPluginContext* context, const cell_t* params) {
@@ -300,7 +300,7 @@ cell_t NetworkStateChangedVar(IPluginContext* context, const cell_t* params) {
 		return 0;
 	}
 
-	entity->NetworkStateChanged(PawnAddressToPtr(params[2]));
+	entity->NetworkStateChanged(PawnAddressToPtr(params[2], context));
 	return 0;
 }
 
@@ -480,7 +480,7 @@ cell_t MyNextBotPointer(IPluginContext* context, const cell_t* params) {
 		return 0;
 	}
 
-	return PtrToPawnAddress(entity->MyNextBotPointer());
+	return PtrToPawnAddress(entity->MyNextBotPointer(), context);
 }
 
 cell_t GetBaseAnimating(IPluginContext* context, const cell_t* params) {
@@ -516,7 +516,7 @@ cell_t TakeDamage(IPluginContext* context, const cell_t* params) {
 		return 0;
 	}
 
-	CTakeDamageInfo* inputInfo = (CTakeDamageInfo*)PawnAddressToPtr(params[2]);
+	CTakeDamageInfo* inputInfo = (CTakeDamageInfo*)PawnAddressToPtr(params[2], context);
 	if (!inputInfo) {
 		context->ThrowNativeError("CTakeDamageInfo is a null ptr!");
 		return 0;

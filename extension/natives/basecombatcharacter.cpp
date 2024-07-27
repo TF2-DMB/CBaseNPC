@@ -34,7 +34,7 @@ cell_t GetLastKnownArea(IPluginContext* context, const cell_t* params) {
 		return 0;
 	}
 
-	return PtrToPawnAddress(entity->GetLastKnownArea());
+	return PtrToPawnAddress(entity->GetLastKnownArea(), context);
 };
 
 void setup(std::vector<sp_nativeinfo_t>& natives) {

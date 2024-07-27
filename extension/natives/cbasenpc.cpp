@@ -47,7 +47,7 @@ void setup(std::vector<sp_nativeinfo_t>& natives) {
 namespace locomotion {
 
 inline CBaseNPC_Locomotion* Get(IPluginContext* context, const cell_t param) {	
-	CBaseNPC_Locomotion* mover = (CBaseNPC_Locomotion*)PawnAddressToPtr(param);
+	CBaseNPC_Locomotion* mover = (CBaseNPC_Locomotion*)PawnAddressToPtr(param, context);
 	if (!mover) {
 		context->ThrowNativeError("Invalid Locomotion %i", param);
 		return nullptr;
@@ -261,7 +261,7 @@ cell_t GetBot(IPluginContext* context, const cell_t* params) {
 		return 0;
 	}
 
-	return PtrToPawnAddress(npc->GetEntity()->MyNextBotPointer());
+	return PtrToPawnAddress(npc->GetEntity()->MyNextBotPointer(), context);
 }
 
 cell_t GetLocomotion(IPluginContext* context, const cell_t* params) {
@@ -270,7 +270,7 @@ cell_t GetLocomotion(IPluginContext* context, const cell_t* params) {
 		return 0;
 	}
 
-	return PtrToPawnAddress(npc->m_pMover);
+	return PtrToPawnAddress(npc->m_pMover, context);
 }
 
 cell_t GetBody(IPluginContext* context, const cell_t* params) {
@@ -279,7 +279,7 @@ cell_t GetBody(IPluginContext* context, const cell_t* params) {
 		return 0;
 	}
 
-	return PtrToPawnAddress(npc->m_pBody);
+	return PtrToPawnAddress(npc->m_pBody, context);
 }
 
 cell_t GetVision(IPluginContext* context, const cell_t* params) {
@@ -288,7 +288,7 @@ cell_t GetVision(IPluginContext* context, const cell_t* params) {
 		return 0;
 	}
 
-	return PtrToPawnAddress(npc->GetEntity()->MyNextBotPointer()->GetVisionInterface());
+	return PtrToPawnAddress(npc->GetEntity()->MyNextBotPointer()->GetVisionInterface(), context);
 }
 
 cell_t GetIntention(IPluginContext* context, const cell_t* params) {
@@ -297,7 +297,7 @@ cell_t GetIntention(IPluginContext* context, const cell_t* params) {
 		return 0;
 	}
 
-	return PtrToPawnAddress(npc->GetEntity()->MyNextBotPointer()->GetIntentionInterface());
+	return PtrToPawnAddress(npc->GetEntity()->MyNextBotPointer()->GetIntentionInterface(), context);
 }
 
 cell_t SetType(IPluginContext* context, const cell_t* params) {

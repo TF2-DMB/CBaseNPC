@@ -1,3 +1,6 @@
 [submodule "hl2sdk-manifests"]
 	path = hl2sdk-manifests
 	url = git@github.com:alliedmodders/hl2sdk-manifests.git
+[submodule "third_party\\safetyhook"]
+	path = third_party\\safetyhook
+	url = https://github.com/alliedmodders/safetyhook.git

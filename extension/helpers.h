@@ -4,6 +4,7 @@
 #pragma once
 
 #include "smsdk_ext.h"
+#include "IMemoryPointer.h"
 #include <iserverunknown.h>
 #include <iservernetworkable.h>
 #include <server_class.h>
@@ -148,25 +149,86 @@ inline void VectorToPawnVector(cell_t* angAddr, const QAngle* angle)
 	angAddr[2] = sp_ftoc(angle->z);
 }
 
-inline cell_t PtrToPawnAddress(const void* ptr) {
-#ifdef PLATFORM_X64
-	return g_pSM->ToPseudoAddress((void*)(ptr));
-#else
-	return (cell_t)ptr;
-#endif
-}
+class ForeignMemoryPointer : IMemoryPointer {
+public:
+	ForeignMemoryPointer(const void* ptr) : m_ptr(ptr) {}
 
-inline void* PawnAddressToPtr(cell_t addr) {
-#ifdef PLATFORM_X64
-	if (!addr) {
-		// BUGFIX: Passing 0 to FromPseudoAddress won't return nullptr but a valid pseudo address.
-		// If we're getting 0 from a plugin then we treat it as nullptr since Address_Null is 0.
+	virtual void Delete() override
+	{
+		delete this;
+	}
+
+	virtual cell_t GetSize() override
+	{
 		return 0;
 	}
-	return (void*)g_pSM->FromPseudoAddress(addr);
-#else
-	return (void*)addr;
-#endif
+
+	virtual void* Get() override
+	{
+		return (void*)m_ptr;
+	}
+protected:
+	const void* m_ptr;
+};
+
+extern HandleType_t g_MemoryPtr;
+
+inline void ReleasePawnAddress(Handle_t hndl, IPluginContext* context)
+{
+	HandleSecurity security;
+	security.pIdentity = myself->GetIdentity();
+	if (context) {
+		security.pOwner = context->GetIdentity();
+	} else {
+		security.pOwner = nullptr;
+	}
+
+	handlesys->FreeHandle(hndl, &security);
+}
+
+inline Handle_t PtrToPawnAddress(const void* ptr, IPluginContext* context) {
+	auto foreignPtr = new ForeignMemoryPointer(ptr);
+
+	IdentityToken_t* identity = nullptr;
+	if (context) {
+		identity = context->GetIdentity();
+	}
+
+	Handle_t handle = handlesys->CreateHandle(g_MemoryPtr, foreignPtr, identity, myself->GetIdentity(), nullptr);
+	if (handle == BAD_HANDLE)
+	{
+		delete foreignPtr;
+		return BAD_HANDLE;
+	}
+
+	return handle;
+}
+
+inline void* PawnAddressToPtr(cell_t cellHndl, IPluginContext* context) {
+	Handle_t hndl = (Handle_t)cellHndl;
+	if (hndl == BAD_HANDLE) {
+		return nullptr;
+	}
+
+	HandleError err = HandleError_None;
+	IMemoryPointer* ptr = nullptr;
+
+	HandleSecurity security;
+	security.pIdentity = myself->GetIdentity();
+	if (context) {
+		security.pOwner = context->GetIdentity();
+	} else {
+		security.pOwner = nullptr;
+	}
+
+	if ((err=handlesys->ReadHandle(hndl, g_MemoryPtr, &security, (void **)&ptr)) != HandleError_None || ptr == nullptr) {
+		if (context) {
+			context->ThrowNativeError("Could not read Handle %x (error %d)", hndl, err);
+		}
+		return nullptr;
+	}
+
+	return ptr->Get();
 }
 
 #if SOURCEPAWN_API_VERSION >= 0x0211
