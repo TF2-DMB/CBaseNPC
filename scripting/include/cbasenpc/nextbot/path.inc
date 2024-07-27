@@ -49,7 +49,7 @@ typeset PathFollowerCostFunctor
 /**
  * A segment of a Path.
  */
-methodmap Segment
+methodmap Segment < MemoryPointer
 {
 	/**
 	 * The CNavArea that this segment traverses.
@@ -200,7 +200,7 @@ methodmap Segment
 /**
  * A structure that stores data about the current progress on the Path.
  */
-methodmap CursorData
+methodmap CursorData < MemoryPointer
 {
 	/**
 	 * The current position along the path.
@@ -261,7 +261,7 @@ typeset PathComputeCallback
 	function void (Path path, bool success, any data);
 };
 
-methodmap Path
+methodmap Path < MemoryPointer
 {
 	/**
 	 * A Path that is used by NextBots to navigate the world.

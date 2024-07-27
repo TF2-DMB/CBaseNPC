@@ -180,8 +180,9 @@ methodmap CNavMesh
 {
 	/**
 	 * Pointer to TheNavMesh.
+	 * You don't have to free the handle.
 	 */
-	property Address Address
+	property MemoryPointer Address
 	{
 		public native get();
 	}
@@ -330,7 +331,7 @@ methodmap CNavMesh
 		bool ignoreNavBlockers = false);
 };
 
-methodmap CNavLadder
+methodmap CNavLadder < MemoryPointer
 {
 	/**
 	 * The length of the ladder.
@@ -472,7 +473,7 @@ native HidingSpot GetHidingSpotByID(int id);
 /**
  * A rectangular region defining a walkable area in the environment.
  */
-methodmap CNavArea
+methodmap CNavArea < MemoryPointer
 {
 	/**
 	 * Updates the blocked status of the area.

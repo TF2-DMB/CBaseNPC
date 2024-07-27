@@ -19,7 +19,7 @@ enum NextBotDebugType
 	DEBUG_ERRORS     = (1 << 8),
 };
 
-methodmap INextBotEventResponder
+methodmap INextBotEventResponder < MemoryPointer
 {
 	public native INextBotEventResponder FirstContainedResponder();
 	public native INextBotEventResponder NextContainedResponder(INextBotEventResponder prev);

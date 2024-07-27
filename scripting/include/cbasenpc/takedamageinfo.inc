@@ -10,14 +10,14 @@ enum TakeDamageInfo_CritType
 	TakeDamageInfo_CritType_Full
 };
 
-methodmap CTakeDamageInfo
+methodmap CTakeDamageInfo < MemoryPointer
 {
 	/**
-	 * Retrieves the CTakeDamageInfo class from the given address ptr.
+	 * Retrieves the CTakeDamageInfo class from the given ptr.
 	 *
 	 * @return		The CTakeDamageInfo.
 	 */
-	public native CTakeDamageInfo(Address ptr);
+	public native CTakeDamageInfo(MemoryPointer ptr);
 
 	/**
 	 * Initializes the CTakeDamageInfo's values.
@@ -393,6 +393,6 @@ methodmap CTakeDamageInfo
  * initialize the values of the object first using CTakeDamageInfo.Init()
  * before modifying and using it in a function call.
  * 
- * @return     Address to the global CTakeDamageInfo object.
+ * @return     Handle to the global CTakeDamageInfo object. You don't have to free this handle.
  */
 native CTakeDamageInfo GetGlobalDamageInfo();

@@ -9,7 +9,7 @@
  * Note: Do not attempt to save pointers of this class as location of the data
  * can (and will!) change.
  */
-methodmap CKnownEntity
+methodmap CKnownEntity < MemoryPointer
 {
 	/**
 	 * Invalidates this entry. This will mark the entry for deletion.
