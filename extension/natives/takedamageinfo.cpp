@@ -33,7 +33,7 @@ cell_t CTakeDamageInfo_Ctor(IPluginContext* context, const cell_t* params) {
 cell_t GetGlobalDamageInfo(IPluginContext* context, const cell_t* params) {
 	static Handle_t globalDmg = BAD_HANDLE;
 	if (globalDmg == BAD_HANDLE) {
-		globalDmg = PtrToPawnAddress(&g_GlobalDamageInfo, nullptr);
+		globalDmg = PtrToPawnAddress(&g_GlobalDamageInfo, nullptr, true);
 	}
 	return globalDmg;
 }

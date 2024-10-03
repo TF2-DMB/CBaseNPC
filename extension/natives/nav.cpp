@@ -50,7 +50,7 @@ void setup(std::vector<sp_nativeinfo_t>& natives) {
 cell_t GetAddress(IPluginContext* context, const cell_t* params) {
 	static Handle_t hndlNavMesh = BAD_HANDLE;
 	if (hndlNavMesh == BAD_HANDLE) {
-		hndlNavMesh = PtrToPawnAddress(TheNavMesh, nullptr);
+		hndlNavMesh = PtrToPawnAddress(TheNavMesh, nullptr, true);
 	}
 	return hndlNavMesh;
 }

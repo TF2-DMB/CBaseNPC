@@ -16,6 +16,7 @@
 
 class CTakeDamageInfoHack;
 SH_DECL_MANUALEXTERN1_void(MEvent_Killed, CTakeDamageInfoHack &);
+SH_DECL_HOOK1_void(IServerGameDLL, GameFrame, SH_NOATTRIB, false, bool);
 
 CGlobalVars* gpGlobals = nullptr;
 IGameConfig* g_pGameConf = nullptr;
@@ -55,6 +56,7 @@ extern ConVar* nb_update_maxslide;
 
 HandleType_t g_KeyValueType;
 HandleType_t g_MemoryPtr;
+std::unordered_set<Handle_t> gHandlesToFree;
 
 CBaseNPCExt g_CBaseNPCExt;
 SMEXT_LINK(&g_CBaseNPCExt);
@@ -62,6 +64,19 @@ SMEXT_LINK(&g_CBaseNPCExt);
 IForward *g_pForwardEventKilled = nullptr;
 bool (ToolsTraceFilterSimple:: *ToolsTraceFilterSimple::func_ShouldHitEntity)(IHandleEntity *pHandleEntity, int contentsMask) = nullptr;
 CUtlMap<int32_t, int32_t> g_EntitiesHooks;
+
+void Hook_GameFrame(bool simulating) {
+	// This is only temporary help for plugin authors getting
+	// accustomed with the new handles
+	HandleSecurity security;
+	security.pIdentity = myself->GetIdentity();
+	security.pOwner = nullptr;
+
+	for (auto hndl : gHandlesToFree) {
+		handlesys->FreeHandle(hndl, &security);
+	}
+	gHandlesToFree.clear();
+}
 
 bool CBaseNPCExt::SDK_OnLoad(char* error, size_t maxlength, bool late) {
 	char conf_error[255];
@@ -154,6 +169,8 @@ bool CBaseNPCExt::SDK_OnMetamodLoad(ISmmAPI *ismm, char *error, size_t maxlen, b
 
 	g_pSharedChangeInfo = engine->GetSharedEdictChangeInfo();
 	gpGlobals = ismm->GetCGlobals();
+
+	SH_ADD_HOOK(IServerGameDLL, GameFrame, gamedll, SH_STATIC(Hook_GameFrame), false);
 	return true;
 }
 
@@ -281,6 +298,8 @@ void CBaseNPCExt::NotifyInterfaceDrop(SMInterface* interface) {
 }
 
 void CBaseNPCExt::SDK_OnUnload() {
+	SH_REMOVE_HOOK(IServerGameDLL, GameFrame, gamedll, SH_STATIC(Hook_GameFrame), false);
+
 	gameconfs->CloseGameConfigFile(g_pGameConf);
 	forwards->ReleaseForward(g_pForwardEventKilled);
 

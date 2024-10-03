@@ -11,6 +11,7 @@
 #include <exception>
 #include <stdexcept>
 #include <string>
+#include <unordered_set>
 	
 #define GETGAMEDATAOFFSET(name, var) \
 	if(!g_pGameConf->GetOffset(name, &var) || var == -1) { snprintf(error, maxlength, "FAILED TO GET GAMEDATA OFFSET FOR %s", name); return false; } \
@@ -172,33 +173,43 @@ protected:
 };
 
 extern HandleType_t g_MemoryPtr;
+extern std::unordered_set<Handle_t> gHandlesToFree;
 
 inline void ReleasePawnAddress(Handle_t hndl, IPluginContext* context)
 {
 	HandleSecurity security;
 	security.pIdentity = myself->GetIdentity();
-	if (context) {
+	// Enable when plugins should be in charge of the handles
+	/*if (context) {
 		security.pOwner = context->GetIdentity();
 	} else {
 		security.pOwner = nullptr;
-	}
+	}*/
+	security.pOwner = nullptr;
 
+	gHandlesToFree.erase(hndl);
 	handlesys->FreeHandle(hndl, &security);
 }
 
-inline Handle_t PtrToPawnAddress(const void* ptr, IPluginContext* context) {
+inline Handle_t PtrToPawnAddress(const void* ptr, IPluginContext* context, bool keepAround = false) {
 	auto foreignPtr = new ForeignMemoryPointer(ptr);
 
-	IdentityToken_t* identity = nullptr;
+	// Enable when plugins should be in charge of the handles
+	/*IdentityToken_t* identity = nullptr;
 	if (context) {
 		identity = context->GetIdentity();
-	}
-
-	Handle_t handle = handlesys->CreateHandle(g_MemoryPtr, foreignPtr, identity, myself->GetIdentity(), nullptr);
+	}*/
+	// Atm regardless of identity, the handle will be owned by no-one
+	Handle_t handle = handlesys->CreateHandle(g_MemoryPtr, foreignPtr, nullptr, myself->GetIdentity(), nullptr);
 	if (handle == BAD_HANDLE)
 	{
 		delete foreignPtr;
 		return BAD_HANDLE;
+	}
+
+	// Unless explicitly specified otherwise, handles will be automatically destroyed next server frame
+	if (!keepAround) {
+		gHandlesToFree.insert(handle);
 	}
 
 	return handle;
