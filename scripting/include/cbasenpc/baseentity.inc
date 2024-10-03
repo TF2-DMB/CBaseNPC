@@ -44,7 +44,7 @@ methodmap CBaseEntity
 	 * @return		Memory address of CServerNetworkProperty.
 	 * @error 		Invalid entity.
 	 */
-	public native Address NetworkProp();
+	public native MemoryPointer NetworkProp();
 
 	/**
 	 * Obtains the entity's CCollisionProperty.
@@ -52,7 +52,7 @@ methodmap CBaseEntity
 	 * @return		Memory address of CCollisionProperty.
 	 * @error 		Invalid entity.
 	 */
-	public native Address CollisionProp();
+	public native MemoryPointer CollisionProp();
 
 	/**
 	 * Informs the server that the network properties of this entity changed.
@@ -69,7 +69,7 @@ methodmap CBaseEntity
 	 * @param varAddr	Entity networked property address.
 	 * @error 		Invalid entity.
 	 */
-	public native void NetworkStateChangedVar(Address varAddr);
+	public native void NetworkStateChangedVar(MemoryPointer varAddr);
 
 	/**
 	 * Gets the entity simulation time.

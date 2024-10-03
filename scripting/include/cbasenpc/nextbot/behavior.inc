@@ -76,10 +76,10 @@ typeset ActionEventResponderCallback
 	
 	// OnContact
 	// result is a CGameTrace* structure
-	function int (NextBotAction action, int actor, int other, Address result);
-	function int (NextBotAction action, CBaseCombatCharacter actor, CBaseEntity other, Address result);
-	function void (NextBotAction action, int actor, int other, Address result);
-	function void (NextBotAction action, CBaseCombatCharacter actor, CBaseEntity other, Address result);
+	function int (NextBotAction action, int actor, int other, MemoryPointer result);
+	function int (NextBotAction action, CBaseCombatCharacter actor, CBaseEntity other, MemoryPointer result);
+	function void (NextBotAction action, int actor, int other, MemoryPointer result);
+	function void (NextBotAction action, CBaseCombatCharacter actor, CBaseEntity other, MemoryPointer result);
 
 	// OnMoveToSuccess
 	function int (NextBotAction action, int actor, Path path);
@@ -203,11 +203,11 @@ typeset ActionEventResponderCallback
 
 	// OnSpokeConcept
 	// response is AI_Response*
-	function int (NextBotAction action, int actor, int who, const char[] concept, Address response);
-	function int (NextBotAction action, CBaseCombatCharacter actor, CBaseCombatCharacter who, const char[] concept, Address response);
+	function int (NextBotAction action, int actor, int who, const char[] concept, MemoryPointer response);
+	function int (NextBotAction action, CBaseCombatCharacter actor, CBaseCombatCharacter who, const char[] concept, MemoryPointer response);
 
-	function void (NextBotAction action, int actor, int who, const char[] concept, Address response);
-	function void (NextBotAction action, CBaseCombatCharacter actor, CBaseCombatCharacter who, const char[] concept, Address response);
+	function void (NextBotAction action, int actor, int who, const char[] concept, MemoryPointer response);
+	function void (NextBotAction action, CBaseCombatCharacter actor, CBaseCombatCharacter who, const char[] concept, MemoryPointer response);
 
 	// OnWeaponFired
 	function int (NextBotAction action, int actor, int whoFired, int weapon);

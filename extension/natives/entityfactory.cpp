@@ -254,9 +254,7 @@ cell_t AttachNextBot(IPluginContext* context, const cell_t* params) {
 		return 0;
 	}
 
-	// TO-DO: 2.0.0
-	bool old = ((params[0] < 2) || context->GetFunctionById(params[2]) == nullptr);
-	factory->AttachNextBot((old) ? (IPluginFunction*)0x1 : context->GetFunctionById(params[2]));
+	factory->AttachNextBot(context->GetFunctionById(params[2]));
 	return 0;
 }
 

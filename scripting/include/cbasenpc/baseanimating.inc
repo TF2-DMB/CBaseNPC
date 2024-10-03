@@ -132,7 +132,7 @@ methodmap CBaseAnimating < CBaseEntity
 	 * @return		Memory address of CStudioHdr.
 	 * @error 		Invalid entity.
 	 */
-	public native Address GetModelPtr();
+	public native MemoryPointer GetModelPtr();
 
 	/**
 	 * Retrieves the parameter index of a named pose parameter.

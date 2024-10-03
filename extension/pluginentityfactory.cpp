@@ -981,24 +981,19 @@ IServerNetworkable* CPluginEntityFactory::RecursiveCreate(const char* classname,
 			if (nextBotFactory && pEnt->MyCombatCharacterPointer() && !pEnt->MyNextBotPointer())
 			{
 				INextBot* createdBot = nullptr;
-				if (nextBotFactory != (IPluginFunction*)0x1)
+				if (nextBotFactory->IsRunnable())
 				{
-					if (nextBotFactory->IsRunnable())
-					{
-						Handle_t hndlEnt = PtrToPawnAddress(pEnt, nullptr);
+					Handle_t hndlEnt = PtrToPawnAddress(pEnt, nullptr);
 
-						nextBotFactory->PushCell(hndlEnt);
-						cell_t address = 0;
-						nextBotFactory->Execute(&address);
+					nextBotFactory->PushCell(hndlEnt);
+					Handle_t hndlBot = BAD_HANDLE;
+					nextBotFactory->Execute((cell_t*)&hndlBot);
 
-						ReleasePawnAddress(hndlEnt, nullptr);
+					ReleasePawnAddress(hndlEnt, nullptr);
 
-						createdBot = (INextBot*)PawnAddressToPtr(address, nullptr);
+					if (hndlBot != BAD_HANDLE) {
+						createdBot = (INextBot*)PawnAddressToPtr(hndlBot, nullptr);
 					}
-				}
-				else
-				{
-					createdBot = new ToolsNextBot(pEnt->MyCombatCharacterPointer());
 				}
 				pEntityRecord->m_pNextBot = createdBot;
 			}

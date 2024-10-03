@@ -60,7 +60,7 @@ typeset CEntityFactoryOnRemoveCallback
 
 typeset CEntityFactoryNextBot
 {
-	function INextBot (Address link);
+	function INextBot (MemoryPointer link);
 };
 
 methodmap CEntityFactory < Handle
@@ -241,7 +241,7 @@ methodmap CEntityFactory < Handle
 	 * 
 	 * @error                Invalid handle.
 	 */
-	public native void AttachNextBot(CEntityFactoryNextBot factory = INVALID_FUNCTION);
+	public native void AttachNextBot(CEntityFactoryNextBot factory);
 
 	// Datamap
 
