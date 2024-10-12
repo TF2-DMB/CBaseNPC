@@ -92,7 +92,7 @@ public:
 
 	void TraceHull(const Vector& start, const Vector& end, const Vector& mins, const Vector& maxs, unsigned int fMask, ITraceFilter* pFilter, trace_t* pTrace) const;
 
-	virtual bool ShouldCollideWith(const CBaseEntity* object) const;
+	virtual bool ShouldCollideWith(const CBaseEntity* object) const { return true; };
 
 	virtual void AdjustPosture(const Vector& moveGoal);
 	virtual void StuckMonitor(void);
