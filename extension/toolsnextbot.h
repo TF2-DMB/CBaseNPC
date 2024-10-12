@@ -16,7 +16,6 @@ public:
 
 	virtual CBaseCombatCharacter* GetEntity() const override { return m_linkedEntity; }
 	virtual NextBotCombatCharacter* GetNextBotCombatCharacter() const override { return nullptr; };
-	virtual ILocomotion *GetLocomotionInterface() const override { return nullptr; };
 	virtual IVision *GetVisionInterface() const override { return nullptr; };
 
 protected:
