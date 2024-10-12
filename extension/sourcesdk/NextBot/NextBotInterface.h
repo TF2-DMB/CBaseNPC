@@ -8,6 +8,7 @@
 #include "NextBotDebug.h"
 #include "NextBotBodyInterface.h"
 #include "NextBotIntentionInterface.h"
+#include "NextBotLocomotionInterface.h"
 #include "sourcesdk/tracefilter_simple.h"
 #include "sourcesdk/basecombatcharacter.h"
 #include <enginecallback.h>
@@ -51,7 +52,7 @@ public:
 	virtual CBaseCombatCharacter* GetEntity() const = 0;
 	virtual NextBotCombatCharacter *GetNextBotCombatCharacter() const { return nullptr; };
 	
-	virtual ILocomotion *GetLocomotionInterface() const = 0;
+	virtual ILocomotion *GetLocomotionInterface() const;
 	virtual IBody *GetBodyInterface() const;
 	virtual IIntention *GetIntentionInterface() const;
 	virtual IVision *GetVisionInterface() const = 0;
@@ -189,7 +190,7 @@ inline void INextBot::NotifyPathDestruction( const PathFollower *path )
 		m_CurrentPath = nullptr;
 }
 
-/*inline ILocomotion *INextBot::GetLocomotionInterface( void ) const
+inline ILocomotion *INextBot::GetLocomotionInterface( void ) const
 {
 	if ( m_LocoInterface == nullptr )
 	{
@@ -197,7 +198,7 @@ inline void INextBot::NotifyPathDestruction( const PathFollower *path )
 	}
 
 	return m_LocoInterface;
-}*/
+}
 
 inline IBody *INextBot::GetBodyInterface( void ) const
 {

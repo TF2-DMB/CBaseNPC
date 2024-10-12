@@ -39,8 +39,8 @@ INextBot::~INextBot()
 	if (m_IntentionInterface)
 		delete m_IntentionInterface;
 
-	/*if (m_LocoInterface)
-		delete m_LocoInterface;*/
+	if (m_LocoInterface)
+		delete m_LocoInterface;
 
 	if (m_BodyInterface)
 		delete m_BodyInterface;
