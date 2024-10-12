@@ -1,6 +1,13 @@
 
 #include "sourcesdk/NextBot/NextBotLocomotionInterface.h"
+#include "sourcesdk/NextBot/NextBotBodyInterface.h"
+#include "sourcesdk/NextBot/NextBotInterface.h"
+#include "sourcesdk/funcbrush.h"
+#include "sourcesdk/nav_area.h"
+#include "sourcesdk/tracefilter_simple.h"
 #include "tier0/vprof.h"
+
+#define STUCK_RADIUS 100.0f
 
 VCall<bool, const Vector&, const Vector&, const CBaseEntity*> ILocomotion::vClimbUpToLedge;
 VCall<void, const Vector&, const Vector&> ILocomotion::vJumpAcrossGap;
@@ -44,6 +51,37 @@ bool ILocomotion::Init(SourceMod::IGameConfig* config, char* error, size_t maxle
 
 	return true;
 }
+
+class NextBotTraversableTraceFilter : public ToolsTraceFilterSimple
+{
+public:
+	NextBotTraversableTraceFilter( INextBot *bot, ILocomotion::TraverseWhenType when = ILocomotion::EVENTUALLY ) : ToolsTraceFilterSimple( bot->GetEntity(), COLLISION_GROUP_NONE )
+	{
+		m_bot = bot;
+		m_when = when;
+	}
+
+	virtual bool ShouldHitEntity( IHandleEntity *pServerEntity, int contentsMask )
+	{
+		CBaseEntity *entity = EntityFromEntityHandle( pServerEntity );
+
+		if ( m_bot->IsSelf( entity ) )
+		{
+			return false;
+		}
+
+		if ( ToolsTraceFilterSimple::ShouldHitEntity( pServerEntity, contentsMask ) )
+		{
+			return !m_bot->GetLocomotionInterface()->IsEntityTraversable( entity, m_when );
+		}
+
+		return false;
+	}
+
+private:
+	INextBot *m_bot;
+	ILocomotion::TraverseWhenType m_when;
+};
 
 ILocomotion::ILocomotion( INextBot *bot ) : INextBotComponent( bot )
 {
@@ -261,11 +299,11 @@ bool ILocomotion::IsEntityTraversable( CBaseEntity *obstacle, TraverseWhenType w
 	{
 		CBasePropDoor *door = dynamic_cast< CBasePropDoor * >( obstacle );
 
-		if ( door && door->IsDoorOpen() )
+		/*if ( door && door->IsDoorOpen() )
 		{
 			// open doors are obstacles
 			return false;
-		}
+		}*/
 
 		return true;
 	}
@@ -274,7 +312,7 @@ bool ILocomotion::IsEntityTraversable( CBaseEntity *obstacle, TraverseWhenType w
 	{
 		CFuncBrush *brush = (CFuncBrush *)obstacle;
 		
-		switch ( brush->m_iSolidity )
+		switch ( brush->GetSolidity() )
 		{
 			case CFuncBrush::BRUSHSOLID_ALWAYS:
 				return false;
