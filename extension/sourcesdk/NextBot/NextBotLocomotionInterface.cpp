@@ -1,5 +1,6 @@
 
 #include "sourcesdk/NextBot/NextBotLocomotionInterface.h"
+#include "tier0/vprof.h"
 
 VCall<bool, const Vector&, const Vector&, const CBaseEntity*> ILocomotion::vClimbUpToLedge;
 VCall<void, const Vector&, const Vector&> ILocomotion::vJumpAcrossGap;
