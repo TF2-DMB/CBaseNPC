@@ -1,5 +1,5 @@
 #include "extension.h"
-#include "CDetour/detours.h"
+#include "oldCDetour/detours.h"
 #include <shareddefs.h>
 #include <enginecallback.h>
 #include <util_shared.h>

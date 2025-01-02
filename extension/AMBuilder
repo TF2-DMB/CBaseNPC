@@ -12,9 +12,10 @@ project.sources = [
   'pluginentityfactory.cpp',
   'toolsnav_mesh.cpp',
   'toolsnextbot.cpp',
-  'CDetour/detours.cpp',
+  'oldCDetour/detours.cpp',
   'asm/asm.c',
   'helpers.cpp',
+  'serialrefresher.cpp',
   'sourcesdk/NextBot/Path/NextBotPath.cpp',
   'sourcesdk/NextBot/Path/NextBotPathFollow.cpp',
   'sourcesdk/NextBot/Path/NextBotChasePath.cpp',
@@ -69,7 +70,7 @@ project.sources = [
   'natives/nextbotplayer.cpp',
   'natives/tf/nav.cpp',
   'natives/tf/nav/area.cpp',
-  'smsdk_ext.cpp'
+  os.path.join(Extension.sm_root, 'public', 'smsdk_ext.cpp')
 ]
 
 for sdk_name in Extension.sdks:

@@ -1,7 +1,7 @@
 #include <memory>
 
 #include "extension.h"
-#include "CDetour/detours.h"
+#include "oldCDetour/detours.h"
 #include "helpers.h"
 #include "sourcesdk/nav_mesh.h"
 #include "sourcesdk/tf_gamerules.h"
@@ -13,6 +13,7 @@
 #include "baseentityoutput.h"
 #include "pluginentityfactory.h"
 #include "cbasenpc_behavior.h"
+#include "serialrefresher.h"
 
 class CTakeDamageInfoHack;
 SH_DECL_MANUALEXTERN1_void(MEvent_Killed, CTakeDamageInfoHack &);
@@ -86,6 +87,8 @@ bool CBaseNPCExt::SDK_OnLoad(char* error, size_t maxlength, bool late) {
 		) {
 		return false;
 	}
+
+	Tools_Refresh_Init();
 
 	if ( !g_pPluginEntityFactories->Init( g_pGameConf, error, maxlength ) ) {
 		return false;
@@ -285,6 +288,8 @@ void CBaseNPCExt::NotifyInterfaceDrop(SMInterface* interface) {
 void CBaseNPCExt::SDK_OnUnload() {
 	gameconfs->CloseGameConfigFile(g_pGameConf);
 	forwards->ReleaseForward(g_pForwardEventKilled);
+
+	Tools_Refresh_Shutdown();
 
 	g_pBaseNPCPluginActionFactories->SDK_OnUnload();
 	g_pPluginEntityFactories->SDK_OnUnload();

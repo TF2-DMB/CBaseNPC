@@ -30,6 +30,15 @@ methodmap CBaseEntity
 	}
 
 	/**
+	 * Refreshes the network serial of the entity.
+	 * You can compute a state for each player. If that state changes, the network serial will be refreshed
+	 *
+	 * @param player The player index to update the state for.
+	 * @param state  State for the player.
+	 */
+	public static native void RefreshSerial(int player, bool state);
+
+	/**
 	 * This is the vtable offset of CBaseEntity::UpdateOnRemove.
 	 *
 	 * @return       VTable offset.

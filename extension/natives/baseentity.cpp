@@ -1,6 +1,7 @@
 #include "sourcesdk/baseentity.h"
 
 #include "baseentity.hpp"
+#include "serialrefresher.h"
 
 namespace natives::baseentity {
 
@@ -526,6 +527,26 @@ cell_t TakeDamage(IPluginContext* context, const cell_t* params) {
 	return 0;
 }
 
+cell_t RefreshSerial(IPluginContext* context, const cell_t* params) {
+	auto entity = Get(context, params[1]);
+	if (!entity) {
+		return 0;
+	}
+
+	auto index = entity->entindex();
+	if (index == 0) {
+		return context->ThrowNativeError("Entity must be attached to an edict!");
+	}
+
+	int player = params[2];
+	if (player <= 0 || player > 128) {
+		return context->ThrowNativeError("Player index (%d) is invalid!", player);
+	}
+
+	Tools_RefreshEntity(entity, player, params[3] != 0);
+	return 0;
+}
+
 void setup(std::vector<sp_nativeinfo_t>& natives) {
 	sp_nativeinfo_t list[] = {
 		{"CBaseEntity.iUpdateOnRemove", iUpdateOnRemove},
@@ -561,6 +582,7 @@ void setup(std::vector<sp_nativeinfo_t>& natives) {
 		{"CBaseEntity.SetLocalAngles", SetLocalAngles},
 		{"CBaseEntity.GetLocalOrigin", GetLocalOrigin},
 		{"CBaseEntity.SetLocalOrigin", SetLocalOrigin},
+		{"CBaseEntity.RefreshSerial", RefreshSerial},
 		{"CBaseEntity.Spawn", Spawn},
 		{"CBaseEntity.Teleport", Teleport},
 		{"CBaseEntity.SetModel", SetModel},

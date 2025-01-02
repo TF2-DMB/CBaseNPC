@@ -387,7 +387,7 @@ class ExtensionConfig(object):
     ]
 
     if builder.options.opt == '1':
-      cxx.cflags += ['/Ox', '/Zo', '-O3']
+      cxx.cflags += ['/Ox', '/Zo']
       cxx.linkflags += ['/OPT:ICF', '/OPT:REF']
 
     if builder.options.debug == '1':
