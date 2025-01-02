@@ -1,7 +1,7 @@
 #include "sourcesdk/baseentity.h"
 #include "sourcesdk/baseanimating.h"
 #include "smsdk_ext.h"
-#include <CDetour/detours.h>
+#include <oldCDetour/detours.h>
 #include <shareddefs.h>
 #include <worldsize.h>
 #include <enginecallback.h>

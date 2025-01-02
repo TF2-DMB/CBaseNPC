@@ -13,6 +13,7 @@ project.sources = [
   'toolsnav_mesh.cpp',
   'toolsnextbot.cpp',
   'helpers.cpp',
+  'serialrefresher.cpp',
   'sourcesdk/NextBot/Path/NextBotPath.cpp',
   'sourcesdk/NextBot/Path/NextBotPathFollow.cpp',
   'sourcesdk/NextBot/Path/NextBotChasePath.cpp',
