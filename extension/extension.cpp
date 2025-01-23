@@ -84,11 +84,10 @@ bool CBaseNPCExt::SDK_OnLoad(char* error, size_t maxlength, bool late) {
 		|| !CBaseEntityOutput::Init(g_pGameConf, error, maxlength)
 		|| !CBaseNPC_Locomotion::Init(g_pGameConf, error, maxlength)
 		|| !ToolsNextBot::Init(g_pGameConf, error, maxlength)
+		|| !Tools_Refresh_Init(g_pGameConf, error, maxlength)
 		) {
 		return false;
 	}
-
-	Tools_Refresh_Init();
 
 	if ( !g_pPluginEntityFactories->Init( g_pGameConf, error, maxlength ) ) {
 		return false;

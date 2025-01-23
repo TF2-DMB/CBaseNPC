@@ -527,7 +527,7 @@ cell_t TakeDamage(IPluginContext* context, const cell_t* params) {
 	return 0;
 }
 
-cell_t RefreshSerial(IPluginContext* context, const cell_t* params) {
+cell_t RefreshNetwork(IPluginContext* context, const cell_t* params) {
 	auto entity = Get(context, params[1]);
 	if (!entity) {
 		return 0;
@@ -582,7 +582,7 @@ void setup(std::vector<sp_nativeinfo_t>& natives) {
 		{"CBaseEntity.SetLocalAngles", SetLocalAngles},
 		{"CBaseEntity.GetLocalOrigin", GetLocalOrigin},
 		{"CBaseEntity.SetLocalOrigin", SetLocalOrigin},
-		{"CBaseEntity.RefreshSerial", RefreshSerial},
+		{"CBaseEntity.RefreshNetwork", RefreshNetwork},
 		{"CBaseEntity.Spawn", Spawn},
 		{"CBaseEntity.Teleport", Teleport},
 		{"CBaseEntity.SetModel", SetModel},
