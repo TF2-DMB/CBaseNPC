@@ -299,6 +299,7 @@ class ExtensionConfig(object):
       '-Wno-unused',
       '-Wno-switch',
       '-Wno-array-bounds',
+      '-Wno-implicit-exception-spec-mismatch',
       '-msse',
       '-m32',
       '-fvisibility=hidden',
