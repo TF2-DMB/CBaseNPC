@@ -4,6 +4,10 @@
 	{
 		"Offsets"
 		{
+			"framesnapshotmanager"
+			{
+				"windows"   "15"
+			}
 			// Locate CNavMesh::Load, first dword is TheNavMesh second is TheNavAreas
 			"TheNavMesh"
 			{
@@ -163,6 +167,18 @@
 		}
 		"Signatures"
 		{
+			"CFrameSnapshotManager::AddExplicitDelete"
+			{
+				"library"   "engine"
+				"windows"   "\x55\x8B\xEC\x83\xEC\x20\x53\x56\x57\x6A\x01"
+				"linux"     "@_ZN21CFrameSnapshotManager17AddExplicitDeleteEi"
+			}
+			"framesnapshotmanager"
+			{
+				"library"  "engine"
+				"windows"  "\x56\xC6\x81\x06\x02\x00\x00\x00"
+				"linux"    "@framesnapshotmanager"
+			}
 			// Find string "Missing command string" which is used by nb_command
 			// nb_command calls TheNextBots()
 			"TheNextBots"
