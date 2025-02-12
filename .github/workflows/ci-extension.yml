@@ -40,13 +40,13 @@ jobs:
       CACHE_PATH: ${{ github.workspace }}/cache
     steps:
           
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         name: Repository checkout
         with:
           fetch-depth: 0
           path: CBaseNPC
 
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         name: Sourcemod checkout
         with:
           repository: alliedmodders/sourcemod
@@ -54,21 +54,21 @@ jobs:
           submodules: true
           path: cache/sourcemod
       
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         name: Metamod-Source checkout
         with:
           repository: alliedmodders/metamod-source
           ref: ${{ env.MMSOURCE_VERSION }}-dev
           path: cache/metamod
 
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         name: AMBuild checkout
         with:
           repository: alliedmodders/ambuild
           ref: master
           path: cache/ambuild
 
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         name: Custom TF2 SDK checkout
         with:
           repository: TF2-DMB/hl2sdk-tf2
@@ -83,7 +83,7 @@ jobs:
       #    restore-keys: |
       #      ${{ runner.os }}-mms_${{ env.MMSOURCE_VERSION }}-sm_${{ env.SOURCEMOD_VERSION }}-${{ join(fromJSON(env.SDKS), '') }}
 
-      - uses: actions/setup-python@v3
+      - uses: actions/setup-python@v5
         name: Setup Python 3.8
         with:
           python-version: 3.8
@@ -126,14 +126,14 @@ jobs:
 
       - name: Upload artifact
         if: github.event_name == 'push' && matrix.platform.release
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: cbasenpc_${{ runner.os }}
           path: ${{ github.workspace }}/CBaseNPC/build/package
       
       - name: Upload artifact
         if: github.event_name == 'push' && strategy.job-index == 0
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: cbasenpc_versioning_files
           path: ${{ github.workspace }}/CBaseNPC/build/includes
