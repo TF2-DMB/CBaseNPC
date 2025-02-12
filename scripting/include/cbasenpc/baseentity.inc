@@ -744,10 +744,23 @@ methodmap CBaseEntity
 	}
 
 	/**
+	 * Alias of DispatchKeyValueInt().
+	 *
+	 * @param keyName       Name of the key.
+	 * @param value         Integer value.
+	 * @return              True on success, false otherwise.
+	 * @error               Invalid entity, or no mod support.
+	 */
+	public bool KeyValueInt(const char[] keyName, int value)
+	{
+		return DispatchKeyValueInt(this.index, keyName, value);
+	}
+
+	/**
 	 * Alias of DispatchKeyValueFloat().
 	 *
 	 * @param keyName       Name of the key.
-	 * @param value         String value.
+	 * @param value         Float value.
 	 * @return              True on success, false otherwise.
 	 * @error               Invalid entity, or no mod support.
 	 */
@@ -760,7 +773,7 @@ methodmap CBaseEntity
 	 * Alias of DispatchKeyValueVector().
 	 *
 	 * @param keyName       Name of the key.
-	 * @param value         String value.
+	 * @param value         Vector value.
 	 * @return              True on success, false otherwise.
 	 * @error               Invalid entity, or no mod support.
 	 */
