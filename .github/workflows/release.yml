@@ -21,25 +21,25 @@ jobs:
     - run: sudo apt-get install -y tree
 
     - name: Download Linux release
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: cbasenpc_Linux
         path: cbasenpc_linux
 
     - name: Download Windows release
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: cbasenpc_Windows
         path: cbasenpc_windows
     
     - name: Download Plugins
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: cbasenpc_plugins
         path: cbasenpc_plugins
 
     - name: Download CBaseNPC verisioning files
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: cbasenpc_versioning_files
         path: cbasenpc_versioning_files
