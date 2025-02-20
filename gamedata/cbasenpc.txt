@@ -175,7 +175,7 @@
 			"CTFGameRules::ApplyOnDamageModifyRules"
 			{
 				"library"		"server"
-				"windows"		"\x55\x8B\xEC\x81\xEC\x90\x00\x00\x00\x56\x8B\x75\x2A\x57\x8B\x7D"
+				"windows"		"\x55\x8B\xEC\x81\xEC\x8C\x00\x00\x00\x56\x8B\x75\x2A\x57\x8B\x7D"
 				"linux"			"@_ZN12CTFGameRules24ApplyOnDamageModifyRulesER15CTakeDamageInfoP11CBaseEntityb"
 			}
 			// Find string "mult_dmgtaken"
@@ -252,7 +252,7 @@
 			"CBaseEntity::CBaseEntity"
 			{
 				"library"		"server"
-				"windows"		"\x55\x8B\xEC\x83\xEC\x14\x53\x56\x8B\xF1\x57\x8D\x2A\x2A\xC7\x06"
+				"windows"		"\x55\x8B\xEC\x83\xEC\x08\x53\x56\x8B\xF1\x57\x8D\x2A\x2A\xC7\x06"
 				"linux"			"@_ZN11CBaseEntityC2Eb"
 			}
 			// Find "add 0x%p: %s-%s (%d-%d) [%d in play, %d max]\n" to find CBaseEntity::PhysicsMarkEntityAsTouched
@@ -331,7 +331,7 @@
 			"CBaseAnimating::ResetSequence"
 			{
 				"library"		"server"
-				"windows"		"\x55\x8B\xEC\x51\xA1\x2A\x2A\x2A\x2A\x53\x56\x57\x83\x78\x2A\x00\x8B\xD9\x8B\x7D"
+				"windows"		"\x55\x8B\xEC\xA1\x2A\x2A\x2A\x2A\x53\x56\x57\x83\x2A\x30\x00\x8B\xD9\x8B\x7D"
 				"linux"			"@_ZN14CBaseAnimating13ResetSequenceEi"
 			}
 			// Go to first data xref of "simple_bot"
