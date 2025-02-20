@@ -35,8 +35,8 @@ jobs:
       # We currently only support tf2 - however when we support more sdks
       # we will have to deal with the special case of our custom tf2 + AM's sdks
       SDKS: '["tf2"]'
-      MMSOURCE_VERSION: '1.10'
-      SOURCEMOD_VERSION: '1.11'
+      MMSOURCE_VERSION: '1.11'
+      SOURCEMOD_VERSION: '1.12'
       CACHE_PATH: ${{ github.workspace }}/cache
     steps:
           
