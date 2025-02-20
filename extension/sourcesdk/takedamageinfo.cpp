@@ -40,7 +40,7 @@ void CTakeDamageInfo::Init( CBaseEntity *pInflictor, CBaseEntity *pAttacker, CBa
 	m_flDamageForForce = 0.f;
 	
 #if SOURCE_ENGINE == SE_TF2
-	m_eCritType = kCritType_None;
+	m_eCritType = CRIT_NONE;
 #endif
 }
 
@@ -57,7 +57,7 @@ void CTakeDamageInfo::Set( CBaseEntity *pInflictor, CBaseEntity *pAttacker, CBas
 #if SOURCE_ENGINE == SE_TF2
 void CTakeDamageInfo::SetCritType( ECritType eType )
 {
-	if ( eType == kCritType_None )
+	if ( eType == CRIT_NONE )
 	{
 		// always let CRIT_NONE override the current setting
 		m_eCritType = eType;
