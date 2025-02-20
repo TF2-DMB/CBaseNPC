@@ -184,7 +184,7 @@
 			"TheNextBots"
 			{
 				"library"		"server"
-				"windows"		"\xA1\x2A\x2A\x2A\x2A\x85\xC0\x0F\x85\x2A\x2A\x2A\x2A\xA1"
+				"windows"		"\xA1\x2A\x2A\x2A\x2A\x85\xC0\x0F\x85\x2A\x2A\x2A\x2A\xA1\x2A\x2A\x2A\x2A"
 				"linux"			"@_Z11TheNextBotsv"
 			}
 			// Find string "or_crit_vs_playercond"
@@ -198,7 +198,7 @@
 			"CTFGameRules::ApplyOnDamageAliveModifyRules"
 			{
 				"library"		"server"
-				"windows"		"\x55\x8B\xEC\x81\xEC\xD4\x00\x00\x00\x53\x8B\x5D"
+				"windows"		"\x55\x8B\xEC\x81\xEC\xD4\x00\x00\x00\x53\x8B\x5D\x0C"
 				"linux"			"@_ZN12CTFGameRules29ApplyOnDamageAliveModifyRulesERK15CTakeDamageInfoP11CBaseEntityRNS_20DamageModifyExtras_tE"
 			}
 			// Find string "Invalid navigation file.\n"
@@ -221,7 +221,7 @@
 			"CTraceFilterSimple::ShouldHitEntity"
 			{
 				"library"		"server"
-				"windows"		"\x55\x8B\xEC\x51\x53\x56\x8B\x75\x2A\x57\x8B\xF9\x8B\x0D"
+				"windows"		"\x55\x8B\xEC\x51\x53\x56\x8B\x75\x08\x57\x8B\xF9\x8B\x0D\x2A\x2A\x2A\x2A"
 				"linux"			"@_ZN18CTraceFilterSimple15ShouldHitEntityEP13IHandleEntityi"
 			}
 			// Go to first data xref of string "%s has changed its model while processing AnimEvents on sequence %d. Aborting dispatch.\n", this is CBaseAnimating::DispatchAnimEvents
@@ -229,7 +229,7 @@
 			"__GetAnimationEvent__"
 			{
 				"library"		"server"
-				"windows"		"\x55\x8B\xEC\x53\x56\x8B\x75\x2A\x57\x85\xF6\x0F\x84\x2A\x2A\x2A\x2A\x8B\xCE"
+				"windows"		"\x55\x8B\xEC\x53\x56\x8B\x75\x08\x57\x85\xF6\x0F\x84\x2A\x2A\x2A\x2A\x8B\xCE"
 				"linux"			"@_Z17GetAnimationEventP10CStudioHdriP11animevent_tffi"
 			}
 			// Search for string "%s: unknown scripted sequence \"%s\"\n" to find CAI_ScriptedSequence::StartSequence
@@ -237,7 +237,7 @@
 			"Studio_LookupSequence"
 			{
 				"library"		"server"
-				"windows"		"\x55\x8B\xEC\x56\x8B\x75\x2A\x85\xF6\x0F\x84\x2A\x2A\x2A\x2A\x8B\xCE"
+				"windows"		"\x55\x8B\xEC\x56\x8B\x75\x08\x85\xF6\x0F\x84\x2A\x2A\x2A\x2A\x8B\xCE"
 				"linux"			"@_Z14LookupSequenceP10CStudioHdrPKc"
 			}
 			// Search for string "CBaseAnimatingOverlay::AddGesture:  model %s missing activity %s\n" to find CBaseAnimatingOverlay::AddGesture
@@ -245,7 +245,7 @@
 			"Studio_SelectWeightedSequence"
 			{
 				"library"		"server"
-				"windows"		"\x55\x8B\xEC\x56\x8B\x75\x2A\x85\xF6\x74\x2A\x8B\xCE\xE8\x2A\x2A\x2A\x2A\x84\xC0\x74\x2A\x57\x56"
+				"windows"		"\x55\x8B\xEC\x56\x8B\x75\x08\x85\xF6\x74\x2A\x8B\xCE\xE8\x2A\x2A\x2A\x2A\x84\xC0\x74\x2A\x57\x56"
 				"linux"			"@_Z22SelectWeightedSequenceP10CStudioHdrii"
 			}
 			// Find "placementOrigin" first subroutine call below it
