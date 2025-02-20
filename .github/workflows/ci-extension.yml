@@ -71,7 +71,7 @@ jobs:
       - uses: actions/checkout@v4
         name: Custom TF2 SDK checkout
         with:
-          repository: TF2-DMB/hl2sdk-tf2
+          repository: alliedmodders/hl2sdk
           ref: tf2
           path: cache/hl2sdk-tf2
 
