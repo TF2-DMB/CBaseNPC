@@ -99,6 +99,7 @@ class ExtensionConfig(object):
     self.smapi_path = None
     self.all_targets = []
     self.target_archs = set()
+    self.libsafetyhook = {}
 
     if self.build_extension():
       if builder.options.targets:
@@ -405,6 +406,16 @@ class ExtensionConfig(object):
   def configure_windows(self, cxx):
     cxx.defines += ['WIN32', '_WINDOWS']
 
+  def AddCDetour(self, binary):
+    binary.sources += [ os.path.join(self.sm_root, 'public', 'CDetour', 'detours.cpp') ]
+    binary.compiler.cxxincludes += [ os.path.join(builder.sourcePath, 'third_party', 'safetyhook', 'include') ]
+
+    for task in self.libsafetyhook:
+      if task.target.arch == binary.compiler.target.arch:
+        binary.compiler.linkflags += [task.binary]
+        return
+    raise Exception('No suitable build of safetyhook was found.')
+
   def ConfigureForExtension(self, context, compiler):
     compiler.cxxincludes += [
       os.path.join(context.currentSourcePath),
@@ -594,6 +605,16 @@ Extension.detectProductVersion()
 if Extension.build_extension():
   Extension.detectSDKs()
 Extension.configure()
+
+class SafetyHookShim(object):
+  def __init__(self):
+    self.all_targets = {}
+    self.libsafetyhook = {}
+
+SafetyHook = SafetyHookShim()
+SafetyHook.all_targets = Extension.all_targets
+builder.Build(os.path.join('third_party/safetyhook/AMBuilder'), {'SafetyHook': SafetyHook })
+Extension.libsafetyhook = SafetyHook.libsafetyhook
 
 if Extension.use_auto_versioning():
   Extension.generated_headers = builder.Build(
