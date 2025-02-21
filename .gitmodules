@@ -1,0 +1,3 @@
+[submodule "third_party/safetyhook"]
+	path = third_party/safetyhook
+	url = git@github.com:alliedmodders/safetyhook.git

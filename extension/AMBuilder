@@ -12,8 +12,6 @@ project.sources = [
   'pluginentityfactory.cpp',
   'toolsnav_mesh.cpp',
   'toolsnextbot.cpp',
-  'CDetour/detours.cpp',
-  'asm/asm.c',
   'helpers.cpp',
   'sourcesdk/NextBot/Path/NextBotPath.cpp',
   'sourcesdk/NextBot/Path/NextBotPathFollow.cpp',
@@ -69,7 +67,7 @@ project.sources = [
   'natives/nextbotplayer.cpp',
   'natives/tf/nav.cpp',
   'natives/tf/nav/area.cpp',
-  'smsdk_ext.cpp'
+  os.path.join(Extension.sm_root, 'public', 'smsdk_ext.cpp')
 ]
 
 for sdk_name in Extension.sdks:
@@ -80,6 +78,7 @@ for sdk_name in Extension.sdks:
       continue
   
     binary = Extension.HL2ExtConfig(project, builder, cxx, 'cbasenpc.ext.' + sdk.ext, sdk)
+    Extension.AddCDetour(binary)
     binary.compiler.cxxincludes += [
       os.path.join(builder.currentSourcePath, 'sourcesdk'),
       os.path.join(builder.currentSourcePath, 'sourcesdk/NextBot'),

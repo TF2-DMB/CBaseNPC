@@ -3,6 +3,7 @@
 
 #include "helpers.h"
 #include "NextBotEventResponderInterface.h"
+#include <cstdint>
 
 class INextBot;
 class Path;
