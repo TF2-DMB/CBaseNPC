@@ -611,10 +611,11 @@ class SafetyHookShim(object):
     self.all_targets = {}
     self.libsafetyhook = {}
 
-SafetyHook = SafetyHookShim()
-SafetyHook.all_targets = Extension.all_targets
-builder.Build(os.path.join('third_party/safetyhook/AMBuilder'), {'SafetyHook': SafetyHook })
-Extension.libsafetyhook = SafetyHook.libsafetyhook
+if Extension.build_extension():
+  SafetyHook = SafetyHookShim()
+  SafetyHook.all_targets = Extension.all_targets
+  builder.Build(os.path.join('third_party/safetyhook/AMBuilder'), {'SafetyHook': SafetyHook })
+  Extension.libsafetyhook = SafetyHook.libsafetyhook
 
 if Extension.use_auto_versioning():
   Extension.generated_headers = builder.Build(
