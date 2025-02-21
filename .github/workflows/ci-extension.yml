@@ -44,6 +44,7 @@ jobs:
         name: Repository checkout
         with:
           fetch-depth: 0
+          submodules: true
           path: CBaseNPC
 
       - uses: actions/checkout@v4
