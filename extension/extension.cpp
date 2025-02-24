@@ -1,7 +1,7 @@
 #include <memory>
 
 #include "extension.h"
-#include "oldCDetour/detours.h"
+#include <CDetour/detours.h>
 #include "helpers.h"
 #include "sourcesdk/nav_mesh.h"
 #include "sourcesdk/tf_gamerules.h"
