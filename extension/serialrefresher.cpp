@@ -1,4 +1,5 @@
-#include "serialrefresher.h"
+#include "serialrefresher.h"	
+#include "helpers.h"
 
 #include <unordered_map>
 #include <memory>
@@ -7,7 +8,7 @@ std::unordered_map<std::uint32_t, std::unique_ptr<ToolsNetworkRefresher>> gRefre
 
 class CFrameSnapshotManager {};
 CFrameSnapshotManager* gFrameSnapshot;
-void (CFrameSnapshotManager::*add_explicit_delete)(int) = nullptr;
+MCall<void, int> add_explicit_delete;
 
 ToolsNetworkRefresher::ToolsNetworkRefresher(CBaseEntity* entity) : 
  m_link(entity),
@@ -17,6 +18,9 @@ ToolsNetworkRefresher::ToolsNetworkRefresher(CBaseEntity* entity) :
  m_old_64_127_players(-1) {
 }
 
+#ifdef COMPILER_GCC
+__attribute__((noinline))
+#endif
 bool ToolsNetworkRefresher::Refresh() {
 	auto entity = m_link.Get();
 	if (!entity) {
@@ -33,7 +37,7 @@ bool ToolsNetworkRefresher::Refresh() {
 	m_old_64_127_players = m_64_127_players;
 
 	auto edict = entity->GetNetworkable()->GetEdict();
-	(gFrameSnapshot->*add_explicit_delete)(edict->m_EdictIndex);
+	add_explicit_delete(gFrameSnapshot, edict->m_EdictIndex);
 
 	return true;
 }
@@ -53,11 +57,14 @@ void ToolsNetworkRefresher::UpdateTransmit(int player, bool toggle) {
 }
 
 void Hook_Frame(bool simulating) {
-	for (auto it = gRefreshers.begin(); it != gRefreshers.end(); it++) {
-		if (!it->second->Refresh()) {
-			// Can't refresh, entity became invalid
-			it = gRefreshers.erase(it);
-		}
+	for (auto it = gRefreshers.begin(); it != gRefreshers.end();) {
+		auto& e = *it;
+        if (!(e.second->Refresh())) {
+            // Can't refresh, entity became invalid
+            it = gRefreshers.erase(it);
+        } else {
+            it++;
+        }
 	}
 }
 
@@ -77,10 +84,12 @@ void Tools_RefreshEntity(CBaseEntity* entity, int player, bool toggle) {
 
 bool Tools_Refresh_Init(SourceMod::IGameConfig* config, char* error, size_t maxlength)
 {
-	if (!config->GetMemSig("CFrameSnapshotManager::AddExplicitDelete", reinterpret_cast<void**>(&add_explicit_delete)) || add_explicit_delete == nullptr) {
+	void* addr = nullptr;
+	if (!config->GetMemSig("CFrameSnapshotManager::AddExplicitDelete", &addr) || addr == nullptr) {
 		snprintf(error, maxlength, "Failed to get CFrameSnapshotManager::AddExplicitDelete");
 		return false;
 	}
+	add_explicit_delete.Init(addr);
 
 	void* manager = nullptr;
 	if (!config->GetMemSig("framesnapshotmanager", reinterpret_cast<void**>(&manager)) || manager == nullptr) {
