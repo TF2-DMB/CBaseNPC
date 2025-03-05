@@ -59,12 +59,12 @@ void ToolsNetworkRefresher::UpdateTransmit(int player, bool toggle) {
 void Hook_Frame(bool simulating) {
 	for (auto it = gRefreshers.begin(); it != gRefreshers.end();) {
 		auto& e = *it;
-        if (!(e.second->Refresh())) {
-            // Can't refresh, entity became invalid
-            it = gRefreshers.erase(it);
-        } else {
-            it++;
-        }
+		if (!(e.second->Refresh())) {
+			// Can't refresh, entity became invalid
+			it = gRefreshers.erase(it);
+		} else {
+			it++;
+		}
 	}
 }
 
