@@ -21,25 +21,41 @@ jobs:
     strategy:
       matrix:
         platform: [
-          { os: ubuntu-20.04, cc: clang-8, cxx: clang++-8, release: true },
-          { os: ubuntu-latest, cc: clang, cxx: clang++, release: false },
-          { os: windows-2019, cc: msvc, release: true },
-          { os: windows-latest, cc: msvc, release: false }
+          { name: ubuntu-20.04, os: ubuntu-latest, containerImage: 'ubuntu:20.04', cc: clang-8, cxx: clang++-8, release: true },
+          { name: ubuntu-latest, os: ubuntu-latest, cc: clang, cxx: clang++, release: false },
+          { name: windows-2019, os: windows-2019, cc: msvc, release: true },
+          { name: windows-latest, os: windows-latest, cc: msvc, release: false }
         ]
         exclude: ${{ fromJson(needs.build-options.outputs.exclude) }}
 
-    name: ${{ matrix.platform.os }} - ${{ matrix.platform.cc }}
+    name: ${{ matrix.platform.name }} - ${{ matrix.platform.cc }}
     runs-on: ${{ matrix.platform.os }}
+    container: ${{ matrix.platform.containerImage }}
 
     env:
-      # We currently only support tf2 - however when we support more sdks
-      # we will have to deal with the special case of our custom tf2 + AM's sdks
+      # We currently only support tf2
       SDKS: '["tf2"]'
       MMSOURCE_VERSION: '1.11'
       SOURCEMOD_VERSION: '1.12'
-      CACHE_PATH: ${{ github.workspace }}/cache
+      CACHE_PATH: 'cache'
+      IN_CONTAINER: ${{ matrix.platform.containerImage != '' }}
+      PYTHON_VERSION: '3.8'
+
     steps:
-          
+      - name: Install Linux container dependencies
+        if: startsWith(runner.os, 'Linux') && env.IN_CONTAINER == 'true'
+        run: |
+          apt-get update
+          DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC apt-get -y install tzdata
+          apt-get install -y --no-install-recommends \
+            sudo \
+            git \
+            curl \
+            wget \
+            zstd \
+            build-essential \
+            software-properties-common
+
       - uses: actions/checkout@v4
         name: Repository checkout
         with:
@@ -53,49 +69,79 @@ jobs:
           repository: alliedmodders/sourcemod
           ref: ${{ env.SOURCEMOD_VERSION }}-dev
           submodules: true
-          path: cache/sourcemod
+          path: ${{ env.CACHE_PATH }}/sourcemod
       
       - uses: actions/checkout@v4
         name: Metamod-Source checkout
         with:
           repository: alliedmodders/metamod-source
           ref: ${{ env.MMSOURCE_VERSION }}-dev
-          path: cache/metamod
+          path: ${{ env.CACHE_PATH }}/metamod
 
       - uses: actions/checkout@v4
         name: AMBuild checkout
         with:
           repository: alliedmodders/ambuild
           ref: master
-          path: cache/ambuild
+          path: ${{ env.CACHE_PATH }}/ambuild
 
       - uses: actions/checkout@v4
-        name: Custom TF2 SDK checkout
+        name: Checkout TF2 SDK
         with:
           repository: alliedmodders/hl2sdk
           ref: tf2
-          path: cache/hl2sdk-tf2
+          path: ${{ env.CACHE_PATH }}/hl2sdk-tf2
 
-      #- uses: actions/cache@v2
-      #  name: Setup cache
+      #- name: Setup cache
+      #  uses: actions/cache@v4
       #  with:
       #    path: ${{ env.CACHE_PATH }}
       #    key: ${{ runner.os }}-mms_${{ env.MMSOURCE_VERSION }}-sm_${{ env.SOURCEMOD_VERSION }}-${{ join(fromJSON(env.SDKS), '') }}
       #    restore-keys: |
       #      ${{ runner.os }}-mms_${{ env.MMSOURCE_VERSION }}-sm_${{ env.SOURCEMOD_VERSION }}-${{ join(fromJSON(env.SDKS), '') }}
 
-      - uses: actions/setup-python@v5
-        name: Setup Python 3.8
+      - name: Setup Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v5
+        if: ${{ !(startsWith( runner.os, 'Linux' ) && env.IN_CONTAINER == 'true') }}
         with:
-          python-version: 3.8
+          python-version: ${{ env.PYTHON_VERSION }}
       
+      # The Setup Python action will fetch from a cached build of Python that is
+      # built on newer distros which are not guaranteed to be compatible with older ones.
+      # https://github.com/actions/setup-python/blob/main/docs/advanced-usage.md#using-setup-python-with-a-self-hosted-runner
+      - name: Setup Python ${{ env.PYTHON_VERSION }} (Container)
+        if: startsWith( runner.os, 'Linux' ) && env.IN_CONTAINER == 'true'
+        shell: bash
+        run: |
+          sudo apt-get install -y --no-install-recommends python3-pip
+          python3 -m pip install packaging
+
+          if python3 -c \
+            'import sys; from packaging.version import parse; exit(0) if parse(".".join(map(str, sys.version_info[:2]))) < parse("${{ env.PYTHON_VERSION }}") else exit(1)'; \
+            then
+
+            sudo add-apt-repository ppa:deadsnakes/ppa
+            sudo apt update
+
+            sudo apt install -y --no-install-recommends \
+              python${{ env.PYTHON_VERSION }} \
+              python${{ env.PYTHON_VERSION }}-dev \
+              python${{ env.PYTHON_VERSION }}-distutils
+
+            curl -sS https://bootstrap.pypa.io/get-pip.py | python${{ env.PYTHON_VERSION }}
+          fi
+
+          ln -sf /usr/bin/python${{ env.PYTHON_VERSION }} /usr/local/bin/python
+
+          python --version
+          pip --version
+
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip setuptools wheel
 
       - name: Setup AMBuild
-        working-directory: cache
-        shell: bash
+        working-directory: ${{ env.CACHE_PATH }}
         run: |
           pip install ./ambuild
 
@@ -119,10 +165,14 @@ jobs:
 
       - name: Build
         working-directory: CBaseNPC
+        shell: bash
         run: |
           mkdir build
           cd build
-          python ../configure.py --extension-only --enable-auto-versioning --enable-optimize --sdks=${{ join(fromJSON(env.SDKS)) }} --mms-path=${{ env.CACHE_PATH }}/metamod --hl2sdk-root=${{ env.CACHE_PATH }} --sm-path=${{ env.CACHE_PATH }}/sourcemod
+          python ../configure.py --extension-only --enable-auto-versioning --enable-optimize --sdks=${{ join(fromJSON(env.SDKS)) }} \
+            --mms-path="$GITHUB_WORKSPACE/${{ env.CACHE_PATH }}/metamod" \
+            --hl2sdk-root="$GITHUB_WORKSPACE/${{ env.CACHE_PATH }}" \
+            --sm-path="$GITHUB_WORKSPACE/${{ env.CACHE_PATH }}/sourcemod"
           ambuild
 
       - name: Upload artifact
@@ -130,11 +180,11 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: cbasenpc_${{ runner.os }}
-          path: ${{ github.workspace }}/CBaseNPC/build/package
+          path: CBaseNPC/build/package
       
       - name: Upload artifact
         if: github.event_name == 'push' && strategy.job-index == 0
         uses: actions/upload-artifact@v4
         with:
           name: cbasenpc_versioning_files
-          path: ${{ github.workspace }}/CBaseNPC/build/includes
+          path: CBaseNPC/build/includes
