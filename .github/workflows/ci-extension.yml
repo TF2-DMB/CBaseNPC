@@ -163,9 +163,9 @@ jobs:
           ${{ matrix.platform.cc }} --version
           ${{ matrix.platform.cxx }} --version
 
-      - name: Build (Linux)
-        if: startsWith(runner.os, 'Linux')
+      - name: Build
         working-directory: CBaseNPC
+        shell: bash
         run: |
           mkdir build
           cd build
@@ -173,18 +173,6 @@ jobs:
             --mms-path="$GITHUB_WORKSPACE/${{ env.CACHE_PATH }}/metamod" \
             --hl2sdk-root="$GITHUB_WORKSPACE/${{ env.CACHE_PATH }}" \
             --sm-path="$GITHUB_WORKSPACE/${{ env.CACHE_PATH }}/sourcemod"
-          ambuild
-
-      - name: Build (Windows)
-        if: startsWith(runner.os, 'Windows')
-        working-directory: CBaseNPC
-        run: |
-          mkdir build
-          cd build
-          python ../configure.py --extension-only --enable-auto-versioning --enable-optimize --sdks=${{ join(fromJSON(env.SDKS)) }} `
-            --mms-path="$env:GITHUB_WORKSPACE/${{ env.CACHE_PATH }}/metamod" `
-            --hl2sdk-root="$env:GITHUB_WORKSPACE/${{ env.CACHE_PATH }}" `
-            --sm-path="$env:GITHUB_WORKSPACE/${{ env.CACHE_PATH }}/sourcemod"
           ambuild
 
       - name: Upload artifact
