@@ -33,8 +33,8 @@ public:
 	static void SDK_OnUnload();
 
 	bool IsLoaded( void ) const		{ return *(bool*)((uint8_t*)this + offset_m_isLoaded); }
-	bool IsAnalyzed( void ) const	{ return *(bool*)((uint8_t*)this + offset_m_isLoaded + 1); }
-	bool IsOutOfDate( void ) const	{ return *(bool*)((uint8_t*)this + offset_m_isLoaded + 2); }
+	bool IsOutOfDate( void ) const	{ return *(bool*)((uint8_t*)this + offset_m_isLoaded + 1); }
+	bool IsAnalyzed( void ) const	{ return *(bool*)((uint8_t*)this + offset_m_isLoaded + 2); }
 
 	/**
 	 * Return true if nav mesh can be trusted for all climbing/jumping decisions because game environment is fairly simple.
