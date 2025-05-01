@@ -61,103 +61,103 @@
 			}
 			"CBaseEntity::MyCombatCharacterPointer"
 			{
-				"linux"		"74"
-				"windows"	"73"
-			}
-			"CBaseEntity::MyNextBotPointer"
-			{
 				"linux"		"75"
 				"windows"	"74"
 			}
+			"CBaseEntity::MyNextBotPointer"
+			{
+				"linux"		"76"
+				"windows"	"75"
+			}
 			"CBaseEntity::Touch"
 			{
-				"linux"		"105"
-				"windows"	"104"
+				"linux"		"106"
+				"windows"	"105"
 			}
 			"CBaseEntity::PhysicsSimulate"
-			{
-				"linux"		"110"
-				"windows"	"109"
-			}
-			"CBaseEntity::UpdateOnRemove"
 			{
 				"linux"		"111"
 				"windows"	"110"
 			}
+			"CBaseEntity::UpdateOnRemove"
+			{
+				"linux"		"112"
+				"windows"	"111"
+			}
 			"CBaseEntity::EyeAngles"
 			{
-				"linux"		"138"
-				"windows"	"137"
+				"linux"		"139"
+				"windows"	"138"
 			}
 			"CBaseEntity::GetVectors"
 			{
-				"linux"		"143"
-				"windows"	"142"
+				"linux"		"144"
+				"windows"	"143"
 			}
 			"CBaseEntity::WorldSpaceCenter"		
 			{
-				"linux"		"156"
-				"windows"	"155"
+				"linux"		"157"
+				"windows"	"156"
 			}
 			"CBaseAnimating::StudioFrameAdvance"
 			{
-				"linux"		"201"
-				"windows"	"200"
+				"linux"		"202"
+				"windows"	"201"
 			}
 			"CBaseAnimating::DispatchAnimEvents"
-			{
-				"linux"		"213"
-				"windows"	"212"
-			}
-			"CBaseAnimating::HandleAnimEvent"
 			{
 				"linux"		"214"
 				"windows"	"213"
 			}
+			"CBaseAnimating::HandleAnimEvent"
+			{
+				"linux"		"215"
+				"windows"	"214"
+			}
 			"CBaseAnimating::GetAttachment"
 			{
-				"linux"		"216"
-				"windows"	"215"
+				"linux"		"217"
+				"windows"	"216"
 			}
 			"CBaseCombatCharacter::Weapon_Equip"
 			{
-				"linux"		"272"
-				"windows"	"271"
+				"linux"		"273"
+				"windows"	"272"
 			}
 			"CBaseCombatCharacter::Weapon_Drop"
 			{
-				"linux"		"274"
-				"windows"	"273"
+				"linux"		"275"
+				"windows"	"274"
 			}
 			"CBaseCombatCharacter::OnTakeDamage_Alive"
-			{
-				"linux"		"283"
-				"windows"	"282"
-			}
-			"CBaseCombatCharacter::OnTakeDamage_Dying"
 			{
 				"linux"		"284"
 				"windows"	"283"
 			}
+			"CBaseCombatCharacter::OnTakeDamage_Dying"
+			{
+				"linux"		"285"
+				"windows"	"284"
+			}
 			"CBaseCombatCharacter::GetLastKnownArea"
 			{
-				"linux"		"323"
-				"windows"	"322"
+				"linux"		"324"
+				"windows"	"323"
 			}
-			"CBaseCombatCharacter::OnNavAreaChanged"
+			"CBaseCombatCharacter::UpdateLastKnownArea"
 			{
 				"linux"		"327"
 				"windows"	"326"
 			}
-			"CBaseCombatCharacter::UpdateLastKnownArea"
+			"CBaseCombatCharacter::OnNavAreaChanged"
 			{
-				"linux"		"326"
-				"windows"	"325"
+				"linux"		"328"
+				"windows"	"327"
 			}
 			"NextBotCombatCharacter::vtable_entries"
 			{
-				"windows"	"338"
-				"linux"		"338"
+				"windows"	"339"
+				"linux"		"339"
 			}
 			"NextBotGroundLocomotion::vtable_entries"
 			{
