@@ -23,7 +23,7 @@ jobs:
         platform: [
           { name: ubuntu-20.04, os: ubuntu-latest, containerImage: 'ubuntu:20.04', cc: clang-8, cxx: clang++-8, release: true },
           { name: ubuntu-latest, os: ubuntu-latest, cc: clang, cxx: clang++, release: false },
-          { name: windows-2019, os: windows-2019, cc: msvc, release: true },
+          { name: windows-2022, os: windows-2022, cc: msvc, release: true },
           { name: windows-latest, os: windows-latest, cc: msvc, release: false }
         ]
         exclude: ${{ fromJson(needs.build-options.outputs.exclude) }}
@@ -56,14 +56,14 @@ jobs:
             build-essential \
             software-properties-common
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         name: Repository checkout
         with:
           fetch-depth: 0
           submodules: true
           path: CBaseNPC
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         name: Sourcemod checkout
         with:
           repository: alliedmodders/sourcemod
@@ -71,21 +71,21 @@ jobs:
           submodules: true
           path: ${{ env.CACHE_PATH }}/sourcemod
       
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         name: Metamod-Source checkout
         with:
           repository: alliedmodders/metamod-source
           ref: ${{ env.MMSOURCE_VERSION }}-dev
           path: ${{ env.CACHE_PATH }}/metamod
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         name: AMBuild checkout
         with:
           repository: alliedmodders/ambuild
-          ref: master
+          ref: 25a23ac92307eb1e181fd3e7d9385412d4034532
           path: ${{ env.CACHE_PATH }}/ambuild
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         name: Checkout TF2 SDK
         with:
           repository: alliedmodders/hl2sdk
@@ -101,7 +101,7 @@ jobs:
       #      ${{ runner.os }}-mms_${{ env.MMSOURCE_VERSION }}-sm_${{ env.SOURCEMOD_VERSION }}-${{ join(fromJSON(env.SDKS), '') }}
 
       - name: Setup Python ${{ env.PYTHON_VERSION }}
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         if: ${{ !(startsWith( runner.os, 'Linux' ) && env.IN_CONTAINER == 'true') }}
         with:
           python-version: ${{ env.PYTHON_VERSION }}
@@ -177,14 +177,14 @@ jobs:
 
       - name: Upload artifact
         if: github.event_name == 'push' && matrix.platform.release
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: cbasenpc_${{ runner.os }}
           path: CBaseNPC/build/package
       
       - name: Upload artifact
         if: github.event_name == 'push' && strategy.job-index == 0
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: cbasenpc_versioning_files
           path: CBaseNPC/build/includes
