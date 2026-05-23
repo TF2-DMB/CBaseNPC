@@ -191,7 +191,7 @@
 			"CTFGameRules::ApplyOnDamageModifyRules"
 			{
 				"library"		"server"
-				"windows"		"\x55\x8B\xEC\x81\xEC\x8C\x00\x00\x00\x56\x8B\x75\x2A\x57\x8B\x7D"
+				"windows"		"\x55\x8B\xEC\x81\xEC\x8C\x00\x00\x00\x56\x57\x8B\x7D\x08\x89\x4D\xC0"
 				"linux"			"@_ZN12CTFGameRules24ApplyOnDamageModifyRulesER15CTakeDamageInfoP11CBaseEntityb"
 			}
 			// Find string "mult_dmgtaken"
