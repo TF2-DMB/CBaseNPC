@@ -286,10 +286,10 @@ methodmap CTakeDamageInfo
 	/**
 	 * Sets the custom damage.
 	 *
-	 * @param damage	The custom damage to set.
-	 * @error			Invalid takedamageinfo.
+	 * @param damageCustom	The custom damage to set.
+	 * @error				Invalid takedamageinfo.
 	 */
-	public native void SetDamageCustom(float damage);
+	public native void SetDamageCustom(int damageCustom);
 
 	/**
 	 * Gets the damage stats.
