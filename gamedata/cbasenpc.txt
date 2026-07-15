@@ -387,4 +387,388 @@
 			}
 		}
 	}
+	
+	"bms"
+	{
+		"Offsets"
+		{
+			"framesnapshotmanager"
+			{
+				"windows"   "2"
+			}
+			// Locate CNavMesh::Load, first dword is TheNavMesh second is TheNavAreas
+			"TheNavMesh"
+			{
+				// Linux points at the GOT slot holding &TheNavMesh.
+				"linux"		"6201848"
+				"windows"	"960"
+			}
+			"TheNavAreas"
+			{
+				// Linux points at the GOT slot holding &TheNavAreas.
+				"linux"		"6204448"
+				"windows"	"1103"
+			}
+			// Locate CBaseEntity::PhysicsMarkEntitiesAsTouching, first dword is g_TouchTrace
+			"g_TouchTrace"
+			{
+				// On Linux g_TouchTrace is addressed directly through EBX-relative PIC code,
+				// so baseentity.cpp must resolve the data symbol instead of using an offset.
+				"windows"	"12"
+			}
+			"g_EntityListPool"
+			{
+				"windows"	"1"
+			}
+			"CNavMesh::m_isLoaded"
+			{
+				"linux"		"52"
+				"windows"	"56"
+			}
+			"CBaseEntity::Spawn"
+			{
+				"linux"		"25"
+				"windows"	"24"
+			}
+			"CBaseEntity::PostConstructor"
+			{
+				"linux"		"29"
+				"windows"	"28"
+			}
+			"CBaseEntity::GetBaseAnimating"
+			{
+				"linux"		"56"
+				"windows"	"55"
+			}
+			"CBaseEntity::IsAlive"
+			{
+				"linux"		"72"
+				"windows"	"71"
+			}
+			"CBaseEntity::Event_Killed"
+			{
+				"linux"		"73"
+				"windows"	"72"
+			}
+			"CBaseEntity::MyCombatCharacterPointer"
+			{
+				"linux"		"79"
+				"windows"	"78"
+			}
+			"CBaseEntity::MyNextBotPointer"
+			{
+				"linux"		"80"
+				"windows"	"79"
+			}
+			"CBaseEntity::Touch"
+			{
+				"linux"		"109"
+				"windows"	"108"
+			}
+			"CBaseEntity::PhysicsSimulate"
+			{
+				"linux"		"114"
+				"windows"	"113"
+			}
+			"CBaseEntity::UpdateOnRemove"
+			{
+				"linux"		"116"
+				"windows"	"115"
+			}
+			"CBaseEntity::EyeAngles"
+			{
+				"linux"		"142"
+				"windows"	"141"
+			}
+			"CBaseEntity::GetVectors"
+			{
+				"linux"		"148"
+				"windows"	"147"
+			}
+			"CBaseEntity::WorldSpaceCenter"		
+			{
+				"linux"		"161"
+				"windows"	"160"
+			}
+			"CBaseAnimating::StudioFrameAdvance"
+			{
+				"linux"		"206"
+				"windows"	"205"
+			}
+			"CBaseAnimating::DispatchAnimEvents"
+			{
+				"linux"		"221"
+				"windows"	"220"
+			}
+			"CBaseAnimating::HandleAnimEvent"
+			{
+				"linux"		"222"
+				"windows"	"221"
+			}
+			"CBaseAnimating::GetAttachment"
+			{
+				"linux"		"224"
+				"windows"	"223"
+			}
+			"CBaseAnimating::SequenceDuration"
+			{
+				"linux"		"210"
+				"windows"	"209"
+			}
+			"CBaseCombatCharacter::Weapon_Equip"
+			{
+				"linux"		"282"
+				"windows"	"281"
+			}
+			"CBaseCombatCharacter::Weapon_Drop"
+			{
+				"linux"		"284"
+				"windows"	"283"
+			}
+			"CBaseCombatCharacter::OnTakeDamage_Alive"
+			{
+				"linux"		"293"
+				"windows"	"292"
+			}
+			"CBaseCombatCharacter::OnTakeDamage_Dying"
+			{
+				"linux"		"294"
+				"windows"	"293"
+			}
+			"CBaseCombatCharacter::GetLastKnownArea"
+			{
+				"linux"		"335"
+				"windows"	"334"
+			}
+			"CBaseCombatCharacter::UpdateLastKnownArea"
+			{
+				"linux"		"327"
+				"windows"	"326"
+			}
+			"CBaseCombatCharacter::OnNavAreaChanged"
+			{
+				"linux"		"338"
+				"windows"	"337"
+			}
+			"CNavMesh::Load"
+			{
+				"linux"		"9"
+				"windows"	"8"
+			}
+			"CTraceFilterSimple::ShouldHitEntity"
+			{
+				"linux"		"0"
+				"windows"	"0"
+			}
+			"NextBotCombatCharacter::vtable_entries"
+			{
+				"windows"	"347"
+				"linux"		"350"
+			}
+			"NextBotGroundLocomotion::vtable_entries"
+			{
+				"linux"		"111"
+				"windows"	"110"
+			}
+		}
+		"Signatures"
+		{
+			"CFrameSnapshotManager::AddExplicitDelete" //how to find: Find ED_Alloc(int*) by string ''ED_Alloc( %d ) - invalid edict index specified.'', one of the funcs it calls is what you need
+			{
+				"library"   "engine"
+				"windows"   "\x55\x8B\xEC\x53\x8B\xD9\x56\x57\x8D\xB3\x9C\x80\x00\x00\xFF\x15\x2A\x2A\x2A\x2A\x8B\xF8\x3B\x3E\x74\x1B\x8B\xD7\x33\xC0\xF0\x0F\xB1\x16"
+				"linux"     "@_ZN21CFrameSnapshotManager17AddExplicitDeleteEi"
+			}
+			"framesnapshotmanager"
+			{
+				"library"  "engine"
+				"windows"  "\x8B\x0D\x2A\x2A\x2A\x2A\x56\xE8\x2A\x2A\x2A\x2A\xFF\x0D\x2A\x2A\x2A\x2A\xB8\x01\x00\x00\x00"
+				"linux"    "@framesnapshotmanager"
+			}
+			// Find string "Missing command string" which is used by nb_command
+			// nb_command calls TheNextBots()
+			"TheNextBots"
+			{
+				"library"		"server"
+				"windows"		"\xA1\x2A\x2A\x2A\x2A\x85\xC0\x75\x3A\x8B\x0D\x2A\x2A\x2A\x2A\xF6\xC1\x01\x75\x20\x83\xC9\x01\x89\x0D\x2A\x2A\x2A\x2A\xB9\x2A\x2A\x2A\x2A\xE8\xF9\xEA\xFF\xFF\x68\x2A\x2A\x2A\x2A\xE8\x79\x9C\x29\x00\x83\xC4\x04\xC7\x05\x2A\x2A\x2A\x2A\x2A\x2A\x2A\x2A\xB8\xC0"
+				"linux"			"@_Z11TheNextBotsv"
+			}
+			// Find string "Invalid navigation file.\n" IS IN VIRTUAL TABLE FOR BM!!!!
+			"CNavMesh::Load" 
+			{
+				"library"		"server"
+				"windows"		"\x55\x8B\xEC\x81\xEC\x88\x02\x00\x00\xA1\x2A\x2A\x2A\x2A\x33\xC5\x89\x45\xFC\x53\x56\x8B\x2A\x2A\x2A\x2A\x11\x57\x8B\xF9\x89\xB5\xAC\xFD\xFF\xFF\x8B\xCE\x89\xBD\xEC\xFD\xFF\xFF\x8B\x06\xFF\x50\x70\x8B\x07\x8B\xCF\xFF\x50\x18\xC7\x2A\x2A\x2A\x2A\x11\x00\x00"
+				"linux"			"@_ZN8CNavMesh4LoadEv"
+			}
+			"CNavMesh::GetGroundHeight" //how to find: find CNavMesh::UpdateGeneration by string ''Finding light intensity...'', you will see 17.5 (something like var = var + 17.5), the func called before 17.5 (something like var = funccall) is what you need
+			{
+				"library"		"server"
+				"windows"		"\x55\x89\xE5\x57\x56\x53\xE8\x30\x75\x95\xFF\x81\xC3\x2A\x2A\x2A\x2A\x2A\x2A\x2A\x2A\x00\x00\x8B\x83\x44\xF7\xFF\xFF\x8B\x2A\x2A\x2A\x2A\x00\x85\xF6\x0F\x95\x85\xFF\xFE\xFF\xFF\x0F\x2A\x2A\x2A\x2A\x00\x8D\x85\x18\xFF\xFF\xFF\xC7\x2A\x2A\x2A\x2A\x00\x00\x00"
+				"linux"			"@_ZNK8CNavMesh15GetGroundHeightERK6VectorPfPS0_"
+			}
+			// Find data xref of string "weapon_*", should be taken to ppszIgnoredClasses static char* array in CTraceFilterValidForDecal::ShouldHitEntity
+			// CTraceFilterSimple::ShouldHitEntity called with 2 params IS IN VIRTUAL TABLE FOR BM!!!!
+			/*"CTraceFilterSimple::ShouldHitEntity"
+			{
+				"library"		"server"
+				"windows"		"\x55\x8B\xEC\x53\x8B\x5D\x0C\x56\x8B\x75\x08\x57\x53\x56\x8B\xF9\xE8\x6B\x01\x00\x00\x83\xC4\x08\x84\xC0\x74\x7E\x8B\x47\x04\x85\xC0\x74\x0E\x50\x56\xE8\xE6\xFB\xFF\xFF\x83\xC4\x08\x84\xC0\x74\x69\x8B\x0D\x2A\x2A\x2A\x2A\x56\x8B\x01\x8B\x40\x0C\xFF\xD0\x84"
+				"linux"			"@_ZN18CTraceFilterSimple15ShouldHitEntityEP13IHandleEntityi"
+			}*/
+			// Go to first data xref of string "%s has changed its model while processing AnimEvents on sequence %d. Aborting dispatch.\n", this is CBaseAnimating::DispatchAnimEvents
+			// GetAnimationEvent is used in a loop
+			"__GetAnimationEvent__"
+			{
+				"library"		"server"
+				"windows"		"\x55\x8B\xEC\x56\x8B\x75\x08\x85\xF6\x0F\x84\x0A\x01\x00\x00\x8B\xCE\xE8\xDA\x73\x1A\x00\x8B\x4D\x0C\x3B\xC8\x0F\x8D\xF8\x00\x00\x2A\x2A\x2A\x2A\x85\xD2\x0F\x84\xED\x00\x00\x00\x57\x51\x8B\xCE\xE8\xAB\x8A\x1A\x00\x8B\xF8\x8B\x4F\x18\x85\xC9\x0F\x84\xD1\x00"
+				"linux"			"@_Z17GetAnimationEventP10CStudioHdriP11animevent_tffi"
+			}
+			"Studio_LookupSequence" //how to find: find CAI_BaseNPC::CalculateValidEnemyInteractions() by string ''   Found: %s\n'', the func that called before Msg() call with this string is CBaseAnimating::LookupSequence, the last func it calls is what you need 
+			{
+				"library"		"server"
+				"windows"		"\x55\x8B\xEC\x57\x8B\x7D\x08\x85\xFF\x75\x05\x33\xC0\x5F\x5D\xC3\x8B\xCF\xE8\xF9\x78\x1A\x00\x84\xC0\x74\xF0\x53\x56\x8B\xCF\x33\xF6\xE8\xCA\x6B\x1A\x00\x8B\x5D\x0C\x85\xC0\x7E\x2A\x8D\x49\x00\x56\x8B\xCF\xE8\xA8\x82\x1A\x00\x53\x8B\x48\x04\x03\xC8\x51\xE8"
+				"linux"			"@_Z14LookupSequenceP10CStudioHdrPKc"
+			}
+			"Studio_SelectWeightedSequence" //how to find: find by string ''Server SelectWeightedSequence''
+			{
+				"library"		"server"
+				"windows"		"\x55\x8B\xEC\xA1\x2A\x2A\x2A\x2A\xA8\x01\x75\x2D\x8B\x0D\x2A\x2A\x2A\x2A\x83\xC8\x01\x6A\x00\x68\x2A\x2A\x2A\x2A\xA3\x2A\x2A\x2A\x2A\xFF\x15\x2A\x2A\x2A\x2A\x68\x2A\x2A\x2A\x2A\xA3\x2A\x2A\x2A\x2A\xE8\x44\x71\x4A\x00\x83\xC4\x04\xA1\x2A\x2A\x2A\x2A\x56\x8B"
+				"linux"			"@_Z22SelectWeightedSequenceP10CStudioHdrii"
+			}
+			// Find "placementOrigin" first subroutine call below it
+			"Studio_FindAttachment"
+			{
+				"library"		"server"
+				"windows"		"\x55\x8B\xEC\x53\x56\x57\x8B\x7D\x08\x85\xFF\x74\x41\x8B\xCF\xE8\xFC\x39\x15\x00\x84\xC0\x74\x36\x8B\xCF\x33\xF6\xE8\x6F\x2C\x15\x00\x85\xC0\x7E\x29\x8B\x5D\x0C\x56\x8B\xCF\xE8\x90\x41\x15\x00\x8B\x08\x03\xC8\x51\x53\xE8\x45\x11\x3F\x00\x83\xC4\x08\x85\xC0"
+				"linux"			"@_Z21Studio_FindAttachmentPK10CStudioHdrPKc"
+			}
+			"SimThink_EntityChanged" //how to find: find CAI_Hint::OnRestore by string ''Warning: AI hint has incorrect or no AI node\n'', the very first func it calls is CBaseEntity::OnRestore, one of the funcs it calls is what you need
+			{
+				"library"		"server"
+				"windows"		"\x55\x8B\xEC\xFF\x75\x08\xB9\x2A\x2A\x2A\x2A\xE8\x2A\x2A\x2A\x2A\x5D\xC3"
+				"linux"			"@_Z22SimThink_EntityChangedP11CBaseEntity"
+			}
+			"CBaseEntity::CBaseEntity" //how to find: find CLensFlare::CLensFlare by string ''sprites/glow02.spr'', the very first func it calls is what you need
+			{
+				"library"		"server"
+				"windows"		"\x55\x8B\xEC\x53\x56\x8B\xF1\x57\x8D\x4E\x0C\xC7\x06\x2A\x2A\x2A\x2A\xE8\x2A\x2A\x2A\x2A\x8D\x8E\x8C\x00\x00\x00"
+				"linux"			"@_ZN11CBaseEntityC2Eb"
+			}
+			"CBaseEntity::PhysicsMarkEntitiesAsTouching" /how to find: find CBaseEntity::PhysicsMarkEntityAsTouched by string ''add 0x%p: %s-%s (%d-%d) [%d in play, %d max]\n'', one of the funcs that calls this func is CBaseEntity::PhysicsMarkEntitiesAsTouching, the first one is what you need (not sure if it's a rule)
+			{
+				"library"		"server"
+				"windows"		"\x55\x8B\xEC\x53\x56\x8B\x75\x0C\x57\x8B\xF9\xB9\x2A\x2A\x2A\x2A\x56\xE8\x2A\x2A\x2A\x2A\xF3\x0F\x10\x46\x38"
+				"linux"			"@_ZN11CBaseEntity29PhysicsMarkEntitiesAsTouchingEPS_R10CGameTrace"
+			}
+			"CBaseEntity::CalcAbsolutePosition" //how to find: find NWCEdit::UpdateEntityPosition by string ''%s\n   origin %f %f %f\n   angles %f %f %f\n'', first 2 calls is the same func, the func is what you need 
+			{
+				"library"		"server"
+				"windows"		"\x55\x8B\xEC\x83\xEC\x64\xA1\x2A\x2A\x2A\x2A\x33\xC5\x89\x45\xFC\x56\x8B\xF1\x8B\x86\x04\x01\x00\x00\xC1\xE8\x0B\xA8\x01\x0F\x84\x00\x02\x00\x00\x57\x8D\xBE\x40\x03\x00\x00\xFF\x15\x2A\x2A\x2A\x2A\x8B\xD0\x3B\x17\x74\x1B\x8B\xCA\x33\xC0\xF0\x0F\xB1\x0F\x85"
+				"linux"			"@_ZN11CBaseEntity20CalcAbsolutePositionEv"
+			}
+			"CBaseEntity::InvalidatePhysicsRecursive" //how to find: find CBaseEntity::ApplyLocalVelocityImpulse by string ''Clamping ApplyLocalVelocityImpulse(%f,%f,%f) on %s\n'', it puts this and 4 as params to call one of the funcs, the func is what you need. RENAME IT TO NORMAL NAME!!!! You will need it later.
+			{
+				"library"		"server"
+				"windows"		"\x55\x8B\xEC\x51\x53\x8B\x5D\x2A\x2A\x2A\x2A\x00\x00\x56\x57\x33\xFF\xC6\x45\xFF\x00\xF6\xC3\x04\x8B\xF1\x0F\x45\xF8\xF6\xC3\x01\x74\x1E\x8B\x46\x18\x81\xCF\x00\x08\x00\x00\x85\xC0\x74\x06\x81\x08\x80\x00\x00\x00\x8D\x8E\x4C\x01\x00\x00\xE8\xA0\xBE\x02\x00"
+				"linux"			"@_ZN11CBaseEntity26InvalidatePhysicsRecursiveEi"
+			}
+			"CBaseEntity::SetGroundEntity" //how to find: find CPropXenPushPad::StartTouch by string ''ignoredEntity'', if renamed Ghidra placeholder to CBaseEntity::CalcAbsolutePosition before, search the func via if statement that contains ''& 1) != 0'', the only not renamed func is what you need
+			{
+				"library"		"server"
+				"windows"		"\x55\x8B\xEC\x56\x57\x8B\xF9\x8B\x97\x00\x02\x00\x00\x83\xFA\xFF"
+				"linux"			"@_ZN11CBaseEntity15SetGroundEntityEPS_"
+			}
+			// Find string "CBaseEntity::TakeDamage:  with inputInfo.GetDamageForce() == vec3_origin\n"
+			"CBaseEntity::TakeDamage"
+			{
+				"library"		"server"
+				"windows"		"\x55\x8B\xEC\x83\xEC\x78\x57\x8B\xF9\x8B\x0D\x2A\x2A\x2A\x2A\x85\xC9\x75\x09\x33\xC0\x5F\x8B\xE5\x5D\xC2\x04\x00\x8B\x01\x56\x8B\x75\x08\x8B\x40\x50\xFF\x76\x3C\xFF\xD0\x84\xC0\x0F\x85\x34\x01\x00\x00\x83\x7E\x3C\x00\x0F\x84\x2A\x01\x00\x00\x8B\x06\xF3\x0F"
+				"linux"			"@_ZN11CBaseEntity10TakeDamageERK15CTakeDamageInfo"
+			}
+			// "g_EntityListPool"
+			"g_EntityListPool"
+			{
+				"library"		"server"
+				"windows"		"\xB9\x2A\x2A\x2A\x2A\x57\xE8\x2A\x2A\x2A\x2A\x8B\xFE\xEB\x09"
+				"linux"			"@g_EntityListPool"
+			}
+			"CBaseAnimating::SetPoseParameter" //how to find: find CFourWheelPhysics::InitializePoseParameters ''vehicle_wheel_fl_height'', it will call the same func with 0.0 as last params, it is CFourWheelPhysics::SetPoseParameter, the func calls func with 4 params, the func is what you want
+			{
+				"library"		"server"
+				"windows"		"\x55\x8B\xEC\x8B\x45\x08\xD9\x45\x10\x57\x8B\xF9\x85\xC0\x74\x2A\x56\x8B\x75\x0C\x85\xF6\x78\x2A"
+				"linux"			"@_ZN14CBaseAnimating16SetPoseParameterEP10CStudioHdrif"
+			}
+			"CBaseAnimating::GetPoseParameter" //how to find: find CBotAI::Update by string ''%s: %f'', one of the funcs it calls is what you need, it is called just before the string used
+			{
+				"library"		"server"
+				"windows"		"\x55\x8B\xEC\x56\x8B\xF1\x57\x80\xBE\x31\x03\x00\x00\x00\x75\x55\x83\xBE\x80\x04\x00\x2A\x2A\x2A\x2A\xE8\x52\x4A\x02\x00\x85\xC0\x74\x07\x8B\xCE\xE8\x47\x14\x00\x00\x8B\xBE\x80\x04\x00\x00\x85\xFF\x74\x32\x83\x3F\x00\x74\x2D\x8B\xCF\xE8\x41\x19\x1A\x00\x84"
+				"linux"			"@_ZN14CBaseAnimating16GetPoseParameterEi"
+			}
+			"CBaseAnimating::LookupPoseParameter" //how to find: pick any xref to ''body_pitch'', it is used as call param for func you want
+			{
+				"library"		"server"
+				"windows"		"\x55\x8B\xEC\x83\xEC\x08\x57\x8B\xF9\xE8\xA2\x4E\xEC\xFF\x8B\x97\xBC\x0E\x00\x00\x83\xFA\xFF\x74\x1E\xA1\x2A\x2A\x2A\x2A\x8B\xCA\x81\xE1\xFF\x1F\x00\x00\xC1\xEA\x0D\x03\xC9\x39\x54\xC8\x08\x75\x06\x8B\x4C\xC8\x04\xEB\x02\x33\xC9\x0F\xB6\x87\xC0\x0E\x00\x00"
+				"linux"			"@_ZN14CBaseAnimating19LookupPoseParameterEP10CStudioHdrPKc"
+			}
+			"CBaseAnimating::SequenceDuration" //how to find: find by string ''CBaseAnimating::SequenceDuration'' IS IN VIRTUAL TABLE FOR BM!!!!
+			{
+				"library"		"server"
+				"windows"		"\x55\x8B\xEC\x56\x8B\x75\x08\x57\x8B\xF9\x85\xF6\x75\x2D\x8B\x47\x5C\xB9\x2A\x2A\x2A\x2A\x85\xC0\x0F\x45\xC8\x51\xFF\x75\x0C\x68\x2A\x2A\x2A\x2A\x6A\x02\xFF\x15\x2A\x2A\x2A\x2A\xD9\x05\x2A\x2A\x2A\x2A\x83\xC4\x10\x5F\x5E\x5D\xC2\x08\x00\x8B\xCE\xE8\x2E\xF8"
+				"linux"			"@_ZN14CBaseAnimating16SequenceDurationEP10CStudioHdri"
+			}
+			// Go to data xref of string "ResetSequence : %s: %s -> %s\n"
+			"CBaseAnimating::ResetSequence"
+			{
+				"library"		"server"
+				"windows"		"\x55\x8B\xEC\xA1\x2A\x2A\x2A\x2A\x53\x56\x8B\xD9\xB9\x2A\x2A\x2A\x2A\x57\xFF\x50\x2C\x8B\x7D\x08\x85\xC0\x74\x45\xF7\x83\xF4\x00\x2A\x2A\x2A\x2A\x00\x00\x74\x39\x8B\x43\x5C\xBF\x2A\x2A\x2A\x2A\xFF\x75\x08\x8B\xB3\xC0\x03\x00\x00\x85\xC0\x8B\xCB\x0F\x45\xF8"
+				"linux"			"@_ZN14CBaseAnimating13ResetSequenceEi"
+			}
+			//how to find: find CBlackMesaPlayer::CBlackMesaPlayer by string ''PlayerThink'', 
+			//the func you'll look at should contain both  ''PlayerThink'' and ''mp_scientist_hev'', 
+			//open call trees, find empty func that does nothing (it may not appear in C decompiler), 
+			//it is CountdownTimer::NetworkStateChanged, 
+			//open it's call trees, 
+			//find func that contains something like ''NextBotGroundLocomotion::vftable'',
+			//if you found one, it's the func you want
+			"NextBotGroundLocomotion::NextBotGroundLocomotion" 
+			{
+				"library"		"server"
+				"windows"		"\x55\x8B\xEC\x56\x57\xFF\x75\x08\x8B\xF1\xE8\xA1\x01\x01\x00\xC7\x06\x2A\x2A\x2A\x2A\x8D\xBE\xF0\x00\x00\x00\xC7\x86\xB8\x00\x00\x00\xFF\xFF\xFF\x2A\x2A\x2A\x2A\x07\x0F\x2E\x05\x2A\x2A\x2A\x2A\xC7\x86\xE8\x00\x00\x00\x2A\x2A\x2A\x2A\x9F\xF6\xC4\x44\x7B\x0F"
+				"linux"			"@_ZN23NextBotGroundLocomotionC2EP8INextBot"
+			}
+			//how to find: find object for convar ai_force_serverside_ragdolls, the only func in it's xref is CBaseCombatCharacter::CBaseCombatCharacter, open call trees for it, find func that contains something like NextBotCombatCharacter::vftable, the that contains it is what you need
+			"NextBotCombatCharacter::NextBotCombatCharacter"
+			{
+				"library"		"server"
+				"windows"		"\x56\x57\x8B\xF9\xE8\x07\x54\xE0\xFF\x8D\x8F\xB4\x08\x00\x00\xE8\x5C\xFC\x00\x00\xC7\x07\x2A\x2A\x2A\x2A\x8B\xC7\xC7\x87\xB4\x08\x00\x00\x2A\x2A\x2A\x2A\xC7\x87\x18\x09\x00\x00\xFF\xFF\xFF\xFF\xC6\x87\x1C\x09\x00\x00\x00\x5F\x5E\xC3"
+				"linux"			"@_ZN22NextBotCombatCharacterC2Ev"
+			}
+		}
+		"Addresses"
+		{		
+			"GetAnimationEvent" 
+			{
+				"windows"
+				{
+					"signature"	"__GetAnimationEvent__"
+					// Immediate 5000 in: cmp [event + 4], 5000
+					"offset"	"133"
+				}
+				"linux"
+				{
+					"signature"	"__GetAnimationEvent__"
+					// First immediate 4999 in the non-wrapping time-range branch.
+					"offset"	"319"
+				}
+			}
+			// GCC emitted the same 4999 comparison twice. baseanimating.cpp must patch this too.
+			"GetAnimationEvent2"
+			{
+				"linux"
+				{
+					"signature"	"__GetAnimationEvent__"
+					"offset"	"507"
+				}
+			}
+		}
+	}
 }
