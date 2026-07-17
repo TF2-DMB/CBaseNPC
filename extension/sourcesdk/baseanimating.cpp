@@ -14,7 +14,11 @@ int CBaseAnimating::offset_HandleAnimEvent = 0;
 VCall<void> CBaseAnimating::vStudioFrameAdvance;
 VCall<void, CBaseAnimating*> CBaseAnimating::vDispatchAnimEvents;
 VCall< bool, int, matrix3x4_t& > CBaseAnimating::vGetAttachment;
-MCall<float, CStudioHdr*, int> CBaseAnimating::mSequenceDuration;
+#if SOURCE_ENGINE == SE_BMS  
+VCall<float, CStudioHdr*, int> CBaseAnimating::mSequenceDuration;  
+#else  
+MCall<float, CStudioHdr*, int> CBaseAnimating::mSequenceDuration;  
+#endif
 MCall<void, int> CBaseAnimating::mResetSequence;
 MCall<int, CStudioHdr*, const char*> CBaseAnimating::mLookupPoseParameter;
 MCall<float, int> CBaseAnimating::mGetPoseParameter;
@@ -66,17 +70,31 @@ bool CBaseAnimating::Init(SourceMod::IGameConfig* config, char* error, size_t ma
 	VAR_OFFSET_SET(m_pStudioHdr, VAR_OFFSET(m_OnIgnite) + sizeof(COutputEvent));
 	END_VAR;
 
-	void* aVal = nullptr;
-	if (!config->GetAddress("GetAnimationEvent", &aVal))
+	void* aVal = nullptr;  
+	if (!config->GetAddress("GetAnimationEvent", &aVal))  
+	{  
+		snprintf(error, maxlength, "Failed to retrieve GetAnimationEvent address!");  
+		return false;  
+	}  
+	  
+	uint8_t* aGetAnimationEvent = reinterpret_cast<uint8_t*>(aVal);  
+	SourceHook::SetMemAccess(aGetAnimationEvent, sizeof(uint32_t), SH_MEM_READ | SH_MEM_WRITE | SH_MEM_EXEC);  
+	*reinterpret_cast<uint32_t*>(aGetAnimationEvent) = 9999;  
+	  
+#if SOURCE_ENGINE == SE_BMS && defined(__linux__)
+	// GCC emitted the same comparison twice in BMS Linux.
+	void* aVal2 = nullptr;
+	if (!config->GetAddress("GetAnimationEvent2", &aVal2) || !aVal2)
 	{
-		snprintf(error, maxlength, "Failed to retrieve GetAnimationEvent address!");
+		snprintf(error, maxlength, "Failed to retrieve second GetAnimationEvent address!");
 		return false;
 	}
 
-	uint8_t* aGetAnimationEvent = reinterpret_cast<uint8_t*>(aVal);
-	SourceHook::SetMemAccess(aGetAnimationEvent, sizeof(uint32_t), SH_MEM_READ | SH_MEM_WRITE | SH_MEM_EXEC);
-	*(uint32_t*)(aGetAnimationEvent) = 9999;
-
+	uint8_t* aGetAnimationEvent2 = reinterpret_cast<uint8_t*>(aVal2);
+	SourceHook::SetMemAccess(aGetAnimationEvent2, sizeof(uint32_t), SH_MEM_READ | SH_MEM_WRITE | SH_MEM_EXEC);
+	*reinterpret_cast<uint32_t*>(aGetAnimationEvent2) = 9999;
+#endif
+	  
 	return true;
 }
 

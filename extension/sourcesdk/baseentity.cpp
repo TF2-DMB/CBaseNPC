@@ -157,26 +157,44 @@ bool CBaseEntity::Init(SourceMod::IGameConfig* config, char* error, size_t maxle
 		return false;
 	}
 
-	uint8_t* addr = nullptr;
-	if (config->GetMemSig("CBaseEntity::PhysicsMarkEntitiesAsTouching", (void**)&addr) && addr)
-	{
-		int offset;
-		if (!config->GetOffset("g_TouchTrace", &offset) || !offset)
-		{
-			snprintf(error, maxlength, "Couldn't find offset for g_TouchTrace ptr!");
-			return false;
-		}
-		
-		g_pTouchTrace = *reinterpret_cast<trace_t**>(addr + offset);
-	}
-	else
-	{
-		snprintf(error, maxlength, "Failed to retrieve g_TouchTrace!");
-		return false;
+	uint8_t* addr = nullptr;  
+	if (config->GetMemSig("CBaseEntity::PhysicsMarkEntitiesAsTouching", (void**)&addr) && addr)  
+	{  
+		int offset;  
+		if (config->GetOffset("g_TouchTrace", &offset) && offset)  
+		{  
+			g_pTouchTrace = *reinterpret_cast<trace_t**>(addr + offset);  
+		}  
+		else  
+		{  
+	#if SOURCE_ENGINE == SE_BMS && defined(__linux__)  
+			// BMS Linux: g_TouchTrace uses EBX-relative PIC addressing,  
+			// no embedded absolute address in the function — resolve via data symbol directly.  
+			void* gTouchTraceAddr = nullptr;  
+			if (!config->GetMemSig("g_TouchTrace", &gTouchTraceAddr) || !gTouchTraceAddr)  
+			{  
+				snprintf(error, maxlength, "Couldn't find g_TouchTrace symbol!");  
+				return false;  
+			}  
+			g_pTouchTrace = reinterpret_cast<trace_t*>(gTouchTraceAddr);  
+	#else  
+			snprintf(error, maxlength, "Couldn't find offset for g_TouchTrace ptr!");  
+			return false;  
+	#endif  
+		}  
+	}  
+	else  
+	{  
+		snprintf(error, maxlength, "Failed to retrieve g_TouchTrace!");  
+		return false;  
 	}
 
-	// Any entity that inherits CBaseEntity is good
-	BEGIN_VAR("trigger_stun");
+	// Any entity that inherits CBaseEntity is good 
+#if SOURCE_ENGINE == SE_BMS  
+	BEGIN_VAR("trigger_auto_crouch");
+#else  
+	BEGIN_VAR("trigger_stun");  
+#endif
 	OFFSETVAR_DATA(CBaseEntity, m_pfnThink);
 	OFFSETVAR_DATA(CBaseEntity, m_iClassname);
 	OFFSETVAR_DATA(CBaseEntity, m_nModelIndex);
@@ -783,4 +801,17 @@ void CBaseEntity::SetLocalAngles(const QAngle& angles)
 		InvalidatePhysicsRecursive(ANGLES_CHANGED);
 		SetSimulationTime(gpGlobals->curtime);
 	}
+}
+
+void CBaseEntity::SDK_OnUnload()
+{
+#ifndef __linux__
+    if (g_pSimThink_EntityChangedDetour != nullptr)
+    {
+        g_pSimThink_EntityChangedDetour->Destroy();
+        g_pSimThink_EntityChangedDetour = nullptr;
+    }
+
+    g_pSimThinkManager = nullptr;
+#endif
 }

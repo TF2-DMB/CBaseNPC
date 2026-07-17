@@ -97,6 +97,8 @@ class CBaseEntity : public IServerEntity
 {
 public:
 	static bool Init(SourceMod::IGameConfig* config, char* error, size_t maxlength);
+	
+	static void SDK_OnUnload();
 
 	static const trace_t& GetTouchTrace(void);
 

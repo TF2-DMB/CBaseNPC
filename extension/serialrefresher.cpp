@@ -97,15 +97,19 @@ bool Tools_Refresh_Init(SourceMod::IGameConfig* config, char* error, size_t maxl
 		return false;
 	}
 
-	int offset = 0;
-	if (config->GetOffset("framesnapshotmanager", &offset)) {
-		if (offset == 0) {
-			snprintf(error, maxlength, "Failed to get framesnapshotmanager offset!");
-			return false;
-		}
-		gFrameSnapshot = reinterpret_cast<CFrameSnapshotManager*>(*reinterpret_cast<std::uint8_t**>(reinterpret_cast<std::uint8_t*>(manager) + offset) + 0x4);
-	} else {
-		gFrameSnapshot = *reinterpret_cast<CFrameSnapshotManager**>(manager);
+	int offset = 0;  
+	if (config->GetOffset("framesnapshotmanager", &offset)) {  
+		if (offset == 0) {  
+			snprintf(error, maxlength, "Failed to get framesnapshotmanager offset!");  
+			return false;  
+		}  
+		int ptr_offset = 0;  
+		config->GetOffset("framesnapshotmanager_ptr_offset", &ptr_offset);  
+		gFrameSnapshot = reinterpret_cast<CFrameSnapshotManager*>(  
+			*reinterpret_cast<std::uint8_t**>(reinterpret_cast<std::uint8_t*>(manager) + offset) + ptr_offset  
+		);  
+	} else {  
+		gFrameSnapshot = *reinterpret_cast<CFrameSnapshotManager**>(manager);  
 	}
 
 	g_pSM->AddGameFrameHook(&Hook_Frame);

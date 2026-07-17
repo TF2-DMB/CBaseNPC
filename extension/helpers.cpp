@@ -7,19 +7,12 @@ int nothing;
 
 IPluginFunction *GetFunctionByNameEx(IPluginContext *pContext, const char *name)
 {
-	IPluginRuntime *pRuntime = pContext->GetRuntime();
-	for(uint32_t i = 0; i < pRuntime->GetPublicsNum(); i++)
+	if (!pContext || !name)
 	{
-		sp_public_t *pub = nullptr;
-		if(pRuntime->GetPublicByIndex(i, &pub) == SP_ERROR_NONE)
-		{
-			if(strstr(pub->name, name) != nullptr)
-			{
-				return pRuntime->GetFunctionById(pub->funcid);
-			}
-		}
+		return nullptr;
 	}
-	return nullptr;
+
+	return pContext->GetRuntime()->GetFunctionByName(name);
 }
 
 void MatrixToPawnMatrix(IPluginContext* context, cell_t* matAddr, const matrix3x4_t& mat)
