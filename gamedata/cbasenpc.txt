@@ -164,9 +164,13 @@
 				"linux"		"111"
 				"windows"	"111"
 			}
+			"framesnapshotmanager_indirect"
+			{
+				"windows" "0"
+			}
 			"framesnapshotmanager_ptr_offset"
-			{  
-				"windows"   "4"  
+			{
+				"windows" "4"
 			}
 		}
 		"Signatures"
@@ -574,9 +578,13 @@
 				"linux"		"111"
 				"windows"	"110"
 			}
+			"framesnapshotmanager_indirect"
+			{
+				"windows" "1"
+			}
 			"framesnapshotmanager_ptr_offset"
-			{  
-				"windows"   "0"  
+			{
+				"windows" "0"
 			}
 		}
 		"Signatures"
