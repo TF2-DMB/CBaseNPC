@@ -27,6 +27,16 @@ enum PluginEntityFactoryBaseClass_t
 	FACTORYBASECLASS_MAX
 };
 
+struct CaseInsensitiveCompare {  
+    bool operator()(const std::string& a, const std::string& b) const {  
+#ifdef __linux__  
+        return strcasecmp(a.c_str(), b.c_str()) < 0;  
+#else  
+        return _stricmp(a.c_str(), b.c_str()) < 0;  
+#endif  
+    }  
+};
+
 class PluginFactoryEntityRecord_t
 {
 public:
@@ -120,8 +130,8 @@ private:
 	size_t m_BaseClassSizes[ FACTORYBASECLASS_MAX ];
 	CUtlVector< CPluginEntityFactory* > m_Factories;
 	std::map<cell_t, std::unique_ptr<PluginFactoryEntityRecord_t>> m_Records;
-	std::map<std::string, IEntityFactory*> m_gameFactories;
-	std::map<std::string, CPluginEntityFactory*> m_pluginFactories;
+	std::map<std::string, IEntityFactory*, CaseInsensitiveCompare> m_gameFactories; 
+	std::map<std::string, CPluginEntityFactory*, CaseInsensitiveCompare> m_pluginFactories;
 	std::vector<int> m_hookIds;
 };
 
