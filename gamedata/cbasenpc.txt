@@ -407,14 +407,10 @@
 			// Locate CNavMesh::Load, first dword is TheNavMesh second is TheNavAreas
 			"TheNavMesh"
 			{
-				// Linux points at the GOT slot holding &TheNavMesh.
-				"linux"		"6201848"
 				"windows"	"960"
 			}
 			"TheNavAreas"
 			{
-				// Linux points at the GOT slot holding &TheNavAreas.
-				"linux"		"6204448"
 				"windows"	"1103"
 			}
 			// Locate CBaseEntity::PhysicsMarkEntitiesAsTouching, first dword is g_TouchTrace
@@ -589,7 +585,9 @@
 		}
 		"Signatures"
 		{
-			"CFrameSnapshotManager::AddExplicitDelete" //how to find: Find ED_Alloc(int*) by string ''ED_Alloc( %d ) - invalid edict index specified.'', one of the funcs it calls is what you need
+			//how to find: Find ED_Alloc(int*) by string ''ED_Alloc( %d ) - invalid edict index specified.'', 
+			//one of the funcs it calls is what you need
+			"CFrameSnapshotManager::AddExplicitDelete"
 			{
 				"library"   "engine"
 				"windows"   "\x55\x8B\xEC\x53\x8B\xD9\x56\x57\x8D\xB3\x9C\x80\x00\x00\xFF\x15\x2A\x2A\x2A\x2A\x8B\xF8\x3B\x3E\x74\x1B\x8B\xD7\x33\xC0\xF0\x0F\xB1\x16"
@@ -793,6 +791,17 @@
 			{  
 				"library"   "server"  
 				"linux"     "@g_TouchTrace"  
+			}
+			"TheNavMesh_Linux"
+			{
+				"library"	"server"
+				"linux"		"@TheNavMesh"
+			}
+
+			"TheNavAreas_Linux"
+			{
+				"library"	"server"
+				"linux"		"@TheNavAreas"
 			}
 		}
 		"Addresses"
