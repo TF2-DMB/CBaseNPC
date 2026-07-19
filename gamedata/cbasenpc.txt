@@ -546,13 +546,13 @@
 			}
 			"CBaseCombatCharacter::UpdateLastKnownArea"
 			{
-				"linux"		"327"
-				"windows"	"326"
+				"linux"		"338"
+				"windows"	"337"
 			}
 			"CBaseCombatCharacter::OnNavAreaChanged"
 			{
-				"linux"		"338"
-				"windows"	"337"
+				"linux"		"339"
+				"windows"	"338"
 			}
 			"CNavMesh::Load"
 			{

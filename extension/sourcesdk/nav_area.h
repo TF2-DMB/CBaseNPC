@@ -225,6 +225,10 @@ class CNavArea : protected CNavAreaCriticalData
 
 		virtual void SaveToSelectedSet( KeyValues *areaKey ) const = 0;		// (EXTEND) saves attributes for the area to a KeyValues
 		virtual void RestoreFromSelectedSet( KeyValues *areaKey ) = 0;		// (EXTEND) restores attributes from a KeyValues
+		
+#if SOURCE_ENGINE == SE_BMS
+		virtual void Dump( CUtlBuffer &fileBuffer ) const = 0;
+#endif
 
 		unsigned int GetID( void ) const	{ return m_id; }
 		
@@ -271,7 +275,14 @@ class CNavArea : protected CNavAreaCriticalData
 		NavDirType ComputeDirection( Vector *point ) const;
 
 		//- hiding spots ------------------------------------------------------------------------------------
-		const HidingSpotVector *GetHidingSpots( void ) const	{ return &m_hidingSpots; }
+		const HidingSpotVector* GetHidingSpots(void) const
+		{
+		#if SOURCE_ENGINE == SE_BMS
+			return reinterpret_cast<const HidingSpotVector*>(reinterpret_cast<const uint8_t*>(this) + 0xCC);
+		#else
+			return &m_hidingSpots;
+		#endif
+		}
 
 		//- "danger" ----------------------------------------------------------------------------------------
 		virtual float GetDangerDecayRate( void ) const = 0;				// return danger decay rate per second
