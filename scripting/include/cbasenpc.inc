@@ -3,6 +3,21 @@
 #endif
 #define _CBASENPC_EXTENSION_INC_
 
+#if !defined CBASENPC_CUSTOM_COMPILE  
+  
+    #if defined CBASENPC_BLACKMESA  
+        //BM-specific feature macros  
+  
+    #else  
+        #if !defined CBASENPC_TF2  
+            #define CBASENPC_TF2  
+        #endif  
+        //TF2-specific feature macros  
+  
+    #endif  
+  
+#endif //!CBASENPC_CUSTOM_COMPILE
+
 #include <sdktools>
 
 #define EFL_DIRTY_SURROUNDING_COLLISION_BOUNDS	(1<<14)

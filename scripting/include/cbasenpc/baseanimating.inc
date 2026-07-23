@@ -3,7 +3,11 @@
 #endif
 #define _CBASENPC_BASEANIMATING_INC_
 
-#include "activity.inc"
+#if defined CBASENPC_BLACKMESA  
+    #include "bms/activity.inc"  
+#elseif defined CBASENPC_TF2  
+    #include "tf2/activity.inc"  
+#endif
 
 methodmap CBaseAnimating < CBaseEntity
 {
