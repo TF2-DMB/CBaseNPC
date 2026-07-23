@@ -36,7 +36,6 @@ project.sources = [
   'sourcesdk/basecombatcharacter.cpp',
   'sourcesdk/servernetworkproperty.cpp',
   'sourcesdk/collisionproperty.cpp',
-  'sourcesdk/tf_gamerules.cpp',
   'sourcesdk/tracefilter_simple.cpp',
   'sourcesdk/basedoor.cpp',
   'sourcesdk/basetoggle.cpp',
@@ -66,8 +65,6 @@ project.sources = [
   'natives/nextbot/path/chase.cpp',
   'natives/nextbot/path/follower.cpp',
   'natives/nextbotplayer.cpp',
-  'natives/tf/nav.cpp',
-  'natives/tf/nav/area.cpp',
   os.path.join(Extension.sm_root, 'public', 'smsdk_ext.cpp')
 ]
 
@@ -79,6 +76,18 @@ for sdk_name in Extension.sdks:
       continue
   
     binary = Extension.HL2ExtConfig(project, builder, cxx, 'cbasenpc.ext.' + sdk.ext, sdk)
+
+    if sdk_name == 'tf2':
+      binary.sources += [
+        'sourcesdk/tf_gamerules.cpp',
+        'natives/tf/nav.cpp',
+        'natives/tf/nav/area.cpp',
+      ]
+    elif sdk_name == 'bms':
+      binary.sources += [
+        'natives/bms/nav.cpp',
+        'natives/bms/nav/area.cpp',
+      ]
     Extension.AddCDetour(binary)
     binary.compiler.cxxincludes += [
       os.path.join(builder.currentSourcePath, 'sourcesdk'),

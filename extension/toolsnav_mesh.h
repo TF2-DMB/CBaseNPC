@@ -2,6 +2,7 @@
 
 #include "toolsnav.h"
 #include "sourcesdk/nav_area.h"
+#include "vstdlib/random.h"
 
 #include <set>
 #include <vector>

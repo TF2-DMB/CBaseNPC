@@ -38,7 +38,7 @@ cell_t CPluginEntityFactory_Ctor(IPluginContext * context, const cell_t * params
 		return context->ThrowNativeError("Entity factory must have a classname");
 	}
 
-	IPlugin* plugin = plsys->FindPluginByContext( context->GetContext() );
+	IPlugin* plugin = plsys->FindPluginByContext(context);
 	IPluginFunction *postConstructor = context->GetFunctionById(params[2]);
 	IPluginFunction *onRemove = context->GetFunctionById(params[3]);
 

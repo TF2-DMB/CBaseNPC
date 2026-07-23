@@ -4,7 +4,9 @@
 #include <CDetour/detours.h>
 #include "helpers.h"
 #include "sourcesdk/nav_mesh.h"
-#include "sourcesdk/tf_gamerules.h"
+#if SOURCE_ENGINE == SE_TF2  
+#include "sourcesdk/tf_gamerules.h"  
+#endif
 #include "sourcesdk/basetoggle.h"
 #include "sourcesdk/funcbrush.h"
 #include "natives.hpp"
@@ -80,12 +82,20 @@ bool CBaseNPCExt::SDK_OnLoad(char* error, size_t maxlength, bool late) {
 		|| !CNavMesh::Init(g_pGameConf, error, maxlength)
 		|| !CBaseCombatCharacter::Init(g_pGameConf, error, maxlength)
 		|| !ToolsTraceFilterSimple::Init(g_pGameConf, error, maxlength)
-		|| !CTFGameRules::Init(g_pGameConf, error, maxlength)
+#if SOURCE_ENGINE == SE_TF2  
+        || !CTFGameRules::Init(g_pGameConf, error, maxlength)  
+#endif  
 		|| !CBaseEntityOutput::Init(g_pGameConf, error, maxlength)
 		|| !CBaseNPC_Locomotion::Init(g_pGameConf, error, maxlength)
 		|| !ToolsNextBot::Init(g_pGameConf, error, maxlength)
 		|| !Tools_Refresh_Init(g_pGameConf, error, maxlength)
-		) {
+		)
+	{
+		// Some initialization stages install detours before all later
+		// stages have succeeded. Roll them back before SourceMod unloads
+		// the extension DLL.
+		CNavMesh::SDK_OnUnload();
+		CBaseEntity::SDK_OnUnload();
 		return false;
 	}
 
@@ -284,7 +294,11 @@ void CBaseNPCExt::NotifyInterfaceDrop(SMInterface* interface) {
 	}
 }
 
-void CBaseNPCExt::SDK_OnUnload() {
+void CBaseNPCExt::SDK_OnUnload()
+{
+	CNavMesh::SDK_OnUnload();
+    CBaseEntity::SDK_OnUnload();
+	
 	gameconfs->CloseGameConfigFile(g_pGameConf);
 	forwards->ReleaseForward(g_pForwardEventKilled);
 
@@ -299,8 +313,6 @@ void CBaseNPCExt::SDK_OnUnload() {
 	if (g_pSDKHooks) {
 		g_pSDKHooks->RemoveEntityListener(this);
 	}
-
-	CNavMesh::SDK_OnUnload();
 	
 	FOR_EACH_MAP_FAST(g_EntitiesHooks, iHookID)
 		SH_REMOVE_HOOK_ID(iHookID);

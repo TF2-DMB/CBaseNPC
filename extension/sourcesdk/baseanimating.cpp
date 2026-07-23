@@ -14,7 +14,11 @@ int CBaseAnimating::offset_HandleAnimEvent = 0;
 VCall<void> CBaseAnimating::vStudioFrameAdvance;
 VCall<void, CBaseAnimating*> CBaseAnimating::vDispatchAnimEvents;
 VCall< bool, int, matrix3x4_t& > CBaseAnimating::vGetAttachment;
-MCall<float, CStudioHdr*, int> CBaseAnimating::mSequenceDuration;
+#if SOURCE_ENGINE == SE_BMS  
+VCall<float, CStudioHdr*, int> CBaseAnimating::mSequenceDuration;  
+#else  
+MCall<float, CStudioHdr*, int> CBaseAnimating::mSequenceDuration;  
+#endif
 MCall<void, int> CBaseAnimating::mResetSequence;
 MCall<int, CStudioHdr*, const char*> CBaseAnimating::mLookupPoseParameter;
 MCall<float, int> CBaseAnimating::mGetPoseParameter;
@@ -62,20 +66,39 @@ bool CBaseAnimating::Init(SourceMod::IGameConfig* config, char* error, size_t ma
 	OFFSETVAR_DATA(CBaseAnimating, m_OnIgnite);
 	OFFSETVAR_SEND(CBaseAnimating, m_nSequence);
 	OFFSETVAR_SEND(CBaseAnimating, m_flModelScale);
+
 	// m_pStudioHdr is in front of m_OnIgnite
 	VAR_OFFSET_SET(m_pStudioHdr, VAR_OFFSET(m_OnIgnite) + sizeof(COutputEvent));
 	END_VAR;
 
-	void* aVal = nullptr;
-	if (!config->GetAddress("GetAnimationEvent", &aVal))
+	auto PatchAnimationEventLimit = [&](const char* addressName) -> bool
 	{
-		snprintf(error, maxlength, "Failed to retrieve GetAnimationEvent address!");
-		return false;
-	}
+		void* address = nullptr;
+		if (!config->GetAddress(addressName, &address) || !address)
+		{
+			snprintf(error, maxlength, "Failed to retrieve %s address!", addressName);
+			return false;
+		}
 
-	uint8_t* aGetAnimationEvent = reinterpret_cast<uint8_t*>(aVal);
-	SourceHook::SetMemAccess(aGetAnimationEvent, sizeof(uint32_t), SH_MEM_READ | SH_MEM_WRITE | SH_MEM_EXEC);
-	*(uint32_t*)(aGetAnimationEvent) = 9999;
+		uint8_t* patchAddress = reinterpret_cast<uint8_t*>(address);
+		SourceHook::SetMemAccess(
+			patchAddress,
+			sizeof(uint32_t),
+			SH_MEM_READ | SH_MEM_WRITE | SH_MEM_EXEC
+		);
+
+		*reinterpret_cast<uint32_t*>(patchAddress) = 9999u;
+		return true;
+	};
+
+	if (!PatchAnimationEventLimit("GetAnimationEvent"))
+		return false;
+
+#if SOURCE_ENGINE == SE_BMS && defined(__linux__)
+	// GCC emitted the same comparison twice in BMS Linux.
+	if (!PatchAnimationEventLimit("GetAnimationEvent2"))
+		return false;
+#endif
 
 	return true;
 }

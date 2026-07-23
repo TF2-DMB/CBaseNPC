@@ -39,7 +39,7 @@ PossibleSDKs = {
 #  'hl2dm':  SDK('HL2SDKHL2DM', '2.hl2dm', '7', 'HL2DM', WinLinuxMac, 'hl2dm'),
 #  'dods': SDK('HL2SDKDODS', '2.dods', '8', 'DODS', WinLinuxMac, 'dods'),
 #  'sdk2013': SDK('HL2SDK2013', '2.sdk2013', '9', 'SDK2013', WinLinuxMac, 'sdk2013'),
-  'tf2':  SDK('HL2SDKTF2', '2.tf2', '11', 'TF2', WinLinuxMac, 'tf2')
+  'tf2':  SDK('HL2SDKTF2', '2.tf2', '11', 'TF2', WinLinuxMac, 'tf2'),
 #  'l4d':  SDK('HL2SDKL4D', '2.l4d', '12', 'LEFT4DEAD', WinLinuxMac, 'l4d'),
 #  'nucleardawn': SDK('HL2SDKND', '2.nd', '13', 'NUCLEARDAWN', WinLinuxMac, 'nucleardawn'),
 #  'l4d2': SDK('HL2SDKL4D2', '2.l4d2', '15', 'LEFT4DEAD2', WinLinuxMac, 'l4d2'),
@@ -53,7 +53,7 @@ PossibleSDKs = {
 #  'blade':  SDK('HL2SDKBLADE', '2.blade', '18', 'BLADE', WinLinux, 'blade'),
 #  'insurgency':  SDK('HL2SDKINSURGENCY', '2.insurgency', '19', 'INSURGENCY', WinLinuxMac, 'insurgency'),
 #  'contagion':  SDK('HL2SDKCONTAGION', '2.contagion', '14', 'CONTAGION', WinOnly, 'contagion'),
-#  'bms':  SDK('HL2SDKBMS', '2.bms', '10', 'BMS', WinLinux, 'bms'),
+  'bms':  SDK('HL2SDKBMS', '2.bms', '10', 'BMS', WinLinux, 'bms'),
 }
 
 def ResolveEnvPath(env, folder=None):
@@ -545,8 +545,19 @@ class ExtensionConfig(object):
       for lib in libs:
         if compiler.target.arch == 'x86':
           lib_path = os.path.join(sdk.path, 'lib', 'public', 'x86', lib) + '.lib'
+
+          # Older SDK layouts, including BMS, store Win32 libraries
+          # directly in lib/public rather than lib/public/x86.
+          if not os.path.isfile(lib_path):
+            lib_path = os.path.join(sdk.path, 'lib', 'public', lib) + '.lib'
         elif compiler.target.arch == 'x86_64':
           lib_path = os.path.join(sdk.path, 'lib', 'public', 'x64', lib) + '.lib'
+        else:
+          raise Exception('Unsupported Windows architecture: {0}'.format(compiler.target.arch))
+
+        if not os.path.isfile(lib_path):
+          raise Exception('Could not find SDK library: {0}'.format(lib_path))
+
         compiler.linkflags.append(lib_path)
 
     for library in dynamic_libs:

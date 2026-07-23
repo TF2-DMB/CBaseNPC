@@ -3,12 +3,14 @@
 #endif
 #define _CBASENPC_TAKEDAMAGEINFO_INC_
 
+#if defined CBASENPC_TF2
 enum TakeDamageInfo_CritType
 {
 	TakeDamageInfo_CritType_None,
 	TakeDamageInfo_CritType_Mini,
 	TakeDamageInfo_CritType_Full
 };
+#endif
 
 methodmap CTakeDamageInfo
 {
@@ -371,6 +373,7 @@ methodmap CTakeDamageInfo
 	 */
 	public native void SetDamagedOtherPlayers(int value);
 
+#if defined CBASENPC_TF2
 	/**
 	 * Sets the damage crit type.
 	 *
@@ -386,6 +389,7 @@ methodmap CTakeDamageInfo
 	 * @error		Invalid takedamageinfo.
 	 */
 	public native TakeDamageInfo_CritType GetCritType();
+#endif
 };
 
 /**

@@ -141,6 +141,27 @@ protected:
 
 	CountdownTimer m_ignorePhysicsPropTimer;				// if active, don't collide with physics props (because we got stuck in one)
 	EHANDLE m_ignorePhysicsProp;							// which prop to ignore
+	
+#if SOURCE_ENGINE == SE_BMS
+	/*
+	 * The timer classes in the actual Black Mesa binary contain an
+	 * additional 4-byte vtable pointer which is absent from the SDK
+	 * declarations used to build the extension.
+	 *
+	 * ILocomotion:
+	 *   2 IntervalTimer  = 8 missing bytes
+	 *   1 CountdownTimer = 4 missing bytes
+	 *
+	 * NextBotGroundLocomotion:
+	 *   3 CountdownTimer = 12 missing bytes
+	 *
+	 * Total: 24 bytes, or 0x18.
+	 *
+	 * This storage must not be initialized or cleared. The game's
+	 * NextBotGroundLocomotion constructor uses this memory.
+	 */
+	unsigned char m_bmsTimerLayoutPadding[0x18];
+#endif
 
 public:
 	static int vtable_entries;
@@ -150,6 +171,13 @@ public:
 	static VCall<float> vGetFrictionSideways;
 	static VCall<float> vGetMaxYawRate;
 };
+
+#if SOURCE_ENGINE == SE_BMS
+static_assert(
+	sizeof(NextBotGroundLocomotion) == 0x144,
+	"Invalid BMS NextBotGroundLocomotion size"
+);
+#endif
 
 #endif
 

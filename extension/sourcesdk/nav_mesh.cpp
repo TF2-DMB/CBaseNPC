@@ -21,6 +21,7 @@ DETOUR_DECL_MEMBER0(CNavMesh_Load, NavErrorType)
 {
 	NavErrorType returnVal = DETOUR_MEMBER_CALL(CNavMesh_Load)();
 
+	TheNavMesh = reinterpret_cast<CNavMesh*>(this);
 	ToolsNavMesh->Load();
 
 	return returnVal;
@@ -28,61 +29,110 @@ DETOUR_DECL_MEMBER0(CNavMesh_Load, NavErrorType)
 
 bool CNavMesh::Init(SourceMod::IGameConfig* config, char* error, size_t maxlength)
 {
-	uint8_t* addr = nullptr;
-	if (config->GetMemSig("CNavMesh::Load", (void**)&addr) && addr)
+	uint8_t* loadAddress = nullptr;
+	if (!config->GetMemSig("CNavMesh::Load", reinterpret_cast<void**>(&loadAddress)) || !loadAddress)
 	{
-		int offset;
-		if (!config->GetOffset("TheNavMesh", &offset) || !offset)
-		{
-			snprintf(error, maxlength, "Couldn't find offset for TheNavMesh ptr!");
-			return false;
-		}
-		
-		CNavMesh** pTheNavMesh = *reinterpret_cast<CNavMesh***>(addr + offset);
-		TheNavMesh = *pTheNavMesh;
-
-		if (!config->GetOffset("TheNavAreas", &offset) || !offset)
-		{
-			snprintf(error, maxlength, "Couldn't find offset for TheNavAreas ptr!");
-			return false;
-		}
-
-		pTheNavAreas = *reinterpret_cast<NavAreaVector**>(addr + offset);
-	}
-	else
-	{
-		snprintf(error, maxlength, "Failed to retrieve TheNavMesh ptr!");
+		snprintf(error, maxlength, "Couldn't resolve CNavMesh::Load signature!");
 		return false;
 	}
 
-	g_pNavMeshLoad = DETOUR_CREATE_MEMBER(CNavMesh_Load, "CNavMesh::Load");
-	if (g_pNavMeshLoad != nullptr)
+	CNavMesh* resolvedNavMesh = nullptr;
+	NavAreaVector* resolvedNavAreas = nullptr;
+
+#if SOURCE_ENGINE == SE_BMS && defined(__linux__)
+	void* navMeshAddress = nullptr;
+	if (!config->GetMemSig("TheNavMesh_Linux", &navMeshAddress) || !navMeshAddress)
 	{
-		g_pNavMeshLoad->EnableDetour();
+		snprintf(error, maxlength, "Couldn't resolve TheNavMesh_Linux symbol!");
+		return false;
 	}
-	else
+
+	void* navAreasAddress = nullptr;
+	if (!config->GetMemSig("TheNavAreas_Linux", &navAreasAddress) || !navAreasAddress)
 	{
-		snprintf(error, maxlength, "Couldn't create CNavMesh::Load detour!");
+		snprintf(error, maxlength, "Couldn't resolve TheNavAreas_Linux symbol!");
+		return false;
+	}
+
+	// TheNavMesh is a global CNavMesh* variable.
+	CNavMesh** navMeshGlobal = reinterpret_cast<CNavMesh**>(navMeshAddress);
+	resolvedNavMesh = *navMeshGlobal;
+
+	// TheNavAreas is the global NavAreaVector object itself.
+	resolvedNavAreas = reinterpret_cast<NavAreaVector*>(navAreasAddress);
+#else
+	int navMeshOffset = 0;
+	if (!config->GetOffset("TheNavMesh", &navMeshOffset) || navMeshOffset == 0)
+	{
+		snprintf(error, maxlength, "Couldn't find valid offset for TheNavMesh!");
+		return false;
+	}
+
+	CNavMesh** navMeshGlobal =
+		*reinterpret_cast<CNavMesh***>(loadAddress + navMeshOffset);
+
+	if (!navMeshGlobal)
+	{
+		snprintf(error, maxlength, "TheNavMesh global address resolved to null!");
+		return false;
+	}
+
+	resolvedNavMesh = *navMeshGlobal;
+
+	int navAreasOffset = 0;
+	if (!config->GetOffset("TheNavAreas", &navAreasOffset) || navAreasOffset == 0)
+	{
+		snprintf(error, maxlength, "Couldn't find valid offset for TheNavAreas!");
+		return false;
+	}
+
+	resolvedNavAreas =
+		*reinterpret_cast<NavAreaVector**>(loadAddress + navAreasOffset);
+#endif
+
+	if (!resolvedNavAreas)
+	{
+		snprintf(error, maxlength, "TheNavAreas address resolved to null!");
+		return false;
+	}
+
+	if (!config->GetOffset("CNavMesh::m_isLoaded", &CNavMesh::offset_m_isLoaded))
+	{
+		snprintf(error, maxlength, "Couldn't find CNavMesh::m_isLoaded offset!");
 		return false;
 	}
 
 	try
 	{
-		if (!config->GetOffset("CNavMesh::m_isLoaded", &CNavMesh::offset_m_isLoaded))
-		{
-			snprintf(error, maxlength, "Couldn't find CNavMesh::m_isLoaded offset!");
-			return false;
-		}
-
 		mGetGroundHeight.Init(config, "CNavMesh::GetGroundHeight");
 	}
 	catch (const std::exception& e)
 	{
-		snprintf(error, maxlength, "%s", e.what());
+		snprintf(error, maxlength, "Couldn't initialize CNavMesh::GetGroundHeight: %s", e.what());
 		return false;
 	}
 
-	g_pSM->LogMessage(myself, "NavMesh: 0x%X NavAreas: 0x%X", TheNavMesh, pTheNavAreas);
+	TheNavMesh = resolvedNavMesh;
+	pTheNavAreas = resolvedNavAreas;
+
+	g_pNavMeshLoad = DETOUR_CREATE_MEMBER(CNavMesh_Load, "CNavMesh::Load");
+	if (!g_pNavMeshLoad)
+	{
+		TheNavMesh = nullptr;
+		pTheNavAreas = nullptr;
+		snprintf(error, maxlength, "Couldn't create CNavMesh::Load detour!");
+		return false;
+	}
+
+	g_pNavMeshLoad->EnableDetour();
+
+	g_pSM->LogMessage(
+		myself,
+		"NavMesh: %p, NavAreas: %p, CNavMesh::Load: %p",
+		static_cast<void*>(TheNavMesh),
+		static_cast<void*>(pTheNavAreas),
+		static_cast<void*>(loadAddress)
+	);
 
 	ToolsNavMesh->Load();
 	return true;
@@ -94,11 +144,15 @@ void CNavMesh::OnCoreMapEnd()
 
 void CNavMesh::SDK_OnUnload()
 {
-	if (g_pNavMeshLoad != nullptr)
+	if (g_pNavMeshLoad)
 	{
 		g_pNavMeshLoad->Destroy();
 		g_pNavMeshLoad = nullptr;
 	}
+
+	TheNavMesh = nullptr;
+	pTheNavAreas = nullptr;
+	CNavMesh::offset_m_isLoaded = 0;
 }
 
 //--------------------------------------------------------------------------------------------------------------

@@ -84,35 +84,103 @@ void Tools_RefreshEntity(CBaseEntity* entity, int player, bool toggle) {
 
 bool Tools_Refresh_Init(SourceMod::IGameConfig* config, char* error, size_t maxlength)
 {
-	void* addr = nullptr;
-	if (!config->GetMemSig("CFrameSnapshotManager::AddExplicitDelete", &addr) || addr == nullptr) {
+	gFrameSnapshot = nullptr;
+
+	void* addExplicitDeleteAddress = nullptr;
+
+	if (!config->GetMemSig("CFrameSnapshotManager::AddExplicitDelete", &addExplicitDeleteAddress) || !addExplicitDeleteAddress)
+	{
 		snprintf(error, maxlength, "Failed to get CFrameSnapshotManager::AddExplicitDelete");
+
 		return false;
 	}
-	add_explicit_delete.Init(addr);
 
-	void* manager = nullptr;
-	if (!config->GetMemSig("framesnapshotmanager", reinterpret_cast<void**>(&manager)) || manager == nullptr) {
+	add_explicit_delete.Init(addExplicitDeleteAddress);
+
+	std::uint8_t* managerAddress = nullptr;
+
+	if (!config->GetMemSig("framesnapshotmanager",reinterpret_cast<void**>(&managerAddress)) || !managerAddress)
+	{
 		snprintf(error, maxlength, "Failed to get framesnapshotmanager signature");
+
 		return false;
 	}
 
-	int offset = 0;
-	if (config->GetOffset("framesnapshotmanager", &offset)) {
-		if (offset == 0) {
-			snprintf(error, maxlength, "Failed to get framesnapshotmanager offset!");
+	int operandOffset = 0;
+
+	if (config->GetOffset("framesnapshotmanager", &operandOffset))
+	{
+		if (operandOffset <= 0)
+		{
+			snprintf(error, maxlength, "Invalid framesnapshotmanager operand offset: %d", operandOffset);
+
 			return false;
 		}
-		gFrameSnapshot = reinterpret_cast<CFrameSnapshotManager*>(*reinterpret_cast<std::uint8_t**>(reinterpret_cast<std::uint8_t*>(manager) + offset) + 0x4);
-	} else {
-		gFrameSnapshot = *reinterpret_cast<CFrameSnapshotManager**>(manager);
+
+		int indirectCount = 0;
+
+		if (!config->GetOffset("framesnapshotmanager_indirect", &indirectCount))
+		{
+			snprintf(error, maxlength, "Failed to get framesnapshotmanager_indirect offset!");
+			return false;
+		}
+
+		if (indirectCount < 0 || indirectCount > 4)
+		{
+			snprintf(error, maxlength, "Invalid framesnapshotmanager indirect count: %d", indirectCount);
+			return false;
+		}
+
+		int pointerOffset = 0;
+		if (!config->GetOffset("framesnapshotmanager_ptr_offset", &pointerOffset))
+		{
+			snprintf(error, maxlength, "Failed to get framesnapshotmanager_ptr_offset!");
+
+			return false;
+		}
+
+		std::uint8_t* resolvedAddress = *reinterpret_cast<std::uint8_t**>(managerAddress + operandOffset);
+
+		if (!resolvedAddress)
+		{
+			snprintf(error, maxlength, "framesnapshotmanager operand resolved to null!");
+			return false;
+		}
+
+		for (int i = 0; i < indirectCount; ++i)
+		{
+			resolvedAddress = *reinterpret_cast<std::uint8_t**>(resolvedAddress);
+
+			if (!resolvedAddress)
+			{
+				snprintf(error, maxlength, "framesnapshotmanager indirection %d resolved to null!", i + 1);
+				return false;
+			}
+		}
+
+		gFrameSnapshot = reinterpret_cast<CFrameSnapshotManager*>(resolvedAddress + pointerOffset);
+	}
+	else
+	{
+		gFrameSnapshot = *reinterpret_cast<CFrameSnapshotManager**>(managerAddress);
 	}
 
+	if (!gFrameSnapshot)
+	{
+		snprintf(error, maxlength, "Failed to resolve CFrameSnapshotManager!");
+		return false;
+	}
+
+	g_pSM->LogMessage(myself, "CFrameSnapshotManager: %p", static_cast<void*>(gFrameSnapshot));
 	g_pSM->AddGameFrameHook(&Hook_Frame);
+
 	return true;
 }
 
 void Tools_Refresh_Shutdown()
 {
 	g_pSM->RemoveGameFrameHook(&Hook_Frame);
+	
+	gRefreshers.clear();
+	gFrameSnapshot = nullptr;
 }

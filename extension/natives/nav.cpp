@@ -1,6 +1,10 @@
 #include "nav.hpp"
 #include "nav/area.hpp"
+#if SOURCE_ENGINE == SE_TF2
 #include "tf/nav.hpp"
+#elif SOURCE_ENGINE == SE_BMS
+#include "bms/nav.hpp"
+#endif
 
 #include "sourcesdk/nav_mesh.h"
 #include "toolsnav_mesh.h"
@@ -257,8 +261,12 @@ cell_t BuildPath(IPluginContext* context, const cell_t* params) {
 void setup(std::vector<sp_nativeinfo_t>& natives) {
 	area::setup(natives);
 	collector::setup(natives);
-	
+
+#if SOURCE_ENGINE == SE_TF2
 	tf::nav::setup(natives);
+#elif SOURCE_ENGINE == SE_BMS
+	bms::nav::setup(natives);
+#endif
 
 	sp_nativeinfo_t list[] = {
 		{"CNavMesh.Address.get", GetAddress},

@@ -317,7 +317,13 @@ cell_t GetDamageForForceCalc(IPluginContext* context, const cell_t* params) {
 		return 0;
 	}
 
+#if SOURCE_ENGINE == SE_TF2
 	return sp_ftoc(info->GetDamageForForceCalc());
+#else
+	return context->ThrowNativeError(
+		"CTakeDamageInfo.GetDamageForForceCalc is only supported in TF2."
+	);
+#endif
 }
 
 cell_t SetDamageForForceCalc(IPluginContext* context, const cell_t* params) {
@@ -326,8 +332,14 @@ cell_t SetDamageForForceCalc(IPluginContext* context, const cell_t* params) {
 		return 0;
 	}
 
+#if SOURCE_ENGINE == SE_TF2
 	info->SetDamageForForceCalc(sp_ctof(params[2]));
 	return 0;
+#else
+	return context->ThrowNativeError(
+		"CTakeDamageInfo.SetDamageForForceCalc is only supported in TF2."
+	);
+#endif
 }
 
 cell_t GetDamagePosition(IPluginContext* context, const cell_t* params) {
