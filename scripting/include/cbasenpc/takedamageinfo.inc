@@ -281,7 +281,7 @@ methodmap CTakeDamageInfo
 	 * @return		Returns the custom damage.
 	 * @error		Invalid takedamageinfo.
 	 */
-	public native float GetDamageCustom();
+	public native int GetDamageCustom();
 
 	/**
 	 * Sets the custom damage.
