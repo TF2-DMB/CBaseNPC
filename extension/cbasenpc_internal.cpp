@@ -3,7 +3,9 @@
 #include "cbasenpc_behavior.h"
 #include "pluginentityfactory.h"
 #include "sourcesdk/baseentity.h"
-#include "sourcesdk/tf_gamerules.h"
+#if SOURCE_ENGINE == SE_TF2  
+#include "sourcesdk/tf_gamerules.h"  
+#endif
 #include "NextBot/Path/NextBotPathFollow.h"
 #include <bspflags.h>
 #include <ai_activity.h>
@@ -160,21 +162,25 @@ void CBaseNPC_Entity::BotThink(void)
 int CBaseNPC_Entity::OnTakeDamage(const CTakeDamageInfo& info)
 {
 	CTakeDamageInfo newInfo = info;
-	if (TFGameRules())
-	{
-		TFGameRules()->ApplyOnDamageModifyRules(newInfo, this, true);
-	}
+#if SOURCE_ENGINE == SE_TF2  
+    if (TFGameRules())  
+    {  
+        TFGameRules()->ApplyOnDamageModifyRules(newInfo, this, true);  
+    }  
+#endif  
 	return mOriginalOnTakeDamage(this, newInfo);
 }
 
 int CBaseNPC_Entity::OnTakeDamage_Alive(const CTakeDamageInfo& info)
 {
 	CTakeDamageInfo newInfo = info;
-	if (TFGameRules())
-	{
-		CTFGameRules::DamageModifyExtras_t outParams;
-		newInfo.SetDamage(TFGameRules()->ApplyOnDamageAliveModifyRules(info, this, outParams));
-	}
+#if SOURCE_ENGINE == SE_TF2  
+    if (TFGameRules())  
+    {  
+        CTFGameRules::DamageModifyExtras_t outParams;  
+        newInfo.SetDamage(TFGameRules()->ApplyOnDamageAliveModifyRules(info, this, outParams));  
+    }  
+#endif
 	return mOriginalOnTakeDamage_Alive(this, newInfo);
 }
 

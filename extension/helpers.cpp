@@ -3,25 +3,6 @@
 
 extern IServerTools *servertools;
 
-int nothing;
-
-IPluginFunction *GetFunctionByNameEx(IPluginContext *pContext, const char *name)
-{
-	IPluginRuntime *pRuntime = pContext->GetRuntime();
-	for(uint32_t i = 0; i < pRuntime->GetPublicsNum(); i++)
-	{
-		sp_public_t *pub = nullptr;
-		if(pRuntime->GetPublicByIndex(i, &pub) == SP_ERROR_NONE)
-		{
-			if(strstr(pub->name, name) != nullptr)
-			{
-				return pRuntime->GetFunctionById(pub->funcid);
-			}
-		}
-	}
-	return nullptr;
-}
-
 void MatrixToPawnMatrix(IPluginContext* context, cell_t* matAddr, const matrix3x4_t& mat)
 {
 	for ( int r = 0; r < 3; r++ )

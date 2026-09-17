@@ -57,6 +57,9 @@ public:
 	
 	virtual void OnSight(CBaseEntity*);
 	virtual void OnLostSight(CBaseEntity*);
+#if SOURCE_ENGINE == SE_BMS
+	virtual void OnThreatChanged(CBaseEntity*);
+#endif
 	virtual void OnSound(CBaseEntity*, const Vector&, KeyValues *);
 	virtual void OnSpokeConcept(CBaseCombatCharacter*, AIConcept_t, AI_Response *);
 	virtual void OnWeaponFired(CBaseCombatCharacter*, CBaseEntity* );
@@ -222,6 +225,16 @@ inline void INextBotEventResponder::OnLostSight(CBaseEntity* subject)
 		it->OnLostSight(subject);
 	}
 }
+
+#if SOURCE_ENGINE == SE_BMS
+inline void INextBotEventResponder::OnThreatChanged(CBaseEntity* threat)
+{
+	for (INextBotEventResponder* it = FirstContainedResponder(); it; it = NextContainedResponder(it))
+	{
+		it->OnThreatChanged(threat);
+	}
+}
+#endif
 
 inline void INextBotEventResponder::OnSound(CBaseEntity* source, const Vector& pos, KeyValues* keys)
 {

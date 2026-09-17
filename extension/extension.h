@@ -11,6 +11,8 @@
 #include <itoolentity.h>
 #include "helpers.h"
 #include "shared/npctools.h"
+#include <datamap.h>
+#include <cstddef>
 
 
 extern CGlobalVars *gpGlobals;
@@ -63,6 +65,17 @@ class CBaseNPCExt : public SDKExtension, public ISMEntityListener, public IConCo
 			//virtual bool SDK_OnMetamodUnload(char *error, size_t maxlength);
 			//virtual bool SDK_OnMetamodPauseChange(bool paused, char *error, size_t maxlength);
 		#endif
+
+	bool Initialize(char* error, size_t maxlength, datamap_t* const* dataMaps = nullptr);
+
+	bool GetDataMaps(const char* const* dataMapNames, datamap_t** dataMaps, size_t count); //get datamaps by memory scan
+
+private:
+	//initialize hooks and offsets when server is ready in case it isn't, fired only once
+	bool Hook_LevelInit(const char* pMapName, const char* pMapEntities, const char* pOldLevel, const char* pLandmarkName, bool loadGame, bool background);
+	void TestDummyNPC(); //check if we got all needed interfaces
+
+	int m_iLevelInitHookID = 0;
 };
 
 #endif

@@ -28,7 +28,8 @@ VCall<int, const CTakeDamageInfo&> CBaseEntity::vOnTakeDamage;
 VCall<bool> CBaseEntity::vIsAlive;
 MCall<void> CBaseEntity::mCalcAbsolutePosition;
 
-#ifndef __linux__
+// Black Mesa and Linux expose the free function; Windows TF2 uses the manager method.
+#if !defined(__linux__) && SOURCE_ENGINE != SE_BMS
 class IEntityListener;
 MCall<void, CBaseEntity*> SimThink_EntityChanged; // In reality CSimThinkManager::EntityChanged
 IEntityListener* g_pSimThinkManager = nullptr;
@@ -85,7 +86,7 @@ DEFINEVAR(CBaseEntity, m_ModelName);
 
 trace_t* g_pTouchTrace;
 
-bool CBaseEntity::Init(SourceMod::IGameConfig* config, char* error, size_t maxlength)
+bool CBaseEntity::Init(SourceMod::IGameConfig* config, char* error, size_t maxlength, datamap_t* dataMap)
 {
 	// Some function signatures & offsets can be fetched from Sourcemod, yay!
 	SourceMod::IGameConfig* configCore;
@@ -127,7 +128,7 @@ bool CBaseEntity::Init(SourceMod::IGameConfig* config, char* error, size_t maxle
 
 		// This function also doesn't warrant its own file, as it only ever used by CBaseEntity
 		SimThink_EntityChanged.Init(config, "SimThink_EntityChanged");
-#ifndef __linux__
+#if !defined(__linux__) && SOURCE_ENGINE != SE_BMS
 		g_pSimThink_EntityChangedDetour = DETOUR_CREATE_MEMBER(SimThink_EntityChanged, "SimThink_EntityChanged")
 			g_pSimThink_EntityChangedDetour->EnableDetour();
 #endif
@@ -157,26 +158,40 @@ bool CBaseEntity::Init(SourceMod::IGameConfig* config, char* error, size_t maxle
 		return false;
 	}
 
-	uint8_t* addr = nullptr;
-	if (config->GetMemSig("CBaseEntity::PhysicsMarkEntitiesAsTouching", (void**)&addr) && addr)
-	{
-		int offset;
-		if (!config->GetOffset("g_TouchTrace", &offset) || !offset)
-		{
-			snprintf(error, maxlength, "Couldn't find offset for g_TouchTrace ptr!");
-			return false;
-		}
-		
-		g_pTouchTrace = *reinterpret_cast<trace_t**>(addr + offset);
-	}
-	else
-	{
-		snprintf(error, maxlength, "Failed to retrieve g_TouchTrace!");
-		return false;
+	uint8_t* addr = nullptr;  
+	if (config->GetMemSig("CBaseEntity::PhysicsMarkEntitiesAsTouching", (void**)&addr) && addr)  
+	{  
+		int offset;  
+		if (config->GetOffset("g_TouchTrace", &offset) && offset)  
+		{  
+			g_pTouchTrace = *reinterpret_cast<trace_t**>(addr + offset);  
+		}  
+		else  
+		{  
+	#if SOURCE_ENGINE == SE_BMS && defined(__linux__)  
+			// BMS Linux: g_TouchTrace uses EBX-relative PIC addressing,  
+			// no embedded absolute address in the function — resolve via data symbol directly.  
+			void* gTouchTraceAddr = nullptr;  
+			if (!config->GetMemSig("g_TouchTrace", &gTouchTraceAddr) || !gTouchTraceAddr)  
+			{  
+				snprintf(error, maxlength, "Couldn't find g_TouchTrace symbol!");  
+				return false;  
+			}  
+			g_pTouchTrace = reinterpret_cast<trace_t*>(gTouchTraceAddr);  
+	#else  
+			snprintf(error, maxlength, "Couldn't find offset for g_TouchTrace ptr!");  
+			return false;  
+	#endif  
+		}  
+	}  
+	else  
+	{  
+		snprintf(error, maxlength, "Failed to retrieve g_TouchTrace!");  
+		return false;  
 	}
 
-	// Any entity that inherits CBaseEntity is good
-	BEGIN_VAR("trigger_stun");
+	// Any entity that inherits CBaseEntity is good.
+	BEGIN_VAR("trigger", dataMap);
 	OFFSETVAR_DATA(CBaseEntity, m_pfnThink);
 	OFFSETVAR_DATA(CBaseEntity, m_iClassname);
 	OFFSETVAR_DATA(CBaseEntity, m_nModelIndex);
@@ -215,7 +230,7 @@ bool CBaseEntity::Init(SourceMod::IGameConfig* config, char* error, size_t maxle
 	gameconfs->CloseGameConfigFile(configSDKHooks);
 	gameconfs->CloseGameConfigFile(configCore);
 
-#ifndef __linux__
+#if !defined(__linux__) && SOURCE_ENGINE != SE_BMS
 	if (g_pSimThinkManager == nullptr)
 	{
 		snprintf(error, maxlength, "Failed to retrieve CSimThinkManager - g_SimThinkManager!");
@@ -745,7 +760,7 @@ void CBaseEntity::CheckHasThinkFunction(bool isThinking)
 	{
 		AddEFlags(EFL_NO_THINK_FUNCTION);
 	}
-#ifndef __linux__
+#if !defined(__linux__) && SOURCE_ENGINE != SE_BMS
 	SimThink_EntityChanged(g_pSimThinkManager, this);
 #else
 	SimThink_EntityChanged(this);
@@ -783,4 +798,17 @@ void CBaseEntity::SetLocalAngles(const QAngle& angles)
 		InvalidatePhysicsRecursive(ANGLES_CHANGED);
 		SetSimulationTime(gpGlobals->curtime);
 	}
+}
+
+void CBaseEntity::Unload()
+{
+#if !defined(__linux__) && SOURCE_ENGINE != SE_BMS
+    if (g_pSimThink_EntityChangedDetour != nullptr)
+    {
+        g_pSimThink_EntityChangedDetour->Destroy();
+        g_pSimThink_EntityChangedDetour = nullptr;
+    }
+
+    g_pSimThinkManager = nullptr;
+#endif
 }

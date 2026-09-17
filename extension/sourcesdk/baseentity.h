@@ -37,19 +37,38 @@ extern IServerTools* servertools;
 #define DEFINEVAR(classname, var) \
 int32_t (classname::classname::offset_##var) = 0
 
-#define BEGIN_VAR(classentity) \
+#define BEGIN_VAR(classentity, dataMap) \
 SourceMod::sm_sendprop_info_t offset_send_info; \
 SourceMod::sm_datatable_info_t offset_data_info; \
-CBaseEntity* offsetEntity = servertools->CreateEntityByName(classentity); \
-datamap_t* offsetMap = gamehelpers->GetDataMap(offsetEntity)
+CBaseEntity* offsetEntity = nullptr; \
+datamap_t* offsetMap = dataMap; \
+if (!offsetMap) \
+{ \
+	offsetEntity = servertools->CreateEntityByName(classentity); \
+	if (offsetEntity) \
+	{ \
+		offsetMap = gamehelpers->GetDataMap(offsetEntity); \
+	} \
+} \
+if (!offsetMap) \
+{ \
+	END_VAR; \
+	snprintf(error, maxlength, "Failed to retrieve datamap for " classentity "!"); \
+	return false; \
+}
 
 #define END_VAR \
-	servertools->RemoveEntityImmediate(offsetEntity)
+if (offsetEntity) \
+{ \
+	servertools->RemoveEntityImmediate(offsetEntity); \
+	offsetEntity = nullptr; \
+}
 
 #define OFFSETVAR_SEND(classname, var) \
 if (!gamehelpers->FindSendPropInfo(#classname, #var, &offset_send_info)) \
 { \
 	snprintf(error, maxlength, "Failed to retrieve "  #classname "::"  #var  "!"); \
+	END_VAR; \
 	return false; \
 } \
 offset_##var = offset_send_info.actual_offset
@@ -58,6 +77,7 @@ offset_##var = offset_send_info.actual_offset
 if (!gamehelpers->FindDataMapInfo(offsetMap, #var, &offset_data_info)) \
 { \
 	snprintf(error, maxlength, "Failed to retrieve "  #classname "::"  #var  "!"); \
+	END_VAR; \
 	return false; \
 } \
 offset_##var = offset_data_info.actual_offset
@@ -96,7 +116,9 @@ struct thinkfunc_t
 class CBaseEntity : public IServerEntity
 {
 public:
-	static bool Init(SourceMod::IGameConfig* config, char* error, size_t maxlength);
+	static bool Init(SourceMod::IGameConfig* config, char* error, size_t maxlength, datamap_t* dataMap = nullptr);
+	
+	static void Unload();
 
 	static const trace_t& GetTouchTrace(void);
 

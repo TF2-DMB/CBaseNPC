@@ -4,11 +4,11 @@
 extern CGlobalVars* gpGlobals;
 DEFINEVAR(CBaseAnimatingOverlay, m_AnimOverlay);
 
-bool CBaseAnimatingOverlay::Init(SourceMod::IGameConfig* config, char* error, size_t maxlength)
+bool CBaseAnimatingOverlay::Init(SourceMod::IGameConfig* config, char* error, size_t maxlength, datamap_t* dataMap)
 {
 	// Any entity that inherits CBaseAnimatingOverlay is good
 	// To-do: Should this be moved to gamedata?
-	BEGIN_VAR("cycler_flex");
+	BEGIN_VAR("cycler_flex", dataMap);
 	OFFSETVAR_DATA(CBaseAnimatingOverlay, m_AnimOverlay);
 	END_VAR;
 	return true;

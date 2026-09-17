@@ -174,8 +174,6 @@ void PawnMatrixToMatrix(IPluginContext* context, cell_t* matAddr, matrix3x4_t& m
 
 const char *HandleErrorToString(HandleError err);
 
-IPluginFunction *GetFunctionByNameEx(IPluginContext *pContext, const char *name);
-
 string_t AllocPooledString(const char *pszValue);
 
 

@@ -10,7 +10,7 @@ class COutputEvent;
 class CBaseAnimating : public CBaseEntity
 {
 public:
-	static bool Init(SourceMod::IGameConfig* config, char* error, size_t maxlength);
+	static bool Init(SourceMod::IGameConfig* config, char* error, size_t maxlength, datamap_t* dataMap = nullptr);
 
 	float GetModelScale() const;
 
@@ -42,7 +42,12 @@ public:
 	static VCall<void, CBaseAnimating*> vDispatchAnimEvents;
 	void DispatchAnimEvents(CBaseAnimating*);
 
-	static MCall<float, CStudioHdr*, int> mSequenceDuration;
+#if SOURCE_ENGINE == SE_BMS  
+    static VCall<float, CStudioHdr*, int> mSequenceDuration;  
+#else  
+    static MCall<float, CStudioHdr*, int> mSequenceDuration;  
+#endif
+
 	float SequenceDuration(CStudioHdr*, int);
 
 	static MCall<void, int> mResetSequence;

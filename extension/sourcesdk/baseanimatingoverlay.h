@@ -144,7 +144,7 @@ public:
 	bool	HasActiveLayer(void);
 
 	// Our functions
-	static bool Init(SourceMod::IGameConfig* config, char* error, size_t maxlength);
+	static bool Init(SourceMod::IGameConfig* config, char* error, size_t maxlength, datamap_t* dataMap = nullptr);
 
 	// Members
 private:

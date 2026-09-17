@@ -12,6 +12,7 @@ folder_list = [
   'addons/sourcemod/scripting/include',
   'addons/sourcemod/scripting/include/cbasenpc',
   'addons/sourcemod/scripting/include/cbasenpc/tf',
+  'addons/sourcemod/scripting/include/cbasenpc/bms',
   'addons/sourcemod/scripting/include/cbasenpc/nextbot',
   'addons/sourcemod/scripting/include/cbasenpc/nextbot/path',
   'addons/sourcemod/gamedata',
@@ -47,6 +48,7 @@ for smx_file in Extension.smx_files:
 CopyDirContent('scripting/include', 'addons/sourcemod/scripting/include')
 CopyDirContent('scripting/include/cbasenpc', 'addons/sourcemod/scripting/include/cbasenpc')
 CopyDirContent('scripting/include/cbasenpc/tf', 'addons/sourcemod/scripting/include/cbasenpc/tf')
+CopyDirContent('scripting/include/cbasenpc/bms', 'addons/sourcemod/scripting/include/cbasenpc/bms')
 CopyDirContent('scripting/include/cbasenpc/nextbot', 'addons/sourcemod/scripting/include/cbasenpc/nextbot')
 CopyDirContent('scripting/include/cbasenpc/nextbot/path', 'addons/sourcemod/scripting/include/cbasenpc/nextbot/path')
 CopyDirContent('gamedata', 'addons/sourcemod/gamedata')

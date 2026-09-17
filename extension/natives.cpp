@@ -165,7 +165,6 @@ void setup(std::vector<sp_nativeinfo_t>& natives) {
 	baseanimating::setup(natives);
 	baseanimatingoverlay::setup(natives);
 	basecombatcharacter::setup(natives);
-	basecombatcharacter::setup(natives);
 	baseentity::setup(natives);
 	cbasenpc::setup(natives);
 	entityfactory::setup(natives);

@@ -241,7 +241,15 @@ inline CBaseNPC_Entity::CBaseNPC* Get(IPluginContext* context, const cell_t para
 	return npc;
 }
 
-cell_t CBaseNPCCtor(IPluginContext* context, const cell_t * params) {
+cell_t CBaseNPCCtor(IPluginContext* context, const cell_t * params)
+{
+	//avoid "ED_Alloc: No edicts yet" for SourceMod forks with early load support
+	if (engine->GetEntityCount() < 1)
+	{
+		g_pSM->LogError(myself, "Edict slots are not initialized, can't create dummy NPC!");
+		return INVALID_NPC_ID;
+	}
+	
 	CBaseNPC_Entity *npc = (CBaseNPC_Entity*)servertools->CreateEntityByName("base_npc");
 	if (!npc) {
 		return INVALID_NPC_ID;

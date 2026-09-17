@@ -5,7 +5,7 @@
 CUtlMemoryPool * g_pEntityListPool = nullptr;
 ISaveRestoreOps *eventFuncs = nullptr;
 
-bool CBaseEntityOutput::Init(SourceMod::IGameConfig* config, char* error, size_t maxlength)
+bool CBaseEntityOutput::Init(SourceMod::IGameConfig* config, char* error, size_t maxlength, datamap_t* dataMap)
 {
 	SourceMod::IGameConfig* configCore;
 	if (!gameconfs->LoadGameConfigFile("core.games", &configCore, error, maxlength))
@@ -36,27 +36,35 @@ bool CBaseEntityOutput::Init(SourceMod::IGameConfig* config, char* error, size_t
 		return false;
 	}
 
-	// eventFuncs
-	CBaseEntity* pOffsetEnt = servertools->CreateEntityByName("info_target");
-	if (pOffsetEnt)
+	// All outputs use eventFuncs as pSaveRestoreOps.
+	CBaseEntity* pOffsetEnt = nullptr;
+	datamap_t* pRootDataMap = dataMap;
+
+	if (!pRootDataMap)
 	{
-		for (datamap_t* pDataMap = gamehelpers->GetDataMap(pOffsetEnt); pDataMap && !eventFuncs; pDataMap = pDataMap->baseMap)
+		pOffsetEnt = servertools->CreateEntityByName("info_target");
+
+		if (pOffsetEnt)
 		{
-			for (int i = 0; i < pDataMap->dataNumFields; i++)
+			pRootDataMap = gamehelpers->GetDataMap(pOffsetEnt);
+		}
+	}
+
+	for (datamap_t* pDataMap = pRootDataMap; pDataMap && !eventFuncs; pDataMap = pDataMap->baseMap)
+	{
+		for (int i = 0; i < pDataMap->dataNumFields; i++)
+		{
+			typedescription_t* pTypeDesc = &pDataMap->dataDesc[i];
+			if (pTypeDesc->fieldType == FIELD_CUSTOM && (pTypeDesc->flags & FTYPEDESC_OUTPUT) && pTypeDesc->pSaveRestoreOps)
 			{
-				typedescription_t *pTypeDesc = &pDataMap->dataDesc[i];
-				if (pTypeDesc->fieldType == FIELD_CUSTOM && ( pTypeDesc->flags & FTYPEDESC_OUTPUT ) )
-				{
-					if (pTypeDesc->pSaveRestoreOps)
-					{
-						// All outputs use eventFuncs as pSaveRestoreOps
-						eventFuncs = pTypeDesc->pSaveRestoreOps;
-						break;
-					}
-				}
+				eventFuncs = pTypeDesc->pSaveRestoreOps;
+				break;
 			}
 		}
+	}
 
+	if (pOffsetEnt)
+	{
 		servertools->RemoveEntityImmediate(pOffsetEnt);
 	}
 

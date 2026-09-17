@@ -37,9 +37,9 @@ void CTakeDamageInfo::Init( CBaseEntity *pInflictor, CBaseEntity *pAttacker, CBa
 	m_iPlayerPenetrationCount = 0;
 	m_flDamageBonus = 0.f;
 	m_bForceFriendlyFire = false;
-	m_flDamageForForce = 0.f;
 	
 #if SOURCE_ENGINE == SE_TF2
+	m_flDamageForForce = 0.f;
 	m_eCritType = CRIT_NONE;
 #endif
 }

@@ -39,7 +39,7 @@ cell_t NextBotActionFactory_Ctor(IPluginContext* context, const cell_t* params) 
 		return context->ThrowNativeError("Action must have a name");
 	}
 	
-	IPlugin* plugin = plsys->FindPluginByContext(context->GetContext());
+	IPlugin* plugin = plsys->FindPluginByContext(context);
 	CBaseNPCPluginActionFactory* factory = new CBaseNPCPluginActionFactory(plugin, name);
 	return factory->m_Handle;
 }

@@ -225,6 +225,10 @@ class CNavArea : protected CNavAreaCriticalData
 
 		virtual void SaveToSelectedSet( KeyValues *areaKey ) const = 0;		// (EXTEND) saves attributes for the area to a KeyValues
 		virtual void RestoreFromSelectedSet( KeyValues *areaKey ) = 0;		// (EXTEND) restores attributes from a KeyValues
+		
+#if SOURCE_ENGINE == SE_BMS
+		virtual void Dump( CUtlBuffer &fileBuffer ) const = 0;
+#endif
 
 		unsigned int GetID( void ) const	{ return m_id; }
 		
@@ -271,7 +275,7 @@ class CNavArea : protected CNavAreaCriticalData
 		NavDirType ComputeDirection( Vector *point ) const;
 
 		//- hiding spots ------------------------------------------------------------------------------------
-		const HidingSpotVector *GetHidingSpots( void ) const	{ return &m_hidingSpots; }
+		const HidingSpotVector* GetHidingSpots(void) const	{ return &m_hidingSpots; }
 
 		//- "danger" ----------------------------------------------------------------------------------------
 		virtual float GetDangerDecayRate( void ) const = 0;				// return danger decay rate per second
@@ -390,6 +394,13 @@ class CNavArea : protected CNavAreaCriticalData
 		unsigned int m_debugid;
 
 		Place m_place;												// place descriptor
+
+#if SOURCE_ENGINE == SE_BMS && !defined(PLATFORM_64BITS)
+		static_assert(
+			sizeof(CountdownTimer) == 0x0C,
+			"BMS CNavArea layout requires the SDK-compatible CountdownTimer ABI"
+		);
+#endif
 
 		CountdownTimer m_blockedTimer;								// Throttle checks on our blocked state while blocked
 		void UpdateBlockedFromNavBlockers( void );					// checks if nav blockers are still blocking the area

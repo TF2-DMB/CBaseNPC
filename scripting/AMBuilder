@@ -1,6 +1,7 @@
 import os
 
 files = [
+  'cbasenpc/bmsnavtest/cbasenpc_bmsnavtest.sp',
   'cbasenpc_actiontest.sp',
   'cbasenpc_example.sp'
 ]

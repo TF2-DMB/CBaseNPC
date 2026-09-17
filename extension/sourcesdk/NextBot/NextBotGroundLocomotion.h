@@ -151,5 +151,11 @@ public:
 	static VCall<float> vGetMaxYawRate;
 };
 
+#if SOURCE_ENGINE == SE_BMS && !defined(PLATFORM_64BITS)
+static_assert(
+	sizeof(NextBotGroundLocomotion) == 0x144,
+	"BMS NextBotGroundLocomotion layout requires the SDK-compatible timer ABI"
+);
 #endif
 
+#endif

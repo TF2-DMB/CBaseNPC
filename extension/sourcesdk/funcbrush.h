@@ -5,7 +5,7 @@
 class CFuncBrush : CBaseEntity
 {
 public:
-	static bool Init(SourceMod::IGameConfig* config, char* error, size_t maxlength);
+	static bool Init(SourceMod::IGameConfig* config, char* error, size_t maxlength, datamap_t* dataMap = nullptr);
 
 	enum BrushSolidities_e
 	{

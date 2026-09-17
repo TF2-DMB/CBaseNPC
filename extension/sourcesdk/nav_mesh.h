@@ -30,7 +30,7 @@ class CNavMesh
 public:
 	static bool Init(SourceMod::IGameConfig* config, char* error, size_t maxlength);
 	static void OnCoreMapEnd();
-	static void SDK_OnUnload();
+	static void Unload();
 
 	bool IsLoaded( void ) const		{ return *(bool*)((uint8_t*)this + offset_m_isLoaded); }
 	bool IsOutOfDate( void ) const	{ return *(bool*)((uint8_t*)this + offset_m_isLoaded + 1); }

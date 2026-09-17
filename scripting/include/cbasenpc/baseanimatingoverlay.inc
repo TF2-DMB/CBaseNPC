@@ -43,7 +43,7 @@ enum //CAnimationLayer
 methodmap CAnimationOverlay  
 {
 	#pragma deprecated Use CAnimationLayer instead
-	public CAnimationOverlay(Address address)
+	public CAnimationOverlay(int address)
 	{
 		return view_as<CAnimationOverlay>(address);
 	}
@@ -52,7 +52,7 @@ methodmap CAnimationOverlay
 	{
 		public get()  
 		{
-			return view_as<Address>(this); 
+			return view_as<Address>(view_as<int>(this)) & 4294967295;
 		}
 	}
 	
